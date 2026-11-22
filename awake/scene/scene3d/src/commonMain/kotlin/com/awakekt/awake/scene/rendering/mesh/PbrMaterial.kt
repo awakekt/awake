@@ -27,8 +27,9 @@ import com.awakekt.awake.scene.rendering.animation.SkinnedPose
  * A textured mesh drawn additive (`MeshRenderer.additive`) adds only its base and emissive colour,
  * unlit; [litWhenAdditive] keeps it lit instead.
  *
- * On a skinned mesh (an entity with a [SkinnedPose]) [baseColorFactor], [emissiveFactor] and
- * [unlit] apply the same way; metallic, roughness and texture animation are not read there.
+ * On a skinned mesh (an entity with a [SkinnedPose]), [metallic], [roughness], [reflectance],
+ * [baseColorFactor], [emissiveFactor] and [unlit] apply through the skinned PBR pipeline; texture
+ * animation is read only by the static textured pipeline.
  *
  * @property metallic Surface metallic factor (0.0 for dielectric, 1.0 for metal).
  * @property roughness Surface roughness factor (0.0 for mirror-smooth, 1.0 for completely diffuse).
@@ -42,6 +43,8 @@ import com.awakekt.awake.scene.rendering.animation.SkinnedPose
  * pipeline, and only for a transparent, additive draw.
  * @property unlit Draws `baseColorFactor * texture * vertexColor` as stored on the textured,
  * skinned and skinned-textured pipelines, skipping lighting, tone mapping and fog.
+ * @property reflectance Environment reflection strength (0.0 off, 1.0 full analytic sky/sun reflection)
+ * for reflective and glossy surfaces on static and skinned meshes.
  */
 data class PbrMaterial(
     var metallic: Float = 0f,
@@ -52,7 +55,34 @@ data class PbrMaterial(
     var alphaCutoff: Float = 0.5f,
     var litWhenAdditive: Boolean = false,
     var unlit: Boolean = false,
+    var reflectance: Float = 0f,
 ) {
+    /** [PbrMaterial] as it was before `reflectance`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        metallic: Float = 0f,
+        roughness: Float = 0.5f,
+        baseColorFactor: Color = Color.White,
+        emissiveFactor: Color = Color.Transparent,
+        alphaMode: AlphaMode = AlphaMode.Opaque,
+        alphaCutoff: Float = 0.5f,
+        litWhenAdditive: Boolean = false,
+        unlit: Boolean = false,
+    ) : this(metallic, roughness, baseColorFactor, emissiveFactor, alphaMode, alphaCutoff, litWhenAdditive, unlit, reflectance = 0f)
+
+    /** [copy] as it was before `reflectance`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        metallic: Float = this.metallic,
+        roughness: Float = this.roughness,
+        baseColorFactor: Color = this.baseColorFactor,
+        emissiveFactor: Color = this.emissiveFactor,
+        alphaMode: AlphaMode = this.alphaMode,
+        alphaCutoff: Float = this.alphaCutoff,
+        litWhenAdditive: Boolean = this.litWhenAdditive,
+        unlit: Boolean = this.unlit,
+    ): PbrMaterial = copy(metallic, roughness, baseColorFactor, emissiveFactor, alphaMode, alphaCutoff, litWhenAdditive, unlit, reflectance)
+
     /** [PbrMaterial] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -89,7 +119,7 @@ data class PbrMaterial(
     fun packedFloats(textureAnimation: TextureAnimation = TextureAnimation.None): FloatArray {
         val cached = packed
         if (cached != null && packedFrom == this && packedAnimation == textureAnimation) return cached
-        return pbrMaterialFloats(metallic, roughness, baseColorFactor, emissiveFactor, textureAnimation, litWhenAdditive, unlit).also {
+        return pbrMaterialFloats(metallic, roughness, baseColorFactor, emissiveFactor, textureAnimation, litWhenAdditive, unlit, reflectance).also {
             packed = it
             packedFrom = copy()
             packedAnimation = textureAnimation
