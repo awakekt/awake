@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -13,10 +13,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.core.math2d"
-    }
-
     sourceSets {
         // No dependencies. Screen-space 2D primitives are vocabulary for the UI stack, the 2D
         // draw path and both backends -- anything this module depends on becomes theirs too.

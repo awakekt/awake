@@ -24,7 +24,7 @@
 
 
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -32,10 +32,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.physics"
-    }
-
     // Portable contracts and backend-independent physics utilities, including character motion.
     // No scene, native binding, renderer or window dependency belongs in this capability module.
     sourceSets {

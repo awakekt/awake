@@ -5,7 +5,7 @@
  */
 plugins {
     alias(libs.plugins.kotlin.serialization)
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -14,10 +14,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.scene.worldstream"
-    }
-
     sourceSets {
         commonMain.dependencies {
             // Each streamer is an AsyncWorldCellStreamListener that fills a streamed cell with one

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
@@ -14,10 +14,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.scene.ai"
-    }
-
     sourceSets {
         commonMain.dependencies {
             // The behaviours these components describe, and the AgentPlacement the scene answers.

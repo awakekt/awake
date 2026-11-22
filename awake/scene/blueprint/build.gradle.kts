@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
@@ -15,10 +15,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.scene.blueprint"
-    }
-
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:blueprint"))
