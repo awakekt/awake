@@ -138,6 +138,7 @@ class SkinnedPbrAndReflectParityTest {
         const val OCCLUSION_MARGIN = 5
         const val BOOT_TIMEOUT_MS = 30_000L
         val IDENTITY_JOINT = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+
         // Low-albedo dark grey base so specular + environment reflection contrast cleanly.
         val DARK_BASE = solid(70)
         val DARK_OCCLUSION = solid(20)
