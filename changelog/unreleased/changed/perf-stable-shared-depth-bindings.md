@@ -1,1 +1,0 @@
-- WebGPU & Vulkan: replaced per-batch `SharedDepthBindings` group borrowing with stable per-key uniform buffers and bind groups on WebGPU (preventing cascade render-bundle re-encodes when the first instanced caster is culled or animated) and pooled zero-allocation lookup on both backends (#1621, #1742).

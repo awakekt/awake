@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-11-23
+
+### Added
+
+- Added optical sun flare (`sunFlareContentFeature`, `SunFlareLook`, `SkyboxSunFlareSystem`, `PipelineVariant.OverlayAdditive`) with 5-tap scene-depth occlusion across Vulkan and WebGPU (#1537).
+- Added full Cook-Torrance PBR (`metallic`, `roughness`, `normal`, `occlusion`, `emissive`) on skinned meshes (`skinned_textured` / `skinned`, glTF skinned PBR maps) and analytic Fresnel/sky environment reflection (`PbrMaterial.reflectance` / `ScenePbrMaterial.reflectance`) across static and skinned pipelines on Vulkan and WebGPU.
+
+### Changed
+
+- Render / Effects: lowered `EffectQuality.Low` bloom to a quarter-resolution bright pass (`width / 4 × height / 4`) with halved bright-pass blur radius and a 2-level downsample cap, cutting RGBA16F bloom memory and bandwidth 4× and eliminating upsample passes on mobile GPUs while keeping `Medium` and `High` unchanged (#1709).
+- WebGPU & Vulkan: replaced per-batch `SharedDepthBindings` group borrowing with stable per-key uniform buffers and bind groups on WebGPU (preventing cascade render-bundle re-encodes when the first instanced caster is culled or animated) and pooled zero-allocation lookup on both backends (#1621, #1742).
+- Render / Vulkan / Scene3D: added `GpuDrawPreparationSource.offscreenDrawPreparer` backed by Vulkan's dedicated offscreen uniform slot (`commandBuffers.size`), updated `RenderSystem3D.planCapture` to prepare offscreen Views against it, and switched `SlotBlock` dirty tracking to a per-slot bitmask so presented frames no longer block on `vkWaitForFences` for submitted offscreen Views (#1687, #1709).
+
+### Fixed
+
+- Applied scene distance fog (exponential and linear) across terrain (`terrain`, `paged_terrain`, `terrain_layers`), skinned (`skinned`, `skinned_textured`, `skinned_instanced`), instanced, lit, and particle shaders on both Vulkan and WebGPU.
+- **Android `core:io` binary compatibility with pure-JVM modules.** `com.awakekt.awake.core:io-android` now exposes `IoDispatcher_desktopKt` and `PlatformFileSystem_desktopKt` compatibility facades delegating to the Android `ioDispatcher` and `createPlatformFileSystem` implementations, fixing Android R8 missing-class failures when pure-JVM (`kmp-library`) modules such as `com.awakekt.awake.scene:runtime` resolve against `io-android`.
+
 ## [0.65.0] - 2026-11-22
 
 ### Added
