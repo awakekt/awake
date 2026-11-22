@@ -11,20 +11,22 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 import io.ygdrasil.webgpu.GPUCommandEncoder
 
 /**
- * Sizes the mask target to the scene a presented frame draws, [Renderer.surfaceWidth] by
- * [Renderer.surfaceHeight] after the render scale, before the frame is recorded (#1709). It was a
- * fixed 2048 square, cleared and stored in full on every masked frame whatever the scene's size.
- * See [com.awakekt.awake.render.passes.MaskTargetSizing] for when it grows and shrinks.
+ * Sizes the scene-depth and mask targets to the scene a presented frame draws,
+ * [Renderer.surfaceWidth] by [Renderer.surfaceHeight] after the render scale, before the frame is
+ * recorded (#1709). Both were fixed 2048 squares; sizing them in lockstep keeps fog's
+ * mask-vs-scene-depth silhouette comparison aligned at one texel grid while cutting both to the
+ * scaled scene extent.
+ * See [com.awakekt.awake.render.passes.MaskTargetSizing] for when they grow and shrink.
  */
 internal fun Renderer.settleMaskTarget() {
-    val target = maskPass?.depthTarget ?: return
-    resizeMaskTarget(sceneDepthEdge() ?: maskSizing.presented(target.size, surfaceWidth, surfaceHeight))
+    val current = currentScreenDepthEdge() ?: return
+    resizeScreenDepthTargets(maskSizing.presented(current, surfaceWidth, surfaceHeight))
 }
 
-/** Grows the mask target for an offscreen render [width] x [height] pixels, never shrinking it. */
+/** Grows the scene-depth and mask targets for an offscreen render [width] x [height] pixels, never shrinking them. */
 internal fun Renderer.ensureMaskTarget(width: Int, height: Int) {
-    val target = maskPass?.depthTarget ?: return
-    resizeMaskTarget(sceneDepthEdge() ?: maskSizing.offscreen(target.size, width, height))
+    val current = currentScreenDepthEdge() ?: return
+    resizeScreenDepthTargets(maskSizing.offscreen(current, width, height))
 }
 
 /**
@@ -44,26 +46,36 @@ internal fun Renderer.recordMaskPass(encoder: GPUCommandEncoder, input: GpuPassI
     }
 }
 
-/**
- * The scene depth target's edge, when the plan has one: fog compares an exempt draw's depth in the mask
- * with scene depth at the same texture coordinate, which agrees only while both are drawn at one size.
- * At different sizes their silhouettes rasterize apart, and fog lands on an unlit draw's edge pixels.
- */
-private fun Renderer.sceneDepthEdge(): Int? = sceneDepthPass?.depthTarget?.size
+private fun Renderer.currentScreenDepthEdge(): Int? =
+    sceneDepthPass?.depthTarget?.size ?: maskPass?.depthTarget?.size
 
 /**
- * Reallocates the mask's layers at [edge] when that differs. The old texture is closed at once, as
- * WebGPU lets submitted work finish; each cached mask group is rebuilt over the new view, as
- * the shadow array rebuilds its groups.
+ * Reallocates the scene-depth and mask targets at [edge] when either differs. Old textures are
+ * closed at once, as WebGPU lets submitted work finish; cached depth bind groups are rebuilt over
+ * the new views, as the shadow array rebuilds its groups.
  */
-private fun Renderer.resizeMaskTarget(edge: Int) {
-    val target = maskPass?.depthTarget ?: return
-    if (target.size == edge) return
-    target.reallocate(MASK_TARGET_LAYER_COUNT, edge)
-    maskCleared = false
-    val groups = bufferPools.shadowBindGroups[BindingSemantic.MaskDepth].orEmpty()
+private fun Renderer.resizeScreenDepthTargets(edge: Int) {
+    val sceneTarget = sceneDepthPass?.depthTarget
+    if (sceneTarget != null && sceneTarget.size != edge) {
+        sceneTarget.reallocate(1, edge)
+        rebuildDepthBindGroups(BindingSemantic.SceneDepth, bufferPools.sceneDepthBindGroupSlots, sceneTarget)
+    }
+    val maskTarget = maskPass?.depthTarget
+    if (maskTarget != null && maskTarget.size != edge) {
+        maskTarget.reallocate(MASK_TARGET_LAYER_COUNT, edge)
+        maskCleared = false
+        rebuildDepthBindGroups(BindingSemantic.MaskDepth, bufferPools.maskBindGroupSlots, maskTarget)
+    }
+}
+
+private fun Renderer.rebuildDepthBindGroups(
+    semantic: BindingSemantic,
+    slots: Map<io.ygdrasil.webgpu.GPURenderPipeline, Int>,
+    target: com.awakekt.awake.webgpu.texture.DepthTarget,
+) {
+    val groups = bufferPools.shadowBindGroups[semantic].orEmpty()
     for ((pipeline, handle) in groups) {
-        val slot = bufferPools.maskBindGroupSlots[pipeline] ?: continue
+        val slot = slots[pipeline] ?: continue
         val old = handle.bindGroup
         handle.bindGroup = bufferPools.depthBindGroup(pipeline, slot, target)
         old.close()

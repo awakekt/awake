@@ -203,7 +203,11 @@ open class WebGpuEngine(
             casterDepthPass(
                 graphicsDevice = graphicsDevice,
                 plan = plan,
-                target = com.awakekt.awake.webgpu.texture.DepthTarget(graphicsDevice),
+                target = com.awakekt.awake.webgpu.texture.DepthTarget(
+                    graphicsDevice,
+                    // The smallest edge: the first frame sizes it to the scene in lockstep with the mask (#1709).
+                    size = com.awakekt.awake.render.passes.MASK_TARGET_MIN_SIZE,
+                ),
                 primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
                     shaderCode = sceneDepthShaders.wgsl(),

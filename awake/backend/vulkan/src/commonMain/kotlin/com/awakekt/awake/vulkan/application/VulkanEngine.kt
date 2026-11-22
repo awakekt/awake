@@ -618,7 +618,7 @@ open class VulkanEngine(
                     format = shadowDepthFormatFor(shadowDepthFormat),
                 )
             }
-            sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }
+            sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice, size = MASK_TARGET_MIN_SIZE) }
             pipelineDescriptorSetLayout =
                 Material.createDescriptorSetLayout(graphicsDevice)
             sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager, rasterState.count)

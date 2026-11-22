@@ -162,8 +162,11 @@ object ScenePassCompiler {
                 shadowCascadeData = shadowCascadeData,
             )
             val requests = foldInstances(drawCalls, drawPreparer, drawStats, scratch.batcher)
-            // Folded again by what a depth pass reads, when something casts: tinted copies cast as one.
-            scratch.casters.fold(requests, light != null && environment.shadowsEnabled, scratch.batcher.canInstanceWith(drawPreparer))
+            // Folded again by what a depth pass reads, only when at least one shadow pass will actually run:
+            // tinted copies cast as one, and zero-reach lights skip caster folding altogether (#1709).
+            val hasActiveShadows = environment.shadowsEnabled &&
+                (shadowViewProjections.isNotEmpty() || (light != null && light.pointShadows.isNotEmpty()))
+            scratch.casters.fold(requests, hasActiveShadows, scratch.batcher.canInstanceWith(drawPreparer))
             draws.prepare(requests, drawPreparer, context, scratch.casters)
             if (environment.wireframe) edges = drawPreparer.prepareEdges(requests, context)
         }

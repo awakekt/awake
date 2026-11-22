@@ -256,7 +256,7 @@ internal class SceneLightingCompiler(
 
         var castsShadows = false
         world.family<Light>().forEachComponent { light ->
-            if (light.shadowsEnabled) castsShadows = true
+            if (light.shadowsEnabled && lightHasShadowReach(light)) castsShadows = true
         }
         val shadows = debug?.shadowsEnabledOverride
             ?: castsShadows
@@ -273,6 +273,11 @@ internal class SceneLightingCompiler(
             fogStart = fog.linearStart(debug),
             fogEnd = fog.linearEnd(debug),
         ).withDebugView(debug)
+    }
+
+    private fun lightHasShadowReach(light: Light): Boolean = when (light.type) {
+        Light.Type.Directional -> light.shadowDistance > 0f
+        Light.Type.Point -> light.range > POINT_SHADOW_NEAR
     }
 
     /** A linear fog's start for the frame, or 0 for exponential fog, as [EnvironmentUniforms.fogStart] reads it. */
