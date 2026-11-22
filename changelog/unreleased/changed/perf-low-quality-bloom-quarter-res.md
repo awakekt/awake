@@ -1,1 +1,0 @@
-- Render / Effects: lowered `EffectQuality.Low` bloom to a quarter-resolution bright pass (`width / 4 × height / 4`) with halved bright-pass blur radius and a 2-level downsample cap, cutting RGBA16F bloom memory and bandwidth 4× and eliminating upsample passes on mobile GPUs while keeping `Medium` and `High` unchanged (#1709).
