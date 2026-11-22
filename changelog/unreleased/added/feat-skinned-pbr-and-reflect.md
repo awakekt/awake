@@ -1,0 +1,1 @@
+- Added full Cook-Torrance PBR (`metallic`, `roughness`, `normal`, `occlusion`, `emissive`) on skinned meshes (`skinned_textured` / `skinned`, glTF skinned PBR maps) and analytic Fresnel/sky environment reflection (`PbrMaterial.reflectance` / `ScenePbrMaterial.reflectance`) across static and skinned pipelines on Vulkan and WebGPU.

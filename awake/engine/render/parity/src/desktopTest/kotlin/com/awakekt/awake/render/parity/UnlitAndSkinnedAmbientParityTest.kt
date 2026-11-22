@@ -157,7 +157,7 @@ class UnlitAndSkinnedAmbientParityTest {
             val effectiveSkinnedAmbient = authoredAmbient ?: DEFAULT_SKINNED_AMBIENT
             val effectiveInstancedAmbient = authoredAmbient ?: DEFAULT_LIT_SHADOW_AMBIENT
             val light = LightingCase(SceneLight(direction = Vec3f(0f, -1f, 0f), color = Vec3f(1f, 1f, 1f), ambient = authoredAmbient))
-            val expectedTexel = displayReferredBytes(SKIN_TEXEL_RGB, effectiveSkinnedAmbient)
+            val expectedTexel = linearTexelBytes(SKIN_TEXEL_RGB, effectiveSkinnedAmbient)
             val expectedWhite = displayReferredBytes(WHITE_RGB, effectiveSkinnedAmbient)
             val expectedInstanced = linearRadianceBytes(effectiveInstancedAmbient)
 
@@ -333,6 +333,9 @@ class UnlitAndSkinnedAmbientParityTest {
 
         private fun displayReferredBytes(rgb: IntArray, shade: Float): IntArray =
             toneMapAndEncodeBytes(FloatArray(3) { ((rgb[it] / 255f) * shade).pow(2.2f) })
+
+        private fun linearTexelBytes(rgb: IntArray, radianceScale: Float): IntArray =
+            toneMapAndEncodeBytes(FloatArray(3) { (rgb[it] / 255f).pow(2.2f) * radianceScale })
 
         private fun linearRadianceBytes(radiance: Float): IntArray =
             toneMapAndEncodeBytes(floatArrayOf(radiance, radiance, radiance))

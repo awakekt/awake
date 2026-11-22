@@ -298,23 +298,31 @@ private fun RenderDrawCommand.singlePlanDrawBlockFloats(
 
 private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: Float, writers: DrawBlockWriters?): FloatArray {
     val writer = writers?.skinned?.reset() ?: UniformWriter(SkinnedDrawLayout)
-    val unlit = if (extraUniformFloats.size == SkinnedMaterialLayout.total) {
+    val metallic: Float
+    val roughness: Float
+    val unlit: Float
+    if (extraUniformFloats.size == SkinnedMaterialLayout.total) {
+        val factors = SkinnedMaterialLayout.readVec4(extraUniformFloats, UniformFields.PbrFactors)
         writer
             .put(extraUniformFloats, 0, SkinnedFields.JointPalette)
             .put(model.data, UniformFields.Model)
             .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
             .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
-        SkinnedMaterialLayout.readVec4(extraUniformFloats, UniformFields.PbrFactors).w
+        metallic = factors.x
+        roughness = factors.y
+        unlit = factors.w
     } else {
         writer
             .putPadded(SkinnedFields.JointPalette, extraUniformFloats)
             .put(model.data, UniformFields.Model)
             .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
             .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
-        0f
+        metallic = DEFAULT_METALLIC_FACTOR
+        roughness = 1f
+        unlit = 0f
     }
     return writer
-        .put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, unlit)
+        .put(UniformFields.PbrFactors, metallic, roughness, alphaCutoff, unlit)
         .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
         .build()
 }
