@@ -286,7 +286,11 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
             // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
             val ambientShare = let("ambientShare", select(ambientStrength, lightColor.w, lightColor.w gt 0f.lit))
             val ambient = let("ambient", albedo * ambientShare * occlusion)
-            val litColor = variable("lit", ambient + (diffuse + specular) * radiance + emissive)
+            val envRefl = let(
+                "envReflection",
+                environmentReflection(n, v, l, lightColor, f0, metallic, roughness, emissiveFactor.w, occlusion),
+            )
+            val litColor = variable("lit", ambient + (diffuse + specular) * radiance + envRefl + emissive)
             // Point lights: unrolled over fixed slots; a disabled slot is one compare.
             loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
                 val slot = let("slot", pointLightPositions[i])

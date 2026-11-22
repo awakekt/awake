@@ -25,6 +25,7 @@ import kotlinx.serialization.Serializable
  * @property litWhenAdditive Keeps a textured mesh drawn additive lit. See [PbrMaterial.litWhenAdditive].
  * @property unlit Draws `baseColorFactor * texture * vertexColor` as stored on the textured,
  * skinned and skinned-textured pipelines, skipping lighting, tone mapping and fog.
+ * @property reflectance Environment reflection strength between 0.0 (off) and 1.0 (full reflection).
  */
 @Serializable
 @SerialName("pbr_material")
@@ -37,7 +38,44 @@ data class ScenePbrMaterial(
     @PropertyRange(min = 0.0, max = 1.0) val alphaCutoff: Float = 0.5f,
     val litWhenAdditive: Boolean = false,
     val unlit: Boolean = false,
+    @PropertyRange(min = 0.0, max = 1.0) val reflectance: Float = 0f,
 ) : SceneComponent {
+    /** [ScenePbrMaterial] as it was before `reflectance`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        metallic: Float = 0f,
+        roughness: Float = 0.5f,
+        baseColorFactor: SceneColor = SceneColor.White,
+        emissiveFactor: SceneColor = SceneColor.Transparent,
+        alphaMode: AlphaMode = AlphaMode.Opaque,
+        alphaCutoff: Float = 0.5f,
+        litWhenAdditive: Boolean = false,
+        unlit: Boolean = false,
+    ) : this(metallic, roughness, baseColorFactor, emissiveFactor, alphaMode, alphaCutoff, litWhenAdditive, unlit, reflectance = 0f)
+
+    /** [copy] as it was before `reflectance`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        metallic: Float = this.metallic,
+        roughness: Float = this.roughness,
+        baseColorFactor: SceneColor = this.baseColorFactor,
+        emissiveFactor: SceneColor = this.emissiveFactor,
+        alphaMode: AlphaMode = this.alphaMode,
+        alphaCutoff: Float = this.alphaCutoff,
+        litWhenAdditive: Boolean = this.litWhenAdditive,
+        unlit: Boolean = this.unlit,
+    ): ScenePbrMaterial = copy(
+        metallic,
+        roughness,
+        baseColorFactor,
+        emissiveFactor,
+        alphaMode,
+        alphaCutoff,
+        litWhenAdditive,
+        unlit,
+        reflectance,
+    )
+
     /** [ScenePbrMaterial] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -79,6 +117,9 @@ data class ScenePbrMaterial(
         }
         if (alphaCutoff !in 0f..1f) {
             add(SceneValidationIssue(path, "pbrMaterial.alphaCutoff must be within 0..1"))
+        }
+        if (reflectance !in 0f..1f) {
+            add(SceneValidationIssue(path, "pbrMaterial.reflectance must be within 0..1"))
         }
     }
 }

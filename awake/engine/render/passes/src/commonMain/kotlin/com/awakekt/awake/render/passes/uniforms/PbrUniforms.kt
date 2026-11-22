@@ -89,15 +89,19 @@ data class TextureAnimation(
 
 /**
  * A skinned draw's `extraUniformFloats` tinted by its material: [palette], then [baseColorFactor],
- * [emissiveFactor] and [unlit] in `pbrFactors.w`, laid out as [SkinnedMaterialLayout]. Written into
- * [into], so a caller that draws every frame reuses one array.
+ * [emissiveFactor] (with [reflectance] in `.w`), and `[metallic, roughness, 0, unlit]` in `pbrFactors`,
+ * laid out as [SkinnedMaterialLayout]. Written into [into], so a caller that draws every frame reuses one array.
  */
+@Suppress("LongParameterList")
 fun skinnedMaterialFloats(
     palette: FloatArray,
     baseColorFactor: Color,
     emissiveFactor: Color,
     into: FloatArray = FloatArray(SkinnedMaterialLayout.total),
     unlit: Boolean = false,
+    metallic: Float = DEFAULT_METALLIC_FACTOR,
+    roughness: Float = DEFAULT_ROUGHNESS_FACTOR,
+    reflectance: Float = 0f,
 ): FloatArray {
     val layout = SkinnedMaterialLayout
     val paletteEnd = layout.offsetOf(UniformFields.BaseColorFactor)
@@ -106,10 +110,20 @@ fun skinnedMaterialFloats(
     palette.copyInto(into)
     into.fill(0f, palette.size, paletteEnd)
     layout.writeVec4(into, UniformFields.BaseColorFactor, baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a)
-    layout.writeVec4(into, UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
-    layout.writeVec4(into, UniformFields.PbrFactors, 0f, 0f, 0f, if (unlit) SKINNED_UNLIT else 0f)
+    layout.writeVec4(into, UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, reflectance)
+    layout.writeVec4(into, UniformFields.PbrFactors, metallic, roughness, 0f, if (unlit) SKINNED_UNLIT else 0f)
     return into
 }
+
+/** [skinnedMaterialFloats] as it was before metallic/roughness/reflectance: hidden, kept for binary compatibility. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun skinnedMaterialFloats(
+    palette: FloatArray,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+    into: FloatArray = FloatArray(SkinnedMaterialLayout.total),
+    unlit: Boolean = false,
+): FloatArray = skinnedMaterialFloats(palette, baseColorFactor, emissiveFactor, into, unlit, DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, 0f)
 
 /** [skinnedMaterialFloats] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -126,7 +140,7 @@ fun skinnedMaterialFloats(
  * [litWhenAdditive] keeps a textured draw lit when it blends additively, where it would otherwise
  * add only its own colour; [unlit] skips lighting and tone mapping so the draw outputs its stored
  * colour (see [TexturedBlend]). Both ride in `pbrFactors.w` for the shared packer, which replaces
- * the lane with the draw's [TexturedBlend] code.
+ * the lane with the draw's [TexturedBlend] code. [reflectance] rides in `emissiveFactor.w`.
  */
 @Suppress("LongParameterList") // One argument per authored material value.
 fun pbrMaterialFloats(
@@ -137,12 +151,27 @@ fun pbrMaterialFloats(
     textureAnimation: TextureAnimation = TextureAnimation.None,
     litWhenAdditive: Boolean = false,
     unlit: Boolean = false,
+    reflectance: Float = 0f,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTexturedMaterial)
     .put(UniformFields.PbrFactors, metallic, roughness, 0f, authoredShadingFlags(litWhenAdditive, unlit))
     .put(UniformFields.BaseColorFactor, baseColorFactor)
-    .put(UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
+    .put(UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, reflectance)
     .putTextureAnimation(textureAnimation)
     .build()
+
+/** [pbrMaterialFloats] as it was before `reflectance`: hidden, kept for binary compatibility. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun pbrMaterialFloats(
+    metallic: Float,
+    roughness: Float,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+    textureAnimation: TextureAnimation = TextureAnimation.None,
+    litWhenAdditive: Boolean = false,
+    unlit: Boolean = false,
+): FloatArray =
+    pbrMaterialFloats(metallic, roughness, baseColorFactor, emissiveFactor, textureAnimation, litWhenAdditive, unlit, reflectance = 0f)
 
 /** [pbrMaterialFloats] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

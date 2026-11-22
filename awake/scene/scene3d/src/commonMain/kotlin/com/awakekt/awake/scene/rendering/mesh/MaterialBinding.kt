@@ -49,6 +49,7 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         alphaCutoff = alphaCutoff,
         litWhenAdditive = litWhenAdditive,
         unlit = unlit,
+        reflectance = reflectance,
     )
 
     /**
@@ -65,5 +66,6 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         alphaCutoff = alphaCutoff,
         litWhenAdditive = litWhenAdditive,
         unlit = unlit,
+        reflectance = reflectance,
     )
 }

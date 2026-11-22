@@ -1081,6 +1081,7 @@ Physically based material values for the entity's mesh. `ScenePbrMaterial`.
 | `alphaCutoff` | number | `0.5` | Alpha threshold for `Masked`, 0 to 1. |
 | `litWhenAdditive` | boolean | `false` | Keeps a textured mesh drawn `additive` lit: it adds its colour as the sun, shadows, ambient and point lights shade it, not only its base and emissive colour. Fog fades it either way. |
 | `unlit` | boolean | `false` | Draws `baseColorFactor * texture * vertexColor` as stored on textured and single-draw skinned meshes, skipping lighting, tone mapping and fog while keeping alpha masking and output encoding. |
+| `reflectance` | number | `0` | Analytic Fresnel sky/sun environment reflection weight on static and skinned PBR surfaces, 0 to 1. |
 
 ## `perceivable`
 
@@ -1225,6 +1226,9 @@ The background drawn behind the scene. `SceneSkybox`.
 | `moonPhase` | number | `0.5` | The moon's phase, from 0 to 1: `0` new, `0.25` first quarter, `0.5` full, `0.75` last quarter. |
 | `additiveBodies` | boolean | `false` | Add the sun and moon to the sky instead of covering it. |
 | `panoramas` | list of panoramas | `[]` | More cubemap strips by time of day, each `{ time, path }` in time order; a `day_cycle` blends the two around its time. |
+| `sunFlare` | boolean | `false` | Draw an optical sun flare along the line from the sun through the screen centre when the sun is above the horizon and unoccluded. |
+| `sunFlareTexture` | string | none | Optional sprite texture for flare elements; none draws procedural discs and halos. |
+| `sunFlareIntensity` | number | `1` | Brightness multiplier for the sun flare, 0 to 4. |
 
 ## `spin_control`
 

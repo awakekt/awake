@@ -94,6 +94,11 @@ public final class com/awakekt/awake/asset/shaderpack/AslSpriteShaderKt {
 	public static final fun getSpriteShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslSunFlareShaderKt {
+	public static final fun sunFlareShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun sunFlareShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
 	public static final field TERRAIN_SURFACE_FIRST_BINDING I
@@ -280,6 +285,8 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkyboxCubemap ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSprite ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSunFlare ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSunFlareUnoccluded ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrainShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -425,6 +432,75 @@ public final class com/awakekt/awake/asset/shaderpack/SpriteScenePipelineKt {
 	public static synthetic fun spriteScenePipeline$default (ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 	public static final fun trailScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 	public static final fun worldTextScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SunFlareContentFeatureKt {
+	public static final fun sunFlareContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/SunFlareLook;ZLcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun sunFlareContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/SunFlareLook;ZLcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SunFlareElement {
+	public fun <init> (FFLcom/awakekt/awake/core/color/Color;FZ)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/core/color/Color;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component4 ()F
+	public final fun component5 ()Z
+	public final fun copy (FFLcom/awakekt/awake/core/color/Color;FZ)Lcom/awakekt/awake/asset/shaderpack/SunFlareElement;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderpack/SunFlareElement;FFLcom/awakekt/awake/core/color/Color;FZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/SunFlareElement;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getIntensity ()F
+	public final fun getPosition ()F
+	public final fun getRing ()Z
+	public final fun getSize ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SunFlareFields {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/SunFlareFields;
+	public final fun getElementColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getElementGeometry ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getFlareParams ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSunScreen ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SunFlareFieldsKt {
+	public static final field MAX_SUN_FLARE_ELEMENTS I
+	public static final fun getSunFlareUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SunFlareLook {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderpack/SunFlareLook$Companion;
+	public fun <init> ()V
+	public fun <init> (ZFFZLjava/util/List;)V
+	public synthetic fun <init> (ZFFZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getElements ()Ljava/util/List;
+	public final fun getEnabled ()Z
+	public final fun getFollowsDirection ()Z
+	public final fun getIntensity ()F
+	public final fun getSunDirection ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getSunVisibility ()F
+	public final fun setElements (Ljava/util/List;)V
+	public final fun setEnabled (Z)V
+	public final fun setFollowsDirection (Z)V
+	public final fun setIntensity (F)V
+	public final fun setSunVisibility (F)V
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SunFlareLook$Companion {
+	public final fun getDEFAULT_ELEMENTS ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SunFlareRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
+	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/asset/shaderpack/SunFlareLook;ZZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/asset/shaderpack/SunFlareLook;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun destroy ()V
+	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
+	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
 public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {
