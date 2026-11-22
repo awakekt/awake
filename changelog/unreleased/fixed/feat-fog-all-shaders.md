@@ -1,0 +1,1 @@
+- Applied scene distance fog (exponential and linear) across terrain (`terrain`, `paged_terrain`, `terrain_layers`), skinned (`skinned`, `skinned_textured`, `skinned_instanced`), instanced, lit, and particle shaders on both Vulkan and WebGPU.

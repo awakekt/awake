@@ -22,6 +22,7 @@ import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.sampler
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.texture2d
@@ -29,6 +30,7 @@ import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
+import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xyz
@@ -86,6 +88,7 @@ private fun particle(): AslShaderDefinition = shader("particle") {
     val out = varyings("VertexOutput")
     val uv by out.varying(GpuDataShape.Vec2, location = 0)
     val color by out.varying(GpuDataShape.Vec4, location = 1)
+    val worldPosVarying by out.varying(GpuDataShape.Vec3, location = 2)
 
     val stretchEpsilon = const("STRETCH_EPSILON", 1e-5f)
 
@@ -135,11 +138,23 @@ private fun particle(): AslShaderDefinition = shader("particle") {
         }
         uv set vec2((spriteUv.x + inFrame) / frameCount, spriteUv.y)
         color set inColor
+        worldPosVarying set worldPos
     }
 
     fragment {
         val sampled = let("sampled", textureSample(particleTexture, particleSampler, uv))
-        colorOutput(vec4(sampled.rgb * color.rgb, sampled.a * color.a))
+        val fogColor = frame.value("fogColor")
+        // Additive particles fade to black in fog rather than adding the fog colour over their quad.
+        val fogTarget = select(fogColor.rgb, vec3(0f.lit), frameInfo.y gt 0.5f.lit)
+        val fogged = applySceneFog(
+            sampled.rgb * color.rgb,
+            frame.value("cameraPosition"),
+            worldPosVarying,
+            fogColor,
+            frame.value("fogRange"),
+            fogTarget,
+        )
+        colorOutput(vec4(fogged, sampled.a * color.a))
     }
 }
 

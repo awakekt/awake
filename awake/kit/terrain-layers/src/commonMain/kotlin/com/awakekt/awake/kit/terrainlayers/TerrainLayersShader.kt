@@ -48,6 +48,7 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.TerrainPageSampling
+import com.awakekt.awake.asset.shaderpack.applyTerrainFog
 import com.awakekt.awake.asset.shaderpack.clayRadiance
 import com.awakekt.awake.asset.shaderpack.debugLayerColor
 import com.awakekt.awake.asset.shaderpack.debugViewColor
@@ -189,7 +190,8 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
             clay = displayTransform.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
         )
         val lit = let("lit", albedo * baked.xyz * 2f.lit * light)
-        val shaded = vec4(displayTransform.displayReferred(lit, terrain.exposure.x), 1f.lit)
+        val mapped = displayTransform.displayReferred(lit, terrain.exposure.x)
+        val shaded = vec4(applyTerrainFog(mapped, terrain), 1f.lit)
         colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
 }
