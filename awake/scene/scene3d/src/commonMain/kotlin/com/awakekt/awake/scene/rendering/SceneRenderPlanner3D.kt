@@ -47,17 +47,25 @@ internal class SceneRenderPlanner3D(
     private val antiAliasing: () -> AntiAliasing = { AntiAliasing.Off },
     /** The quality that FXAA stage runs at: the renderer's `effectQuality`. */
     private val effectQuality: () -> EffectQuality = { EffectQuality.High },
+    /** Preparer for offscreen captures; defaults to [drawPreparer] when the backend shares one slot (#1687, #1709). */
+    captureDrawPreparer: GpuDrawPreparer? = drawPreparer,
 ) {
     private val drawPreparer = RejectionCountingPreparer(
         requireNotNull(drawPreparer) {
             "SceneRenderPlanner3D requires a GpuDrawPreparer from the render-pipeline bootstrap"
         },
     )
+    private val capturePreparer = if (captureDrawPreparer === drawPreparer || captureDrawPreparer == null) {
+        this.drawPreparer
+    } else {
+        RejectionCountingPreparer(captureDrawPreparer)
+    }
     private val geometryFeature = SceneGeometryFeature3D(rendererClipSpace)
     private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features, shadowBudget)
     private val drawCalls = ArrayList<RenderDrawCommand>()
     private val shadowCasters = ShadowCasterVolume()
     private val passScratch = ScenePassScratch()
+    private val captureScratch = if (capturePreparer === this.drawPreparer) passScratch else ScenePassScratch()
 
     /** Whether a frame this planner prepared may be drawn again later; see `GpuDrawPreparer.redrawsPreparedFrames`. */
     val redrawsPreparedFrames: Boolean get() = drawPreparer.redrawsPreparedFrames
@@ -84,6 +92,7 @@ internal class SceneRenderPlanner3D(
     var stages: RenderDrawStages? = null
 
     /** Plans [camera]'s view at [aspect], into [viewport] when it fills only part of the target. */
+    @Suppress("LongParameterList")
     fun plan(
         world: World,
         camera: Camera,
@@ -95,6 +104,7 @@ internal class SceneRenderPlanner3D(
         targetHeight: Int = 0,
         drawStats: SceneDrawStats? = null,
         transparentSources: TransparentDrawSources? = null,
+        forCapture: Boolean = false,
     ): PlannedFrame {
         val stages = stages
         stages?.begin(RenderDrawStage.Collect)
@@ -117,8 +127,10 @@ internal class SceneRenderPlanner3D(
 
         stages?.end(RenderDrawStage.Collect)
         stages?.begin(RenderDrawStage.Compile)
-        val rejectedBefore = drawPreparer.rejected
-        drawPreparer.rejected = 0
+        val activePreparer = if (forCapture) capturePreparer else drawPreparer
+        val activeScratch = if (forCapture) captureScratch else passScratch
+        val rejectedBefore = activePreparer.rejected
+        activePreparer.rejected = 0
         val passInput = ScenePassCompiler.compile(
             lens = camera.lens,
             drawCalls = drawCalls,
@@ -127,11 +139,11 @@ internal class SceneRenderPlanner3D(
             clipSpace = rendererClipSpace,
             aspect = aspect,
             viewport = viewport,
-            drawPreparer = drawPreparer,
+            drawPreparer = activePreparer,
             maskLayers = world.outlineMaskLayers(),
             postPassChain = postPassChain,
             drawStats = drawStats,
-            scratch = passScratch,
+            scratch = activeScratch,
         )
         stages?.end(RenderDrawStage.Compile)
         return PlannedFrame(
@@ -141,8 +153,8 @@ internal class SceneRenderPlanner3D(
             frustumCulled = geometryFeature.lastFrustumCulledCount,
             occluded = geometryFeature.lastOccludedCount,
             // A frame handed back unchanged prepared nothing; its draws are the last frame's.
-            unresolved = if (passScratch.reusedLastFrame) rejectedBefore.also { drawPreparer.rejected = it } else drawPreparer.rejected,
-            reused = passScratch.reusedLastFrame,
+            unresolved = if (activeScratch.reusedLastFrame) rejectedBefore.also { activePreparer.rejected = it } else activePreparer.rejected,
+            reused = activeScratch.reusedLastFrame,
         )
     }
 

@@ -185,6 +185,10 @@ class Renderer internal constructor(
         VulkanDrawPreparer(this)
     }
 
+    override val offscreenDrawPreparer: GpuDrawPreparer by lazy {
+        VulkanDrawPreparer(this, offscreen = true)
+    }
+
     internal val gpuPassExecutor: GpuPassExecutor by lazy { RendererGpuPassExecutor(this) }
 
     override val clipSpace: ClipSpace = ClipSpace.Vulkan
@@ -437,6 +441,9 @@ class Renderer internal constructor(
     internal var submittedOffscreenCommandBuffer: Long = 0
     internal var submittedOffscreenFence: Long = 0
     internal var submittedOffscreenFrame: Int = NO_SUBMITTED_OFFSCREEN_FRAME
+
+    /** How many times a presented frame had to block on outstanding offscreen work sharing its slot: for tests (#1709). */
+    internal var offscreenWaitsForFrame: Long = 0L
     internal var submittedOffscreenTiming: Long? = null
     internal var framebuffers: List<Long> = emptyList()
     internal var commandBuffers: LongArray = LongArray(maxFramesInFlight)
