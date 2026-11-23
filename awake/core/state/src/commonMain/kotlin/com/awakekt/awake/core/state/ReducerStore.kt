@@ -31,6 +31,40 @@ fun interface Reducer<S, in I, out E> {
 }
 
 /**
+ * Synchronous, single-consumption source of one-shot [E] side effects.
+ *
+ * Implemented by both [ReducerStore] and [MutableEffectStore] so frame-loop coordinators such as
+ * [EffectDrainer] can drain heterogeneous stores uniformly.
+ *
+ * @param E The one-shot effect type.
+ */
+interface EffectSource<out E> {
+    /**
+     * Synchronously drains all pending effects in FIFO order.
+     *
+     * Consumed effects are removed from the queue; a subsequent drain call will be empty unless
+     * new effects were queued in the interim.
+     */
+    fun drainEffects(): List<E>
+
+    /**
+     * Synchronously invokes [action] for each pending effect in FIFO order without allocating an
+     * intermediate list on hot frame paths.
+     */
+    fun drainEffects(action: (E) -> Unit) {
+        drainEffects().forEach(action)
+    }
+
+    /**
+     * Observable stream of one-shot effects for asynchronous or UI collectors.
+     *
+     * Shares the same single-consumption queue as [drainEffects]; choose either synchronous
+     * frame draining or coroutine collection for a given store.
+     */
+    val effects: Flow<E>
+}
+
+/**
  * Unidirectional Data Flow (UDF) / MVI contract store.
  *
  * Enforces strict separation between immutable [State], user [Intent], pure state transitions,
@@ -50,26 +84,15 @@ fun interface Reducer<S, in I, out E> {
  * @param I The intent/action type.
  * @param E The one-shot effect type.
  */
-interface ReducerStore<S, in I, out E> : Store<S> {
+interface ReducerStore<S, in I, out E> :
+    Store<S>,
+    EffectSource<E> {
     /**
      * Dispatches an [intent] to mutate state via the pure [Reducer].
      *
      * @param intent The user action or event to dispatch.
      */
     fun dispatch(intent: I)
-
-    /**
-     * Synchronously drains all pending effects in order.
-     *
-     * Consumed effects are removed from the buffer; a subsequent drain call will be empty
-     * unless new effects were queued in the interim.
-     */
-    fun drainEffects(): List<E>
-
-    /**
-     * Observable stream of one-shot effects for asynchronous or UI collectors.
-     */
-    val effects: Flow<E>
 }
 
 /**
@@ -88,13 +111,13 @@ interface ReducerStore<S, in I, out E> : Store<S> {
 open class MutableEffectStore<S, E>(
     initialState: S,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
-) : MutableStore<S>(initialState, scope) {
+) : MutableStore<S>(initialState, scope),
+    EffectSource<E> {
 
     private val effectChannel = Channel<E>(Channel.UNLIMITED)
-    private val flowChannel = Channel<E>(Channel.UNLIMITED)
 
     /** Observable stream of one-shot effects for asynchronous or UI collectors. */
-    val effects: Flow<E> = flowChannel.receiveAsFlow()
+    override val effects: Flow<E> = effectChannel.receiveAsFlow()
 
     /**
      * Atomically updates the current state using [transform].
@@ -106,14 +129,13 @@ open class MutableEffectStore<S, E>(
     }
 
     /**
-     * Synchronously enqueues a one-shot [effect] for [drainEffects] and emits it to [effects]
-     * without launching a coroutine.
+     * Synchronously enqueues a one-shot [effect] for [drainEffects] or [effects] without
+     * launching a coroutine.
      *
      * @param effect The one-shot side effect to emit.
      */
     protected fun emitEffect(effect: E) {
         effectChannel.trySend(effect)
-        flowChannel.trySend(effect)
     }
 
     /**
@@ -121,7 +143,7 @@ open class MutableEffectStore<S, E>(
      *
      * @return The list of effects queued since the previous drain, or [emptyList] if none.
      */
-    fun drainEffects(): List<E> {
+    override fun drainEffects(): List<E> {
         val first = effectChannel.tryReceive().getOrNull() ?: return emptyList()
         val drained = ArrayList<E>()
         drained.add(first)
@@ -130,6 +152,18 @@ open class MutableEffectStore<S, E>(
             drained.add(next)
         }
         return drained
+    }
+
+    override fun drainEffects(action: (E) -> Unit) {
+        while (true) {
+            val next = effectChannel.tryReceive().getOrNull() ?: break
+            action(next)
+        }
+    }
+
+    override fun close() {
+        super<MutableStore>.close()
+        effectChannel.close()
     }
 }
 
@@ -151,8 +185,7 @@ open class DefaultReducerStore<S, in I, out E>(
     ReducerStore<S, I, E> {
 
     private val effectChannel = Channel<E>(Channel.UNLIMITED)
-    private val flowChannel = Channel<E>(Channel.UNLIMITED)
-    override val effects: Flow<E> = flowChannel.receiveAsFlow()
+    override val effects: Flow<E> = effectChannel.receiveAsFlow()
 
     override fun dispatch(intent: I) {
         var effectToEmit: E? = null
@@ -164,7 +197,6 @@ open class DefaultReducerStore<S, in I, out E>(
 
         effectToEmit?.let { eff ->
             effectChannel.trySend(eff)
-            flowChannel.trySend(eff)
         }
     }
 
@@ -177,6 +209,18 @@ open class DefaultReducerStore<S, in I, out E>(
             drained.add(next)
         }
         return drained
+    }
+
+    override fun drainEffects(action: (E) -> Unit) {
+        while (true) {
+            val next = effectChannel.tryReceive().getOrNull() ?: break
+            action(next)
+        }
+    }
+
+    override fun close() {
+        super<MutableStore>.close()
+        effectChannel.close()
     }
 }
 

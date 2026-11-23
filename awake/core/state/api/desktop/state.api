@@ -1,8 +1,10 @@
 public class com/awakekt/awake/core/state/DefaultReducerStore : com/awakekt/awake/core/state/MutableStore, com/awakekt/awake/core/state/ReducerStore {
 	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/state/Reducer;Lkotlinx/coroutines/CoroutineScope;)V
 	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/state/Reducer;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
 	public fun dispatch (Ljava/lang/Object;)V
 	public fun drainEffects ()Ljava/util/List;
+	public fun drainEffects (Lkotlin/jvm/functions/Function1;)V
 	public fun getEffects ()Lkotlinx/coroutines/flow/Flow;
 }
 
@@ -16,12 +18,35 @@ public final class com/awakekt/awake/core/state/DefaultStoreScope : com/awakekt/
 	public fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
 }
 
-public class com/awakekt/awake/core/state/MutableEffectStore : com/awakekt/awake/core/state/MutableStore {
+public final class com/awakekt/awake/core/state/EffectDrainer : java/lang/AutoCloseable {
+	public fun <init> ()V
+	public final fun bind (Lcom/awakekt/awake/core/state/EffectSource;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Ljava/lang/AutoCloseable;
+	public final fun bind (Lcom/awakekt/awake/core/state/ReducerStore;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/lang/AutoCloseable;
+	public static synthetic fun bind$default (Lcom/awakekt/awake/core/state/EffectDrainer;Lcom/awakekt/awake/core/state/EffectSource;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/AutoCloseable;
+	public static synthetic fun bind$default (Lcom/awakekt/awake/core/state/EffectDrainer;Lcom/awakekt/awake/core/state/ReducerStore;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/AutoCloseable;
+	public fun close ()V
+	public final fun drain ()V
+	public final fun getSize ()I
+}
+
+public abstract interface class com/awakekt/awake/core/state/EffectSource {
+	public abstract fun drainEffects ()Ljava/util/List;
+	public fun drainEffects (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun getEffects ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/awakekt/awake/core/state/EffectSource$DefaultImpls {
+	public static fun drainEffects (Lcom/awakekt/awake/core/state/EffectSource;Lkotlin/jvm/functions/Function1;)V
+}
+
+public class com/awakekt/awake/core/state/MutableEffectStore : com/awakekt/awake/core/state/MutableStore, com/awakekt/awake/core/state/EffectSource {
 	public fun <init> (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;)V
 	public synthetic fun <init> (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun drainEffects ()Ljava/util/List;
+	public fun close ()V
+	public fun drainEffects ()Ljava/util/List;
+	public fun drainEffects (Lkotlin/jvm/functions/Function1;)V
 	protected final fun emitEffect (Ljava/lang/Object;)V
-	public final fun getEffects ()Lkotlinx/coroutines/flow/Flow;
+	public fun getEffects ()Lkotlinx/coroutines/flow/Flow;
 	protected final fun updateState (Lkotlin/jvm/functions/Function1;)V
 }
 
@@ -40,14 +65,13 @@ public abstract interface class com/awakekt/awake/core/state/Reducer {
 	public abstract fun reduce (Ljava/lang/Object;Ljava/lang/Object;)Lkotlin/Pair;
 }
 
-public abstract interface class com/awakekt/awake/core/state/ReducerStore : com/awakekt/awake/core/state/Store {
+public abstract interface class com/awakekt/awake/core/state/ReducerStore : com/awakekt/awake/core/state/EffectSource, com/awakekt/awake/core/state/Store {
 	public abstract fun dispatch (Ljava/lang/Object;)V
-	public abstract fun drainEffects ()Ljava/util/List;
-	public abstract fun getEffects ()Lkotlinx/coroutines/flow/Flow;
 }
 
 public final class com/awakekt/awake/core/state/ReducerStore$DefaultImpls {
 	public static fun close (Lcom/awakekt/awake/core/state/ReducerStore;)V
+	public static fun drainEffects (Lcom/awakekt/awake/core/state/ReducerStore;Lkotlin/jvm/functions/Function1;)V
 	public static fun getValue (Lcom/awakekt/awake/core/state/ReducerStore;)Ljava/lang/Object;
 }
 
