@@ -16,8 +16,10 @@ import com.awakekt.awake.physics.ConvexHullShape
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.MeshShape
 import com.awakekt.awake.physics.PhysicsShape
+import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.physics.SphereShape
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -72,6 +74,30 @@ class PhysicsShapeWireframe {
             is HeightFieldShape -> heightFieldFootprint(out, shape, position, color)
             is MeshShape -> pointCloudBounds(out, shape.vertices, position, color)
             is ConvexHullShape -> pointCloudBounds(out, shape.points, position, color)
+            is ScaledShape -> writeScaled(shape, position, color, out)
+        }
+    }
+
+    private fun writeScaled(scaled: ScaledShape, position: Vec3f, color: Color, out: DebugLines) {
+        val s = scaled.scale
+        when (val inner = scaled.shape) {
+            is MeshShape -> pointCloudBounds(out, inner.vertices, position, color, s.x, s.y, s.z)
+            is ConvexHullShape -> pointCloudBounds(out, inner.points, position, color, s.x, s.y, s.z)
+            is BoxShape -> {
+                top.set(abs(inner.halfExtents.x * s.x), abs(inner.halfExtents.y * s.y), abs(inner.halfExtents.z * s.z))
+                box(out, top, position, color)
+            }
+            is SphereShape -> {
+                val radius = inner.radius * maxOf(abs(s.x), abs(s.y), abs(s.z))
+                ring(out, position, radius, Axis.Y, color)
+                ring(out, position, radius, Axis.X, color)
+                ring(out, position, radius, Axis.Z, color)
+            }
+            is CapsuleShape -> {
+                val radial = maxOf(abs(s.x), abs(s.z))
+                capsule(out, CapsuleShape(inner.halfHeight * abs(s.y), inner.radius * radial), position, color)
+            }
+            is HeightFieldShape, is ScaledShape -> Unit
         }
     }
 
@@ -175,7 +201,15 @@ class PhysicsShapeWireframe {
      * this overlay answers about either is almost always "where is it, and is it where the mesh is".
      * Draw the geometry itself if that ever stops being enough; it is a bigger feature than a wireframe.
      */
-    private fun pointCloudBounds(out: DebugLines, points: FloatArray, origin: Vec3f, color: Color) {
+    private fun pointCloudBounds(
+        out: DebugLines,
+        points: FloatArray,
+        origin: Vec3f,
+        color: Color,
+        scaleX: Float = 1f,
+        scaleY: Float = 1f,
+        scaleZ: Float = 1f,
+    ) {
         var minX = Float.MAX_VALUE
         var minY = Float.MAX_VALUE
         var minZ = Float.MAX_VALUE
@@ -184,12 +218,15 @@ class PhysicsShapeWireframe {
         var maxZ = -Float.MAX_VALUE
         var index = 0
         while (index + 2 < points.size) {
-            minX = minOf(minX, points[index])
-            maxX = maxOf(maxX, points[index])
-            minY = minOf(minY, points[index + 1])
-            maxY = maxOf(maxY, points[index + 1])
-            minZ = minOf(minZ, points[index + 2])
-            maxZ = maxOf(maxZ, points[index + 2])
+            val px = points[index] * scaleX
+            val py = points[index + 1] * scaleY
+            val pz = points[index + 2] * scaleZ
+            minX = minOf(minX, px)
+            maxX = maxOf(maxX, px)
+            minY = minOf(minY, py)
+            maxY = maxOf(maxY, py)
+            minZ = minOf(minZ, pz)
+            maxZ = maxOf(maxZ, pz)
             index += VALUES_PER_POINT
         }
         rotate((minX + maxX) * HALF, (minY + maxY) * HALF, (minZ + maxZ) * HALF, offset)

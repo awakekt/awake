@@ -5,9 +5,11 @@
  */
 package com.awakekt.awake.scene.physics
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.MeshShape
 import com.awakekt.awake.physics.MotionType
+import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
@@ -64,17 +66,17 @@ class MeshColliderSceneTest {
     }
 
     @Test
-    fun theNodesScaleIsBakedInAndAMirrorKeepsTheSolidSide() {
+    fun aScaledPlacementWrapsTheSharedMeshInAScaledShapeIncludingMirrors() {
         val world = World()
         SceneLoader.decode(SCENE.replace("\"x\": 2.0", "\"x\": -2.0")).instantiate(world = world, componentRegistry = registry)
         MeshColliderSystem { _, _ -> RAMP }.update(world, STEP)
 
-        var shape: MeshShape? = null
-        world.queryEach(PhysicsBody::class) { _, body -> shape = body.shape as MeshShape }
+        var shape: ScaledShape? = null
+        world.queryEach(PhysicsBody::class) { _, body -> shape = body.shape as ScaledShape }
         val checkedShape = checkNotNull(shape)
 
-        assertContentEquals(floatArrayOf(-2f, 0f, 0f, -4f, 3f, 0f, -2f, 3f, 4f), checkedShape.vertices)
-        assertContentEquals(intArrayOf(0, 2, 1), checkedShape.indices, "a mirror must swap two corners")
+        assertSame(RAMP, checkedShape.shape, "scaled placements must share the unscaled mesh instead of copying vertices")
+        assertEquals(Vec3f(-2f, 3f, 4f), checkedShape.scale)
     }
 
     @Test

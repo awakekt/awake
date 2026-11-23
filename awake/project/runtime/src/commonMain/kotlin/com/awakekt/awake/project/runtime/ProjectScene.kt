@@ -32,13 +32,23 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 internal class ProjectScene(
     val path: String,
-    val document: SceneDocument,
-    val models: GltfAssetResolver,
-    val physics: PhysicsWorld?,
-    val content: SceneContent,
+    document: SceneDocument,
+    models: GltfAssetResolver,
+    physics: PhysicsWorld?,
+    content: SceneContent,
 ) : AutoCloseable {
+    var document: SceneDocument = document
+        private set
+    var models: GltfAssetResolver = models
+        private set
+    var physics: PhysicsWorld? = physics
+        private set
+    var content: SceneContent = content
+        private set
+
     /** The models spawned nodes draw that the scene didn't load, loaded as they are spawned. */
-    val spawnedModels = SpawnedModels(models)
+    var spawnedModels = SpawnedModels(models)
+        private set
 
     // The nodes spawned into the scene, despawned when a switch leaves it. Read and written on the frame thread.
     private val spawned = mutableListOf<SpawnedNode>()
@@ -60,12 +70,22 @@ internal class ProjectScene(
         spawned.clear()
     }
 
-    /** Destroys the physics world, if the scene had one, and stops loading models. Closing twice is harmless. */
+    /**
+     * Destroys the physics world, if the scene had one, stops loading models, and releases retained
+     * scene document, model resolver, and feature content references. Closing twice is harmless.
+     */
     override fun close() {
         if (closed) return
         closed = true
         physics?.destroy()
+        physics = null
         spawnedModels.close()
+        spawned.clear()
+        val emptyModels = GltfAssetResolver()
+        document = SceneDocument()
+        models = emptyModels
+        content = SceneContent.Empty
+        spawnedModels = SpawnedModels(emptyModels).also { it.close() }
     }
 }
 

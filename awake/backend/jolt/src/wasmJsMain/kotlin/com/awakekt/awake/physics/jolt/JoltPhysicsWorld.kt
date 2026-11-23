@@ -34,6 +34,7 @@ import com.awakekt.awake.physics.PhysicsCapabilityException
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.RaycastHit
+import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.physics.ShapeCastHit
 import com.awakekt.awake.physics.SphereShape
 import com.awakekt.awake.physics.requireCanBeSensor
@@ -165,7 +166,7 @@ internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()
         // -- unlike the JVM and native backends, where Jolt's worker threads make this a lock.
         const world = {
             jolt, joltInterface, physicsSystem, bodyInterface, objectFilter,
-            contacts: [], reporting: new Set(),
+            contacts: [], reporting: new Set(), meshShapes: new Map(),
         };
         const record = (id1, id2, phase) => {
             // Jolt reports every touching pair in the scene, so without this filter a settled pile
@@ -366,9 +367,56 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
         "A ConvexHullShape cannot be swept on the JoltPhysics.js backend",
     )
 
+    is ScaledShape -> when (shape.shape) {
+        is MeshShape, is HeightFieldShape -> throw PhysicsCapabilityException(unsupported)
+        else -> flatten(resolveScaledConvex(shape), unsupported)
+    }
+
     is MeshShape -> throw PhysicsCapabilityException(unsupported)
     is HeightFieldShape -> throw PhysicsCapabilityException(unsupported)
 }
+
+private fun resolveScaledConvex(scaled: ScaledShape): PhysicsShape {
+    val s = scaled.scale
+    return when (val inner = scaled.shape) {
+        is BoxShape -> BoxShape(
+            Vec3f(
+                kotlin.math.abs(inner.halfExtents.x * s.x),
+                kotlin.math.abs(inner.halfExtents.y * s.y),
+                kotlin.math.abs(inner.halfExtents.z * s.z),
+            ),
+        )
+        is SphereShape -> SphereShape(inner.radius * uniformScaleOrThrow(s, "SphereShape"))
+        is CapsuleShape -> {
+            val factor = uniformScaleOrThrow(s, "CapsuleShape")
+            CapsuleShape(inner.halfHeight * factor, inner.radius * factor)
+        }
+        is ConvexHullShape -> {
+            val points = FloatArray(inner.points.size) { index ->
+                inner.points[index] * when (index % 3) {
+                    0 -> s.x
+                    1 -> s.y
+                    else -> s.z
+                }
+            }
+            ConvexHullShape(points)
+        }
+        is MeshShape, is HeightFieldShape, is ScaledShape ->
+            throw PhysicsCapabilityException("ScaledShape cannot scale ${inner::class.simpleName} as convex")
+    }
+}
+
+private fun uniformScaleOrThrow(scale: Vec3f, shapeName: String): Float {
+    val ax = kotlin.math.abs(scale.x)
+    val ay = kotlin.math.abs(scale.y)
+    val az = kotlin.math.abs(scale.z)
+    if (kotlin.math.abs(ax - ay) > SCALE_EPSILON || kotlin.math.abs(ay - az) > SCALE_EPSILON) {
+        throw PhysicsCapabilityException("$shapeName requires uniform scale, got $scale")
+    }
+    return ax
+}
+
+private const val SCALE_EPSILON = 1e-4f
 
 /**
  * Builds a body from the convex hull of a flat point array.
@@ -434,16 +482,14 @@ private external fun joltCreateHullBody(
 ): Int
 
 /**
- * Builds a static triangle-mesh body from a flat vertex array and a flat index array.
- *
- * The arrays cross as JS arrays and are rebuilt into Jolt's own `TriangleList` on the far side,
- * for the same reason the heightfield's samples are: the `@JsFun` boundary carries primitives.
+ * Builds and caches a base triangle-mesh shape under [cacheId] on [world] so repeated placements
+ * (unscaled or scaled) share one BVH. Released when the world is destroyed.
  */
-// Called from JoltPhysicsWorld.createBody() below; detekt cannot trace @JsFun calls.
-@Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a mesh type.
+// Called from JoltPhysicsWorld.createMeshBody() below; detekt cannot trace @JsFun calls.
+@Suppress("unused")
 @JsFun(
     """
-    (world, verts, indices, px, py, pz, qw, qx, qy, qz, layerIndex) => {
+    (world, cacheId, verts, indices) => {
         const jolt = world.jolt;
         const triangles = new jolt.TriangleList();
         const count = indices.length / 3;
@@ -463,7 +509,48 @@ private external fun joltCreateHullBody(
         }
         const settings = new jolt.MeshShapeSettings(triangles);
         const shapeResult = settings.Create();
+        if (shapeResult.HasError()) {
+            const msg = shapeResult.GetError().c_str();
+            jolt.destroy(shapeResult);
+            jolt.destroy(settings);
+            jolt.destroy(triangles);
+            throw new Error("MeshShapeSettings failed: " + msg);
+        }
         const shape = shapeResult.Get();
+        shape.AddRef();
+        world.meshShapes.set(cacheId, shape);
+        jolt.destroy(shapeResult);
+        jolt.destroy(settings);
+        jolt.destroy(triangles);
+    }
+    """,
+)
+private external fun joltCacheMeshShape(world: JsAny, cacheId: Int, verts: JsAny, indices: JsAny)
+
+/**
+ * Builds a static triangle-mesh body from a cached base mesh shape, wrapping it in a `ScaledShape`
+ * when `(sx, sy, sz)` is not `(1, 1, 1)`.
+ */
+// Called from JoltPhysicsWorld.createMeshBody() below; detekt cannot trace @JsFun calls.
+@Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a mesh type.
+@JsFun(
+    """
+    (world, cacheId, sx, sy, sz, px, py, pz, qw, qx, qy, qz, layerIndex) => {
+        const jolt = world.jolt;
+        const base = world.meshShapes.get(cacheId);
+        let scaledResult = null;
+        let shape = base;
+        if (sx !== 1 || sy !== 1 || sz !== 1) {
+            const scale = new jolt.Vec3(sx, sy, sz);
+            scaledResult = base.ScaleShape(scale);
+            jolt.destroy(scale);
+            if (scaledResult.HasError()) {
+                const msg = scaledResult.GetError().c_str();
+                jolt.destroy(scaledResult);
+                throw new Error("ScaleShape failed: " + msg);
+            }
+            shape = scaledResult.Get();
+        }
         const position = new jolt.RVec3(px, py, pz);
         const rotation = new jolt.Quat(qx, qy, qz, qw);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
@@ -473,18 +560,18 @@ private external fun joltCreateHullBody(
         jolt.destroy(bodyCreationSettings);
         jolt.destroy(rotation);
         jolt.destroy(position);
-        jolt.destroy(shapeResult);
-        jolt.destroy(settings);
-        jolt.destroy(triangles);
+        if (scaledResult !== null) jolt.destroy(scaledResult);
         world.bodyInterface.AddBody(body.GetID(), jolt.EActivation_DontActivate);
         return body.GetID().GetIndexAndSequenceNumber();
     }
     """,
 )
-private external fun joltCreateMeshBody(
+private external fun joltCreateCachedMeshBody(
     world: JsAny,
-    verts: JsAny,
-    indices: JsAny,
+    cacheId: Int,
+    sx: Double,
+    sy: Double,
+    sz: Double,
     px: Double,
     py: Double,
     pz: Double,
@@ -1205,6 +1292,8 @@ private external fun jsArrayGet(arr: JsAny, index: Int): Double
     """
     (world) => {
         const jolt = world.jolt;
+        for (const shape of world.meshShapes.values()) shape.Release();
+        world.meshShapes.clear();
         for (const made of Object.values(world.query)) jolt.destroy(made);
         for (const made of world.oneLayer.values()) jolt.destroy(made);
         jolt.destroy(world.joltInterface);
@@ -1240,6 +1329,10 @@ class JoltPhysicsWorld private constructor(
     // destroy() knows what to tear down -- same reasoning (and the same "no cheap bulk query"
     // constraint) as the desktop/iOS backends' own `trackedBodyIds`.
     private val trackedBodyIds = mutableListOf<Int>()
+
+    // Base MeshShape cache ids matching `world.meshShapes` on the JS side; cleared in destroy().
+    private val meshShapeIds = HashMap<MeshShape, Int>()
+    private var nextMeshShapeId = 1
 
     /** Live constraints and the bodies each joins; see [destroyBody] for why the pairing is kept. */
     // LinkedHashMap and LinkedHashSet, not the hash forms: teardown iterates these, and
@@ -1283,7 +1376,22 @@ class JoltPhysicsWorld private constructor(
         // entry point and this dispatches rather than falling through a chain of guards.
         val ownEntryPoint = when (shape) {
             is HeightFieldShape -> createHeightFieldBody(shape, position, motionType, layer)
-            is MeshShape -> createMeshBody(shape, position, rotation, motionType, layer)
+            is MeshShape -> createMeshBody(shape, Vec3f.ONE, position, rotation, motionType, layer)
+            is ScaledShape -> {
+                shape.requireSupportedMotionType(motionType)
+                when (val inner = shape.shape) {
+                    is MeshShape -> createMeshBody(inner, shape.scale, position, rotation, motionType, layer)
+                    else -> createBody(
+                        resolveScaledConvex(shape),
+                        position,
+                        rotation,
+                        motionType,
+                        layer,
+                        sensor,
+                        degreesOfFreedom,
+                    )
+                }
+            }
             is ConvexHullShape ->
                 createHullBody(shape, position, rotation, motionType, layer, sensor, degreesOfFreedom)
             else -> null
@@ -1370,22 +1478,31 @@ class JoltPhysicsWorld private constructor(
         return BodyHandle(idNum.toLong())
     }
 
+    @Suppress("LongParameterList") // Mirrors createBody's own parameters plus scale.
     private fun createMeshBody(
         shape: MeshShape,
+        scale: Vec3f,
         position: Vec3f,
         rotation: Quat,
         motionType: MotionType,
         layer: CollisionLayer,
     ): BodyHandle {
         shape.requireSupportedMotionType(motionType)
-        val verts = jsNewArray()
-        shape.vertices.forEach { jsArrayPush(verts, it.toDouble()) }
-        val indices = jsNewArray()
-        shape.indices.forEach { jsArrayPush(indices, it.toDouble()) }
-        val idNum = joltCreateMeshBody(
+        val cacheId = meshShapeIds.getOrPut(shape) {
+            val id = nextMeshShapeId++
+            val verts = jsNewArray()
+            shape.vertices.forEach { jsArrayPush(verts, it.toDouble()) }
+            val indices = jsNewArray()
+            shape.indices.forEach { jsArrayPush(indices, it.toDouble()) }
+            joltCacheMeshShape(world, id, verts, indices)
+            id
+        }
+        val idNum = joltCreateCachedMeshBody(
             world,
-            verts,
-            indices,
+            cacheId,
+            scale.x.toDouble(),
+            scale.y.toDouble(),
+            scale.z.toDouble(),
             position.x.toDouble(),
             position.y.toDouble(),
             position.z.toDouble(),
@@ -1784,6 +1901,7 @@ class JoltPhysicsWorld private constructor(
         constraints.keys.toList().forEach { destroyConstraint(ConstraintHandle(it)) }
         trackedBodyIds.forEach { idNum -> joltDestroyBody(world, idNum) }
         trackedBodyIds.clear()
+        meshShapeIds.clear()
         joltDestroyWorld(world)
     }
 
