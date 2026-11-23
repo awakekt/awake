@@ -9,10 +9,11 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.MeshShape
 import com.awakekt.awake.physics.MotionType
+import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.ScaledShape
-import com.sun.management.ThreadMXBean
+import com.awakekt.awake.testing.allocation.assertAllocatesAtMost
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlinx.coroutines.test.runTest
-import java.lang.management.ManagementFactory
 import kotlin.math.sin
 import kotlin.system.measureNanoTime
 import kotlin.test.Test
@@ -26,8 +27,8 @@ import kotlin.test.assertTrue
  * [ScaledShape], every placement cloned vertices and built a fresh Jolt BVH on frame 1 (a multi-
  * second freeze and tens of megabytes of native/JNI churn).
  *
- * Desktop only: `currentThreadAllocatedBytes` has no wasm or Native equivalent, and the budget
- * guards order-of-magnitude regressions without flaking on busy CI hosts.
+ * Desktop only: `readAllocation` uses JVM `ThreadMXBean`, and the budget guards order-of-magnitude
+ * regressions without flaking on busy CI hosts.
  */
 class JoltMeshCreationBudgetTest {
 
@@ -45,47 +46,43 @@ class JoltMeshCreationBudgetTest {
             }
         }
 
-        // Warm up JIT and native library paths outside the timed window.
-        warmUp(meshes[0])
-
-        val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
-        val world = createJoltPhysicsWorld(gravity = Vec3f.ZERO)
-        val allocatedBytes: Long
-        val elapsedNanos: Long
-        try {
-            val bytesBefore = threads.currentThreadAllocatedBytes
-            elapsedNanos = measureNanoTime {
-                for (index in placements.indices) {
-                    world.createBody(
-                        shape = placements[index],
-                        position = Vec3f((index % 100) * 6f, 0f, (index / 100) * 6f),
-                        rotation = Quat.IDENTITY,
-                        motionType = MotionType.STATIC,
-                    )
+        // Measure both wall time (quietest of multiple runs) and JVM allocations (median window
+        // via shared `readAllocation` helper so CI scheduling noise does not flake).
+        var minElapsedNanos = Long.MAX_VALUE
+        val reading = readAllocation(unitsPerWindow = TOWN_PLACEMENTS, windows = MEASURE_WINDOWS) {
+            val world = JoltPhysicsWorld(gravity = Vec3f.ZERO)
+            try {
+                val elapsed = measureNanoTime {
+                    for (index in placements.indices) {
+                        world.createBody(
+                            shape = placements[index],
+                            position = Vec3f((index % 100) * 6f, 0f, (index / 100) * 6f),
+                            rotation = Quat.IDENTITY,
+                            motionType = MotionType.STATIC,
+                        )
+                    }
                 }
+                if (elapsed < minElapsedNanos) minElapsedNanos = elapsed
+            } finally {
+                world.destroy()
             }
-            allocatedBytes = threads.currentThreadAllocatedBytes - bytesBefore
-        } finally {
-            world.destroy()
         }
 
-        val elapsedMs = elapsedNanos / 1_000_000.0
-        val bytesPerBody = allocatedBytes / TOWN_PLACEMENTS
-        val totalKiB = allocatedBytes / 1024L
+        val elapsedMs = minElapsedNanos / 1_000_000.0
         println(
             "JoltMeshCreationBudget: $TOWN_PLACEMENTS bodies ($TOWN_UNIQUE_MESHES unique " +
                 "${meshes[0].triangleCount}-tri meshes) built in ${round1(elapsedMs)} ms, " +
-                "$totalKiB KiB allocated ($bytesPerBody B/body)",
+                "${reading.medianBytes / 1024L} KiB allocated ($reading)",
         )
         assertTrue(
             elapsedMs < TOWN_BUDGET_MILLIS,
             "creating $TOWN_PLACEMENTS cached/scaled mesh bodies took ${round1(elapsedMs)} ms " +
-                "(budget ${TOWN_BUDGET_MILLIS} ms)",
+                "(budget $TOWN_BUDGET_MILLIS ms)",
         )
-        assertTrue(
-            bytesPerBody < TOWN_BYTES_PER_BODY_CEILING,
-            "creating $TOWN_PLACEMENTS cached/scaled mesh bodies allocated $bytesPerBody B/body " +
-                "(ceiling $TOWN_BYTES_PER_BODY_CEILING B/body)",
+        assertAllocatesAtMost(
+            reading,
+            TOWN_BYTES_PER_BODY_CEILING,
+            "creating $TOWN_PLACEMENTS cached/scaled mesh bodies",
         )
     }
 
@@ -97,24 +94,21 @@ class JoltMeshCreationBudgetTest {
             Vec3f(if (index % 9 == 0) -factor else factor, 1f + (index % 5) * 0.2f, factor)
         }
 
-        warmUp(baseMeshes[0])
-
-        val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
         // Uncached path reproduces the pre-fix Frame-1 cost: baking each placement's scale into a
         // fresh MeshShape vertex/index copy and building a separate Jolt BVH per placement.
-        val (uncachedMs, uncachedBytes) = measureCreateAll(threads, COMPARE_PLACEMENTS) { index ->
+        val (uncachedMs, uncachedReading) = measureCreateAll(COMPARE_PLACEMENTS) { index ->
             bakedScaledCopy(baseMeshes[index % baseMeshes.size], scales[index])
         }
-        val (cachedMs, cachedBytes) = measureCreateAll(threads, COMPARE_PLACEMENTS) { index ->
+        val (cachedMs, cachedReading) = measureCreateAll(COMPARE_PLACEMENTS) { index ->
             ScaledShape(baseMeshes[index % baseMeshes.size], scales[index])
         }
         val speedup = uncachedMs / cachedMs.coerceAtLeast(0.001)
-        val allocRatio = uncachedBytes.toDouble() / cachedBytes.coerceAtLeast(1L).toDouble()
+        val allocRatio = uncachedReading.medianBytes.toDouble() / cachedReading.medianBytes.coerceAtLeast(1L).toDouble()
 
         println(
             "JoltMeshCreationCompare ($COMPARE_PLACEMENTS placements / $COMPARE_UNIQUE_MESHES meshes): " +
-                "uncached=${round1(uncachedMs)} ms (${uncachedBytes / 1024} KiB) vs " +
-                "cached+ScaledShape=${round1(cachedMs)} ms (${cachedBytes / 1024} KiB) -> " +
+                "uncached=${round1(uncachedMs)} ms (${uncachedReading.medianBytes / 1024} KiB) vs " +
+                "cached+ScaledShape=${round1(cachedMs)} ms (${cachedReading.medianBytes / 1024} KiB) -> " +
                 "${round1(speedup)}x faster, ${round1(allocRatio)}x less JVM alloc",
         )
         assertTrue(
@@ -130,41 +124,30 @@ class JoltMeshCreationBudgetTest {
         )
     }
 
-    private suspend fun warmUp(sample: MeshShape) {
-        val world = createJoltPhysicsWorld(gravity = Vec3f.ZERO)
-        try {
-            repeat(WARMUP_BODIES) { index ->
-                val shape = if (index % 2 == 0) sample else ScaledShape(sample, Vec3f(1.5f, 1.2f, 1.5f))
-                world.createBody(shape, Vec3f(index * 4f, 0f, 0f), Quat.IDENTITY, MotionType.STATIC)
-            }
-        } finally {
-            world.destroy()
-        }
-    }
-
-    private suspend fun measureCreateAll(
-        threads: ThreadMXBean,
+    private fun measureCreateAll(
         count: Int,
-        shapeAt: (Int) -> com.awakekt.awake.physics.PhysicsShape,
-    ): Pair<Double, Long> {
-        val world = createJoltPhysicsWorld(gravity = Vec3f.ZERO)
-        try {
-            val bytesBefore = threads.currentThreadAllocatedBytes
-            val elapsedNanos = measureNanoTime {
-                for (index in 0 until count) {
-                    world.createBody(
-                        shape = shapeAt(index),
-                        position = Vec3f((index % 50) * 6f, 0f, (index / 50) * 6f),
-                        rotation = Quat.IDENTITY,
-                        motionType = MotionType.STATIC,
-                    )
+        shapeAt: (Int) -> PhysicsShape,
+    ): Pair<Double, com.awakekt.awake.testing.allocation.AllocationReading> {
+        var minElapsedNanos = Long.MAX_VALUE
+        val reading = readAllocation(unitsPerWindow = count, windows = MEASURE_WINDOWS) {
+            val world = JoltPhysicsWorld(gravity = Vec3f.ZERO)
+            try {
+                val elapsed = measureNanoTime {
+                    for (index in 0 until count) {
+                        world.createBody(
+                            shape = shapeAt(index),
+                            position = Vec3f((index % 50) * 6f, 0f, (index / 50) * 6f),
+                            rotation = Quat.IDENTITY,
+                            motionType = MotionType.STATIC,
+                        )
+                    }
                 }
+                if (elapsed < minElapsedNanos) minElapsedNanos = elapsed
+            } finally {
+                world.destroy()
             }
-            val bytes = threads.currentThreadAllocatedBytes - bytesBefore
-            return (elapsedNanos / 1_000_000.0) to bytes
-        } finally {
-            world.destroy()
         }
+        return (minElapsedNanos / 1_000_000.0) to reading
     }
 
     private fun bakedScaledCopy(base: MeshShape, scale: Vec3f): MeshShape {
@@ -220,7 +203,7 @@ class JoltMeshCreationBudgetTest {
 
     private companion object {
         const val GRID_CELLS = 10 // 200 triangles, 121 vertices per unique mesh
-        const val WARMUP_BODIES = 20
+        const val MEASURE_WINDOWS = 3
         const val TOWN_UNIQUE_MESHES = 180
         const val TOWN_PLACEMENTS = 6_000
         const val TOWN_BUDGET_MILLIS = 1_500.0
