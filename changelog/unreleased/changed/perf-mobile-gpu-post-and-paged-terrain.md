@@ -1,3 +1,0 @@
-- Forward `effectQuality` from `SceneRenderPlanner3D` into `PostProcessingStack.buildChain` so `EffectQuality.Off` skips camera post-processing and `EffectQuality.Low` runs quarter-resolution bloom.
-- Guard `texturedShader` unlit and unlit-additive draws behind a uniform branch so they skip PBR texture fetches, normal perturbation, GGX BRDF, cascaded shadow sampling, and point lights.
-- Guard paged terrain page-table lookups (`TerrainPageSampling.sampleIn`, `samplePairIn`, and `pageHeightKnot`) with `iff` branches and shared paired control-map lookups instead of eager `select()`, eliminating wasted fallback/resident texture fetches on mobile GPUs.
