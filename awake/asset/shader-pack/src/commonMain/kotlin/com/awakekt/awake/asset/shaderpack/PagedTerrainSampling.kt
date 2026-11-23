@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslFunctionHandle
 import com.awakekt.awake.asset.shaderdsl.AslLayoutHandles
@@ -13,6 +14,7 @@ import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.floor
 import com.awakekt.awake.asset.shaderdsl.gt
+import com.awakekt.awake.asset.shaderdsl.le
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.min
@@ -29,6 +31,7 @@ import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
 import com.awakekt.awake.asset.shaderdsl.toU32
 import com.awakekt.awake.asset.shaderdsl.vec2
+import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.y
@@ -95,6 +98,67 @@ class TerrainPageSampling internal constructor(val grid: AslExpr, val dimensions
     }
 
     /**
+     * Resolves a cell through the page table inside [block], branching so only the resident page
+     * array or the coarse fallback texture is sampled (never both).
+     */
+    @Suppress("LongParameterList") // Sampling options describe endpoint and packed-control layouts.
+    fun sampleIn(
+        block: AslBlockBuilder,
+        name: String,
+        texture: AslExpr,
+        fallback: AslExpr,
+        relative: AslExpr,
+        endpoints: Boolean = true,
+        parts: Int = 1,
+        part: Int = 0,
+        coarseLinear: Boolean = false,
+    ): AslExpr {
+        val cell = block.let("${name}Cell", clamp(floor(relative / grid.z), vec2(0f.lit, 0f.lit), vec2(dimensions.x - 1f.lit, dimensions.y - 1f.lit)))
+        val local = clamp(relative / grid.z - cell, vec2(0f.lit, 0f.lit), vec2(1f.lit, 1f.lit))
+        val uv = pageUv(texture, local, endpoints, parts, part)
+        val coarseUV = fallbackUv(fallback, relative, endpoints, parts, part, coarseLinear)
+        return resolveIn(block, name, texture, fallback, cell, uv, coarseUV)
+    }
+
+    /**
+     * Resolves a cell once through the page table inside [block] and samples a paired resident
+     * texture set ([first], [second]) or their coarse fallbacks, halving table and texture fetches
+     * for paired control maps.
+     */
+    @Suppress("LongParameterList")
+    fun samplePairIn(
+        block: AslBlockBuilder,
+        name: String,
+        first: AslExpr,
+        firstFallback: AslExpr,
+        second: AslExpr,
+        secondFallback: AslExpr,
+        relative: AslExpr,
+        parts: Int = 1,
+        part: Int = 0,
+    ): Pair<AslExpr, AslExpr> {
+        val cell = block.let("${name}Cell", clamp(floor(relative / grid.z), vec2(0f.lit, 0f.lit), vec2(dimensions.x - 1f.lit, dimensions.y - 1f.lit)))
+        val local = block.let("${name}Local", clamp(relative / grid.z - cell, vec2(0f.lit, 0f.lit), vec2(1f.lit, 1f.lit)))
+        val firstUv = pageUv(first, local, endpoints = false, parts = parts, part = part)
+        val secondUv = pageUv(second, local, endpoints = false, parts = parts, part = part)
+        val firstCoarseUv = fallbackUv(firstFallback, relative, endpoints = false, parts = parts, part = part, coarseLinear = false)
+        val secondCoarseUv = fallbackUv(secondFallback, relative, endpoints = false, parts = parts, part = part, coarseLinear = false)
+        val layer = resolveLayer(block, name, cell)
+        val firstSample = block.variable("${name}First", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit))
+        val secondSample = block.variable("${name}Second", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit))
+        block.iff(layer gt (-0.5f).lit) {
+            val pageLayer = let("${name}PageLayer", toU32(layer))
+            assign(firstSample, textureSampleArrayLevel(first, sampler, firstUv, pageLayer, 0f.lit))
+            assign(secondSample, textureSampleArrayLevel(second, sampler, secondUv, pageLayer, 0f.lit))
+        }
+        block.iff(layer le (-0.5f).lit) {
+            assign(firstSample, textureSampleLevel(firstFallback, sampler, firstCoarseUv, 0f.lit))
+            assign(secondSample, textureSampleLevel(secondFallback, sampler, secondCoarseUv, 0f.lit))
+        }
+        return firstSample to secondSample
+    }
+
+    /**
      * Endpoint-inclusive lookup of the global fine [knot], whose components are whole numbers.
      * Integer-valued arithmetic picks the same positive-side owner as `TerrainPageLayout.owner` on the
      * CPU, where dividing a reconstructed world position could round a boundary knot into the wrong cell.
@@ -111,6 +175,82 @@ class TerrainPageSampling internal constructor(val grid: AslExpr, val dimensions
             (knot.y / (dimensions.y * intervals) * (toF32(coarseSize.y) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.y),
         )
         return resolve(texture, fallback, cell, uv, coarseUV)
+    }
+
+    internal fun sampleKnotIn(block: AslBlockBuilder, texture: AslExpr, fallback: AslExpr, knot: AslExpr): AslExpr {
+        val intervals = grid.w
+        val cell = block.let("knotCell", clamp(floor(knot / intervals), vec2(0f.lit, 0f.lit), vec2(dimensions.x - 1f.lit, dimensions.y - 1f.lit)))
+        val size = textureDimensions(texture)
+        val sample = knot - cell * intervals
+        val uv = vec2((sample.x + 0.5f.lit) / toF32(size.x), (sample.y + 0.5f.lit) / toF32(size.y))
+        val coarseSize = textureDimensions(fallback)
+        val coarseUV = vec2(
+            (knot.x / (dimensions.x * intervals) * (toF32(coarseSize.x) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.x),
+            (knot.y / (dimensions.y * intervals) * (toF32(coarseSize.y) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.y),
+        )
+        return resolveIn(block, "knot", texture, fallback, cell, uv, coarseUV)
+    }
+
+    private fun pageUv(texture: AslExpr, local: AslExpr, endpoints: Boolean, parts: Int, part: Int): AslExpr {
+        val size = textureDimensions(texture)
+        return if (endpoints) {
+            vec2((local.x * (toF32(size.x) - 1f.lit) + 0.5f.lit) / toF32(size.x), (local.y * (toF32(size.y) - 1f.lit) + 0.5f.lit) / toF32(size.y))
+        } else {
+            vec2(
+                (clamp(floor(local.x * toF32(size.x) / parts.toFloat().lit), 0f.lit, toF32(size.x) / parts.toFloat().lit - 1f.lit) * parts.toFloat().lit + (part + 0.5f).lit) / toF32(size.x),
+                (clamp(floor(local.y * toF32(size.y)), 0f.lit, toF32(size.y) - 1f.lit) + 0.5f.lit) / toF32(size.y),
+            )
+        }
+    }
+
+    @Suppress("LongParameterList")
+    private fun fallbackUv(fallback: AslExpr, relative: AslExpr, endpoints: Boolean, parts: Int, part: Int, coarseLinear: Boolean): AslExpr {
+        val coarseSize = textureDimensions(fallback)
+        return if (coarseLinear) {
+            relative / (vec2(dimensions.x, dimensions.y) * grid.z)
+        } else if (endpoints) {
+            vec2(
+                (relative.x / (dimensions.x * grid.z) * (toF32(coarseSize.x) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.x),
+                (relative.y / (dimensions.y * grid.z) * (toF32(coarseSize.y) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.y),
+            )
+        } else {
+            vec2(
+                (clamp(floor(relative.x / (dimensions.x * grid.z) * toF32(coarseSize.x) / parts.toFloat().lit), 0f.lit, toF32(coarseSize.x) / parts.toFloat().lit - 1f.lit) * parts.toFloat().lit + (part + 0.5f).lit) / toF32(coarseSize.x),
+                (clamp(floor(relative.y / (dimensions.y * grid.z) * toF32(coarseSize.y)), 0f.lit, toF32(coarseSize.y) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.y),
+            )
+        }
+    }
+
+    private fun resolveLayer(block: AslBlockBuilder, name: String, cell: AslExpr): AslExpr {
+        val lookup = block.let(
+            "${name}Lookup",
+            textureSampleLevel(table, sampler, vec2((cell.x + 0.5f.lit) / dimensions.x, (cell.y + 0.5f.lit) / dimensions.y), 0f.lit),
+        )
+        return block.let(
+            "${name}Layer",
+            floor(lookup.x * 255f.lit + 0.5f.lit) + floor(lookup.y * 255f.lit + 0.5f.lit) * 256f.lit - 1f.lit,
+        )
+    }
+
+    @Suppress("LongParameterList")
+    private fun resolveIn(
+        block: AslBlockBuilder,
+        name: String,
+        texture: AslExpr,
+        fallback: AslExpr,
+        cell: AslExpr,
+        uv: AslExpr,
+        coarseUV: AslExpr,
+    ): AslExpr {
+        val layer = resolveLayer(block, name, cell)
+        val result = block.variable("${name}Sample", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit))
+        block.iff(layer gt (-0.5f).lit) {
+            assign(result, textureSampleArrayLevel(texture, sampler, uv, toU32(layer), 0f.lit))
+        }
+        block.iff(layer le (-0.5f).lit) {
+            assign(result, textureSampleLevel(fallback, sampler, coarseUV, 0f.lit))
+        }
+        return result
     }
 
     /** The resident image at [uv] when the table maps [cell] to a layer, otherwise the coarse image at [coarseUV]. */
@@ -130,7 +270,7 @@ internal fun AslShaderBuilder.pagedHeightSampler(pages: TerrainPageSampling, fal
     val heightPages by texture2dArray(group = 0, binding = TERRAIN_HEIGHT_PAGES_BINDING)
     val knot = fn("pageHeightKnot") {
         val index by param(GpuDataShape.Vec2)
-        returnValue(decodeHeight(pages.sampleKnot(heightPages, fallback, index)))
+        returnValue(decodeHeight(pages.sampleKnotIn(this, heightPages, fallback, index)))
     }
     return fn("pageHeight") {
         val position by param(GpuDataShape.Vec2)
