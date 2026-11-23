@@ -147,6 +147,36 @@ class TerrainContentSystemTest {
         assertEquals(2, host.detached)
     }
 
+    @Test
+    fun surfacedOnlyAttachesWhenReferenceArrivesAfterTerrainWasAlreadyInWorld() {
+        val surfacedOnly = TerrainContentSystem(host, scope, surfacedOnly = true)
+        val entity = spawnTerrain()
+        repeat(3) { surfacedOnly.update(world, 0f) }
+        assertEquals(0, host.attached.size)
+
+        world.add(entity, TerrainSurfaceReference("not.installed", 1, JsonObject(emptyMap())))
+        repeat(2) { surfacedOnly.update(world, 0f) }
+
+        assertEquals(1, host.attached.size)
+        surfacedOnly.detachAll()
+        assertEquals(1, host.detached)
+    }
+
+    @Test
+    fun manyTerrainsAttachOnceAndDetachCleanly() {
+        val entities = List(24) { spawnTerrain() }
+        repeat(4) { system.update(world, 0f) }
+        assertEquals(24, host.attached.size)
+        assertEquals(0, host.detached)
+
+        world.destroy(entities[10])
+        repeat(2) { system.update(world, 0f) }
+        assertEquals(1, host.detached)
+
+        system.detachAll()
+        assertEquals(24, host.detached)
+    }
+
     private fun spawnTerrain(reference: TerrainSurfaceReference? = null): Entity {
         val entity = world.create()
         world.add(entity, terrain())

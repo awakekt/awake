@@ -271,4 +271,71 @@ class PhysicsSystemTest {
         system.update(world, 1f / 60f)
         assertEquals(2, physicsWorld.createBodyCallCount, "a body was rebuilt without an edit")
     }
+
+    @Test
+    fun settledStaticBodiesRespondToInPlaceMotionEditExternalHandleClearAndNewEntity() {
+        val world = World()
+        val staticBodies = List(20) { index ->
+            val entity = world.create()
+            world.add(entity, Transform(position = Vec3f(index.toFloat(), 0f, 0f)))
+            PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.STATIC).also {
+                world.add(entity, it)
+            }
+        }
+        val dynamicEntity = world.create()
+        val dynamicTransform = Transform(position = Vec3f(0f, 5f, 0f))
+        world.add(dynamicEntity, dynamicTransform)
+        val dynamicBody = PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.DYNAMIC)
+        world.add(dynamicEntity, dynamicBody)
+
+        val physicsWorld = FakePhysicsWorld()
+        val system = PhysicsSystem(physicsWorld)
+
+        system.update(world, 1f / 60f)
+        assertEquals(21, physicsWorld.createBodyCallCount)
+
+        // Steady-state step with only the dynamic body reporting a pose: interpolate updates it and skips static bodies.
+        val dynamicHandle = assertNotNull(dynamicBody.handle)
+        physicsWorld.scriptedTransforms = listOf(
+            BodyTransform(dynamicHandle, Vec3f(0f, 4f, 0f), Quat.IDENTITY),
+        )
+        system.update(world, 1f / 60f)
+        physicsWorld.scriptedTransforms = listOf(
+            BodyTransform(dynamicHandle, Vec3f(0f, 2f, 0f), Quat.IDENTITY),
+        )
+        system.update(world, 1f / 60f)
+        system.interpolate(world, 0.5f)
+        assertEquals(3f, dynamicTransform.position.y, 1e-4f)
+
+        // 1) In-place motionType edit on a settled static body wakes the sync path and rebuilds it.
+        val edited = staticBodies[5]
+        val previousHandle = assertNotNull(edited.handle)
+        edited.motionType = MotionType.DYNAMIC
+        system.update(world, 1f / 60f)
+        assertEquals(22, physicsWorld.createBodyCallCount)
+        assertTrue(previousHandle in physicsWorld.destroyed)
+
+        // 2) Adding a new entity wakes the sync path via family.changes.
+        val addedEntity = world.create()
+        world.add(addedEntity, Transform(position = Vec3f(50f, 0f, 0f)))
+        val addedBody = PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.STATIC)
+        world.add(addedEntity, addedBody)
+        system.update(world, 1f / 60f)
+        assertEquals(23, physicsWorld.createBodyCallCount)
+        assertNotNull(addedBody.handle)
+
+        // 3) Clearing a handle externally wakes the sync path via handle edit tracking.
+        addedBody.handle = null
+        system.update(world, 1f / 60f)
+        assertEquals(24, physicsWorld.createBodyCallCount)
+        assertNotNull(addedBody.handle)
+
+        // 4) Destroying a posed body removes it cleanly from the posed interpolation list.
+        system.destroyBody(world, dynamicEntity)
+        world.destroy(dynamicEntity)
+        physicsWorld.scriptedTransforms = emptyList()
+        system.update(world, 1f / 60f)
+        system.interpolate(world, 0.5f)
+        assertEquals(24, physicsWorld.createBodyCallCount)
+    }
 }

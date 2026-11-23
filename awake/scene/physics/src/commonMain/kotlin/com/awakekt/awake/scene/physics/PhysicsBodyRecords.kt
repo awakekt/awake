@@ -23,6 +23,9 @@ internal class PhysicsBodyRecord(val entity: Entity, val handle: BodyHandle, val
 
     /** Where this record sits in [PhysicsBodyRecords]' dense list. */
     var listIndex: Int = -1
+
+    /** Where this record sits in [PhysicsBodyRecords]' posed list, or -1 if static/never simulated. */
+    var poseIndex: Int = -1
 }
 
 /**
@@ -40,6 +43,7 @@ internal class PhysicsBodyRecords {
     private var bySlot = arrayOfNulls<PhysicsBodyRecord>(INITIAL_CAPACITY)
     private val byHandle = MutableLongObjectMap<PhysicsBodyRecord>()
     private val records = ArrayList<PhysicsBodyRecord>()
+    private val posed = ArrayList<PhysicsBodyRecord>()
 
     /** The record of the body this system built for [entity] as [handle], or `null` when it built none. */
     fun built(entity: Entity, handle: BodyHandle): PhysicsBodyRecord? {
@@ -64,6 +68,12 @@ internal class PhysicsBodyRecords {
         return record
     }
 
+    fun markPosed(record: PhysicsBodyRecord) {
+        if (record.poseIndex >= 0) return
+        record.poseIndex = posed.size
+        posed += record
+    }
+
     fun remove(handle: BodyHandle) {
         val record = byHandle.remove(handle.id) ?: return
         val slot = record.entity.id
@@ -74,6 +84,14 @@ internal class PhysicsBodyRecords {
             last.listIndex = record.listIndex
         }
         record.listIndex = -1
+        if (record.poseIndex >= 0) {
+            val lastPosed = posed.removeAt(posed.lastIndex)
+            if (lastPosed !== record) {
+                posed[record.poseIndex] = lastPosed
+                lastPosed.poseIndex = record.poseIndex
+            }
+            record.poseIndex = -1
+        }
     }
 
     /** Visits every record, without allocating. */
@@ -81,9 +99,18 @@ internal class PhysicsBodyRecords {
         for (index in 0 until recordCount) action(recordAt(index))
     }
 
+    /** Visits only records whose body has reported a simulated pose, skipping static bodies. */
+    inline fun forEachPosed(action: (PhysicsBodyRecord) -> Unit) {
+        for (index in 0 until posedCount) action(posedAt(index))
+    }
+
     val recordCount: Int get() = records.size
 
     fun recordAt(index: Int): PhysicsBodyRecord = records[index]
+
+    val posedCount: Int get() = posed.size
+
+    fun posedAt(index: Int): PhysicsBodyRecord = posed[index]
 
     private companion object {
         const val INITIAL_CAPACITY = 64

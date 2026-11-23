@@ -64,6 +64,15 @@ class PhysicsSystem(
     private var transformTypeId = ComponentTypeId(0)
     private var steppingWorld: World? = null
 
+    // Steady-state memoization for body creation / motionType rebuilds: when the family membership
+    // and in-place motionType/handle counters have not moved, every entity in the family already has
+    // its live handle, avoiding an O(N) scan over tens of thousands of static bodies every fixed step.
+    private var syncedWorld: World? = null
+    private var syncedGeneration = -1
+    private var syncedFamilyChanges = -1
+    private var syncedMotionEdits = -1
+    private var syncedHandleEdits = -1
+
     // Built once, so a step allocates no visitor; a BodyTransformVisitor, so no handle is boxed per body (#1428).
     private val readBack = BodyTransformVisitor { handleId, position, rotation ->
         val record = bodies.forHandle(BodyHandle(handleId))
@@ -79,7 +88,12 @@ class PhysicsSystem(
                 rotation.toEuler(transform.rotation)
             }
             val pose = record.pose
-            if (pose == null) record.pose = BodyPose(position, rotation) else pose.record(position, rotation)
+            if (pose == null) {
+                record.pose = BodyPose(position, rotation)
+                bodies.markPosed(record)
+            } else {
+                pose.record(position, rotation)
+            }
         }
     }
 
@@ -139,31 +153,44 @@ class PhysicsSystem(
         transformGeneration = world.generation
     }
 
+    private fun needsBodySync(world: World, familyChanges: Int): Boolean {
+        val worldChanged = syncedWorld !== world || syncedGeneration != world.generation
+        val editsChanged = syncedMotionEdits != physicsBodyMotionTypeEdits || syncedHandleEdits != physicsBodyHandleEdits
+        return worldChanged || syncedFamilyChanges != familyChanges || editsChanged
+    }
+
     override fun update(world: World, delta: Float) {
         resolveTransformType(world)
         val family = world.family<Transform, PhysicsBody>()
-        family.forEach { entity, transform, physicsBody ->
-            val live = physicsBody.handle
-            // A rebuild rather than a mutation: the backend port has no setMotionType, and adding
-            // one to four backends to serve an editor field is the larger change.
-            if (live != null && bodies.built(entity, live)?.motionType != physicsBody.motionType) {
-                physicsWorld.destroyBody(live)
-                bodies.remove(live)
-                physicsBody.handle = null
+        if (needsBodySync(world, family.changes)) {
+            family.forEach { entity, transform, physicsBody ->
+                val live = physicsBody.handle
+                // A rebuild rather than a mutation: the backend port has no setMotionType, and adding
+                // one to four backends to serve an editor field is the larger change.
+                if (live != null && bodies.built(entity, live)?.motionType != physicsBody.motionType) {
+                    physicsWorld.destroyBody(live)
+                    bodies.remove(live)
+                    physicsBody.handle = null
+                }
+                if (physicsBody.handle == null) {
+                    val handle = physicsWorld.createBody(
+                        physicsBody.shape,
+                        transform.position,
+                        Quat.fromEuler(transform.rotation),
+                        physicsBody.motionType,
+                        physicsBody.layer,
+                        physicsBody.sensor,
+                        physicsBody.degreesOfFreedom,
+                    )
+                    physicsBody.handle = handle
+                    bodies.add(entity, handle, physicsBody.motionType)
+                }
             }
-            if (physicsBody.handle == null) {
-                val handle = physicsWorld.createBody(
-                    physicsBody.shape,
-                    transform.position,
-                    Quat.fromEuler(transform.rotation),
-                    physicsBody.motionType,
-                    physicsBody.layer,
-                    physicsBody.sensor,
-                    physicsBody.degreesOfFreedom,
-                )
-                physicsBody.handle = handle
-                bodies.add(entity, handle, physicsBody.motionType)
-            }
+            syncedWorld = world
+            syncedGeneration = world.generation
+            syncedFamilyChanges = family.changes
+            syncedMotionEdits = physicsBodyMotionTypeEdits
+            syncedHandleEdits = physicsBodyHandleEdits
         }
 
         physicsWorld.step(delta)
@@ -188,10 +215,11 @@ class PhysicsSystem(
      * it did before this existed.
      */
     override fun interpolate(world: World, alpha: Float) {
+        if (bodies.posedCount == 0) return
         resolveTransformType(world)
-        bodies.forEach { record ->
-            val pose = record.pose ?: return@forEach
-            val transform = world.get<Transform>(record.entity, transformTypeId) ?: return@forEach
+        bodies.forEachPosed { record ->
+            val pose = record.pose ?: return@forEachPosed
+            val transform = world.get<Transform>(record.entity, transformTypeId) ?: return@forEachPosed
             pose.blendInto(transform, alpha)
         }
     }

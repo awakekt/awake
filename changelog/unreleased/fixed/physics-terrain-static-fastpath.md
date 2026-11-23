@@ -1,0 +1,1 @@
+- Avoid per-step `O(N)` scans over settled static `PhysicsBody` entities in `PhysicsSystem.update` and `PhysicsSystem.interpolate`, eliminate per-frame `O(N^2)` lookups and `KClass` map probes in `TerrainContentSystem`, and replace `KClass` lookups and allocating lambdas in `SceneTerrainColliders` and `CharacterControllerSystem`.
