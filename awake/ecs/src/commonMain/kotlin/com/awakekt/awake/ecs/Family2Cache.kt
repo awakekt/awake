@@ -18,9 +18,17 @@ internal class Family2Cache<A : Any, B : Any>(
     private val typeB: KClass<B>,
     private val typeIdB: ComponentTypeId,
     private val storeB: ComponentStore<B>,
-    private val excludeTypes: Set<KClass<out Any>> = emptySet(),
-    private val excludeMask: LongArray = EMPTY_SIGNATURE_MASK,
+    private val excludeTypes: Set<KClass<out Any>>,
+    private val excludeMask: LongArray,
 ) : FamilyCache() {
+    internal constructor(
+        typeA: KClass<A>,
+        typeIdA: ComponentTypeId,
+        storeA: ComponentStore<A>,
+        typeB: KClass<B>,
+        typeIdB: ComponentTypeId,
+        storeB: ComponentStore<B>,
+    ) : this(typeA, typeIdA, storeA, typeB, typeIdB, storeB, emptySet(), EMPTY_SIGNATURE_MASK)
     @PublishedApi
     internal var entities = LongArray(DEFAULT_FAMILY_CAPACITY)
 

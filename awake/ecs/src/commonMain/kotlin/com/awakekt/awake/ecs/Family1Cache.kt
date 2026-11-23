@@ -14,9 +14,14 @@ internal class Family1Cache<A : Any>(
     private val type: KClass<A>,
     private val typeId: ComponentTypeId,
     private val store: ComponentStore<A>,
-    private val excludeTypes: Set<KClass<out Any>> = emptySet(),
-    private val excludeMask: LongArray = EMPTY_SIGNATURE_MASK,
+    private val excludeTypes: Set<KClass<out Any>>,
+    private val excludeMask: LongArray,
 ) : FamilyCache() {
+    internal constructor(
+        type: KClass<A>,
+        typeId: ComponentTypeId,
+        store: ComponentStore<A>,
+    ) : this(type, typeId, store, emptySet(), EMPTY_SIGNATURE_MASK)
     @PublishedApi
     internal var entities = LongArray(DEFAULT_FAMILY_CAPACITY)
 
