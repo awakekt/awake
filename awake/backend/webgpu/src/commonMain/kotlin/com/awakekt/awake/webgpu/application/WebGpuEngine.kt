@@ -323,7 +323,11 @@ open class WebGpuEngine(
             add(attacher.beforeGeometry)
             content[ContentPaint.OpaqueGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.opaqueGeometry)
-            add(OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline)))
+            val beforeTransparent = buildList<RenderFeature<WebGpuRenderFrameContext>> {
+                content[ContentPaint.BeforeTransparent].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+                add(attacher.beforeTransparent)
+            }
+            add(OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline), beforeTransparent))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.afterGeometry)
             add(UiRenderFeature(WebGpuUiPass()))

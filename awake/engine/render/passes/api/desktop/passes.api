@@ -69,6 +69,7 @@ public final class com/awakekt/awake/render/passes/ContentGeometry {
 public final class com/awakekt/awake/render/passes/ContentPaint : java/lang/Enum {
 	public static final field AfterGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static final field BeforeGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
+	public static final field BeforeTransparent Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static final field OpaqueGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/ContentPaint;
@@ -214,6 +215,7 @@ public final class com/awakekt/awake/render/passes/MaskTargetSizingKt {
 
 public final class com/awakekt/awake/render/passes/OpaqueRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
 	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;)V
+	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;Ljava/util/List;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V

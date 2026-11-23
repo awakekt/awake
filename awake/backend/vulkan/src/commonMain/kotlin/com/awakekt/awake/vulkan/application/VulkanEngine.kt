@@ -412,7 +412,11 @@ open class VulkanEngine(
             add(contentAttacher.beforeGeometry)
             content[ContentPaint.OpaqueGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.opaqueGeometry)
-            add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline)))
+            val beforeTransparent = buildList<RenderFeature<VulkanRenderFrameContext>> {
+                content[ContentPaint.BeforeTransparent].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+                add(contentAttacher.beforeTransparent)
+            }
+            add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline), beforeTransparent))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.afterGeometry)
             add(UiRenderFeature(VulkanUiPass()))

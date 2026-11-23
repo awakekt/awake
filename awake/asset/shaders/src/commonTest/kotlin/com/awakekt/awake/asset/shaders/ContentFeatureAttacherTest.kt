@@ -47,14 +47,19 @@ class ContentFeatureAttacherTest {
     fun anAttachedFeatureRecordsInItsPaintSlot() = runTest {
         attacher.attachContentFeature(source("terrain", ContentPaint.OpaqueGeometry))
         attacher.attachContentFeature(source("sky", ContentPaint.BeforeGeometry))
+        attacher.attachContentFeature(source("water", ContentPaint.BeforeTransparent))
         attacher.attachContentFeature(source("fog", ContentPaint.AfterGeometry))
 
         attacher.beforeGeometry.recordCommands(FRAME)
         attacher.opaqueGeometry.recordCommands(FRAME)
+        attacher.beforeTransparent.recordCommands(FRAME)
         attacher.afterGeometry.recordCommands(FRAME)
 
-        assertEquals(listOf("upload terrain", "upload sky", "upload fog", "record sky", "record terrain", "record fog"), events)
-        assertEquals(3, gpu.registry.specs.size)
+        assertEquals(
+            listOf("upload terrain", "upload sky", "upload water", "upload fog", "record sky", "record terrain", "record water", "record fog"),
+            events,
+        )
+        assertEquals(4, gpu.registry.specs.size)
     }
 
     /** Earlier frames may still read what detach frees, so the wait comes first. */

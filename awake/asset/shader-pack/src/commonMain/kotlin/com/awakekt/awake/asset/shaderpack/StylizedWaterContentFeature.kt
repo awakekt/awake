@@ -54,7 +54,7 @@ fun stylizedWaterContentFeature(
             uniforms = StylizedWaterUniformLayout,
         ),
         geometry = geometry,
-        paint = ContentPaint.AfterGeometry,
+        paint = ContentPaint.BeforeTransparent,
         samplesSceneDepth = samplesDepth,
     ) { pipeline, uniforms, uploaded ->
         StylizedWaterRenderFeature(

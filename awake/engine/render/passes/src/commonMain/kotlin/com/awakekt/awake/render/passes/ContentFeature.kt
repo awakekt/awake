@@ -186,6 +186,12 @@ enum class ContentPaint {
 
     /** After backdrops and before the scene's opaque and blended draws, for surfaces such as terrain. */
     OpaqueGeometry,
+
+    /**
+     * After opaque geometry (and scene depth) and before transparent scene draws such as particles
+     * and effects -- for world-space water and cloud sheets that splashes and ripples blend over.
+     */
+    BeforeTransparent,
 }
 
 /**

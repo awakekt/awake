@@ -47,7 +47,7 @@ fun cloudLayerContentFeature(
             uniforms = CloudLayerUniformLayout,
         ),
         geometry = geometry,
-        paint = ContentPaint.AfterGeometry,
+        paint = ContentPaint.BeforeTransparent,
     ) { pipeline, uniforms, uploaded ->
         CloudLayerRenderFeature(
             pipeline = pipeline,

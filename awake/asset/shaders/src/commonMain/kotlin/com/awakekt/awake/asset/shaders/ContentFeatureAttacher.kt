@@ -31,6 +31,9 @@ import kotlinx.coroutines.sync.withLock
 class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeatureGpu<P>) : ContentFeatureHost {
     val beforeGeometry = AttachedContentSlot()
     val opaqueGeometry = AttachedContentSlot()
+
+    /** Attached features painted after opaque geometry and before transparent scene draws. */
+    val beforeTransparent = AttachedContentSlot()
     val afterGeometry = AttachedContentSlot()
     private val attached = mutableListOf<Attachment>()
     private val shared = HashMap<PipelineSpec, SharedPipeline>()
@@ -72,6 +75,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         val slot = when (feature.paint) {
             ContentPaint.BeforeGeometry -> beforeGeometry
             ContentPaint.OpaqueGeometry -> opaqueGeometry
+            ContentPaint.BeforeTransparent -> beforeTransparent
             ContentPaint.AfterGeometry -> afterGeometry
         }
         slot.add(built)
