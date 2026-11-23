@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.67.1] - 2026-11-23
+
+### Changed
+
+- Enhance analytic environment reflection (`PbrMaterial.reflectance`) on static and skinned PBR shaders with albedo-tinted chrome reflection bands and a grazing rim gleam, removing the flat grey reflection floor on dark regions.
+
 ## [0.67.0] - 2026-11-23
 
 ### Added
