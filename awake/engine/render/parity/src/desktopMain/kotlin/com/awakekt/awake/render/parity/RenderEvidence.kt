@@ -65,8 +65,7 @@ fun main(args: Array<String>) {
         write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
         writeParticleEmitterEvidence(renderer, EVIDENCE_SIZE, ::write)
         writeSkinnedEvidence(renderer, ::write)
-        writeWorldTextEvidence(renderer, ::write)
-        writeShaderEffectEvidence(renderer, ::write)
+        writeWorldAndSurfaceEvidence(renderer, ::write)
         writePostProcessingEvidence(renderer, ::write)
         writeFxaaOnlyEvidence(renderer, ::write)
         write("scene-terrains-adjoining", "Three adjoining terrains of one shader set, each its own tint, each casting west", EVIDENCE_SIZE, renderer.renderAdjoiningTerrainsScene(size = EVIDENCE_SIZE))
@@ -97,6 +96,15 @@ fun main(args: Array<String>) {
         writeBackdropBlurEvidence(renderer, ::write)
     }
     File(out, "captions.tsv").writeText(captions.toString())
+}
+
+private fun writeWorldAndSurfaceEvidence(
+    renderer: Renderer,
+    write: (name: String, caption: String, size: Int, pixels: ByteArray) -> Unit,
+) {
+    writeWorldTextEvidence(renderer, write)
+    writeShaderEffectEvidence(renderer, write)
+    writeWaterAndCloudEvidence(renderer, EVIDENCE_SIZE, write)
 }
 
 /** Every third of the twelve studio yaws: enough angles to show a lighting change, few enough to scan. */

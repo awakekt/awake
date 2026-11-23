@@ -114,4 +114,10 @@ object PackShaderSets {
 
     /** Procedural anti-aliased infinite ground grid shader set. */
     val InfiniteGrid = aslShaderSet(InfiniteGridShader)
+
+    /** Procedural stylized water surface shader set with Fast and Standard tiers: see [StylizedWaterShader]. */
+    val StylizedWater = aslShaderSet(StylizedWaterShader)
+
+    /** Single-pass procedural cloud layer shader set with Fast and Standard tiers: see [CloudLayerShader]. */
+    val CloudLayer = aslShaderSet(CloudLayerShader)
 }
