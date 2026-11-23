@@ -11,7 +11,9 @@ import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
@@ -26,18 +28,23 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 
 private const val VERTEX_BINDING = 0
 private const val DEFAULT_WATER_AMBIENT = 0.35f
+private val IDENTITY_MATRIX = Mat4()
 
 /**
  * Procedural stylized water drawn after opaque geometry on any [VertexFormat.PositionNormalColorUv] mesh.
  *
- * Uses zero textures and switches between [StylizedWaterQuality.Fast] and [StylizedWaterQuality.Standard]
- * uniformly via [look] with zero pipeline rebuilds or per-frame allocations.
+ * Switches between [StylizedWaterQuality.Fast] and [StylizedWaterQuality.Standard] uniformly via [look]
+ * with zero pipeline rebuilds. When [samplesDepth] is true (and the render plan provides
+ * `sceneDepthShaderSet`), the [StylizedWaterQuality.Standard] tier automatically draws animated contact
+ * foam and bubble rings around shorelines, rocks, pillars, and wading characters while [StylizedWaterQuality.Fast]
+ * keeps zero texture fetches.
  */
 fun stylizedWaterContentFeature(
     geometry: MeshGeometry,
     look: StylizedWaterLook = StylizedWaterLook(),
     name: String = "stylized_water",
-    shaders: ShaderSet = PackShaderSets.StylizedWater,
+    samplesDepth: Boolean = false,
+    shaders: ShaderSet = if (samplesDepth) PackShaderSets.StylizedWaterDepth else PackShaderSets.StylizedWater,
 ): ContentFeatureSource = ContentFeatureSource { backend ->
     ContentFeature(
         name = name,
@@ -48,12 +55,14 @@ fun stylizedWaterContentFeature(
         ),
         geometry = geometry,
         paint = ContentPaint.AfterGeometry,
+        samplesSceneDepth = samplesDepth,
     ) { pipeline, uniforms, uploaded ->
         StylizedWaterRenderFeature(
             pipeline = pipeline,
             uniforms = uniforms,
             geometry = requireNotNull(uploaded) { "Stylized water declares geometry, so the engine must have uploaded it." },
             look = look,
+            samplesDepth = samplesDepth,
         )
     }
 }
@@ -64,6 +73,7 @@ class StylizedWaterRenderFeature(
     private val uniforms: UniformBlock,
     private val geometry: ContentGeometry,
     private val look: StylizedWaterLook,
+    private val samplesDepth: Boolean = false,
 ) : RenderFeature<RenderFrameContext> {
     override val pass = RenderPassSlot.Scene
 
@@ -78,9 +88,11 @@ class StylizedWaterRenderFeature(
         val lightB = lightOverride?.b ?: light.color.z
         val ambient = look.ambientOverride ?: light.ambient ?: DEFAULT_WATER_AMBIENT
         val env = environment
+        val inverseVp = if (samplesDepth) (viewProjection.inverse() ?: IDENTITY_MATRIX) else IDENTITY_MATRIX
 
         uniforms.write(frameIndex) {
             put(StylizedWaterFields.ViewProjection, viewProjection)
+            put(StylizedWaterFields.InverseViewProjection, inverseVp)
             put(StylizedWaterFields.CameraEye, cameraEye, look.timeSeconds)
             put(StylizedWaterFields.LightDirection, sun, look.quality.code.toFloat())
             put(StylizedWaterFields.LightColor, lightR, lightG, lightB, ambient)
@@ -92,10 +104,14 @@ class StylizedWaterRenderFeature(
             put(StylizedWaterFields.DeepColor, look.deepColor.r, look.deepColor.g, look.deepColor.b, look.waveSpeed)
             put(StylizedWaterFields.FoamColor, look.foamColor.r, look.foamColor.g, look.foamColor.b, look.waveStrength)
             put(StylizedWaterFields.HighlightParams, look.sunGlintStrength, look.crestHighlightStrength, look.origin.x, look.origin.z)
+            put(StylizedWaterFields.FlowAndFoam, look.flowDirectionX, look.flowDirectionZ, look.contactFoamWidth, look.contactFoamStrength)
         }
 
         recorder.bindPipeline(pipeline)
         recorder.bindMaterial(BindingSemantic.Material, uniforms.binding(frameIndex))
+        if (samplesDepth) {
+            sceneDepthBinding(pipeline)?.let { recorder.bindMaterial(BindingSemantic.SceneDepth, it) }
+        }
         recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
         val indices = geometry.indexBuffer
         if (indices != null) {

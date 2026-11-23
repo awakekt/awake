@@ -100,6 +100,8 @@ public final class com/awakekt/awake/asset/shaderpack/AslSpriteShaderKt {
 
 public final class com/awakekt/awake/asset/shaderpack/AslStylizedWaterShaderKt {
 	public static final fun getStylizedWaterShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun stylizedWaterShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun stylizedWaterShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslSunFlareShaderKt {
@@ -373,6 +375,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSkyboxCubemap ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSprite ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getStylizedWater ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getStylizedWaterDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSunFlare ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSunFlareUnoccluded ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -523,19 +526,21 @@ public final class com/awakekt/awake/asset/shaderpack/SpriteScenePipelineKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/StylizedWaterContentFeatureKt {
-	public static final fun stylizedWaterContentFeature (Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/asset/shaderpack/StylizedWaterLook;Ljava/lang/String;Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
-	public static synthetic fun stylizedWaterContentFeature$default (Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/asset/shaderpack/StylizedWaterLook;Ljava/lang/String;Lcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static final fun stylizedWaterContentFeature (Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/asset/shaderpack/StylizedWaterLook;Ljava/lang/String;ZLcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun stylizedWaterContentFeature$default (Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/asset/shaderpack/StylizedWaterLook;Ljava/lang/String;ZLcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/StylizedWaterFields {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/StylizedWaterFields;
 	public final fun getCameraEye ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getDeepColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getFlowAndFoam ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getFoamColor ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getFogColor ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getFogRange ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getHighlightParams ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getHorizonColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getInverseViewProjection ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getLightColor ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getLightDirection ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getShallowColor ()Lcom/awakekt/awake/render/renderer/UniformField;
@@ -549,12 +554,16 @@ public final class com/awakekt/awake/asset/shaderpack/StylizedWaterFieldsKt {
 
 public final class com/awakekt/awake/asset/shaderpack/StylizedWaterLook {
 	public fun <init> ()V
-	public fun <init> (ZLcom/awakekt/awake/asset/shaderpack/StylizedWaterQuality;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/Float;Lcom/awakekt/awake/core/math/Vec3f;)V
-	public synthetic fun <init> (ZLcom/awakekt/awake/asset/shaderpack/StylizedWaterQuality;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/Float;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLcom/awakekt/awake/asset/shaderpack/StylizedWaterQuality;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FFFFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/Float;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/asset/shaderpack/StylizedWaterQuality;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FFFFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/Float;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAmbientOverride ()Ljava/lang/Float;
+	public final fun getContactFoamStrength ()F
+	public final fun getContactFoamWidth ()F
 	public final fun getCrestHighlightStrength ()F
 	public final fun getDeepColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getEnabled ()Z
+	public final fun getFlowDirectionX ()F
+	public final fun getFlowDirectionZ ()F
 	public final fun getFoamColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getLightColorOverride ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getOpacity ()F
@@ -567,9 +576,13 @@ public final class com/awakekt/awake/asset/shaderpack/StylizedWaterLook {
 	public final fun getWaveSpeed ()F
 	public final fun getWaveStrength ()F
 	public final fun setAmbientOverride (Ljava/lang/Float;)V
+	public final fun setContactFoamStrength (F)V
+	public final fun setContactFoamWidth (F)V
 	public final fun setCrestHighlightStrength (F)V
 	public final fun setDeepColor (Lcom/awakekt/awake/core/color/Color;)V
 	public final fun setEnabled (Z)V
+	public final fun setFlowDirectionX (F)V
+	public final fun setFlowDirectionZ (F)V
 	public final fun setFoamColor (Lcom/awakekt/awake/core/color/Color;)V
 	public final fun setLightColorOverride (Lcom/awakekt/awake/core/color/Color;)V
 	public final fun setOpacity (F)V
@@ -592,7 +605,8 @@ public final class com/awakekt/awake/asset/shaderpack/StylizedWaterQuality : jav
 }
 
 public final class com/awakekt/awake/asset/shaderpack/StylizedWaterRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
-	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/shaderpack/StylizedWaterLook;)V
+	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/shaderpack/StylizedWaterLook;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/shaderpack/StylizedWaterLook;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V

@@ -58,6 +58,33 @@ class WaterAndCloudParityTest {
         assertTrue(diff < MAX_BACKEND_DIFF, "Vulkan and WebGPU cloud layer should match closely (diff=$diff)")
     }
 
+    @Test
+    fun vulkanStylizedWaterDepthFoamWrapsRockAndShore() = verifyWaterDepthFoam(HeadlessUiBackend.Vulkan)
+
+    @Test
+    fun webGpuStylizedWaterDepthFoamWrapsRockAndShore() = verifyWaterDepthFoam(HeadlessUiBackend.WebGpu)
+
+    @Test
+    fun vulkanAndWebGpuStylizedWaterDepthFoamMatch() {
+        val vk = renderStylizedWaterWithRockScene(HeadlessUiBackend.Vulkan, StylizedWaterQuality.Standard, samplesDepth = true)
+        val wgpu = renderStylizedWaterWithRockScene(HeadlessUiBackend.WebGpu, StylizedWaterQuality.Standard, samplesDepth = true)
+        val diff = meanRgbDiff(vk, wgpu)
+        println("PARITY stylized-water-depth-foam Vulkan vs WebGPU mean RGB diff = $diff")
+        assertTrue(diff < MAX_BACKEND_DIFF, "Vulkan and WebGPU depth water foam should match closely (diff=$diff)")
+    }
+
+    private fun verifyWaterDepthFoam(backend: HeadlessUiBackend) {
+        val withFoam = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Standard, samplesDepth = true)
+        val noFoam = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Standard, samplesDepth = false)
+        val fastWithDepthPlan = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Fast, samplesDepth = true)
+        val fastWithoutDepthPlan = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Fast, samplesDepth = false)
+        val foamDelta = meanRgbDiff(withFoam, noFoam)
+        val fastDepthDelta = meanRgbDiff(fastWithDepthPlan, fastWithoutDepthPlan)
+        println("WATER_DEPTH[$backend] foamDelta=$foamDelta fastDepthDelta=$fastDepthDelta")
+        assertTrue(foamDelta > 3.0f, "$backend: SceneDepth contact foam should visibly brighten shore and rock edges (delta=$foamDelta)")
+        assertTrue(fastDepthDelta < 0.5f, "$backend: Fast mobile tier must skip depth foam sampling (fastDelta=$fastDepthDelta)")
+    }
+
     private fun verifyWater(backend: HeadlessUiBackend) = openHeadlessScene(backend).use { session ->
         val r = session.renderer
         val off = r.renderStylizedWaterScene(StylizedWaterQuality.Standard, enabled = false)

@@ -55,6 +55,14 @@ class StylizedWaterLook(
     var sunGlintStrength: Float = 0.90f,
     /** Blend strength of [foamColor] on high wave crests (0..1). */
     var crestHighlightStrength: Float = 0.24f,
+    /** Horizontal flow velocity along world X (metres per second); non-zero creates directional river/stream flow. */
+    var flowDirectionX: Float = 0f,
+    /** Horizontal flow velocity along world Z (metres per second); non-zero creates directional river/stream flow. */
+    var flowDirectionZ: Float = 0f,
+    /** Water depth range in metres where shoreline and rock/obstacle contact foam forms when `samplesDepth` is true. */
+    var contactFoamWidth: Float = 0.85f,
+    /** Intensity of animated shoreline and obstacle contact foam rings (0..1) when `samplesDepth` is true. */
+    var contactFoamStrength: Float = 0.85f,
     /** Optional directional light colour override; null reads the frame's scene light colour. */
     var lightColorOverride: Color? = null,
     /** Optional ambient floor override; null reads the frame's scene light ambient. */
@@ -67,6 +75,9 @@ class StylizedWaterLook(
 object StylizedWaterFields {
     /** Camera view-projection matrix. */
     val ViewProjection = UniformField("viewProjection", GpuDataShape.Mat4)
+
+    /** Inverse camera view-projection matrix used to reconstruct world depth for shoreline and obstacle contact foam. */
+    val InverseViewProjection = UniformField("inverseViewProjection", GpuDataShape.Mat4)
 
     /** `xyz` = world-space camera eye, `w` = animation time in seconds. */
     val CameraEye = UniformField("cameraEye", GpuDataShape.Vec4)
@@ -100,11 +111,15 @@ object StylizedWaterFields {
 
     /** `x` = sun specular glint strength, `y` = crest highlight strength, `z` = origin.x, `w` = origin.z. */
     val HighlightParams = UniformField("highlightParams", GpuDataShape.Vec4)
+
+    /** `x` = flowDirectionX, `y` = flowDirectionZ, `z` = contactFoamWidth (metres), `w` = contactFoamStrength (0..1). */
+    val FlowAndFoam = UniformField("flowAndFoam", GpuDataShape.Vec4)
 }
 
 /** Uniform layout of [StylizedWaterShader]. */
 val StylizedWaterUniformLayout = UniformLayout(
     StylizedWaterFields.ViewProjection,
+    StylizedWaterFields.InverseViewProjection,
     StylizedWaterFields.CameraEye,
     StylizedWaterFields.LightDirection,
     StylizedWaterFields.LightColor,
@@ -116,4 +131,5 @@ val StylizedWaterUniformLayout = UniformLayout(
     StylizedWaterFields.DeepColor,
     StylizedWaterFields.FoamColor,
     StylizedWaterFields.HighlightParams,
+    StylizedWaterFields.FlowAndFoam,
 )
