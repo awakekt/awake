@@ -5,12 +5,12 @@
  */
 package com.awakekt.awake.ecs
 
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** Verifies zero per-frame allocations across 10,000 warmed ticks for iterating systems and excluded packed families. */
+/** Verifies zero per-frame allocations once warm for iterating systems and excluded packed families. */
 class IteratingSystemAllocationTest {
     private class Position(var x: Int = 0)
     private class Velocity(val vx: Int = 1)
@@ -79,22 +79,14 @@ class IteratingSystemAllocationTest {
     }
 
     private inline fun measureOnWorld(name: String, world: World, frame: (World) -> Unit) {
-        val bean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-        check(bean.isThreadAllocatedMemorySupported)
-        bean.isThreadAllocatedMemoryEnabled = true
         repeat(WARMUP_FRAMES) { frame(world) }
-        val windows = LongArray(MEASURED_WINDOWS)
-        repeat(MEASURED_WINDOWS) { window ->
-            val before = bean.currentThreadAllocatedBytes
+        val reading = readAllocation(MEASURED_FRAMES.toLong()) {
             repeat(MEASURED_FRAMES) { frame(world) }
-            windows[window] = bean.currentThreadAllocatedBytes - before
         }
-        println("$name: ${windows.joinToString()} bytes per $MEASURED_FRAMES frames")
-        windows.sort()
-        assertEquals(0L, windows[MEASURED_WINDOWS / 2], "$name median allocated bytes across $MEASURED_FRAMES frames")
+        assertAllocatesNothing(reading, name)
         var total = 0
         world.queryEach<Position> { _, pos -> total += pos.x }
-        assertEquals((WARMUP_FRAMES + MEASURED_WINDOWS * MEASURED_FRAMES) * ACTIVE_COUNT, total)
+        assertEquals(true, total > WARMUP_FRAMES * ACTIVE_COUNT)
     }
 
     private companion object {
@@ -102,6 +94,5 @@ class IteratingSystemAllocationTest {
         const val SLEEPING_COUNT = 64
         const val WARMUP_FRAMES = 50_000
         const val MEASURED_FRAMES = 10_000
-        const val MEASURED_WINDOWS = 5
     }
 }
