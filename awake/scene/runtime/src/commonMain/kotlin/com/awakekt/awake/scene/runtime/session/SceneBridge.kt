@@ -6,13 +6,15 @@
 package com.awakekt.awake.scene.runtime.session
 
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 
 /**
  * Connects an external presentation, UI, editor, or session layer to a [SceneSession] at the frame
  * boundary without masquerading as an ECS [com.awakekt.awake.ecs.System].
  *
- * Keep Compose UI, HUD registries, and store coordinators out of ECS systems: attach a
- * [SceneBridge] instead so simulation schedules stay pure and headless hosts never run UI bridges.
+ * Acts like a scene-scoped ViewModel / coordinator: owns stores, state projections, and child
+ * coroutines for the lifetime of the [SceneSession], keeping Compose UI purely declarative and ECS
+ * simulation schedules free of UI dependencies.
  *
  * Frame order inside [SceneSession]:
  * 1. [beforeAdvance] — drain queued UI/store effects into ECS request components so simulation sees
@@ -34,13 +36,43 @@ interface SceneBridge : AutoCloseable {
     override fun close() = Unit
 }
 
+/**
+ * Type-safe, stateless handle identifying a [SceneBridge] registered on a scene via `bridge { ... }`
+ * or `ui(bridge = { ... }) { ... }`.
+ *
+ * Mirrors [com.awakekt.awake.scene.runtime.SceneSystemHandle]: holds no mutable runtime state, so
+ * one [com.awakekt.awake.scene.runtime.SceneAppSpec] can be installed or reloaded repeatedly.
+ */
+class SceneBridgeHandle<T : SceneBridge>
+
+/**
+ * Registration entry pairing a typed [SceneBridgeHandle] with its factory inside a scene spec.
+ *
+ * @property handle The typed handle used to resolve this bridge from a ready session.
+ * @property factory Factory constructing the [SceneBridge] once the scene is ready.
+ */
+class SceneBridgeRegistration(
+    val handle: SceneBridgeHandle<out SceneBridge>,
+    val factory: SceneAppLifecycleRuntime.() -> SceneBridge,
+)
+
 internal class SceneBridgeList {
     private val bridges = ArrayList<SceneBridge>()
+    private val byHandle = HashMap<SceneBridgeHandle<out SceneBridge>, SceneBridge>()
 
     fun add(bridge: SceneBridge): AutoCloseable {
         bridges.add(bridge)
         return AutoCloseable { bridges.remove(bridge) }
     }
+
+    fun register(handle: SceneBridgeHandle<out SceneBridge>, bridge: SceneBridge) {
+        bridges.add(bridge)
+        byHandle[handle] = bridge
+    }
+
+    @Suppress("UNCHECKED_CAST") // Handle<T> is only ever bound to the T produced by its registration.
+    fun <T : SceneBridge> get(handle: SceneBridgeHandle<T>): T =
+        (byHandle[handle] ?: error("SceneBridge is not active on this session yet (available after ready()).")) as T
 
     fun beforeAdvance(world: World, delta: Float) {
         var index = 0
@@ -71,6 +103,7 @@ internal class SceneBridgeList {
             index -= 1
         }
         bridges.clear()
+        byHandle.clear()
         return failure
     }
 }

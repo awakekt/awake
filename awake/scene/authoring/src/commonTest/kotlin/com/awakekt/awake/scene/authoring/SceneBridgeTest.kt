@@ -7,13 +7,18 @@ package com.awakekt.awake.scene.authoring
 
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.core.state.ContextualEffectDrainer
+import com.awakekt.awake.core.state.childStoreScope
 import com.awakekt.awake.core.state.reducerStore
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.bridge
 import com.awakekt.awake.scene.runtime.session.SceneBridge
+import com.awakekt.awake.scene.runtime.session.SceneBridgeHandle
 import com.awakekt.awake.scene.runtime.session.SceneSession
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -192,5 +197,94 @@ class SceneBridgeTest {
         assertTrue(store.coroutineScope.isActive)
         game.dispose()
         assertFalse(store.coroutineScope.isActive)
+    }
+
+    private class CounterBridge(parentScope: CoroutineScope) : SceneBridge {
+        private val drainer = ContextualEffectDrainer<World>()
+        val store = reducerStore<HudState, HudIntent, HudEffect>(
+            initialState = HudState(),
+            scope = parentScope.childStoreScope(),
+        ) { state, intent ->
+            when (intent) {
+                is HudIntent.Synced -> state.copy(value = intent.value) to null
+                is HudIntent.RequestIncrement -> state to HudEffect.ApplyIncrement(intent.delta)
+            }
+        }
+
+        init {
+            drainer.bind(
+                store = store,
+                closeWithDrainer = true,
+                sync = { world, state ->
+                    world.queryEach(CounterComponent::class) { _, counter ->
+                        if (counter.value != state.value) store.dispatch(HudIntent.Synced(counter.value))
+                    }
+                },
+                onEffect = { world, effect ->
+                    if (effect is HudEffect.ApplyIncrement) {
+                        world.queryEach(CounterComponent::class) { _, counter -> counter.pendingDelta += effect.delta }
+                    }
+                },
+            )
+        }
+
+        override fun beforeAdvance(world: World, delta: Float) = drainer.drainEffects(world)
+
+        override fun afterAdvance(world: World, delta: Float) = drainer.sync(world)
+
+        override fun close() = drainer.close()
+    }
+
+    private fun applyCounterSystem(): System = object : System {
+        override fun update(world: World, delta: Float) {
+            world.queryEach(CounterComponent::class) { _, counter ->
+                if (counter.pendingDelta != 0) {
+                    counter.value += counter.pendingDelta
+                    counter.pendingDelta = 0
+                }
+            }
+        }
+    }
+
+    @Test
+    fun pairedUiBridgeShorthandActsAsSceneScopedViewModelAndSurvivesSpecReuse() = runTest {
+        val renderedA = mutableListOf<Int>()
+        val renderedB = mutableListOf<Int>()
+        var sink = renderedA
+        lateinit var handle: SceneBridgeHandle<CounterBridge>
+
+        val reusableSpec = sceneApp {
+            scene { entity("counter") { with(CounterComponent(value = 4)) } }
+            frameSystem("apply-counter") { applyCounterSystem() }
+            handle = ui(bridge = { CounterBridge(session.coroutineScope) }) { vm ->
+                val state = vm.store.value
+                sink += state.value
+                Text("Count: ${state.value}")
+            }
+        }
+
+        val appA = app { scene(reusableSpec) }
+        appA.ready(RecordingRenderer())
+        val vmA = appA.requireService<SceneAppLifecycleRuntime>().bridge(handle)
+        appA.update(1f / 60f, 320f, 240f)
+        vmA.store.dispatch(HudIntent.RequestIncrement(3))
+        appA.update(1f / 60f, 320f, 240f)
+        assertEquals(listOf(4, 7), renderedA)
+
+        // Installing the same SceneAppSpec again produces an isolated session-scoped bridge instance.
+        sink = renderedB
+        val appB = app { scene(reusableSpec) }
+        appB.ready(RecordingRenderer())
+        val vmB = appB.requireService<SceneAppLifecycleRuntime>().bridge(handle)
+        assertTrue(vmA !== vmB)
+        appB.update(1f / 60f, 320f, 240f)
+        assertEquals(listOf(4), renderedB)
+
+        appA.dispose()
+        assertFalse(vmA.store.coroutineScope.isActive)
+        assertTrue(vmB.store.coroutineScope.isActive)
+
+        appB.dispose()
+        assertFalse(vmB.store.coroutineScope.isActive)
     }
 }

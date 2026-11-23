@@ -48,7 +48,7 @@ class SceneSession internal constructor(
     }
 
     internal val schedule = SceneSchedule(spec)
-    private val bridges = SceneBridgeList()
+    internal val bridges = SceneBridgeList()
     private var assetLibrary: SceneAssetLibrary? = null
 
     private var scope: CoroutineScope? = null
@@ -89,8 +89,8 @@ class SceneSession internal constructor(
         schedule.initialize(runtime)
         spec.scenePopulationBlock(runtime)
         spec.onReadyBlock(runtime)
-        for (factory in spec.bridgeFactories) {
-            bridges.add(factory(runtime))
+        for (registration in spec.bridgeRegistrations) {
+            bridges.register(registration.handle, registration.factory(runtime))
         }
         schedule.synchronize(world)
     }

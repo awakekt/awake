@@ -247,6 +247,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntimeKt {
+	public static final fun bridge (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/runtime/session/SceneBridgeHandle;)Lcom/awakekt/awake/scene/runtime/session/SceneBridge;
 	public static final fun defaultInfrastructureSystems (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Ljava/util/List;
 	public static synthetic fun defaultInfrastructureSystems$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/util/List;
 	public static final fun getMinShadowCasterRatio (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;)F
@@ -258,7 +259,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntimeKt {
 public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/awake/engine/platform/core/AppModule {
 	public fun <init> (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getBridgeFactories ()Ljava/util/List;
+	public final fun getBridgeRegistrations ()Ljava/util/List;
 	public final fun getDisabledSystems ()Ljava/util/Set;
 	public final fun getHostRole ()Lcom/awakekt/awake/scene/runtime/SceneHostRole;
 	public final fun getInfrastructureSystemsFactory ()Lkotlin/jvm/functions/Function1;
@@ -270,17 +271,19 @@ public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/aw
 	public final fun getSceneName ()Ljava/lang/String;
 	public final fun getScenePopulationBlock ()Lkotlin/jvm/functions/Function1;
 	public final fun getSessionDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getSessionUi ()Lkotlin/jvm/functions/Function2;
 	public final fun getSystems ()Ljava/util/List;
 	public final fun getUi ()Lkotlin/jvm/functions/Function1;
 	public final fun getUpdateBlock ()Lkotlin/jvm/functions/Function3;
 	public fun install (Lcom/awakekt/awake/engine/platform/dsl/AppSpecBuilder;)V
 	public final fun installInto (Lcom/awakekt/awake/engine/platform/dsl/AppSpecBuilder;)Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;
-	public final fun setBridgeFactories (Ljava/util/List;)V
+	public final fun setBridgeRegistrations (Ljava/util/List;)V
 	public final fun setDisabledSystems (Ljava/util/Set;)V
 	public final fun setHostRole (Lcom/awakekt/awake/scene/runtime/SceneHostRole;)V
 	public final fun setMaxFixedStepsPerFrame (I)V
 	public final fun setMinShadowCasterRatio (F)V
 	public final fun setSessionDispatcher (Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public final fun setSessionUi (Lkotlin/jvm/functions/Function2;)V
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
@@ -827,6 +830,16 @@ public final class com/awakekt/awake/scene/runtime/session/SceneBridge$DefaultIm
 	public static fun afterAdvance (Lcom/awakekt/awake/scene/runtime/session/SceneBridge;Lcom/awakekt/awake/ecs/World;F)V
 	public static fun beforeAdvance (Lcom/awakekt/awake/scene/runtime/session/SceneBridge;Lcom/awakekt/awake/ecs/World;F)V
 	public static fun close (Lcom/awakekt/awake/scene/runtime/session/SceneBridge;)V
+}
+
+public final class com/awakekt/awake/scene/runtime/session/SceneBridgeHandle {
+	public fun <init> ()V
+}
+
+public final class com/awakekt/awake/scene/runtime/session/SceneBridgeRegistration {
+	public fun <init> (Lcom/awakekt/awake/scene/runtime/session/SceneBridgeHandle;Lkotlin/jvm/functions/Function1;)V
+	public final fun getFactory ()Lkotlin/jvm/functions/Function1;
+	public final fun getHandle ()Lcom/awakekt/awake/scene/runtime/session/SceneBridgeHandle;
 }
 
 public final class com/awakekt/awake/scene/runtime/session/SceneDocumentEditSession {
