@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.69.0] - 2026-11-23
+
+### Changed
+
+- **Kotlin `2.5.0-RC` and `KOTLIN_ARCHIVE` (`.kar.xz`) publications.** Upgraded Kotlin across the build, templates, and standalone tools from `2.4.20` to `2.5.0-RC` and enabled `kotlin.publicationFormat=KOTLIN_ARCHIVE`, packing KMP metadata and KLIB targets (`iosArm64`, `iosSimulatorArm64`, `wasmJs`) into a single XZ-compressed archive per module (falling back to legacy multi-publication on non-macOS local builds for iOS-cinterop modules). Updated WebGPU WasmJs linear-memory uploads (`UniformUploads.wasm.kt`, `MeshUploads.wasm.kt`) to pass `kotlin.wasm.unsafe.wasmMemory` instead of relying on the removed `wasmExports` glue variable. Combined with #1869, this cuts Maven Central release file counts by ~58% (~14,620 → ~6,120 files per Core release). Consuming builds must use Kotlin 2.5+.
+
+### Fixed
+
+- Added `ScaledShape` to `:awake:physics:api` and world-scoped base `MeshShape` BVH caching across all four Jolt backends (`desktopMain`, `androidMain`, `iosMain`, `wasmJsMain`), updated `MeshColliderSystem` to share base collision meshes instead of cloning vertices per scaled placement, streamed `loadCollisionMeshes` per model, released retained scene/model/content references on `ProjectScene.close()` and `ProjectSceneRunner.stop()`, and switched `LoadedProject.sceneLoads` and `AssetSourceTextureResolver` defaults to `ioDispatcher`.
+
 ## [0.68.0] - 2026-11-23
 
 ### Added
