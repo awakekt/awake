@@ -5,7 +5,8 @@
  */
 package com.awakekt.awake.scene.scene2d
 
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 
 /**
@@ -13,12 +14,15 @@ import com.awakekt.awake.ecs.World
  *
  * @param isPlaying Whether the host advances simulation; false preserves the current cell and clock.
  */
-class SpriteClipSystem(private val isPlaying: () -> Boolean = { true }) : System {
-    override fun update(world: World, delta: Float) {
-        if (!isPlaying()) return
-        world.queryEach<Sprite, SpriteClips> { _, sprite, clips ->
-            clips.advance(delta)
-            clips.applyTo(sprite)
-        }
+class SpriteClipSystem(private val isPlaying: () -> Boolean = { true }) : Family2System<Sprite, SpriteClips>(Sprite::class, SpriteClips::class) {
+    override fun shouldProcess(world: World, delta: Float): Boolean = isPlaying()
+
+    override fun process(world: World, delta: Float, entity: Entity, first: Sprite, second: SpriteClips) {
+        second.advance(delta)
+        second.applyTo(first)
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
     }
 }

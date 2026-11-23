@@ -228,10 +228,11 @@ public final class com/awakekt/awake/ai/btree/BehaviorTreeSnapshot$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ai/btree/BehaviorTreeSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/ai/btree/BehaviorTreeSystem : com/awakekt/awake/ecs/Family1System {
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/ai/AiEventSink;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ai/AiEventSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun process-0iDFBS0 (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -1646,10 +1647,11 @@ public final class com/awakekt/awake/ai/fsm/AiStateMachineComponent {
 	public final fun setEnabled (Z)V
 }
 
-public final class com/awakekt/awake/ai/fsm/AiStateMachineSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/ai/fsm/AiStateMachineSystem : com/awakekt/awake/ecs/Family1System {
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/ai/AiEventSink;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ai/AiEventSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun process-0iDFBS0 (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

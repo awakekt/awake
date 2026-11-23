@@ -6,7 +6,8 @@
 package com.awakekt.awake.ai.behavior
 
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.PathRequest
 
@@ -36,18 +37,19 @@ import com.awakekt.awake.navigation.PathRequest
 class ChaseAiSystem(
     /** Where chasers and their targets are, and how a chaser moves. */
     private val placement: AgentPlacement,
-) : System {
+) : Family2System<ChaseBehavior, PathRequest>(ChaseBehavior::class, PathRequest::class) {
     private val position = Vec3f(0f, 0f, 0f)
     private val targetPosition = Vec3f(0f, 0f, 0f)
 
-    override fun update(world: World, delta: Float) {
-        world.family<ChaseBehavior>().forEach { entity, chase ->
-            val request = world.get<PathRequest>(entity) ?: return@forEach
-            if (!placement.position(world, entity, position)) return@forEach
-            chase.adoptArrivedRoute(request)
-            chase.requestRouteWhenDue(position, targetPositionOf(world, chase), request, delta)
-            chase.steer(placement, world, entity, position, delta)
-        }
+    override fun process(world: World, delta: Float, entity: Entity, first: ChaseBehavior, second: PathRequest) {
+        if (!placement.position(world, entity, position)) return
+        first.adoptArrivedRoute(second)
+        first.requestRouteWhenDue(position, targetPositionOf(world, first), second, delta)
+        first.steer(placement, world, entity, position, delta)
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
     }
 
     /**

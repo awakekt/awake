@@ -37,10 +37,8 @@ class EffectDrainer : AutoCloseable {
     ): AutoCloseable {
         val binding = Binding(
             closeable = if (closeWithDrainer && source is AutoCloseable) source else null,
-            step = {
-                sync?.invoke()
-                source.drainEffects(onEffect)
-            },
+            sync = sync,
+            drain = { source.drainEffects(onEffect) },
         )
         bindings.add(binding)
         return AutoCloseable { bindings.remove(binding) }
@@ -62,27 +60,71 @@ class EffectDrainer : AutoCloseable {
         onEffect = onEffect,
     )
 
+    /**
+     * Registers a sync-only hook (for read-only UI projections or stateful coordinators that emit
+     * no effects). If [closeable] is supplied, [close] closes it on teardown.
+     */
+    fun onSync(
+        closeable: AutoCloseable? = null,
+        sync: () -> Unit,
+    ): AutoCloseable {
+        val binding = Binding(closeable = closeable, sync = sync, drain = null)
+        bindings.add(binding)
+        return AutoCloseable { bindings.remove(binding) }
+    }
+
+    /** Runs every registered sync hook in registration order without draining effects. */
+    fun sync() {
+        var index = 0
+        while (index < bindings.size) {
+            bindings[index].sync?.invoke()
+            index += 1
+        }
+    }
+
+    /** Drains every registered effect source in registration order without running sync hooks. */
+    fun drainEffects() {
+        var index = 0
+        while (index < bindings.size) {
+            bindings[index].drain?.invoke()
+            index += 1
+        }
+    }
+
     /** Runs each binding's optional sync step and drains its pending effects in registration order. */
     fun drain() {
         var index = 0
         while (index < bindings.size) {
-            bindings[index].step()
+            val binding = bindings[index]
+            binding.sync?.invoke()
+            binding.drain?.invoke()
             index += 1
         }
     }
 
-    /** Removes all bindings and closes every store bound with `closeWithDrainer = true`. */
+    /** Removes all bindings and closes every store or resource owned by this drainer in reverse order. */
     override fun close() {
-        var index = 0
-        while (index < bindings.size) {
-            bindings[index].closeable?.close()
-            index += 1
+        var failure: Throwable? = null
+        var index = bindings.size - 1
+        while (index >= 0) {
+            val closeable = bindings[index].closeable
+            if (closeable != null) {
+                @Suppress("TooGenericExceptionCaught") // Every remaining closeable must still run on teardown.
+                try {
+                    closeable.close()
+                } catch (error: Throwable) {
+                    if (failure == null) failure = error else failure.addSuppressed(error)
+                }
+            }
+            index -= 1
         }
         bindings.clear()
+        failure?.let { throw it }
     }
 
     private class Binding(
         val closeable: AutoCloseable?,
-        val step: () -> Unit,
+        val sync: (() -> Unit)?,
+        val drain: (() -> Unit)?,
     )
 }

@@ -50,10 +50,13 @@ class SpawnedNode internal constructor(
      * none once the node is despawned.
      */
     fun attachRenderers(which: (SceneRenderableRequest) -> Boolean): List<Entity> {
-        if (despawned) return emptyList()
+        if (despawned || waiting.isEmpty()) return emptyList()
         val attached = mutableListOf<Entity>()
-        waiting.filter(which).forEach { request ->
-            waiting -= request
+        val iterator = waiting.iterator()
+        while (iterator.hasNext()) {
+            val request = iterator.next()
+            if (!which(request)) continue
+            iterator.remove()
             if (world.isAlive(request.entity)) {
                 world.attachRenderable(request, runtime.spec.renderableFactory(runtime, request))
                 runtime.noteRenderableAttached(world, request.entity)

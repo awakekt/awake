@@ -5,59 +5,35 @@
  */
 package com.awakekt.awake.sample.uishowcase.state
 
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import com.awakekt.awake.core.state.DefaultReducerStore
+import com.awakekt.awake.core.state.Reducer
 
-internal class UiShowcaseCounterStore {
-    private val _state = MutableStateFlow(UiShowcaseCounterContract.State())
-    val state: StateFlow<UiShowcaseCounterContract.State> = _state.asStateFlow()
-
-    private val effects = Channel<UiShowcaseCounterContract.Effect>(Channel.BUFFERED)
-
-    fun dispatch(intent: UiShowcaseCounterContract.Intent) {
-        when (intent) {
-            UiShowcaseCounterContract.Intent.Increment -> {
-                val nextState = updateState { current ->
-                    current.copy(count = current.count + 1)
+internal class UiShowcaseCounterStore :
+    DefaultReducerStore<
+        UiShowcaseCounterContract.State,
+        UiShowcaseCounterContract.Intent,
+        UiShowcaseCounterContract.Effect,
+        >(
+        initialState = UiShowcaseCounterContract.State(),
+        reducer = Reducer { state, intent ->
+            when (intent) {
+                UiShowcaseCounterContract.Intent.Increment -> {
+                    val next = state.copy(count = state.count + 1)
+                    val effect = if (next.count > 0 && next.count % 5 == 0) {
+                        UiShowcaseCounterContract.Effect.MilestoneReached(next.count)
+                    } else {
+                        null
+                    }
+                    next to effect
                 }
-                if (nextState.count > 0 && nextState.count % 5 == 0) {
-                    effects.trySend(UiShowcaseCounterContract.Effect.MilestoneReached(nextState.count))
-                }
-            }
 
-            UiShowcaseCounterContract.Intent.Decrement -> {
-                updateState { current ->
-                    current.copy(count = current.count - 1)
-                }
-            }
+                UiShowcaseCounterContract.Intent.Decrement ->
+                    state.copy(count = state.count - 1) to null
 
-            UiShowcaseCounterContract.Intent.Reset -> {
-                val previous = _state.value
-                updateState { UiShowcaseCounterContract.State() }
-                if (previous.count != 0) {
-                    effects.trySend(UiShowcaseCounterContract.Effect.ResetCompleted)
+                UiShowcaseCounterContract.Intent.Reset -> {
+                    val effect = if (state.count != 0) UiShowcaseCounterContract.Effect.ResetCompleted else null
+                    UiShowcaseCounterContract.State() to effect
                 }
             }
-        }
-    }
-
-    fun drainEffects(): List<UiShowcaseCounterContract.Effect> = buildList {
-        while (true) {
-            val effect = effects.tryReceive().getOrNull() ?: break
-            add(effect)
-        }
-    }
-
-    private inline fun updateState(
-        update: (UiShowcaseCounterContract.State) -> UiShowcaseCounterContract.State,
-    ): UiShowcaseCounterContract.State {
-        var nextState = _state.value
-        _state.update { current ->
-            update(current).also { nextState = it }
-        }
-        return nextState
-    }
-}
+        },
+    )

@@ -42,7 +42,7 @@ private class SceneComposeAppModule(
 ) : AppModule {
     override fun install(into: AppSpecBuilder) {
         val existingScene = into.service(SceneAppLifecycleRuntime::class)
-        check(existingScene == null || existingScene.spec.ui == null) {
+        check(existingScene == null || !existingScene.spec.hasUi) {
             "An application-level Compose module cannot be installed when a scene has declared legacy content { }."
         }
         val services = into.serviceLookup()

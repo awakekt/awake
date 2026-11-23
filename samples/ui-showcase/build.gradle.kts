@@ -78,6 +78,7 @@ kotlin {
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:input"))
+            implementation(project(":awake:core:state"))
             implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:scene:authoring"))
             implementation(project(":awake:ui:shadcn"))

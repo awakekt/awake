@@ -23,14 +23,14 @@ internal class FamilyRegistry(
 ) {
     private val families = mutableMapOf<FamilyKey, FamilyCache>()
     private val familySpecCaches = mutableMapOf<FamilySpec, FamilySpecCache>()
-    private val excludedFamily1s = mutableMapOf<ExcludedFamilyKey, Family1<*>>()
-    private val excludedFamily2s = mutableMapOf<ExcludedFamilyKey, Family2<*, *>>()
-    private val excludedCaches = ArrayList<FamilyCache>()
+    private val filteredCaches = ArrayList<FamilyCache>()
 
     // Index wrappers by type ID so a warmed lookup allocates neither a wrapper nor a boxed
     // FamilyKey. Pair rows are ordered: (A, B) and (B, A) expose different typed columns.
     private var singleFamilies = arrayOfNulls<Family1<*>>(16)
     private var pairFamilies = arrayOfNulls<Array<Family2<*, *>?>>(16)
+    private var filteredSingleFamilies = arrayOfNulls<ArrayList<FilteredFamily1Entry>>(16)
+    private var filteredPairFamilies = arrayOfNulls<ArrayList<FilteredFamily2Entry>>(16)
 
     /** Index of families that care about a specific component type, indexed by
      * [ComponentTypeId.value]. Using an array of lists avoids [KClass] map lookups
@@ -40,21 +40,60 @@ internal class FamilyRegistry(
     fun clear() {
         families.clear()
         familySpecCaches.clear()
-        excludedFamily1s.clear()
-        excludedFamily2s.clear()
-        excludedCaches.clear()
+        filteredCaches.clear()
         familiesByComponentId.fill(null)
         singleFamilies.fill(null)
         pairFamilies.fill(null)
+        filteredSingleFamilies.fill(null)
+        filteredPairFamilies.fill(null)
     }
 
     @Suppress("UNCHECKED_CAST") // The ID was resolved from A in this world generation.
     fun <A : Any> cachedFamily(typeId: ComponentTypeId): Family1<A>? =
         singleFamilies.getOrNull(typeId.value) as Family1<A>?
 
+    @Suppress("UNCHECKED_CAST") // The ID and filter were resolved for A in this world generation.
+    fun <A : Any> cachedFamily(typeId: ComponentTypeId, filter: FamilySpec): Family1<A>? {
+        if (filter.isEmpty) return cachedFamily(typeId)
+        val entries = filteredSingleFamilies.getOrNull(typeId.value)
+        var match: Family1<A>? = null
+        if (entries != null) {
+            for (index in 0 until entries.size) {
+                val entry = entries[index]
+                if (entry.filter === filter || entry.filter == filter) {
+                    match = entry.family as Family1<A>
+                    break
+                }
+            }
+        }
+        return match
+    }
+
     @Suppress("UNCHECKED_CAST") // The ordered IDs were resolved from A and B in this generation.
     fun <A : Any, B : Any> cachedFamily(typeIdA: ComponentTypeId, typeIdB: ComponentTypeId): Family2<A, B>? =
         pairFamilies.getOrNull(typeIdA.value)?.getOrNull(typeIdB.value) as Family2<A, B>?
+
+    @Suppress("UNCHECKED_CAST") // The ordered IDs and filter were resolved for A and B in this generation.
+    fun <A : Any, B : Any> cachedFamily(
+        typeIdA: ComponentTypeId,
+        typeIdB: ComponentTypeId,
+        filter: FamilySpec,
+    ): Family2<A, B>? {
+        if (filter.isEmpty) return cachedFamily(typeIdA, typeIdB)
+        val entries = filteredPairFamilies.getOrNull(typeIdA.value)
+        var match: Family2<A, B>? = null
+        if (entries != null) {
+            val idB = typeIdB.value
+            for (index in 0 until entries.size) {
+                val entry = entries[index]
+                if (entry.typeIdB == idB && (entry.filter === filter || entry.filter == filter)) {
+                    match = entry.family as Family2<A, B>
+                    break
+                }
+            }
+        }
+        return match
+    }
 
     // A type ID identifies exactly A until clear(), which also discards these wrappers.
     @Suppress("UNCHECKED_CAST")
@@ -106,49 +145,81 @@ internal class FamilyRegistry(
         buildFamilySpecCache(spec).also(::indexFamily)
     }
 
-    // The key binds exact type and exclude IDs within this world generation until clear().
+    // The entries bind exact type and filter within this world generation until clear().
     @Suppress("UNCHECKED_CAST")
-    fun <A : Any> familyExcluding(type: KClass<A>, exclude: Set<KClass<out Any>>): Family1<A> {
-        if (exclude.isEmpty()) return family(type)
+    fun <A : Any> family(type: KClass<A>, filter: FamilySpec): Family1<A> {
+        if (filter.isEmpty) return family(type)
         val typeId = world.typeId(type)
-        val key = excludedKey(typeId.value, SINGLE_TYPE_SENTINEL, exclude)
-        val existing = excludedFamily1s[key] as Family1<A>?
-        return existing ?: Family1(
-            buildFamily(type, typeId, exclude).also {
-                indexFamily(it)
-                excludedCaches.add(it)
-            },
-        ).also { excludedFamily1s[key] = it }
+        return cachedFamily<A>(typeId, filter) ?: createFilteredFamily1(type, typeId, filter)
     }
 
-    // The key binds exact ordered pair and exclude IDs within this world generation until clear().
+    private fun <A : Any> createFilteredFamily1(
+        type: KClass<A>,
+        typeId: ComponentTypeId,
+        filter: FamilySpec,
+    ): Family1<A> {
+        val compiled = CompiledFamilySpec(world, filter, type)
+        val resolved = if (!compiled.isActive) {
+            family(type)
+        } else {
+            Family1(
+                buildFamily(type, typeId, compiled).also {
+                    indexFamily(it)
+                    filteredCaches.add(it)
+                },
+            )
+        }
+        filteredSingleRow(typeId.value).add(FilteredFamily1Entry(filter, resolved))
+        return resolved
+    }
+
+    // The entries bind exact ordered pair and filter within this world generation until clear().
     @Suppress("UNCHECKED_CAST")
-    fun <A : Any, B : Any> familyExcluding(
+    fun <A : Any, B : Any> family(
         typeA: KClass<A>,
         typeB: KClass<B>,
-        exclude: Set<KClass<out Any>>,
+        filter: FamilySpec,
     ): Family2<A, B> {
-        if (exclude.isEmpty()) return family(typeA, typeB)
+        if (filter.isEmpty) return family(typeA, typeB)
         val typeIdA = world.typeId(typeA)
         val typeIdB = world.typeId(typeB)
-        val key = excludedKey(typeIdA.value, typeIdB.value, exclude)
-        val existing = excludedFamily2s[key] as Family2<A, B>?
-        return existing ?: Family2(
-            buildFamily(typeA, typeIdA, typeB, typeIdB, exclude).also {
-                indexFamily(it)
-                excludedCaches.add(it)
-            },
-        ).also { excludedFamily2s[key] = it }
+        return cachedFamily<A, B>(typeIdA, typeIdB, filter) ?: createFilteredFamily2(typeA, typeIdA, typeB, typeIdB, filter)
     }
 
-    private fun excludedKey(typeIdA: Int, typeIdB: Int, exclude: Set<KClass<out Any>>): ExcludedFamilyKey {
-        val ids = IntArray(exclude.size)
-        var index = 0
-        for (excludedType in exclude) {
-            ids[index++] = world.typeId(excludedType).value
+    private fun <A : Any, B : Any> createFilteredFamily2(
+        typeA: KClass<A>,
+        typeIdA: ComponentTypeId,
+        typeB: KClass<B>,
+        typeIdB: ComponentTypeId,
+        filter: FamilySpec,
+    ): Family2<A, B> {
+        val compiled = CompiledFamilySpec(world, filter, typeA, typeB)
+        val resolved = if (!compiled.isActive) {
+            family(typeA, typeB)
+        } else {
+            Family2(
+                buildFamily(typeA, typeIdA, typeB, typeIdB, compiled).also {
+                    indexFamily(it)
+                    filteredCaches.add(it)
+                },
+            )
         }
-        ids.sort()
-        return ExcludedFamilyKey(typeIdA, typeIdB, ids)
+        filteredPairRow(typeIdA.value).add(FilteredFamily2Entry(typeIdB.value, filter, resolved))
+        return resolved
+    }
+
+    private fun filteredSingleRow(id: Int): ArrayList<FilteredFamily1Entry> {
+        if (id >= filteredSingleFamilies.size) {
+            filteredSingleFamilies = filteredSingleFamilies.copyOf(maxOf(id + 1, filteredSingleFamilies.size * 2))
+        }
+        return filteredSingleFamilies[id] ?: ArrayList<FilteredFamily1Entry>(2).also { filteredSingleFamilies[id] = it }
+    }
+
+    private fun filteredPairRow(idA: Int): ArrayList<FilteredFamily2Entry> {
+        if (idA >= filteredPairFamilies.size) {
+            filteredPairFamilies = filteredPairFamilies.copyOf(maxOf(idA + 1, filteredPairFamilies.size * 2))
+        }
+        return filteredPairFamilies[idA] ?: ArrayList<FilteredFamily2Entry>(2).also { filteredPairFamilies[idA] = it }
     }
 
     fun removeEntity(entity: Entity) {
@@ -190,8 +261,8 @@ internal class FamilyRegistry(
     private inline fun forEachCache(action: (FamilyCache) -> Unit) {
         families.values.forEach(action)
         familySpecCaches.values.forEach(action)
-        for (index in 0 until excludedCaches.size) {
-            action(excludedCaches[index])
+        for (index in 0 until filteredCaches.size) {
+            action(filteredCaches[index])
         }
     }
 
@@ -214,16 +285,16 @@ internal class FamilyRegistry(
     private fun <A : Any> buildFamily(
         type: KClass<A>,
         typeId: ComponentTypeId,
-        exclude: Set<KClass<out Any>> = emptySet(),
+        filter: CompiledFamilySpec? = null,
     ): Family1Cache<A> {
         val store = world.store(typeId, type)
-        val cache = if (exclude.isEmpty()) {
+        val cache = if (filter == null) {
             Family1Cache(type, typeId, store)
         } else {
-            Family1Cache(type, typeId, store, exclude.toSet(), buildSignatureMask(world, exclude))
+            Family1Cache(type, typeId, store, filter)
         }
         store.forEach { entity, component ->
-            if (!cache.isExcluded(world, entity)) {
+            if (cache.matchesFilter(world, entity)) {
                 cache.add(entity, component)
             }
         }
@@ -235,14 +306,14 @@ internal class FamilyRegistry(
         typeIdA: ComponentTypeId,
         typeB: KClass<B>,
         typeIdB: ComponentTypeId,
-        exclude: Set<KClass<out Any>> = emptySet(),
+        filter: CompiledFamilySpec? = null,
     ): Family2Cache<A, B> {
         val storeA = world.store(typeIdA, typeA)
         val storeB = world.store(typeIdB, typeB)
-        val cache = if (exclude.isEmpty()) {
+        val cache = if (filter == null) {
             Family2Cache(typeA, typeIdA, storeA, typeB, typeIdB, storeB)
         } else {
-            Family2Cache(typeA, typeIdA, storeA, typeB, typeIdB, storeB, exclude.toSet(), buildSignatureMask(world, exclude))
+            Family2Cache(typeA, typeIdA, storeA, typeB, typeIdB, storeB, filter)
         }
         fillFamily(cache, storeA, storeB)
         return cache
@@ -276,7 +347,7 @@ internal class FamilyRegistry(
         storeB: ComponentStore<B>,
     ) {
         storeA.forEach { entity, componentA ->
-            if (!cache.isExcluded(world, entity)) {
+            if (cache.matchesFilter(world, entity)) {
                 storeB.get(entity)?.let { componentB ->
                     cache.add(entity, componentA, componentB)
                 }
@@ -290,39 +361,25 @@ internal class FamilyRegistry(
         storeB: ComponentStore<B>,
     ) {
         storeB.forEach { entity, componentB ->
-            if (!cache.isExcluded(world, entity)) {
+            if (cache.matchesFilter(world, entity)) {
                 storeA.get(entity)?.let { componentA ->
                     cache.add(entity, componentA, componentB)
                 }
             }
         }
     }
-
-    private companion object {
-        const val SINGLE_TYPE_SENTINEL = -1
-    }
 }
 
-private class ExcludedFamilyKey(
-    private val typeIdA: Int,
-    private val typeIdB: Int,
-    private val excludeIds: IntArray,
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is ExcludedFamilyKey) return false
-        return typeIdA == other.typeIdA &&
-            typeIdB == other.typeIdB &&
-            excludeIds.contentEquals(other.excludeIds)
-    }
+private class FilteredFamily1Entry(
+    val filter: FamilySpec,
+    val family: Family1<*>,
+)
 
-    override fun hashCode(): Int {
-        var result = typeIdA
-        result = 31 * result + typeIdB
-        result = 31 * result + excludeIds.contentHashCode()
-        return result
-    }
-}
+private class FilteredFamily2Entry(
+    val typeIdB: Int,
+    val filter: FamilySpec,
+    val family: Family2<*, *>,
+)
 
 /**
  * Internal unique identifier for a component type in a [World].

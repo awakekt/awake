@@ -9,10 +9,9 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.lerp
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ecs.componentType
-import com.awakekt.awake.ecs.family
 import com.awakekt.awake.ecs.get
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -121,32 +120,32 @@ object KeyframeAnimationBinding : SceneComponentBinding<KeyframeAnimation, Scene
  *
  * @param hasRenderer Whether anything draws the entities; false skips the alpha track.
  */
-class KeyframeAnimationSystem(private val hasRenderer: Boolean) : System {
+class KeyframeAnimationSystem(private val hasRenderer: Boolean) : Family2System<Transform, KeyframeAnimation>(Transform::class, KeyframeAnimation::class) {
     /** A system for a host that draws, writing every track. */
     constructor() : this(hasRenderer = true)
 
-    override fun update(world: World, delta: Float) {
-        world.family(TRANSFORM, KEYFRAMES).forEach { entity, transform, animation ->
-            val tracks = animation.tracks
-            if (tracks.duration <= 0f) return@forEach
-            val time = (animation.time + delta).mod(tracks.duration)
-            animation.time = time
-            animation.positionKey = tracks.position.sampleInto(time, transform.position, animation.positionKey)
-            animation.rotationKey = tracks.rotation.sampleInto(time, transform.rotation, animation.rotationKey)
-            animation.scaleKey = tracks.scale.sampleInto(time, transform.scale, animation.scaleKey)
-            if (!hasRenderer || tracks.alpha.isEmpty()) return@forEach
-            val material = world.get(entity, MATERIAL) ?: return@forEach
-            val next = keyAfter(tracks.alpha.size, time, animation.alphaKey) { tracks.alpha[it].time }
-            animation.alphaKey = next
+    override fun process(world: World, delta: Float, entity: Entity, first: Transform, second: KeyframeAnimation) {
+        val tracks = second.tracks
+        if (tracks.duration <= 0f) return
+        val time = (second.time + delta).mod(tracks.duration)
+        second.time = time
+        second.positionKey = tracks.position.sampleInto(time, first.position, second.positionKey)
+        second.rotationKey = tracks.rotation.sampleInto(time, first.rotation, second.rotationKey)
+        second.scaleKey = tracks.scale.sampleInto(time, first.scale, second.scaleKey)
+        if (hasRenderer && tracks.alpha.isNotEmpty()) {
+            val material = world.get(entity, MATERIAL) ?: return
+            val next = keyAfter(tracks.alpha.size, time, second.alphaKey) { tracks.alpha[it].time }
+            second.alphaKey = next
             val alpha = tracks.alpha.sample(time, next)
             if (material.baseColorFactor.a != alpha) material.baseColorFactor = material.baseColorFactor.copy(a = alpha)
         }
     }
 
-    // An inline family walk with handles resolved once: queryEach's capturing lambda was a frame's only allocation.
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
+    }
+
     private companion object {
-        val TRANSFORM = componentType<Transform>()
-        val KEYFRAMES = componentType<KeyframeAnimation>()
         val MATERIAL = componentType<PbrMaterial>()
     }
 }

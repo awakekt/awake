@@ -11,6 +11,8 @@ public final class com/awakekt/awake/scene/world/BudgetedCellNodeSpawner : java/
 	public final fun getPendingDespawnBatches ()I
 	public final fun getPendingSpawnCount ()I
 	public final fun step ()V
+	public final fun stepDespawns (I)I
+	public final fun stepSpawns (I)I
 	public final fun unloadCell (Lcom/awakekt/awake/world/WorldCellCoord;)V
 }
 

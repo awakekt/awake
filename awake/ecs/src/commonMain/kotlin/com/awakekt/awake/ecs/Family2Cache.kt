@@ -26,14 +26,9 @@ internal class Family2Cache<A : Any, B : Any>(
         typeB: KClass<B>,
         typeIdB: ComponentTypeId,
         storeB: ComponentStore<B>,
-        excludeTypes: Set<KClass<out Any>>,
-        excludeMask: LongArray,
+        filter: CompiledFamilySpec,
     ) : this(typeA, typeIdA, storeA, typeB, typeIdB, storeB) {
-        this.excludeTypes = excludeTypes
-        this.excludeMask = excludeMask
-        this.hasExcludes = excludeMask.isNotEmpty()
-        this.excludeWide = excludeMask.size > 1
-        this.excludeLow = excludeMask.firstOrNull() ?: 0L
+        this.filter = filter
     }
 
     @PublishedApi
@@ -49,24 +44,12 @@ internal class Family2Cache<A : Any, B : Any>(
     internal var count: Int = 0
 
     private val sparse = EntityIndexMap()
-    private var excludeTypes: Set<KClass<out Any>> = emptySet()
-    private var excludeMask: LongArray = EMPTY_SIGNATURE_MASK
-    private var hasExcludes: Boolean = false
-    private var excludeWide: Boolean = false
-    private var excludeLow: Long = 0L
+    private var filter: CompiledFamilySpec? = null
 
-    override fun types(): Set<KClass<out Any>> = if (excludeTypes.isEmpty()) setOf(typeA, typeB) else excludeTypes + typeA + typeB
+    override fun types(): Set<KClass<out Any>> = filter?.allTypes(typeA, typeB) ?: setOf(typeA, typeB)
 
-    /** Returns `true` when [entity] carries any component type excluded by this family. */
-    internal fun isExcluded(world: World, entity: Entity): Boolean {
-        if (!hasExcludes) return false
-        val id = entity.id
-        return if (excludeWide) {
-            world.entities.intersects(id, excludeMask)
-        } else {
-            (world.entities.signatureWord(id, 0) and excludeLow) != 0L
-        }
-    }
+    /** Returns `true` when [entity] satisfies this family's optional [FamilySpec] filter. */
+    internal fun matchesFilter(world: World, entity: Entity): Boolean = filter?.matches(world, entity) ?: true
 
     /** Number of live dense entries. */
     val size: Int get() = count
@@ -148,21 +131,21 @@ internal class Family2Cache<A : Any, B : Any>(
 
     override fun addComponent(world: World, entity: Entity, typeId: ComponentTypeId, component: Any) {
         when {
-            typeId == typeIdA -> if (!isExcluded(world, entity) && indexOf(entity) < 0) {
+            typeId == typeIdA -> if (matchesFilter(world, entity) && indexOf(entity) < 0) {
                 storeB.get(entity)?.let { componentB ->
                     // Safe: typeId == typeIdA check confirms component is of type A.
                     @Suppress("UNCHECKED_CAST")
                     append(entity, component as A, componentB)
                 }
             }
-            typeId == typeIdB -> if (!isExcluded(world, entity) && indexOf(entity) < 0) {
+            typeId == typeIdB -> if (matchesFilter(world, entity) && indexOf(entity) < 0) {
                 storeA.get(entity)?.let { componentA ->
                     // Safe: typeId == typeIdB check confirms component is of type B.
                     @Suppress("UNCHECKED_CAST")
                     append(entity, componentA, component as B)
                 }
             }
-            hasExcludes -> remove(entity)
+            filter != null -> syncFiltered(world, entity)
         }
     }
 
@@ -185,10 +168,20 @@ internal class Family2Cache<A : Any, B : Any>(
     override fun removeComponent(world: World, entity: Entity, typeId: ComponentTypeId) {
         if (typeIdA == typeId || typeIdB == typeId) {
             remove(entity)
-        } else if (hasExcludes && !isExcluded(world, entity) && indexOf(entity) < 0) {
+        } else if (filter != null) {
+            syncFiltered(world, entity)
+        }
+    }
+
+    private fun syncFiltered(world: World, entity: Entity) {
+        val currentIndex = indexOf(entity)
+        val shouldMatch = matchesFilter(world, entity)
+        if (shouldMatch && currentIndex < 0) {
             val componentA = storeA.get(entity) ?: return
             val componentB = storeB.get(entity) ?: return
             append(entity, componentA, componentB)
+        } else if (!shouldMatch && currentIndex >= 0) {
+            removeAt(currentIndex)
         }
     }
 

@@ -6,7 +6,7 @@
 package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family1System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 
@@ -21,24 +21,25 @@ import com.awakekt.awake.render.passes.uniforms.TextureAnimation
  *
  * Run it once per rendered frame, before the scene is drawn.
  */
-class TextureClipSystem : System {
+class TextureClipSystem : Family1System<TextureClips>(TextureClips::class) {
     /** Entities whose first cell has to be added, kept to add after the walk rather than during it. */
     private val unshown = ArrayList<Entity>()
 
-    override fun update(world: World, delta: Float) {
-        world.queryEach(TextureClips::class) { entity, clips ->
-            clips.advance(delta)
-            val cell = clips.frame
-            if (clips.shownFrame == cell) return@queryEach
-            // Giving an entity a component it lacks changes which entities the query matches, so that
-            // waits until the walk is over. Replacing the one it has changes nothing the walk reads.
-            if (clips.neverShown && !world.has(entity, TextureAnimation::class)) {
-                unshown += entity
-            } else {
-                world.add(entity, clips.held())
-                clips.shownFrame = cell
-            }
+    override fun process(world: World, delta: Float, entity: Entity, component: TextureClips) {
+        component.advance(delta)
+        val cell = component.frame
+        if (component.shownFrame == cell) return
+        // Giving an entity a component it lacks changes which entities the query matches, so that
+        // waits until the walk is over. Replacing the one it has changes nothing the walk reads.
+        if (component.neverShown && !world.has(entity, TextureAnimation::class)) {
+            unshown += entity
+        } else {
+            world.add(entity, component.held())
+            component.shownFrame = cell
         }
+    }
+
+    override fun end(world: World, delta: Float) {
         if (unshown.isEmpty()) return
         for (entity in unshown) {
             val clips = world.get<TextureClips>(entity) ?: continue
@@ -46,5 +47,9 @@ class TextureClipSystem : System {
             clips.shownFrame = clips.frame
         }
         unshown.clear()
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, component ->
+        process(world, delta, entity, component)
     }
 }

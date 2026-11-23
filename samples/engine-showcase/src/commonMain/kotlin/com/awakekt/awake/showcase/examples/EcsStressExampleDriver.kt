@@ -11,7 +11,7 @@ import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
@@ -32,16 +32,22 @@ internal class SwarmMotion(
  * Moves every [SwarmMotion] entity: a travelling wave in height and a spin, written straight into
  * its [Transform]. One pass over a maintained family, no allocation, no structural change.
  */
-internal class SwarmMotionSystem : System {
+internal class SwarmMotionSystem : Family2System<Transform, SwarmMotion>(Transform::class, SwarmMotion::class) {
     private var time = 0f
 
-    override fun update(world: World, delta: Float) {
-        if (!EcsStressExampleDriver.moving) return
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
+    }
+
+    override fun shouldProcess(world: World, delta: Float): Boolean = EcsStressExampleDriver.moving
+
+    override fun begin(world: World, delta: Float) {
         time += delta
-        world.family<Transform, SwarmMotion>().forEach { _, transform, motion ->
-            transform.position.y = motion.restY + sin(time * WAVE_SPEED + motion.phase) * WAVE_HEIGHT
-            transform.rotation.y = time * motion.spin
-        }
+    }
+
+    override fun process(world: World, delta: Float, entity: Entity, first: Transform, second: SwarmMotion) {
+        first.position.y = second.restY + sin(time * WAVE_SPEED + second.phase) * WAVE_HEIGHT
+        first.rotation.y = time * second.spin
     }
 
     private companion object {

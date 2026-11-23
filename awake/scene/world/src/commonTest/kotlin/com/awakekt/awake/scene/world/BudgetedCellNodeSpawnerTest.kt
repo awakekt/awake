@@ -54,4 +54,43 @@ class BudgetedCellNodeSpawnerTest {
         assertTrue(activeBatches.isEmpty())
         assertEquals(0, spawner.pendingDespawnBatches)
     }
+
+    @Test
+    fun sharedBudgetAcrossMultipleSpawnersCapsTotalNodesPerFrame() {
+        var totalSpawned = 0
+        var totalDespawned = 0
+        fun makeSpawner(): BudgetedCellNodeSpawner = BudgetedCellNodeSpawner(nodesPerFrame = 10) { batchRoot ->
+            val count = batchRoot.children.size
+            totalSpawned += count
+            SpawnedNode { totalDespawned += count }
+        }
+
+        val spawners = listOf(makeSpawner(), makeSpawner(), makeSpawner())
+        spawners.forEachIndexed { idx, spawner ->
+            val children = (1..4).map { i -> SceneNode(name = "s$idx-p$i") }
+            spawner.enqueueCell(WorldCellCoord(idx, 0), SceneNode(name = "cell-$idx", children = children))
+        }
+
+        // Frame 1: shared budget of 5 across 3 spawners spawns 4 from spawner[0] + 1 from spawner[1] = 5 total.
+        var remaining = 5
+        for (spawner in spawners) remaining = spawner.stepSpawns(remaining)
+        assertEquals(0, remaining)
+        assertEquals(5, totalSpawned)
+        assertEquals(0, spawners[0].pendingSpawnCount)
+        assertEquals(3, spawners[1].pendingSpawnCount)
+        assertEquals(4, spawners[2].pendingSpawnCount)
+
+        // Frame 2: shared budget of 10 drains the remaining 7 nodes with 3 left over.
+        remaining = 10
+        for (spawner in spawners) remaining = spawner.stepSpawns(remaining)
+        assertEquals(3, remaining)
+        assertEquals(12, totalSpawned)
+
+        // Unload all cells and despawn under a shared budget of 5.
+        spawners.forEachIndexed { idx, spawner -> spawner.unloadCell(WorldCellCoord(idx, 0)) }
+        remaining = 5
+        for (spawner in spawners) remaining = spawner.stepDespawns(remaining)
+        assertEquals(0, remaining)
+        assertEquals(5, totalDespawned)
+    }
 }

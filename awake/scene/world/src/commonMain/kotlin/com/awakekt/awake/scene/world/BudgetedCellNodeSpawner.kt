@@ -78,8 +78,39 @@ class BudgetedCellNodeSpawner(
      * Advances one frame's worth of despawns and spawns, each bounded by [nodesPerFrame].
      */
     fun step() {
-        despawnSome()
-        spawnSome()
+        stepDespawns(nodesPerFrame)
+        stepSpawns(nodesPerFrame)
+    }
+
+    /**
+     * Despawns leaving batches up to [maxNodes] total node weight and returns the unused budget
+     * (`>= 0`). Lets multiple cell spawners share a single per-frame despawn budget across layers.
+     */
+    fun stepDespawns(maxNodes: Int): Int {
+        if (maxNodes <= 0 || leaving.isEmpty()) return maxOf(0, maxNodes)
+        var budget = maxNodes
+        while (budget > 0) {
+            val batch = leaving.removeFirstOrNull() ?: break
+            batch.handle.despawn()
+            budget -= batch.nodes
+        }
+        return maxOf(0, budget)
+    }
+
+    /**
+     * Spawns queued cell children up to [maxNodes] total node weight and returns the unused budget
+     * (`>= 0`). Lets multiple cell spawners share a single per-frame spawn budget across layers.
+     */
+    fun stepSpawns(maxNodes: Int): Int {
+        if (maxNodes <= 0 || shown.isEmpty()) return maxOf(0, maxNodes)
+        var budget = maxNodes
+        for (cell in shown.values) {
+            if (budget <= 0) break
+            if (cell.waiting.isNotEmpty()) {
+                budget = spawnBatchForCell(cell, budget)
+            }
+        }
+        return maxOf(0, budget)
     }
 
     /**
@@ -96,25 +127,6 @@ class BudgetedCellNodeSpawner(
 
     override fun close() {
         clear()
-    }
-
-    private fun despawnSome() {
-        var budget = nodesPerFrame
-        while (budget > 0) {
-            val batch = leaving.removeFirstOrNull() ?: break
-            batch.handle.despawn()
-            budget -= batch.nodes
-        }
-    }
-
-    private fun spawnSome() {
-        var budget = nodesPerFrame
-        for (cell in shown.values) {
-            if (budget <= 0) break
-            if (cell.waiting.isNotEmpty()) {
-                budget = spawnBatchForCell(cell, budget)
-            }
-        }
     }
 
     private fun spawnBatchForCell(cell: ShownCell, initialBudget: Int): Int {

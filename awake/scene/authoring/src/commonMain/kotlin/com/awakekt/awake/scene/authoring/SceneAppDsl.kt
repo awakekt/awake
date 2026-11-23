@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.authoring
 
+import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.engine.bootstrap.dsl.AppSpecDsl
 import com.awakekt.awake.scene.authoring.dsl.AwakeSceneDsl
@@ -29,7 +30,11 @@ import com.awakekt.awake.scene.runtime.SceneSystemRegistration
 import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.scene.runtime.SceneUpdateBlock
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.scene.runtime.bridge
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
+import com.awakekt.awake.scene.runtime.session.SceneBridge
+import com.awakekt.awake.scene.runtime.session.SceneBridgeHandle
+import com.awakekt.awake.scene.runtime.session.SceneBridgeRegistration
 import kotlin.reflect.KClass
 
 /**
@@ -120,17 +125,25 @@ class SceneAppDsl internal constructor() {
         error("ecs { assets { ... } } or ecs { renderables { ... } } must resolve scene mesh/material requests.")
     }
     private var assetLibraryFactory: (() -> SceneAssetLibrary)? = null
+    private var assetsDsl: SceneAssetsDsl? = null
+    private var retainedMeshBudgetOverride: Long? = null
     private val systemsDsl = SceneSystemsDsl()
     private var updateBlock: SceneUpdateBlock = { _, _ -> }
     private var ui: SceneContent? = null
+    private var sessionUi: (
+        context(Composer)
+        (SceneAppLifecycleRuntime) -> Unit
+    )? = null
     private val onReadyBlocks = mutableListOf<SceneReadyBlock>()
     private val onDisposeBlocks = mutableListOf<SceneDisposeBlock>()
+    private val bridgeRegistrations = mutableListOf<SceneBridgeRegistration>()
     private val serviceRegistrations = mutableListOf<SceneServiceRegistration<*>>()
     private var infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems
     private var fixedStepCap: Int? = null
     private var disabledSystems: Set<String> = emptySet()
     private var hostRole: SceneHostRole = SceneHostRole.Full
+    private var shadowCasterRatio: Float = 0f
 
     /**
      * Sets the descriptive name of the scene.
@@ -209,10 +222,33 @@ class SceneAppDsl internal constructor() {
      */
     fun assets(block: SceneAssetsDsl.() -> Unit) {
         val dsl = SceneAssetsDsl().apply(block)
-        assetLibraryFactory = dsl::buildLibrary
+        assetsDsl = dsl
+        assetLibraryFactory = { dsl.buildLibrary(retainedMeshBudgetOverride) }
         renderableFactory = { request ->
             requireAssetLibrary().resolve(this, request)
         }
+    }
+
+    /**
+     * Retains up to [bytes] of released GPU meshes in the scene asset library so walking across
+     * streamed cell boundaries reuses meshes without re-reading or re-uploading them. Zero (the
+     * default) destroys a mesh when its last renderer releases it.
+     */
+    fun retainedMeshBudgetBytes(bytes: Long) {
+        require(bytes >= 0L) { "retainedMeshBudgetBytes must be >= 0, was $bytes" }
+        retainedMeshBudgetOverride = bytes
+        assetsDsl?.let { dsl ->
+            assetLibraryFactory = { dsl.buildLibrary(retainedMeshBudgetOverride) }
+        }
+    }
+
+    /**
+     * Sets the smallest off-screen shadow caster size (`radius / distance` from camera eye) that is
+     * still drawn into shadow maps. On-screen entities always cast shadows. Zero draws every caster.
+     */
+    fun minShadowCasterRatio(value: Float) {
+        require(value >= 0f && value.isFinite()) { "minShadowCasterRatio must be finite and >= 0, was $value" }
+        shadowCasterRatio = value
     }
 
     /**
@@ -295,6 +331,37 @@ class SceneAppDsl internal constructor() {
      */
     fun ui(block: SceneContent) {
         ui = block
+        sessionUi = null
+    }
+
+    /**
+     * Declares scene-level Compose UI overlay content backed by a scene-scoped [SceneBridge]
+     * registered via [bridge], passing the active [T] directly into Compose without mutable
+     * captures or a `World` UI registry.
+     */
+    fun <T : SceneBridge> ui(
+        bridge: SceneBridgeHandle<T>,
+        content: context(Composer) (T) -> Unit,
+    ) {
+        ui = null
+        sessionUi = { runtime -> content(runtime.bridge(bridge)) }
+    }
+
+    /**
+     * Registers a scene-scoped [SceneBridge] and pairs it directly with the scene's Compose UI
+     * overlay [content], returning its [SceneBridgeHandle] for optional lookup via
+     * [SceneAppLifecycleRuntime.bridge].
+     *
+     * Acts like a scene-scoped ViewModel: [bridge] owns stores and ECS sync/effect draining for
+     * the scene's lifetime, while [content] stays purely declarative Compose.
+     */
+    fun <T : SceneBridge> ui(
+        bridge: SceneAppLifecycleRuntime.() -> T,
+        content: context(Composer) (T) -> Unit,
+    ): SceneBridgeHandle<T> {
+        val handle = bridge(bridge)
+        ui(handle, content)
+        return handle
     }
 
     /**
@@ -305,6 +372,18 @@ class SceneAppDsl internal constructor() {
     @Deprecated("Use ui { ... } instead.", ReplaceWith("ui(block)"))
     fun content(block: SceneContent) {
         ui(block)
+    }
+
+    /**
+     * Registers a [SceneBridge] built once the scene is ready, stepped around the ECS schedule on
+     * each frame (`beforeAdvance` / `afterAdvance`), and closed automatically in reverse order when
+     * the scene disposes. Returns a stateless [SceneBridgeHandle] usable with [ui] and
+     * [SceneAppLifecycleRuntime.bridge].
+     */
+    fun <T : SceneBridge> bridge(factory: SceneAppLifecycleRuntime.() -> T): SceneBridgeHandle<T> {
+        val handle = SceneBridgeHandle<T>()
+        bridgeRegistrations += SceneBridgeRegistration(handle, factory)
+        return handle
     }
 
     /**
@@ -427,6 +506,9 @@ class SceneAppDsl internal constructor() {
         fixedStepCap?.let { spec.maxFixedStepsPerFrame = it }
         spec.disabledSystems = disabledSystems
         spec.hostRole = hostRole
+        spec.minShadowCasterRatio = shadowCasterRatio
+        spec.bridgeRegistrations = bridgeRegistrations.toList()
+        spec.sessionUi = sessionUi
     }
 }
 
