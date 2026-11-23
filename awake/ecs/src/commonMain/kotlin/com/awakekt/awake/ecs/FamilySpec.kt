@@ -91,9 +91,9 @@ internal class FamilySpecCache(
     internal var count: Int = 0
     private val sparse = EntityIndexMap()
 
-    private val allMask = maskOf(spec.all)
-    private val oneMask = maskOf(spec.one)
-    private val excludeMask = maskOf(spec.exclude)
+    private val allMask = buildSignatureMask(world, spec.all)
+    private val oneMask = buildSignatureMask(world, spec.one)
+    private val excludeMask = buildSignatureMask(world, spec.exclude)
 
     // Word 0 of each mask is the whole mask unless one of them names a type ID of 64 or above.
     private val wide = maxOf(allMask.size, oneMask.size, excludeMask.size) > 1
@@ -202,14 +202,6 @@ internal class FamilySpecCache(
         }
         val newCapacity = maxOf(requiredCapacity, entities.size * CAPACITY_GROWTH_FACTOR)
         entities = entities.copyOf(newCapacity)
-    }
-
-    /** [types] as a signature-shaped bit set, one word per 64 type IDs; empty for no types. */
-    private fun maskOf(types: Set<KClass<out Any>>): LongArray {
-        val ids = types.map { world.typeId(it).value }
-        val mask = LongArray(ids.maxOrNull()?.let { (it ushr 6) + 1 } ?: 0)
-        for (id in ids) mask[id ushr 6] = mask[id ushr 6] or (1L shl (id and 63))
-        return mask
     }
 
     private companion object {

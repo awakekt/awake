@@ -1,0 +1,2 @@
+- Add `World.familyExcluding` overloads so packed `Family1` and `Family2` SoA caches can incrementally exclude component types without falling back to per-entity `World.get` lookups.
+- Add `IteratingSystem`, `Family1System`, and `Family2System` base classes in `:awake:ecs` that cache maintained families per world generation and iterate dense entity/component bags with zero per-frame allocations.

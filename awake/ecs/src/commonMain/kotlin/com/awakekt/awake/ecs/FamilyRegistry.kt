@@ -23,6 +23,9 @@ internal class FamilyRegistry(
 ) {
     private val families = mutableMapOf<FamilyKey, FamilyCache>()
     private val familySpecCaches = mutableMapOf<FamilySpec, FamilySpecCache>()
+    private val excludedFamily1s = mutableMapOf<ExcludedFamilyKey, Family1<*>>()
+    private val excludedFamily2s = mutableMapOf<ExcludedFamilyKey, Family2<*, *>>()
+    private val excludedCaches = ArrayList<FamilyCache>()
 
     // Index wrappers by type ID so a warmed lookup allocates neither a wrapper nor a boxed
     // FamilyKey. Pair rows are ordered: (A, B) and (B, A) expose different typed columns.
@@ -37,6 +40,9 @@ internal class FamilyRegistry(
     fun clear() {
         families.clear()
         familySpecCaches.clear()
+        excludedFamily1s.clear()
+        excludedFamily2s.clear()
+        excludedCaches.clear()
         familiesByComponentId.fill(null)
         singleFamilies.fill(null)
         pairFamilies.fill(null)
@@ -100,6 +106,51 @@ internal class FamilyRegistry(
         buildFamilySpecCache(spec).also(::indexFamily)
     }
 
+    // The key binds exact type and exclude IDs within this world generation until clear().
+    @Suppress("UNCHECKED_CAST")
+    fun <A : Any> familyExcluding(type: KClass<A>, exclude: Set<KClass<out Any>>): Family1<A> {
+        if (exclude.isEmpty()) return family(type)
+        val typeId = world.typeId(type)
+        val key = excludedKey(typeId.value, SINGLE_TYPE_SENTINEL, exclude)
+        val existing = excludedFamily1s[key] as Family1<A>?
+        return existing ?: Family1(
+            buildFamily(type, typeId, exclude).also {
+                indexFamily(it)
+                excludedCaches.add(it)
+            },
+        ).also { excludedFamily1s[key] = it }
+    }
+
+    // The key binds exact ordered pair and exclude IDs within this world generation until clear().
+    @Suppress("UNCHECKED_CAST")
+    fun <A : Any, B : Any> familyExcluding(
+        typeA: KClass<A>,
+        typeB: KClass<B>,
+        exclude: Set<KClass<out Any>>,
+    ): Family2<A, B> {
+        if (exclude.isEmpty()) return family(typeA, typeB)
+        val typeIdA = world.typeId(typeA)
+        val typeIdB = world.typeId(typeB)
+        val key = excludedKey(typeIdA.value, typeIdB.value, exclude)
+        val existing = excludedFamily2s[key] as Family2<A, B>?
+        return existing ?: Family2(
+            buildFamily(typeA, typeIdA, typeB, typeIdB, exclude).also {
+                indexFamily(it)
+                excludedCaches.add(it)
+            },
+        ).also { excludedFamily2s[key] = it }
+    }
+
+    private fun excludedKey(typeIdA: Int, typeIdB: Int, exclude: Set<KClass<out Any>>): ExcludedFamilyKey {
+        val ids = IntArray(exclude.size)
+        var index = 0
+        for (excludedType in exclude) {
+            ids[index++] = world.typeId(excludedType).value
+        }
+        ids.sort()
+        return ExcludedFamilyKey(typeIdA, typeIdB, ids)
+    }
+
     fun removeEntity(entity: Entity) {
         // Entity destruction affects every cache (it must be removed if it was present)
         forEachCache { it.remove(entity) }
@@ -139,6 +190,9 @@ internal class FamilyRegistry(
     private inline fun forEachCache(action: (FamilyCache) -> Unit) {
         families.values.forEach(action)
         familySpecCaches.values.forEach(action)
+        for (index in 0 until excludedCaches.size) {
+            action(excludedCaches[index])
+        }
     }
 
     private inline fun forEachRelevantCache(typeId: ComponentTypeId, action: (FamilyCache) -> Unit) {
@@ -157,11 +211,21 @@ internal class FamilyRegistry(
         }
     }
 
-    private fun <A : Any> buildFamily(type: KClass<A>, typeId: ComponentTypeId): Family1Cache<A> {
+    private fun <A : Any> buildFamily(
+        type: KClass<A>,
+        typeId: ComponentTypeId,
+        exclude: Set<KClass<out Any>> = emptySet(),
+    ): Family1Cache<A> {
         val store = world.store(typeId, type)
-        val cache = Family1Cache(type, typeId, store)
+        val cache = if (exclude.isEmpty()) {
+            Family1Cache(type, typeId, store)
+        } else {
+            Family1Cache(type, typeId, store, exclude.toSet(), buildSignatureMask(world, exclude))
+        }
         store.forEach { entity, component ->
-            cache.add(entity, component)
+            if (!cache.isExcluded(world, entity)) {
+                cache.add(entity, component)
+            }
         }
         return cache
     }
@@ -171,10 +235,15 @@ internal class FamilyRegistry(
         typeIdA: ComponentTypeId,
         typeB: KClass<B>,
         typeIdB: ComponentTypeId,
+        exclude: Set<KClass<out Any>> = emptySet(),
     ): Family2Cache<A, B> {
         val storeA = world.store(typeIdA, typeA)
         val storeB = world.store(typeIdB, typeB)
-        val cache = Family2Cache(typeA, typeIdA, storeA, typeB, typeIdB, storeB)
+        val cache = if (exclude.isEmpty()) {
+            Family2Cache(typeA, typeIdA, storeA, typeB, typeIdB, storeB)
+        } else {
+            Family2Cache(typeA, typeIdA, storeA, typeB, typeIdB, storeB, exclude.toSet(), buildSignatureMask(world, exclude))
+        }
         fillFamily(cache, storeA, storeB)
         return cache
     }
@@ -207,8 +276,10 @@ internal class FamilyRegistry(
         storeB: ComponentStore<B>,
     ) {
         storeA.forEach { entity, componentA ->
-            storeB.get(entity)?.let { componentB ->
-                cache.add(entity, componentA, componentB)
+            if (!cache.isExcluded(world, entity)) {
+                storeB.get(entity)?.let { componentB ->
+                    cache.add(entity, componentA, componentB)
+                }
             }
         }
     }
@@ -219,10 +290,37 @@ internal class FamilyRegistry(
         storeB: ComponentStore<B>,
     ) {
         storeB.forEach { entity, componentB ->
-            storeA.get(entity)?.let { componentA ->
-                cache.add(entity, componentA, componentB)
+            if (!cache.isExcluded(world, entity)) {
+                storeA.get(entity)?.let { componentA ->
+                    cache.add(entity, componentA, componentB)
+                }
             }
         }
+    }
+
+    private companion object {
+        const val SINGLE_TYPE_SENTINEL = -1
+    }
+}
+
+private class ExcludedFamilyKey(
+    private val typeIdA: Int,
+    private val typeIdB: Int,
+    private val excludeIds: IntArray,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ExcludedFamilyKey) return false
+        return typeIdA == other.typeIdA &&
+            typeIdB == other.typeIdB &&
+            excludeIds.contentEquals(other.excludeIds)
+    }
+
+    override fun hashCode(): Int {
+        var result = typeIdA
+        result = 31 * result + typeIdB
+        result = 31 * result + excludeIds.contentHashCode()
+        return result
     }
 }
 
