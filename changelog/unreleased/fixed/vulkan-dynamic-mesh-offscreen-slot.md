@@ -1,0 +1,1 @@
+- **Vulkan:** Allocated the dedicated offscreen frame slot (`maxFramesInFlight + 1`) on `VulkanDynamicMesh` so offscreen captures containing dynamic meshes (such as trails) no longer fail with `Frame index 2 is outside 0..1`.

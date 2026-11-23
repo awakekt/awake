@@ -11,6 +11,7 @@ import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
@@ -131,6 +132,60 @@ class OffscreenUniformSlotTest {
         } finally {
             renderer.waitIdle()
             mesh.destroy()
+            material.destroy()
+            target.destroy()
+            close()
+        }
+    }
+
+    @Test
+    fun offscreenCaptureDrawsDynamicMeshOnDedicatedOffscreenSlot() {
+        val (renderer, close) = newHeadlessShadowRenderer(SIZE, presentable = true)
+        val target = renderer.createRenderTarget(SIZE, SIZE)
+        val cube = generate { cube(size = 1.6f) }
+        val vertexCount = cube.vertices.size / cube.format.strideFloats
+        val dynamicMesh = checkNotNull(renderer.capability(GpuDynamicMeshes)).createDynamicMesh(cube.format, vertexCount, cube.indices)
+        val material = renderer.createMaterial(LitShadowUniformLayout)
+        try {
+            dynamicMesh.writeVertices(cube.vertices, firstVertex = 0, vertexCount = vertexCount)
+            dynamicMesh.drawIndexCount = cube.indices.size
+            val light = SceneLight(direction = Vec3f(0.4f, 1f, 0.3f), color = Vec3f(1f, 1f, 1f))
+            val camera = Lens(eye = Vec3f(0f, 0f, 4f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 40f)
+            val draw = listOf(RenderDrawCommand(dynamicMesh, material, model = Mat4()))
+
+            repeat(FRAMES) {
+                val offscreenPass = ScenePassCompiler.compile(
+                    lens = camera,
+                    drawCalls = draw,
+                    light = light,
+                    environment = EnvironmentUniforms(clearColor = Color(0f, 0f, 0.6f, 1f)),
+                    clipSpace = renderer.clipSpace,
+                    aspect = 1f,
+                    drawPreparer = renderer.offscreenDrawPreparer,
+                )
+                renderer.submitToTexture(target, offscreenPass)
+
+                val mainPass = ScenePassCompiler.compile(
+                    lens = camera,
+                    drawCalls = draw,
+                    light = light,
+                    clipSpace = renderer.clipSpace,
+                    aspect = 1f,
+                    drawPreparer = renderer.gpuDrawPreparer,
+                )
+                renderer.draw(mainPass)
+            }
+
+            assertEquals(0L, renderer.offscreenWaitsForFrame, "dynamic mesh offscreen capture must not stall presented frames")
+            renderer.waitIdle()
+            val pixels = runBlocking { renderer.readPixels(target) }.data
+            val centre = ((SIZE / 2) * SIZE + (SIZE / 2)) * 4
+            val red = pixels[centre].toInt() and 0xFF
+            val green = pixels[centre + 1].toInt() and 0xFF
+            assertTrue(red > 40 && green > 40, "dynamic mesh drew on the dedicated offscreen slot (r=$red g=$green)")
+        } finally {
+            renderer.waitIdle()
+            dynamicMesh.destroy()
             material.destroy()
             target.destroy()
             close()
