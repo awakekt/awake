@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.71.0] - 2026-11-24
+
+### Changed
+
+- Guarded unlit skinned PBR fetches, matte environment/chrome reflections, deep-water shoreline cellular noise, and steady cubemap sky secondary lookups behind uniform/depth branches, skipped covering-exempt and clean inactive mask/depth passes when no consumer requires them, removed empty `LOAD`+`STORE` post-pass wrappers, honored pre-sorted scene draws on Vulkan, and added an allocation-free unclipped quad fast path to 2D texture run coalescing.
+
+### Fixed
+
+- Fixed per-frame native C++ heap (`new[]`) and JNI local-reference leaks in the Vulkan render-pass, submit, present, and command-buffer JNI accessors, replaced exact-size instance-packing reallocations with grow-only `InstancePacker.packSlice` / `InstanceTintPacker.packSlice` across Vulkan and WebGPU, skipped unchanged `SkinnedInstanceBuffer` palette/tint uploads, eliminated WebAssembly WebGPU `ArrayBuffer.slice` copies via direct linear-memory `writeBufferFloats`/`writeBufferInts`, and skipped the redundant pre-frame `TransformSystem` pass when `frameSystems` is empty.
+
 ## [0.70.0] - 2026-11-23
 
 ### Added
