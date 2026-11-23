@@ -14,7 +14,9 @@ import io.ygdrasil.webgpu.Queue
 import io.ygdrasil.webgpu.WGPUBuffer
 import io.ygdrasil.webgpu.WGPUQueue
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.js.JsAny
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
+import kotlin.wasm.unsafe.wasmMemory
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
 
 /**
@@ -30,6 +32,7 @@ internal actual fun GPUQueue.writeMeshFloatRange(buffer: GPUBuffer, data: FloatA
             (this as Queue).handler,
             (buffer as Buffer).handler,
             first * Float.SIZE_BYTES,
+            wasmMemory,
             base.address.toInt(),
             count * Float.SIZE_BYTES,
         )
@@ -46,14 +49,20 @@ internal actual fun GPUQueue.writeMeshIntRange(buffer: GPUBuffer, data: IntArray
             (this as Queue).handler,
             (buffer as Buffer).handler,
             first * Int.SIZE_BYTES,
+            wasmMemory,
             base.address.toInt(),
             count * Int.SIZE_BYTES,
         )
     }
 }
 
-/** Read after the allocation, which may have grown the memory and replaced its buffer. `wasmExports`
- * is the generated glue's own module binding, which it keeps in scope for `js()` code. */
+/** Read [memory] after the allocation, which may have grown linear memory and replaced its buffer. */
 @Suppress("UnusedParameter") // Read by the JS body.
-private fun writeFromLinearMemoryAt(queue: WGPUQueue, buffer: WGPUBuffer, bufferOffset: Int, byteOffset: Int, byteSize: Int): Unit =
-    js("queue.writeBuffer(buffer, bufferOffset, wasmExports.memory.buffer, byteOffset, byteSize)")
+private fun writeFromLinearMemoryAt(
+    queue: WGPUQueue,
+    buffer: WGPUBuffer,
+    bufferOffset: Int,
+    memory: JsAny,
+    byteOffset: Int,
+    byteSize: Int,
+): Unit = js("queue.writeBuffer(buffer, bufferOffset, memory.buffer, byteOffset, byteSize)")

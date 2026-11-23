@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.20"
+kotlin = "2.5.0-RC"
 # Awake Core release the plugin compiles against. Its editor contract is the only API a plugin uses.
 awake = "0.8.6"
 

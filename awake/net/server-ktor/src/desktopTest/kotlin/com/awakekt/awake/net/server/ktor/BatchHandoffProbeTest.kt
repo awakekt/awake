@@ -120,15 +120,20 @@ class BatchHandoffProbeTest {
         override suspend fun close() = Unit
     }
 
-    /** Thread-allocated bytes per client per tick of `produce`, after warm-up, on the calling thread. */
-    private fun allocPerClientTick(clients: Int, ticks: Int, produce: suspend (Int) -> Unit): Long {
+    /** Thread-allocated bytes per client per tick of `produce`, median of 5 windows after warm-up. */
+    private inline fun allocPerClientTick(clients: Int, ticks: Int, crossinline produce: suspend (Int) -> Unit): Long {
         val thread = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
         return runBlocking {
             val id = Thread.currentThread().id
             repeat(WARMUP_TICKS) { for (c in 0 until clients) produce(c) }
-            val before = thread.getThreadAllocatedBytes(id)
-            repeat(ticks) { for (c in 0 until clients) produce(c) }
-            (thread.getThreadAllocatedBytes(id) - before) / (clients.toLong() * ticks)
+            val windows = LongArray(ALLOC_WINDOWS)
+            for (w in windows.indices) {
+                val before = thread.getThreadAllocatedBytes(id)
+                repeat(ticks) { for (c in 0 until clients) produce(c) }
+                windows[w] = thread.getThreadAllocatedBytes(id) - before
+            }
+            windows.sort()
+            windows[windows.size / 2] / (clients.toLong() * ticks)
         }
     }
 
@@ -165,6 +170,7 @@ class BatchHandoffProbeTest {
 
     private companion object {
         const val WARMUP_TICKS = 300
+        const val ALLOC_WINDOWS = 5
         const val ARRAY_HEADER_BYTES = 16
         const val CONTINUATION_SLACK_BYTES = 96
         const val NOISE_BYTES = 32L

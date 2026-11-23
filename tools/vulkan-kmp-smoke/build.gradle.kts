@@ -10,7 +10,7 @@
 // Add -Pnative=<path to desktop-native-libs> to go past compile-time resolution and create a
 // real VkInstance through the published artifact.
 plugins {
-    kotlin("jvm") version "2.4.20"
+    kotlin("jvm") version "2.5.0-RC"
     application
 }
 

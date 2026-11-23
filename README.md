@@ -4,7 +4,7 @@
 <p align="center">
   <a href="https://github.com/awakekt/awake/releases"><img src="https://img.shields.io/github/v/release/awakekt/awake?filter=v*&label=Release" alt="Latest Awake Core release"></a>
   <a href="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build and publish"></a>
-  <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.20-blue.svg?logo=kotlin" alt="Kotlin"></a>
+  <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.5.0--RC-blue.svg?logo=kotlin" alt="Kotlin"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Apache 2.0 license"></a>
 </p>
 
