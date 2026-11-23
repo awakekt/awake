@@ -6,7 +6,9 @@
 package com.awakekt.awake.scene.character
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.EntityList
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
@@ -52,13 +54,30 @@ class CharacterControllerSystem(
     // carries of its own (CharacterConfig.innerBody) is destroyed when the character goes. Left in
     // the physics world, it stands where the character was, solid, and still trips every sensor.
     // Lists rather than a map, so checking them each step allocates nothing.
-    private val builtFor = ArrayList<Entity>()
+    private val builtFor = EntityList()
     private val built = ArrayList<KinematicCharacterController>()
 
     /** The scene's terrain bodies, for lifting a character found under one. */
     private val terrains = SceneTerrainColliders()
 
+    // Resolved once per world generation to avoid per-step KClass map lookups.
+    private var typesWorld: World? = null
+    private var typesGeneration = -1
+    private var movementTypeId = ComponentTypeId(0)
+    private var groundContactTypeId = ComponentTypeId(0)
+    private var characterTypeId = ComponentTypeId(0)
+
+    private fun resolveTypes(world: World) {
+        if (typesWorld === world && typesGeneration == world.generation) return
+        movementTypeId = world.typeId(MOVEMENT_CONTROL)
+        groundContactTypeId = world.typeId(GROUND_CONTACT)
+        characterTypeId = world.typeId(CHARACTER)
+        typesWorld = world
+        typesGeneration = world.generation
+    }
+
     override fun update(world: World, delta: Float) {
+        resolveTypes(world)
         basis.update(world)
         world.queryEach(TRANSFORM, CHARACTER) { entity, transform, character ->
             character.restoreSteppedYaw(transform)
@@ -68,7 +87,7 @@ class CharacterControllerSystem(
                         character.controller = built
                         track(entity, built)
                     }
-            val intent = world.get<MovementControl>(entity)
+            val intent = world.get<MovementControl>(entity, movementTypeId)
             if (character.motionMode == CharacterMotionMode.Free) {
                 moveFree(character, body, intent, delta)
             } else {
@@ -76,7 +95,7 @@ class CharacterControllerSystem(
             }
             if (liftOutOfTerrain(world, body)) character.verticalVelocity = 0f
             transform.position.set(body.position)
-            world.get<GroundContact>(entity)?.let { contact ->
+            world.get<GroundContact>(entity, groundContactTypeId)?.let { contact ->
                 val isFree = character.motionMode == CharacterMotionMode.Free
                 contact.freeMotion = isFree
                 contact.grounded = !isFree && character.isGrounded && character.verticalVelocity <= 0f
@@ -143,14 +162,21 @@ class CharacterControllerSystem(
     private fun liftOutOfTerrain(world: World, body: KinematicCharacterController): Boolean {
         val surfaces = terrains.of(world)
         if (surfaces.isEmpty() || terrains.isTerrain(body.groundBody)) return false
-        return surfaces.any { body.liftOutOf(it) }
+        var lifted = false
+        for (index in surfaces.indices) {
+            if (body.liftOutOf(surfaces[index])) {
+                lifted = true
+                break
+            }
+        }
+        return lifted
     }
 
     /** Keeps [controller] as [entity]'s, disposing one built for it before: its component was replaced. */
     private fun track(entity: Entity, controller: KinematicCharacterController) {
         val index = builtFor.indexOf(entity)
         if (index < 0) {
-            builtFor += entity
+            builtFor.add(entity)
             built += controller
         } else {
             built[index].dispose()
@@ -163,7 +189,7 @@ class CharacterControllerSystem(
         var index = builtFor.size
         while (--index >= 0) {
             val entity = builtFor[index]
-            if (world.isAlive(entity) && world.get(entity, CHARACTER)?.controller === built[index]) continue
+            if (world.isAlive(entity) && world.get<CharacterController>(entity, characterTypeId)?.controller === built[index]) continue
             built[index].dispose()
             builtFor.removeAt(index)
             built.removeAt(index)
@@ -180,5 +206,7 @@ class CharacterControllerSystem(
         // Hoisted: a `Type::class` literal builds a new KClass each time it runs, and interpolate runs every frame.
         val TRANSFORM = Transform::class
         val CHARACTER = CharacterController::class
+        val MOVEMENT_CONTROL = MovementControl::class
+        val GROUND_CONTACT = GroundContact::class
     }
 }

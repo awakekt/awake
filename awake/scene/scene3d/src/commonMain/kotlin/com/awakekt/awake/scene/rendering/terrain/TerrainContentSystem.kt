@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -55,23 +56,50 @@ class TerrainContentSystem(
 ) : System {
     private val log = Logger("scene-terrain")
 
-    /** A list, not a map: a scene holds a handful of terrains, and indexed loops allocate nothing. */
     private val tracked = ArrayList<Tracked>()
+    private var bySlot = arrayOfNulls<Tracked>(INITIAL_SLOT_CAPACITY)
     private val resolved = Channel<Resolved>(Channel.UNLIMITED)
     private val attached = Channel<Attached>(Channel.UNLIMITED)
 
+    // Resolved once per world generation so per-frame updates use direct type ids rather than KClass lookups.
+    private var resolvedWorld: World? = null
+    private var resolvedGeneration = -1
+    private var transformTypeId = ComponentTypeId(0)
+    private var terrainTypeId = ComponentTypeId(0)
+    private var referenceTypeId = ComponentTypeId(0)
+
+    // Steady-state memoization: when neither terrain nor surface-reference families have changed,
+    // no terrain has been added, removed, or replaced.
+    private var syncedWorld: World? = null
+    private var syncedGeneration = -1
+    private var syncedTerrainChanges = -1
+    private var syncedReferenceChanges = -1
+
     override fun update(world: World, delta: Float) {
-        releaseRemoved(world)
+        resolveTypes(world)
+        val terrainFamily = world.family(TERRAIN_CLASS)
+        val referenceFamily = world.family(REFERENCE_CLASS)
+        val worldChanged = syncedWorld !== world || syncedGeneration != world.generation
+        val familyChanged =
+            syncedTerrainChanges != terrainFamily.changes || syncedReferenceChanges != referenceFamily.changes
+        val membershipChanged = worldChanged || familyChanged
+        if (membershipChanged) {
+            releaseRemoved(world)
+        }
         place(world)
         applyAttached()
         applyResolved()
-        // A lambda here, not a stored function: `queryEach` is inline, so this one is inlined into
-        // its loop, where a stored function's generic `invoke` boxed every Entity, each frame (#1742).
-        world.queryEach(TerrainComponent::class) { entity, terrain ->
-            if (find(entity) == null) {
-                val reference = world.get<TerrainSurfaceReference>(entity)
-                if (reference != null || !surfacedOnly) track(world, entity, terrain, reference)
+        if (membershipChanged) {
+            terrainFamily.forEach { entity, terrain ->
+                if (find(entity) == null) {
+                    val reference = world.get<TerrainSurfaceReference>(entity, referenceTypeId)
+                    if (reference != null || !surfacedOnly) track(world, entity, terrain, reference)
+                }
             }
+            syncedWorld = world
+            syncedGeneration = world.generation
+            syncedTerrainChanges = terrainFamily.changes
+            syncedReferenceChanges = referenceFamily.changes
         }
     }
 
@@ -79,6 +107,11 @@ class TerrainContentSystem(
     fun detachAll() {
         tracked.forEach(Tracked::release)
         tracked.clear()
+        bySlot.fill(null)
+        syncedWorld = null
+        syncedGeneration = -1
+        syncedTerrainChanges = -1
+        syncedReferenceChanges = -1
         while (true) {
             val pending = attached.tryReceive().getOrNull() ?: break
             pending.feature.detach()
@@ -88,12 +121,23 @@ class TerrainContentSystem(
         }
     }
 
+    private fun resolveTypes(world: World) {
+        if (resolvedWorld === world && resolvedGeneration == world.generation) return
+        transformTypeId = world.typeId(TRANSFORM_CLASS)
+        terrainTypeId = world.typeId(TERRAIN_CLASS)
+        referenceTypeId = world.typeId(REFERENCE_CLASS)
+        resolvedWorld = world
+        resolvedGeneration = world.generation
+    }
+
     private fun releaseRemoved(world: World) {
         for (index in tracked.indices.reversed()) {
             val entry = tracked[index]
-            val current = if (world.isAlive(entry.entity)) world.get<TerrainComponent>(entry.entity) else null
+            val current = if (world.isAlive(entry.entity)) world.get<TerrainComponent>(entry.entity, terrainTypeId) else null
             if (current !== entry.terrain) {
                 entry.release()
+                val slot = entry.entity.id
+                if (slot < bySlot.size && bySlot[slot] === entry) bySlot[slot] = null
                 tracked.removeAt(index)
             }
         }
@@ -103,7 +147,7 @@ class TerrainContentSystem(
     private fun place(world: World) {
         for (index in tracked.indices) {
             val entry = tracked[index]
-            terrainOrigin(world, entry.entity, entry.origin)
+            terrainOrigin(world, entry.entity, entry.origin, transformTypeId)
         }
     }
 
@@ -127,8 +171,13 @@ class TerrainContentSystem(
     // TooGenericExceptionCaught: a provider that fails for any reason still leaves a drawn terrain.
     @Suppress("TooGenericExceptionCaught")
     private fun track(world: World, entity: Entity, terrain: TerrainComponent, reference: TerrainSurfaceReference?) {
-        val entry = Tracked(entity, terrain).also { tracked += it }
-        place(world)
+        val entry = Tracked(entity, terrain).also {
+            tracked += it
+            val slot = entity.id
+            if (slot >= bySlot.size) bySlot = bySlot.copyOf(maxOf(slot + 1, bySlot.size * 2))
+            bySlot[slot] = it
+        }
+        terrainOrigin(world, entity, entry.origin, transformTypeId)
         val provider = reference?.let { providers[it.provider] }
         if (reference == null || provider == null) {
             if (reference != null) {
@@ -171,8 +220,15 @@ class TerrainContentSystem(
     }
 
     private fun find(entity: Entity): Tracked? {
-        for (index in tracked.indices) if (tracked[index].entity == entity) return tracked[index]
-        return null
+        val slot = entity.id
+        val inSlot = if (slot < bySlot.size) bySlot[slot] else null
+        return if (inSlot != null && inSlot.entity == entity) inSlot else null
+    }
+
+    private companion object {
+        val TRANSFORM_CLASS = Transform::class
+        val TERRAIN_CLASS = TerrainComponent::class
+        val REFERENCE_CLASS = TerrainSurfaceReference::class
     }
 
     private class Tracked(val entity: Entity, val terrain: TerrainComponent) {
@@ -198,8 +254,11 @@ class TerrainContentSystem(
  * translation; before it has run, or in a world that runs none, it sums local positions up the parent
  * chain, since terrains apply neither rotation nor scale.
  */
-internal fun terrainOrigin(world: World, entity: Entity, out: Vec3f): Vec3f {
-    val transform = world.get<Transform>(entity)
+internal fun terrainOrigin(world: World, entity: Entity, out: Vec3f): Vec3f =
+    terrainOrigin(world, entity, out, world.typeId(Transform::class))
+
+internal fun terrainOrigin(world: World, entity: Entity, out: Vec3f, transformTypeId: ComponentTypeId): Vec3f {
+    val transform = world.get<Transform>(entity, transformTypeId)
     return when {
         transform == null -> out.set(0f, 0f, 0f)
         transform.parent == null -> out.set(transform.position)
@@ -207,18 +266,18 @@ internal fun terrainOrigin(world: World, entity: Entity, out: Vec3f): Vec3f {
             val placed = transform.worldMatrix
             out.set(placed.m03, placed.m13, placed.m23)
         }
-        else -> sumParentPositions(world, transform, out)
+        else -> sumParentPositions(world, transform, out, transformTypeId)
     }
 }
 
-private fun sumParentPositions(world: World, start: Transform, out: Vec3f): Vec3f {
+private fun sumParentPositions(world: World, start: Transform, out: Vec3f, transformTypeId: ComponentTypeId): Vec3f {
     var x = start.position.x
     var y = start.position.y
     var z = start.position.z
     var parent = start.parent
     var depth = 0
     while (parent != null && depth < MAX_TERRAIN_PARENT_DEPTH) {
-        val above = world.get<Transform>(parent)
+        val above = world.get<Transform>(parent, transformTypeId)
         if (above == null) {
             parent = null
         } else if (above.parent != null && above.worldVersion > 0) {
@@ -239,3 +298,4 @@ private fun sumParentPositions(world: World, start: Transform, out: Vec3f): Vec3
 }
 
 private const val MAX_TERRAIN_PARENT_DEPTH = 64
+private const val INITIAL_SLOT_CAPACITY = 64
