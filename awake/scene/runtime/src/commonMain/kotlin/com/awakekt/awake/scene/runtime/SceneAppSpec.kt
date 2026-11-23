@@ -86,6 +86,17 @@ class SceneAppSpec(
     var hostRole: SceneHostRole = SceneHostRole.Full
 
     /**
+     * The smallest an off-screen entity can be (bounds radius / distance from camera eye) and still
+     * be drawn into shadow maps. Zero (the default) draws every caster that can reach a shadow map.
+     * On-screen entities always cast shadows regardless of this threshold.
+     */
+    var minShadowCasterRatio: Float = 0f
+        set(value) {
+            require(value >= 0f && value.isFinite()) { "minShadowCasterRatio must be finite and >= 0, was $value" }
+            field = value
+        }
+
+    /**
      * Installs this scene module into the host application specification.
      *
      * @param into The builder receiving module configuration.

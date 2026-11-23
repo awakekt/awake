@@ -9,10 +9,12 @@ public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public final fun hostRole (Lcom/awakekt/awake/scene/runtime/SceneHostRole;)V
 	public final fun infrastructureSystems (Lkotlin/jvm/functions/Function1;)V
 	public final fun maxFixedStepsPerFrame (I)V
+	public final fun minShadowCasterRatio (F)V
 	public final fun name (Ljava/lang/String;)V
 	public final fun onDispose (Lkotlin/jvm/functions/Function1;)V
 	public final fun onReady (Lkotlin/jvm/functions/Function2;)V
 	public final fun preAnimationSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public final fun retainedMeshBudgetBytes (J)V
 	public final fun scene (Lcom/awakekt/awake/scene/document/SceneDocument;)V
 	public final fun scene (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)V
 	public final fun scene (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
@@ -37,12 +39,14 @@ public final class com/awakekt/awake/scene/authoring/SceneAppDslKt {
 }
 
 public final class com/awakekt/awake/scene/authoring/SceneAssetsDsl {
+	public final fun getRetainedMeshBudgetBytes ()J
 	public final fun material (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun mesh (Ljava/lang/String;Lcom/awakekt/awake/core/geometry/MeshGeometry;)V
 	public final fun mesh (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun proceduralMesh (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun renderer (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun resolver (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;)V
+	public final fun setRetainedMeshBudgetBytes (J)V
 	public final fun texture (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
 }
 

@@ -7,7 +7,6 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
@@ -40,7 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 fun SceneAppLifecycleRuntime.spawn(project: LoadedProject, node: SceneNode): SpawnedNode {
     val models = project.spawnedModels
     val library = requireAssetLibrary()
-    val spawned = spawn(node, SceneComponentRegistry()) { request -> !models.mustLoad(request, library) }
+    val spawned = spawn(node, project.spawnComponentRegistry()) { request -> !models.mustLoad(request, library) }
     startSkinnedAnimations(project.models, spawned.entities.toSet())
     models.load(spawned, session.coroutineScope)
     project.playing.track(spawned, world)
@@ -51,14 +50,31 @@ fun SceneAppLifecycleRuntime.spawn(project: LoadedProject, node: SceneNode): Spa
  * The glTF models of spawned nodes that a project's scene didn't load. Each loads once, through
  * [GltfAssetResolver.loadModel], which reads it off the frame thread and shares a load already under way,
  * such as a prewarm's; [attachLoaded] polls those loads on the frame thread, where a finished one is
- * adopted into the project's resolver, and attaches the renderers that waited for it. [close] stops
- * waiting, which cancels a load nothing else waits for.
+ * adopted into the project's resolver, and attaches the renderers that waited for it.
+ *
+ * At most [maxAttachesPerFrame] newly loaded models are adopted and uploaded to the GPU per frame
+ * (reset each frame by [beginFrame]), so arriving in a dense streamed area spreads GPU mesh and
+ * texture uploads smoothly across frames instead of stalling one frame. [close] stops waiting, which
+ * cancels a load nothing else waits for.
  */
-internal class SpawnedModels(private val models: GltfAssetResolver) : AutoCloseable {
+internal class SpawnedModels(
+    private val models: GltfAssetResolver,
+    private val maxAttachesPerFrame: Int = DEFAULT_MAX_ATTACHES_PER_FRAME,
+) : AutoCloseable {
+    init {
+        require(maxAttachesPerFrame > 0) { "maxAttachesPerFrame must be positive, not $maxAttachesPerFrame." }
+    }
+
     // Read and written on the frame thread only.
-    private val loading = mutableMapOf<String, SceneMeshLoad>()
-    private val waiting = mutableListOf<SpawnedNode>()
+    private val loading = LinkedHashMap<String, SceneMeshLoad>()
+    private val waitingByPath = HashMap<String, MutableList<SpawnedNode>>()
+    private var attachedThisFrame = 0
     private var closed = false
+
+    /** Resets the per-frame GPU attach budget at the start of a new frame. */
+    fun beginFrame() {
+        attachedThisFrame = 0
+    }
 
     /**
      * Whether [request] draws a glTF model that can't be drawn now, so its renderer has to wait for a load: one
@@ -79,32 +95,40 @@ internal class SpawnedModels(private val models: GltfAssetResolver) : AutoClosea
 
     /** Waits for the models [spawned] has no renderer for, starting, in [scope], each load not already under way. */
     fun load(spawned: SpawnedNode, scope: CoroutineScope) {
-        val paths = spawned.unattachedRenderables.map(::modelOf).toSet()
-        if (closed || paths.isEmpty()) return
-        waiting += spawned
-        paths.filter { it !in loading }.forEach { path -> loading[path] = models.loadModel(path, scope) }
+        if (closed) return
+        val unattached = spawned.unattachedRenderables
+        if (unattached.isEmpty()) return
+        val paths = LinkedHashSet<String>(unattached.size)
+        for (request in unattached) paths += modelOf(request)
+        for (path in paths) {
+            waitingByPath.getOrPut(path) { ArrayList() }.add(spawned)
+            if (path !in loading) {
+                loading[path] = models.loadModel(path, scope)
+            }
+        }
     }
 
     /**
-     * On the frame thread: adopts each model that has loaded since the last call, attaches the
-     * renderers that waited for it and starts their clips, and logs each model that failed.
+     * On the frame thread: adopts up to [maxAttachesPerFrame] completed models this frame, attaches
+     * the renderers that waited for each and starts their clips, and logs each model that failed.
      */
     fun attachLoaded(runtime: SceneAppLifecycleRuntime) {
-        // Only while something loads, so a frame with nothing to adopt polls nothing.
-        if (closed || loading.isEmpty()) return
+        // Only while something loads and this frame still has upload budget.
+        if (closed || loading.isEmpty() || attachedThisFrame >= maxAttachesPerFrame) return
         // Pairs, not entries: an entry reads through to the map, and on Kotlin/Wasm and Native reading one after
         // `loading -= path` has changed the map throws ConcurrentModificationException.
         for ((path, load) in loading.toList()) {
-            if (!load.poll()) continue
-            loading -= path
-            load.close()
-            when (val failure = load.failure) {
-                null -> attach(runtime, path)
-                else -> giveUp(runtime, path, failure)
+            if (attachedThisFrame >= maxAttachesPerFrame) break
+            if (load.poll()) {
+                loading -= path
+                load.close()
+                val waiters = waitingByPath.remove(path).orEmpty()
+                when (val failure = load.failure) {
+                    null -> if (attach(runtime, path, waiters)) attachedThisFrame += 1
+                    else -> giveUp(runtime, path, waiters, failure)
+                }
             }
         }
-        // A node despawned, or one left waiting only for models that failed, waits no longer.
-        if (waiting.isNotEmpty()) waiting.removeAll { node -> node.unattachedRenderables.none { modelOf(it) in loading } }
     }
 
     override fun close() {
@@ -112,25 +136,29 @@ internal class SpawnedModels(private val models: GltfAssetResolver) : AutoClosea
         closed = true
         loading.values.forEach(SceneMeshLoad::close)
         loading.clear()
-        waiting.clear()
+        waitingByPath.clear()
+        attachedThisFrame = 0
     }
 
     // TooGenericExceptionCaught: one node that can't draw the model it loaded must not stop the frame.
     @Suppress("TooGenericExceptionCaught")
-    private fun attach(runtime: SceneAppLifecycleRuntime, path: String) {
+    private fun attach(runtime: SceneAppLifecycleRuntime, path: String, waiters: List<SpawnedNode>): Boolean {
+        if (waiters.isEmpty()) return false
         val attached = mutableSetOf<Entity>()
-        waiting.forEach { node ->
+        for (node in waiters) {
             try {
                 attached += node.attachRenderers { modelOf(it) == path }
             } catch (failure: Exception) {
                 log.error(failure) { "Spawned node ${node.label(runtime)} can't draw $path: ${failure.message}" }
             }
         }
-        if (attached.isNotEmpty()) runtime.startSkinnedAnimations(models, attached)
+        val anyAttached = attached.isNotEmpty()
+        if (anyAttached) runtime.startSkinnedAnimations(models, attached)
+        return anyAttached
     }
 
-    private fun giveUp(runtime: SceneAppLifecycleRuntime, path: String, failure: Throwable) {
-        val nodes = waiting.filter { node -> node.unattachedRenderables.any { modelOf(it) == path } }
+    private fun giveUp(runtime: SceneAppLifecycleRuntime, path: String, waiters: List<SpawnedNode>, failure: Throwable) {
+        val nodes = waiters.filter { node -> node.unattachedRenderables.any { modelOf(it) == path } }
         log.error(failure) {
             val names = nodes.joinToString { it.label(runtime) }.ifEmpty { "none" }
             "Can't load $path from the project (${failure.message}), so the spawned nodes that wait for it draw without it: $names"
@@ -141,6 +169,11 @@ internal class SpawnedModels(private val models: GltfAssetResolver) : AutoClosea
 
     private fun SpawnedNode.label(runtime: SceneAppLifecycleRuntime): String =
         runtime.world.get<Name>(root)?.let { "'${it.value}'" } ?: "unnamed"
+
+    companion object {
+        /** Default cap on newly loaded glTF models uploaded and attached per frame. */
+        const val DEFAULT_MAX_ATTACHES_PER_FRAME = 4
+    }
 }
 
 private val log = Logger("project.spawn")

@@ -122,6 +122,12 @@ class LoadedProject internal constructor(
     /** The models the playing scene's spawned nodes draw that it didn't load, loaded as they are spawned. */
     internal val spawnedModels: SpawnedModels get() = playing.spawnedModels
 
+    // Built once on first runtime spawn when no scoped registry was passed, avoiding per-batch copies.
+    private var defaultSpawnRegistry: SceneComponentRegistry? = null
+
+    internal fun spawnComponentRegistry(): SceneComponentRegistry =
+        componentRegistry ?: defaultSpawnRegistry ?: SceneComponentRegistry().also { defaultSpawnRegistry = it }
+
     /** Where a switch reads its next scene: off the frame thread. A test passes one that runs at once. */
     internal var sceneLoads: CoroutineContext = Dispatchers.Default
 

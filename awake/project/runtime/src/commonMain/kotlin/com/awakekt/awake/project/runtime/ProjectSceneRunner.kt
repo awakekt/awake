@@ -447,6 +447,7 @@ internal class ProjectSceneRunner(
         override fun update(world: World, delta: Float) {
             frameOpen = false
             status.frameStarted()
+            project.spawnedModels.beginFrame()
             carryOut()
             attachSpawnedModels()
             val set = systems
@@ -462,6 +463,7 @@ internal class ProjectSceneRunner(
         override fun update(world: World, delta: Float) {
             if (!frameOpen) {
                 status.frameStarted()
+                project.spawnedModels.beginFrame()
                 carryOut()
             }
             frameOpen = false

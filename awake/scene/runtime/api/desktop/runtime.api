@@ -249,8 +249,10 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntimeKt {
 	public static final fun defaultInfrastructureSystems (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Ljava/util/List;
 	public static synthetic fun defaultInfrastructureSystems$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/util/List;
+	public static final fun getMinShadowCasterRatio (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;)F
 	public static final fun pointerCursorImageOf (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;)Lkotlin/jvm/functions/Function0;
 	public static final fun pointerCursorOf (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;)Lkotlin/jvm/functions/Function0;
+	public static final fun setMinShadowCasterRatio (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;F)V
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/awake/engine/platform/core/AppModule {
@@ -260,6 +262,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/aw
 	public final fun getHostRole ()Lcom/awakekt/awake/scene/runtime/SceneHostRole;
 	public final fun getInfrastructureSystemsFactory ()Lkotlin/jvm/functions/Function1;
 	public final fun getMaxFixedStepsPerFrame ()I
+	public final fun getMinShadowCasterRatio ()F
 	public final fun getOnDisposeBlock ()Lkotlin/jvm/functions/Function1;
 	public final fun getOnReadyBlock ()Lkotlin/jvm/functions/Function2;
 	public final fun getRenderableFactory ()Lkotlin/jvm/functions/Function2;
@@ -274,6 +277,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/aw
 	public final fun setDisabledSystems (Ljava/util/Set;)V
 	public final fun setHostRole (Lcom/awakekt/awake/scene/runtime/SceneHostRole;)V
 	public final fun setMaxFixedStepsPerFrame (I)V
+	public final fun setMinShadowCasterRatio (F)V
 	public final fun setSessionDispatcher (Lkotlinx/coroutines/CoroutineDispatcher;)V
 }
 

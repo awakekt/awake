@@ -1109,6 +1109,18 @@ class SceneAppLifecycleRuntime internal constructor(
     }
 }
 
+/**
+ * The smallest an off-screen entity can be (bounds radius / distance from camera eye) and still be
+ * drawn into shadow maps. Zero draws every caster that can reach a shadow map; on-screen entities
+ * always cast shadows regardless of this threshold.
+ */
+var SceneAppLifecycleRuntime.minShadowCasterRatio: Float
+    get() = session.schedule.renderSystem?.minShadowCasterRatio ?: spec.minShadowCasterRatio
+    set(value) {
+        spec.minShadowCasterRatio = value
+        session.schedule.renderSystem?.minShadowCasterRatio = value
+    }
+
 /** The standard infrastructure trio every 3D scene needs -- transform resolution, the draw
  * pass, then debug wireframes (frustum/[com.awakekt.awake.scene.rendering
  * .components.MeshBounds] boxes) drawn over whatever [RenderSystem3D] just drew. See
@@ -1154,7 +1166,10 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
             renderWorldProvider = renderWorldProvider,
             isRealtimeProvider = isRealtimeProvider,
             isDirtyProvider = isDirtyProvider,
-        ).also { it.cullingProbe = cullingProbe },
+        ).also {
+            it.cullingProbe = cullingProbe
+            it.minShadowCasterRatio = minShadowCasterRatio
+        },
         // The sources' lines draw with the world's own debug lines, in one call.
         DebugVisualizationSystem(renderer, viewportProvider, debugRegistry ?: DebugRegistry.Off),
     ) + listOfNotNull(

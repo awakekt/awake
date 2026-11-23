@@ -120,6 +120,8 @@ class SceneAppDsl internal constructor() {
         error("ecs { assets { ... } } or ecs { renderables { ... } } must resolve scene mesh/material requests.")
     }
     private var assetLibraryFactory: (() -> SceneAssetLibrary)? = null
+    private var assetsDsl: SceneAssetsDsl? = null
+    private var retainedMeshBudgetOverride: Long? = null
     private val systemsDsl = SceneSystemsDsl()
     private var updateBlock: SceneUpdateBlock = { _, _ -> }
     private var ui: SceneContent? = null
@@ -131,6 +133,7 @@ class SceneAppDsl internal constructor() {
     private var fixedStepCap: Int? = null
     private var disabledSystems: Set<String> = emptySet()
     private var hostRole: SceneHostRole = SceneHostRole.Full
+    private var shadowCasterRatio: Float = 0f
 
     /**
      * Sets the descriptive name of the scene.
@@ -209,10 +212,33 @@ class SceneAppDsl internal constructor() {
      */
     fun assets(block: SceneAssetsDsl.() -> Unit) {
         val dsl = SceneAssetsDsl().apply(block)
-        assetLibraryFactory = dsl::buildLibrary
+        assetsDsl = dsl
+        assetLibraryFactory = { dsl.buildLibrary(retainedMeshBudgetOverride) }
         renderableFactory = { request ->
             requireAssetLibrary().resolve(this, request)
         }
+    }
+
+    /**
+     * Retains up to [bytes] of released GPU meshes in the scene asset library so walking across
+     * streamed cell boundaries reuses meshes without re-reading or re-uploading them. Zero (the
+     * default) destroys a mesh when its last renderer releases it.
+     */
+    fun retainedMeshBudgetBytes(bytes: Long) {
+        require(bytes >= 0L) { "retainedMeshBudgetBytes must be >= 0, was $bytes" }
+        retainedMeshBudgetOverride = bytes
+        assetsDsl?.let { dsl ->
+            assetLibraryFactory = { dsl.buildLibrary(retainedMeshBudgetOverride) }
+        }
+    }
+
+    /**
+     * Sets the smallest off-screen shadow caster size (`radius / distance` from camera eye) that is
+     * still drawn into shadow maps. On-screen entities always cast shadows. Zero draws every caster.
+     */
+    fun minShadowCasterRatio(value: Float) {
+        require(value >= 0f && value.isFinite()) { "minShadowCasterRatio must be finite and >= 0, was $value" }
+        shadowCasterRatio = value
     }
 
     /**
@@ -427,6 +453,7 @@ class SceneAppDsl internal constructor() {
         fixedStepCap?.let { spec.maxFixedStepsPerFrame = it }
         spec.disabledSystems = disabledSystems
         spec.hostRole = hostRole
+        spec.minShadowCasterRatio = shadowCasterRatio
     }
 }
 

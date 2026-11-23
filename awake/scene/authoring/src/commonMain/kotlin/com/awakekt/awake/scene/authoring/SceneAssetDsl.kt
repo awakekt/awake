@@ -29,6 +29,17 @@ class SceneAssetsDsl internal constructor() {
     private val resolvers = mutableListOf<SceneAssetResolver>()
 
     /**
+     * Bytes of released-but-kept GPU meshes to retain for instant reuse when walking back and forth
+     * across streamed cell boundaries. Zero (the default) destroys a mesh as soon as its last
+     * renderer releases it.
+     */
+    var retainedMeshBudgetBytes: Long = 0L
+        set(value) {
+            require(value >= 0L) { "retainedMeshBudgetBytes must be >= 0, was $value" }
+            field = value
+        }
+
+    /**
      * Registers a dynamic asset resolver for loading runtime assets.
      *
      * @param resolver The [SceneAssetResolver] implementation to register.
@@ -100,11 +111,12 @@ class SceneAssetsDsl internal constructor() {
         textureFactories[name] = factory
     }
 
-    internal fun buildLibrary(): SceneAssetLibrary = SceneAssetLibrary(
+    internal fun buildLibrary(retainedMeshBudgetOverride: Long? = null): SceneAssetLibrary = SceneAssetLibrary(
         meshFactories = meshFactories.toMap(),
         materialFactories = materialFactories.toMap(),
         rendererFactories = rendererFactories.toMap(),
         dynamicResolvers = resolvers.toList(),
+        retainedMeshBudgetBytes = retainedMeshBudgetOverride ?: retainedMeshBudgetBytes,
         textureFactories = textureFactories.toMap(),
     )
 }
