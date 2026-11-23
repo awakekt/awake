@@ -48,52 +48,45 @@ VkRenderPassBeginInfoAccessor::fromObject(VkRenderPassBeginInfo &clazzInfo) {
 
 void
 VkRenderPassBeginInfoAccessor::getpClearValues(VkRenderPassBeginInfo &clazzInfo) {
+    clearValuesStorage.clear();
     auto pClearValuesArray = (jobjectArray) env->GetObjectField(obj, pClearValuesField);
     if (pClearValuesArray == nullptr) {
         clazzInfo.clearValueCount = 0;
         clazzInfo.pClearValues = nullptr;
-        env->DeleteLocalRef(pClearValuesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pClearValuesArray);
-    std::vector<VkClearValue> pClearValues;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pClearValuesArray,
-                                                            i); // actual type is VkClearValue[];
-        // sealed class
+    if (size > 0) {
+        clearValuesStorage.reserve(static_cast<size_t>(size));
         auto vkClearColorValueClass = env->FindClass(
                 "com/awakekt/awake/vulkan/models/VkClearColorValue");
-        if (env->IsInstanceOf(element, vkClearColorValueClass)) {
-            VkClearColorValueAccessor accessor(env, element);
-            VkClearColorValue ref{};
-            accessor.fromObject(ref);
-            VkClearValue value = {.color {ref}};
-            pClearValues.push_back(value);
-            env->DeleteLocalRef(vkClearColorValueClass);
-            continue;
-        }
         auto vkClearDepthStencilValueClass = env->FindClass(
                 "com/awakekt/awake/vulkan/models/VkClearDepthStencilValue");
-        if (env->IsInstanceOf(element, vkClearDepthStencilValueClass)) {
-            VkClearDepthStencilValueAccessor accessor(env, element);
-            VkClearDepthStencilValue ref{};
-            accessor.fromObject(ref);
-            VkClearValue value = {.depthStencil {ref}};
-            pClearValues.push_back(value);
-            env->DeleteLocalRef(vkClearDepthStencilValueClass);
-            continue;
+        for (int i = 0; i < size; ++i) {
+            auto element = (jobject) env->GetObjectArrayElement(pClearValuesArray, i);
+            if (element != nullptr) {
+                if (env->IsInstanceOf(element, vkClearColorValueClass)) {
+                    VkClearColorValueAccessor accessor(env, element);
+                    VkClearColorValue ref{};
+                    accessor.fromObject(ref);
+                    VkClearValue value = {.color {ref}};
+                    clearValuesStorage.push_back(value);
+                } else if (env->IsInstanceOf(element, vkClearDepthStencilValueClass)) {
+                    VkClearDepthStencilValueAccessor accessor(env, element);
+                    VkClearDepthStencilValue ref{};
+                    accessor.fromObject(ref);
+                    VkClearValue value = {.depthStencil {ref}};
+                    clearValuesStorage.push_back(value);
+                }
+                env->DeleteLocalRef(element);
+            }
         }
-        env->DeleteLocalRef(element); // release element reference
+        env->DeleteLocalRef(vkClearColorValueClass);
+        env->DeleteLocalRef(vkClearDepthStencilValueClass);
     }
-    // processing array data
-    auto clearValueCount = static_cast<uint32_t>(pClearValues.size());
-    clazzInfo.clearValueCount = clearValueCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkClearValue[size];
-    std::copy(pClearValues.begin(), pClearValues.end(), copy);
-    clazzInfo.pClearValues = copy;
-    env->DeleteLocalRef(pClearValuesArray); // release reference
+    clazzInfo.clearValueCount = static_cast<uint32_t>(clearValuesStorage.size());
+    clazzInfo.pClearValues = clearValuesStorage.empty() ? nullptr : clearValuesStorage.data();
+    env->DeleteLocalRef(pClearValuesArray);
 }
 
 VkRenderPass

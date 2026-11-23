@@ -54,6 +54,7 @@ class InstanceBuffer(
 
         /** What [buffer] holds, as [update] last wrote it, or null when it holds nothing yet. */
         var resident: FloatArray? = null
+        var residentCount = 0
     }
 
     private val frameResources = arrayOfNulls<FrameResources>(framesInFlight)
@@ -65,9 +66,7 @@ class InstanceBuffer(
     internal var uploads = 0L
         private set
 
-    // Reused across frames so a steady instance count allocates nothing per frame; reallocated
-    // only when the count actually changes (writeBufferMemoryFloats writes the whole array, so
-    // it has to be exactly instance-count sized rather than capacity sized).
+    // Grow-only scratch buffer reused across frames without reallocating as visible instance counts fluctuate.
 
     /** Packs [models] into this frame slot's buffer. `Mat4.data` is already column-major, which
      * is the order `instanced.wgsl`'s 4 `vec4` attributes reassemble into a `mat4x4` -- so this
@@ -94,13 +93,18 @@ class InstanceBuffer(
      * [frameIndex] is not a valid slot.
      */
     fun update(frameIndex: Int, models: List<Mat4>) {
-        val floats = packer.pack(models, maxInstances) ?: return
+        val count = packer.packSlice(models, maxInstances)
+        if (count == 0) return
+        val floats = packer.buffer
         val resources = resourcesFor(frameIndex, models.size)
         // Copies of a static prop hold still frame after frame: the slot's buffer already has them (#1452).
-        if (resources.resident?.sameBitsAs(floats) == true) return
-        VulkanBuffers.writeBufferMemoryFloats(device, resources.memory.handle, 0, floats)
+        val resident = resources.resident
+        if (resident != null && resources.residentCount == count && resident.sameBitsAs(floats, count)) return
+        VulkanBuffers.writeBufferMemoryFloats(device, resources.memory.handle, 0, floats, 0, count)
         uploads += 1
-        resources.resident = resources.resident?.takeIf { it.size == floats.size }?.let { floats.copyInto(it) } ?: floats.copyOf()
+        val target = if (resident != null && resident.size >= count) resident else FloatArray(count).also { resources.resident = it }
+        floats.copyInto(target, 0, 0, count)
+        resources.residentCount = count
     }
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 1. */

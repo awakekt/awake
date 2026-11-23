@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
+import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
@@ -20,6 +21,7 @@ import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.textureCube
 import com.awakekt.awake.asset.shaderdsl.textureSampleCube
+import com.awakekt.awake.asset.shaderdsl.textureSampleLevelCube
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
@@ -130,9 +132,14 @@ val SkyboxCubemapShader: AslShaderDefinition = shader("skybox_cubemap") {
         val far = let("far", inverseViewProjection * vec4(ndc, 1f.lit, 1f.lit))
         val rayDir = let("rayDir", normalize(far.xyz / far.w - cameraEye.xyz))
         val sampled = let("sampledColor", textureSampleCube(envMap, envSampler, rayDir))
-        val next = let("blendedColor", textureSampleCube(envMapB, envSampler, rayDir))
+        val skyRgb = variable("skyRgb", sampled.rgb)
+        // Skip the second cubemap lookup whenever blend == 0 (steady daytime/nighttime frames).
+        iff(exposure.y gt 0.0001f.lit) {
+            val next = let("blendedColor", textureSampleLevelCube(envMapB, envSampler, rayDir, 0f.lit))
+            assign(skyRgb, mix(sampled.rgb, next.rgb, exposure.y))
+        }
         // blend 0 is exactly the first cubemap, and a white tint exactly the baked colour.
-        val exposed = mix(sampled.rgb, next.rgb, exposure.y) * tint.rgb * exposure.x
+        val exposed = skyRgb * tint.rgb * exposure.x
         colorOutput(vec4(exposed, 1f.lit))
     }
 }

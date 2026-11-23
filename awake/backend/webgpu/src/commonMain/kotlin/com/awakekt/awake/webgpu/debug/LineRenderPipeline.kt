@@ -12,14 +12,13 @@ import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferBinding
@@ -168,7 +167,7 @@ class LineRenderPipeline(
     /** Lines are already in world space (no per-line model matrix), so their MVP is exactly
      * the frame's viewProjection. */
     fun writeMvp(mvp: FloatArray) {
-        device.queue.writeBufferData(mvpBuffer, 0uL, fastArrayBufferOf(mvp))
+        device.queue.writeBufferFloats(mvpBuffer, 0uL, mvp)
     }
 
     /**

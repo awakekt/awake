@@ -23,6 +23,10 @@ private:
     jfieldID pSwapchainsField;
     jfieldID pImageIndicesField;
     jfieldID pResultsField;
+    std::vector<VkSemaphore> waitSemaphoresStorage;
+    std::vector<VkSwapchainKHR> swapchainsStorage;
+    std::vector<uint32_t> imageIndicesStorage;
+    std::vector<VkResult> resultsStorage;
 public:
     VkPresentInfoKHRAccessor(JNIEnv *env, jobject obj);
 

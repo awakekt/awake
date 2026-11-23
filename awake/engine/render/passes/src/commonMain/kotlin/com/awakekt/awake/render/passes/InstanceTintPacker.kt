@@ -21,6 +21,17 @@ class InstanceTintPacker {
         },
     )
 
+    /** Backing array populated by [packSlice]; only indices `0..<count` are valid. */
+    val buffer: FloatArray get() = packer.buffer
+
+    /** Packs [instanceCount] RGBA values into a grow-only [buffer], returning float count (`0` if empty). */
+    fun packSlice(colors: List<Vec4>?, instanceCount: Int, maxInstances: Int): Int {
+        require(colors == null || colors.size == instanceCount) {
+            "Instance tint count (${colors?.size}) must match instance count ($instanceCount)."
+        }
+        return packer.packSlice(instanceCount, maxInstances, InstanceSource { colors?.get(it) ?: WHITE })
+    }
+
     /** Packs exactly [instanceCount] RGBA values; omitted colours become white, empty draws return null. */
     fun pack(colors: List<Vec4>?, instanceCount: Int, maxInstances: Int): FloatArray? {
         require(colors == null || colors.size == instanceCount) {

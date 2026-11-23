@@ -14,6 +14,7 @@ import com.awakekt.awake.asset.shaderdsl.AslVaryings
 import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.F32
 import com.awakekt.awake.asset.shaderdsl.a
+import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.b
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.cross
@@ -21,6 +22,7 @@ import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.dpdx
 import com.awakekt.awake.asset.shaderdsl.dpdy
+import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.g
 import com.awakekt.awake.asset.shaderdsl.ge
@@ -45,8 +47,9 @@ import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
 import com.awakekt.awake.asset.shaderdsl.texture2d
-import com.awakekt.awake.asset.shaderdsl.textureSample
+import com.awakekt.awake.asset.shaderdsl.textureSampleGrad
 import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.toU32
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
@@ -305,13 +308,11 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
 
     val perturbNormal = fn("perturbNormal", returns = AslType.Data(GpuDataShape.Vec3)) {
         val n by param(GpuDataShape.Vec3)
-        val pos by param(GpuDataShape.Vec3)
-        val surfaceUv by param(GpuDataShape.Vec2)
+        val dPosDx by param(GpuDataShape.Vec3)
+        val dPosDy by param(GpuDataShape.Vec3)
+        val dUvDx by param(GpuDataShape.Vec2)
+        val dUvDy by param(GpuDataShape.Vec2)
         val tangentNormal by param(GpuDataShape.Vec3)
-        val dPosDx = let("dPosDx", dpdx(pos))
-        val dPosDy = let("dPosDy", dpdy(pos))
-        val dUvDx = let("dUvDx", dpdx(surfaceUv))
-        val dUvDy = let("dUvDy", dpdy(surfaceUv))
         val perpDy = let("perpDy", cross(dPosDy, n))
         val perpDx = let("perpDx", cross(n, dPosDx))
         val tangent = let("tangent", perpDy * dUvDx.x + perpDx * dUvDy.x)
@@ -328,87 +329,120 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     }
 
     fragment {
-        // Sample all five PBR maps before branching/loops so implicit derivatives stay uniform.
-        val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
-        val mrSample = let("metallicRoughness", textureSample(metallicRoughnessTexture, baseColorSampler, uv))
-        val tangentNormal = let("tangentNormal", textureSample(normalTexture, baseColorSampler, uv).xyz * 2f.lit - vec3(1f.lit))
-        val occlusion = let("occlusion", textureSample(occlusionTexture, baseColorSampler, uv).r)
-        val emissiveMask = let("emissiveMask", srgbToLinear(textureSample(emissiveTexture, baseColorSampler, uv).rgb))
-
-        val stored = let("stored", texColor.rgb * color * tint.xyz)
-        val albedo = let("albedo", srgbToLinear(texColor.rgb) * color * tint.xyz)
-        val metallic = let("metallic", clamp(mrSample.b * pbrFactors.x, 0f.lit, 1f.lit))
-        val roughness = let("roughness", clamp(mrSample.g * pbrFactors.y, minRoughness, 1f.lit))
-        val emissive = let("emissive", emissiveMask * glow.xyz)
-
         val worldPos = debugVaryings.worldPosition
+        // Compute screen-space derivatives in uniform control flow so unlit skinned draws skip
+        // PBR texture fetches, TBN normal perturbation, GGX BRDF, environment reflection, and point lights.
+        val dPosDx = let("dPosDx", dpdx(worldPos))
+        val dPosDy = let("dPosDy", dpdy(worldPos))
+        val dUvDx = let("dUvDx", dpdx(uv))
+        val dUvDy = let("dUvDy", dpdy(uv))
+        val texColor = let("texColor", textureSampleGrad(baseColorTexture, baseColorSampler, uv, dUvDx, dUvDy))
+        val alpha = let("alpha", texColor.a * tint.w)
+        val stored = let("stored", texColor.rgb * color * tint.xyz)
         val cameraPosition = frame.value("cameraPosition")
-        val n = let("n", perturbNormal(normalize(normal), worldPos, uv, tangentNormal))
-        val l = let("l", normalize(frame.value("lightDirection").xyz))
-        val v = let("v", normalize(cameraPosition.xyz - worldPos))
-        val h = let("h", normalize(v + l))
-        val nDotL = let("nDotL", max(dot(n, l), 0f.lit))
-        val nDotV = let("nDotV", max(dot(n, v), epsilon))
-        val nDotH = let("nDotH", max(dot(n, h), 0f.lit))
-        val f0 = let("f0", mix(vec3(dielectricF0), albedo, metallic))
-        val fresnel = let("fresnel", fresnelSchlick(max(dot(h, v), 0f.lit), f0))
-        val specular = let(
-            "specular",
-            (distributionGgx(nDotH, roughness) * geometrySmith(nDotV, nDotL, roughness) * fresnel) /
-                max(4f.lit * nDotV * nDotL, epsilon),
-        )
-        val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * albedo / pi)
-        val lightColor = frame.value("lightColor")
-        val radiance = let("radiance", lightColor.xyz * pi * nDotL)
-        val ambientShare = let("ambientShare", select(ambient, lightColor.w, lightColor.w gt 0f.lit))
-        val envRefl = let(
-            "envReflection",
-            environmentReflection(n, v, l, lightColor, albedo, f0, metallic, roughness, glow.w, occlusion),
-        )
-        val litColor = variable("lit", albedo * ambientShare * occlusion + (diffuse + specular) * radiance + envRefl + emissive)
 
-        val pointLights = SkinnedPointLights(frame::array)
-        loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
-            val slot = let("slot", pointLights.positions[i])
-            iff(slot.w le 0f.lit) { continueLoop() }
-            val toLight = let("toLight", slot.xyz - worldPos)
-            val dist = let("dist", length(toLight))
-            iff(dist ge slot.w) { continueLoop() }
-            val pl = let("pl", toLight / max(dist, epsilon))
-            val pNdotL = let("pNdotL", max(dot(n, pl), 0f.lit))
-            iff(pNdotL le 0f.lit) { continueLoop() }
-            val falloff = let("falloff", clamp(1f.lit - (dist * dist) / (slot.w * slot.w), 0f.lit, 1f.lit))
-            val attenuation = let("attenuation", falloff * falloff / max(dist * dist, epsilon))
-            val ph = let("ph", normalize(v + pl))
-            val pNdotH = let("pNdotH", max(dot(n, ph), 0f.lit))
-            val pFresnel = let("pFresnel", fresnelSchlick(max(dot(ph, v), 0f.lit), f0))
-            val pSpecular = let(
-                "pSpecular",
-                (distributionGgx(pNdotH, roughness) * geometrySmith(nDotV, pNdotL, roughness) * pFresnel) /
-                    max(4f.lit * nDotV * pNdotL, epsilon),
-            )
-            val pDiffuse = let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * albedo / pi)
-            val pRadiance = let("pRadiance", pointLights.colors[i].xyz * pi * pNdotL * attenuation)
-            assign(litColor, litColor + (pDiffuse + pSpecular) * pRadiance)
+        val materialUnlit = pbrFactors.w gt UNLIT_THRESHOLD.lit
+        val noDebugView = toU32(debug.view.w + 0.5f.lit) eq 0u.lit
+        val skipLit = materialUnlit and noDebugView
+        val needsLit = select(1u.lit, 0u.lit, skipLit) eq 1u.lit
+        val finalColor = variable("finalColor", vec4(0f.lit))
+
+        iff(skipLit) {
+            val unlitRgb = variable("unlitRgb", stored)
+            iff(glow.w gt 0.001f.lit) {
+                val unlitN = let("unlitN", normalize(normal))
+                val unlitV = let("unlitV", normalize(cameraPosition.xyz - worldPos))
+                assign(unlitRgb, unlitSignedChrome(stored, unlitN, unlitV, glow.w))
+            }
+            assign(finalColor, vec4(displayTransform.unlit(unlitRgb), alpha))
         }
 
-        val alpha = let("alpha", texColor.a * tint.w)
-        val litShaded = applySceneFog(
-            displayTransform.display(litColor, exposure.x),
-            cameraPosition,
-            worldPos,
-            frame.value("fogColor"),
-            frame.value("fogRange"),
-        )
-        val unlitReflected = unlitSignedChrome(stored, n, v, glow.w)
-        val shaded = vec4(
-            select(litShaded, displayTransform.unlit(unlitReflected), pbrFactors.w gt UNLIT_THRESHOLD.lit),
-            alpha,
-        )
-        val debugColor = let("debugColor", skinnedDebugColor(debug, debugVaryings, n, stored, displayTransform, exposure, shaded))
-        val coverage = materialCoverage(alpha, pbrFactors.z, debugColor.w)
+        iff(needsLit) {
+            val mrSample = let("metallicRoughness", textureSampleGrad(metallicRoughnessTexture, baseColorSampler, uv, dUvDx, dUvDy))
+            val tangentNormal = let(
+                "tangentNormal",
+                textureSampleGrad(normalTexture, baseColorSampler, uv, dUvDx, dUvDy).xyz * 2f.lit - vec3(1f.lit),
+            )
+            val occlusion = let("occlusion", textureSampleGrad(occlusionTexture, baseColorSampler, uv, dUvDx, dUvDy).r)
+            val emissiveMask = let(
+                "emissiveMask",
+                srgbToLinear(textureSampleGrad(emissiveTexture, baseColorSampler, uv, dUvDx, dUvDy).rgb),
+            )
+
+            val albedo = let("albedo", srgbToLinear(texColor.rgb) * color * tint.xyz)
+            val metallic = let("metallic", clamp(mrSample.b * pbrFactors.x, 0f.lit, 1f.lit))
+            val roughness = let("roughness", clamp(mrSample.g * pbrFactors.y, minRoughness, 1f.lit))
+            val emissive = let("emissive", emissiveMask * glow.xyz)
+
+            val n = let("n", perturbNormal(normalize(normal), dPosDx, dPosDy, dUvDx, dUvDy, tangentNormal))
+            val l = let("l", normalize(frame.value("lightDirection").xyz))
+            val v = let("v", normalize(cameraPosition.xyz - worldPos))
+            val h = let("h", normalize(v + l))
+            val nDotL = let("nDotL", max(dot(n, l), 0f.lit))
+            val nDotV = let("nDotV", max(dot(n, v), epsilon))
+            val nDotH = let("nDotH", max(dot(n, h), 0f.lit))
+            val f0 = let("f0", mix(vec3(dielectricF0), albedo, metallic))
+            val fresnel = let("fresnel", fresnelSchlick(max(dot(h, v), 0f.lit), f0))
+            val specular = let(
+                "specular",
+                (distributionGgx(nDotH, roughness) * geometrySmith(nDotV, nDotL, roughness) * fresnel) /
+                    max(4f.lit * nDotV * nDotL, epsilon),
+            )
+            val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * albedo / pi)
+            val lightColor = frame.value("lightColor")
+            val radiance = let("radiance", lightColor.xyz * pi * nDotL)
+            val ambientShare = let("ambientShare", select(ambient, lightColor.w, lightColor.w gt 0f.lit))
+            val envRefl = let(
+                "envReflection",
+                environmentReflection(n, v, l, lightColor, albedo, f0, metallic, roughness, glow.w, occlusion),
+            )
+            val litColor = variable("lit", albedo * ambientShare * occlusion + (diffuse + specular) * radiance + envRefl + emissive)
+
+            val pointLights = SkinnedPointLights(frame::array)
+            loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
+                val slot = let("slot", pointLights.positions[i])
+                iff(slot.w le 0f.lit) { continueLoop() }
+                val toLight = let("toLight", slot.xyz - worldPos)
+                val dist = let("dist", length(toLight))
+                iff(dist ge slot.w) { continueLoop() }
+                val pl = let("pl", toLight / max(dist, epsilon))
+                val pNdotL = let("pNdotL", max(dot(n, pl), 0f.lit))
+                iff(pNdotL le 0f.lit) { continueLoop() }
+                val falloff = let("falloff", clamp(1f.lit - (dist * dist) / (slot.w * slot.w), 0f.lit, 1f.lit))
+                val attenuation = let("attenuation", falloff * falloff / max(dist * dist, epsilon))
+                val ph = let("ph", normalize(v + pl))
+                val pNdotH = let("pNdotH", max(dot(n, ph), 0f.lit))
+                val pFresnel = let("pFresnel", fresnelSchlick(max(dot(ph, v), 0f.lit), f0))
+                val pSpecular = let(
+                    "pSpecular",
+                    (distributionGgx(pNdotH, roughness) * geometrySmith(nDotV, pNdotL, roughness) * pFresnel) /
+                        max(4f.lit * nDotV * pNdotL, epsilon),
+                )
+                val pDiffuse = let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * albedo / pi)
+                val pRadiance = let("pRadiance", pointLights.colors[i].xyz * pi * pNdotL * attenuation)
+                assign(litColor, litColor + (pDiffuse + pSpecular) * pRadiance)
+            }
+
+            val litShaded = applySceneFog(
+                displayTransform.display(litColor, exposure.x),
+                cameraPosition,
+                worldPos,
+                frame.value("fogColor"),
+                frame.value("fogRange"),
+            )
+            val shadedRgb = variable("shadedRgb", litShaded)
+            iff(materialUnlit) {
+                val unlitReflected = unlitSignedChrome(stored, n, v, glow.w)
+                assign(shadedRgb, displayTransform.unlit(unlitReflected))
+            }
+            val shaded = vec4(shadedRgb, alpha)
+            val debugColor = let("debugColor", skinnedDebugColor(debug, debugVaryings, n, stored, displayTransform, exposure, shaded))
+            assign(finalColor, debugColor)
+        }
+
+        val coverage = materialCoverage(alpha, pbrFactors.z, finalColor.w)
         ditherFade(exposure.y)
-        colorOutput(vec4(debugColor.xyz, coverage))
+        colorOutput(vec4(finalColor.xyz, coverage))
     }
 }
 

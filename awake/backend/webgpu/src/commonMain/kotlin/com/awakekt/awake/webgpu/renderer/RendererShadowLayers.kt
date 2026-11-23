@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.renderer
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.passes.shadowLayersNeeded
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.webgpu.pipeline.resetLayerState
 import com.awakekt.awake.webgpu.texture.DepthTarget
 
 /**
@@ -54,6 +55,7 @@ private fun Renderer.applyShadowLayers(layers: Int) {
     val unchanged = if (layers == 0) !target.resident else target.resident && layers == target.layers && size == target.size
     if (unchanged) return
     if (layers == 0) target.reallocate(1, DepthTarget.DORMANT_SIZE) else target.reallocate(layers, size)
+    depthPrePass?.resetLayerState()
     val groups = bufferPools.shadowBindGroups[BindingSemantic.ShadowDepth].orEmpty()
     for ((pipeline, handle) in groups) {
         val slot = bufferPools.shadowBindGroupSlots[pipeline] ?: continue

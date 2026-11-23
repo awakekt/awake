@@ -1026,21 +1026,9 @@ object DrawRunCoalescer {
         }
 
         for (primitive in textures) {
-            val clipped = clipTextureQuad(primitive, activePathClips, safeInteriorRect)
-            val vertexCount = clipped.vertices.size
-            val indexCount = clipped.indices.size
-            if (vertexCount == 0 || indexCount == 0) continue
-            val slice = StagedTextureSlice(
-                material = primitive.material,
-                blendMode = primitive.blendMode,
-                premultiplied = primitive.premultiplied,
-                mesh = clipped,
-                color = primitive.tint.withAlpha(primitive.tint.a * primitive.alpha),
-                transform = primitive.transform,
-                region = primitive.region,
-                repeatX = primitive.repeatX != 1f,
-                repeatY = primitive.repeatY != 1f,
-            )
+            val slice = stageTextureSlice(primitive, activePathClips, safeInteriorRect) ?: continue
+            val vertexCount = slice.vertexCount
+            val indexCount = slice.indexCount
             val head = chunk.firstOrNull()
             val breaksBatch = head != null && (
                 !slice.matchesBatchState(head) ||
@@ -1054,6 +1042,29 @@ object DrawRunCoalescer {
         }
         flushChunk()
         return StagedDrawRun.TextureRun(stagedRuns)
+    }
+
+    private fun stageTextureSlice(
+        primitive: DrawCommand.Texture,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+    ): StagedTextureSlice? {
+        val fastQuad = primitive.rotationDegrees == 0f &&
+            (activePathClips.isEmpty() || canSkipExactClip(safeInteriorRect, primitive.x, primitive.y, primitive.w, primitive.h))
+        val clipped = if (fastQuad) null else clipTextureQuad(primitive, activePathClips, safeInteriorRect)
+        if (clipped != null && (clipped.vertices.isEmpty() || clipped.indices.isEmpty())) return null
+        return StagedTextureSlice(
+            material = primitive.material,
+            blendMode = primitive.blendMode,
+            premultiplied = primitive.premultiplied,
+            mesh = clipped,
+            quad = if (fastQuad) primitive else null,
+            color = primitive.tint.withAlpha(primitive.tint.a * primitive.alpha),
+            transform = primitive.transform,
+            region = primitive.region,
+            repeatX = primitive.repeatX != 1f,
+            repeatY = primitive.repeatY != 1f,
+        )
     }
 
     private fun clipTextureQuad(
@@ -1100,39 +1111,79 @@ object DrawRunCoalescer {
 
     private fun stageCoalescedTextureRun(chunk: List<StagedTextureSlice>): TexturedDrawRun {
         val head = chunk.first()
-        val totalVertices = chunk.sumOf { it.mesh.vertices.size }
-        val totalIndices = chunk.sumOf { it.mesh.indices.size }
+        var totalVertices = 0
+        var totalIndices = 0
+        for (i in chunk.indices) {
+            val slice = chunk[i]
+            totalVertices += slice.vertexCount
+            totalIndices += slice.indexCount
+        }
         val vertices = FloatArray(totalVertices * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX)
         val indices = IntArray(totalIndices)
         var vertexCursor = 0
         var indexCursor = 0
         var vertexOffset = 0
-        for (slice in chunk) {
+        for (i in chunk.indices) {
+            val slice = chunk[i]
             val region = slice.region
-            for (vertex in slice.mesh.vertices) {
-                writeTextureVertex(
-                    vertices,
-                    vertexCursor,
-                    vertex.position.x,
-                    vertex.position.y,
-                    vertex.u,
-                    vertex.v,
-                    region.u0,
-                    region.v0,
-                    if (slice.repeatX) region.u1 - region.u0 else 0f,
-                    if (slice.repeatY) region.v1 - region.v0 else 0f,
-                    slice.color,
-                    slice.transform,
-                )
-                vertexCursor += VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+            val spanU = if (slice.repeatX) region.u1 - region.u0 else 0f
+            val spanV = if (slice.repeatY) region.v1 - region.v0 else 0f
+            val mesh = slice.mesh
+            if (mesh == null) {
+                writeFastQuadSlice(slice, vertices, indices, vertexCursor, indexCursor, vertexOffset, spanU, spanV)
+                vertexCursor += VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+                indexCursor += VertexFormats2D.INDICES_PER_QUAD
+                vertexOffset += VertexFormats2D.VERTICES_PER_QUAD
+            } else {
+                for (vertex in mesh.vertices) {
+                    writeTextureVertex(
+                        vertices, vertexCursor, vertex.position.x, vertex.position.y, vertex.u, vertex.v,
+                        region.u0, region.v0, spanU, spanV, slice.color, slice.transform,
+                    )
+                    vertexCursor += VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+                }
+                for (index in mesh.indices) {
+                    indices[indexCursor] = vertexOffset + index
+                    indexCursor += 1
+                }
+                vertexOffset += mesh.vertices.size
             }
-            for (index in slice.mesh.indices) {
-                indices[indexCursor] = vertexOffset + index
-                indexCursor += 1
-            }
-            vertexOffset += slice.mesh.vertices.size
         }
         return TexturedDrawRun(head.material, vertices, indices, head.blendMode, head.premultiplied)
+    }
+
+    @Suppress("LongParameterList")
+    private fun writeFastQuadSlice(
+        slice: StagedTextureSlice,
+        vertices: FloatArray,
+        indices: IntArray,
+        vertexStart: Int,
+        indexStart: Int,
+        vertexOffset: Int,
+        spanU: Float,
+        spanV: Float,
+    ) {
+        val p = requireNotNull(slice.quad)
+        val region = slice.region
+        val u0 = if (slice.repeatX) 0f else region.u0
+        val v0 = if (slice.repeatY) 0f else region.v0
+        val u1 = if (slice.repeatX) p.repeatX else region.u1
+        val v1 = if (slice.repeatY) p.repeatY else region.v1
+        val x0 = p.x
+        val y0 = p.y
+        val x1 = x0 + p.w
+        val y1 = y0 + p.h
+        val stride = VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+        writeTextureVertex(vertices, vertexStart, x0, y0, u0, v0, region.u0, region.v0, spanU, spanV, slice.color, slice.transform)
+        writeTextureVertex(vertices, vertexStart + stride, x1, y0, u1, v0, region.u0, region.v0, spanU, spanV, slice.color, slice.transform)
+        writeTextureVertex(vertices, vertexStart + stride * 2, x1, y1, u1, v1, region.u0, region.v0, spanU, spanV, slice.color, slice.transform)
+        writeTextureVertex(vertices, vertexStart + stride * 3, x0, y1, u0, v1, region.u0, region.v0, spanU, spanV, slice.color, slice.transform)
+        indices[indexStart] = vertexOffset
+        indices[indexStart + 1] = vertexOffset + 1
+        indices[indexStart + 2] = vertexOffset + 2
+        indices[indexStart + 3] = vertexOffset + 2
+        indices[indexStart + 4] = vertexOffset + 3
+        indices[indexStart + 5] = vertexOffset
     }
 
     /** Generates a textured quad mesh for a rectangle at ([x], [y], [w], [h]) with UV bounds. */
@@ -1380,13 +1431,17 @@ private class StagedTextureSlice(
     val material: Any,
     val blendMode: BlendMode,
     val premultiplied: Boolean,
-    val mesh: TexturedTriangleMesh,
+    val mesh: TexturedTriangleMesh?,
+    val quad: DrawCommand.Texture?,
     val color: Color,
     val transform: DrawTransform?,
     val region: TextureRegion,
     val repeatX: Boolean,
     val repeatY: Boolean,
 ) {
+    val vertexCount: Int get() = mesh?.vertices?.size ?: VertexFormats2D.VERTICES_PER_QUAD
+    val indexCount: Int get() = mesh?.indices?.size ?: VertexFormats2D.INDICES_PER_QUAD
+
     fun matchesBatchState(other: StagedTextureSlice): Boolean =
         material === other.material &&
             blendMode == other.blendMode &&

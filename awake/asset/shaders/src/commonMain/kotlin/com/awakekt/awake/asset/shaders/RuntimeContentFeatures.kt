@@ -188,6 +188,9 @@ private class ContentFeaturePassGate(
         feature.prepareFrame(frameIndex, uploads)
     }
 
+    override fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean =
+        environment.contentFeatures && feature.needsCoveringExemptMask(environment)
+
     override fun recordCommands(context: RenderFrameContext) {
         if (context.environment.contentFeatures) feature.recordCommands(context)
     }
@@ -217,6 +220,13 @@ class AttachedContentSlot : RenderFeature<RenderFrameContext> {
 
     internal fun remove(feature: RenderFeature<RenderFrameContext>) {
         features -= feature
+    }
+
+    override fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean {
+        for (index in features.indices) {
+            if (features[index].needsCoveringExemptMask(environment)) return true
+        }
+        return false
     }
 
     override fun recordCommands(context: RenderFrameContext) {

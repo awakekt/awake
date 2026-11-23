@@ -15,6 +15,7 @@ import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.GpuDebugView
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentFeature
@@ -83,6 +84,9 @@ class DepthFogRenderFeature(
     private val isVisible: () -> Boolean = { true },
 ) : RenderFeature<RenderFrameContext> {
     override val pass = RenderPassSlot.Scene
+
+    override fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean =
+        isVisible() && environment.debugView == GpuDebugView.Off
 
     override fun recordCommands(context: RenderFrameContext) {
         // A debug view's colours are data; fog over them would misreport it.

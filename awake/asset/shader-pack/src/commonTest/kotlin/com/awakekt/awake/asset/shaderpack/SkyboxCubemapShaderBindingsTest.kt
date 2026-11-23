@@ -55,7 +55,7 @@ class SkyboxCubemapShaderBindingsTest {
         assertTrue(wgsl.contains("exposure : vec4f"))
         assertTrue(wgsl.contains("var envMapB : texture_cube<f32>;"), "the second panorama the day blends toward")
         assertTrue(wgsl.contains("tint : vec4f"))
-        assertTrue(wgsl.contains("textureSample(envMapB, envSampler, rayDir)"))
+        assertTrue(wgsl.contains("textureSampleLevel(envMapB, envSampler, rayDir, 0.0)"))
     }
 
     @Test

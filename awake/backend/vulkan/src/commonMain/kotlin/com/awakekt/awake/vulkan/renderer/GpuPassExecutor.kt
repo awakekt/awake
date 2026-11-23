@@ -40,11 +40,10 @@ internal class RendererGpuPassExecutor(
         renderer.settleShadowArray(input)
         renderer.settleMaskTarget()
         renderer.graphicsDevice.frameUniforms.write(currentFrame, input)
-        val resolvedDraws = input.resolvedDraws
         val depthDraws = renderer.prepareDepthDraws(input)
         Vulkan.vkResetCommandBuffer(renderer.commandBuffers[currentFrame], 0)
         renderer.recordResolvedCommandBuffer(
-            renderer.commandBuffers[currentFrame], currentFrame, imageIndex, resolvedDraws,
+            renderer.commandBuffers[currentFrame], currentFrame, imageIndex, emptyList(),
             input.viewProjection, input.cameraEye, depthDraws = depthDraws,
             prePasses = input.prePasses,
             postPasses = input.postPasses,

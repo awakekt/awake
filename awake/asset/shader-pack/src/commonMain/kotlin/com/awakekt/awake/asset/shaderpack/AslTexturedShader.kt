@@ -355,12 +355,13 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
                 val emitted = select(litColor, albedo + emissive, addsUnlit)
                 val fogTarget = select(fogColor.rgb, vec3(0f.lit), additive)
                 val litShaded = applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget)
-                val stored = let("debugUnlitStored", baseColorFactor.rgb * baseColorSample.rgb * color)
-                val unlitReflected = unlitSignedChrome(stored, n, v, emissiveFactor.w)
-                val shaded = vec4(
-                    select(litShaded, displayTransform.unlit(unlitReflected), materialUnlit),
-                    sourceAlpha,
-                )
+                val shadedRgb = variable("shadedRgb", litShaded)
+                iff(materialUnlit) {
+                    val stored = let("debugUnlitStored", baseColorFactor.rgb * baseColorSample.rgb * color)
+                    val unlitReflected = unlitSignedChrome(stored, n, v, emissiveFactor.w)
+                    assign(shadedRgb, displayTransform.unlit(unlitReflected))
+                }
+                val shaded = vec4(shadedRgb, sourceAlpha)
                 // Clay lights the geometric normal: the normal map is a texture too.
                 val clayNDotL = let("clayNDotL", max(dot(normalize(normal), l), 0f.lit))
                 val surface = DebugSurface(

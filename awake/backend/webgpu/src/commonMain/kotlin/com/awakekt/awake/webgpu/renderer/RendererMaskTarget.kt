@@ -5,11 +5,15 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.maskExtentHeight
 import com.awakekt.awake.render.passes.maskExtentWidth
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.webgpu.pipeline.resetLayerState
 import com.awakekt.awake.webgpu.texture.DepthTarget
 import io.ygdrasil.webgpu.GPUCommandEncoder
 
@@ -41,13 +45,45 @@ internal fun Renderer.ensureMaskTarget(width: Int, height: Int) {
  */
 internal fun Renderer.recordMaskPass(encoder: GPUCommandEncoder, input: GpuPassInput) {
     val pass = maskPass ?: return
-    if (input.maskPasses.isNotEmpty()) {
-        pass.recordCommands(encoder, input.maskPasses, input.environment)
-        maskCleared = false
+    val effective = filterMasksForFrame(input.maskPasses, input.environment)
+    if (effective.isNotEmpty()) {
+        pass.recordCommands(encoder, effective, input.environment)
+        maskCleared = true
     } else if (!maskCleared) {
         pass.clearLayers(encoder)
         maskCleared = true
+    } else {
+        pass.clearLayers(encoder, onlyDirty = true)
     }
+}
+
+private fun Renderer.needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean {
+    for (i in renderFeatures.indices) {
+        if (renderFeatures[i].needsCoveringExemptMask(environment)) return true
+    }
+    return false
+}
+
+private fun Renderer.filterMasksForFrame(masks: List<GpuSubPass>, environment: GpuEnvironmentState): List<GpuSubPass> {
+    if (masks.isEmpty() || needsCoveringExemptMask(environment)) return masks
+    var exemptCount = 0
+    for (i in masks.indices) {
+        if (masks[i].targetLayer == COVERING_EXEMPT_MASK_LAYER) exemptCount++
+    }
+    return when {
+        exemptCount == 0 -> masks
+        exemptCount == masks.size -> emptyList()
+        else -> collectNonExemptMasks(masks, masks.size - exemptCount)
+    }
+}
+
+private fun collectNonExemptMasks(masks: List<GpuSubPass>, count: Int): List<GpuSubPass> {
+    val filtered = ArrayList<GpuSubPass>(count)
+    for (i in masks.indices) {
+        val subPass = masks[i]
+        if (subPass.targetLayer != COVERING_EXEMPT_MASK_LAYER) filtered.add(subPass)
+    }
+    return filtered
 }
 
 private fun Renderer.currentScreenDepthTarget(): DepthTarget? =
@@ -62,11 +98,13 @@ private fun Renderer.resizeScreenDepthTargets(width: Int, height: Int) {
     val sceneTarget = sceneDepthPass?.depthTarget
     if (sceneTarget != null && (sceneTarget.width != width || sceneTarget.height != height)) {
         sceneTarget.reallocate(1, width, height)
+        sceneDepthPass?.resetLayerState()
         rebuildDepthBindGroups(BindingSemantic.SceneDepth, bufferPools.sceneDepthBindGroupSlots, sceneTarget)
     }
     val maskTarget = maskPass?.depthTarget
     if (maskTarget != null && (maskTarget.width != width || maskTarget.height != height)) {
         maskTarget.reallocate(MASK_TARGET_LAYER_COUNT, width, height)
+        maskPass?.resetLayerState()
         maskCleared = false
         rebuildDepthBindGroups(BindingSemantic.MaskDepth, bufferPools.maskBindGroupSlots, maskTarget)
     }

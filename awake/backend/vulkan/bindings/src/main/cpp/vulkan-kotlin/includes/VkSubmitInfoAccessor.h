@@ -23,6 +23,10 @@ private:
     jfieldID pWaitDstStageMaskField;
     jfieldID pCommandBuffersField;
     jfieldID pSignalSemaphoresField;
+    std::vector<VkSemaphore> waitSemaphoresStorage;
+    std::vector<uint32_t> waitDstStageMaskStorage;
+    std::vector<VkCommandBuffer> commandBuffersStorage;
+    std::vector<VkSemaphore> signalSemaphoresStorage;
 public:
     VkSubmitInfoAccessor(JNIEnv *env, jobject obj);
 

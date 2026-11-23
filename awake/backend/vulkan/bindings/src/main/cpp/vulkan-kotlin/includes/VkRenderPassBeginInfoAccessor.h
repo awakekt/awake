@@ -26,6 +26,7 @@ private:
     jfieldID framebufferField;
     jfieldID renderAreaField;
     jfieldID pClearValuesField;
+    std::vector<VkClearValue> clearValuesStorage;
 public:
     VkRenderPassBeginInfoAccessor(JNIEnv *env, jobject obj);
 

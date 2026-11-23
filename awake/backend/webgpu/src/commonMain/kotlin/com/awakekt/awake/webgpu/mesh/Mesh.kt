@@ -9,11 +9,11 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.webgpu.WebGpuHandles
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.handles.BufferHandle
 import com.awakekt.awake.webgpu.handles.DeviceMemoryHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
+import com.awakekt.awake.webgpu.writeBufferInts
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -115,7 +115,7 @@ private constructor(
                     usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
                 ),
             )
-            device.queue.writeBufferData(rawVertexBuffer, 0uL, fastArrayBufferOf(vertices))
+            device.queue.writeBufferFloats(rawVertexBuffer, 0uL, vertices)
             val vertexHandle = WebGpuHandles.register(rawVertexBuffer)
             vertexBuffer = BufferHandle(vertexHandle)
             vertexBufferMemory = DeviceMemoryHandle(vertexHandle)
@@ -128,7 +128,7 @@ private constructor(
                 usage = GPUBufferUsage.Index or GPUBufferUsage.CopyDst,
             ),
         )
-        device.queue.writeBufferData(rawIndexBuffer, 0uL, fastArrayBufferOf(indices))
+        device.queue.writeBufferInts(rawIndexBuffer, 0uL, indices)
         val indexHandle = WebGpuHandles.register(rawIndexBuffer)
         indexBuffer = BufferHandle(indexHandle)
         indexBufferMemory = DeviceMemoryHandle(indexHandle)
@@ -141,7 +141,7 @@ private constructor(
                 usage = GPUBufferUsage.Index or GPUBufferUsage.CopyDst,
             ),
         )
-        device.queue.writeBufferData(rawLineIndexBuffer, 0uL, fastArrayBufferOf(lineIndices))
+        device.queue.writeBufferInts(rawLineIndexBuffer, 0uL, lineIndices)
         lineIndexBuffer = BufferHandle(WebGpuHandles.register(rawLineIndexBuffer))
 
         indexBinding = WebGpuBufferHandle(rawIndexBuffer)
