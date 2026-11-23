@@ -137,7 +137,7 @@ reads_version_property() {
 }
 
 point() {
-  local plugins="$1" version="$2" catalog core_kotlin core_gradle wrapper
+  local plugins="$1" version="$2" catalog core_kotlin core_gradle core_sha wrapper
   catalog="$plugins/gradle/libs.versions.toml"
   wrapper="$plugins/gradle/wrapper/gradle-wrapper.properties"
   # KOTLIN_ARCHIVE (.kar.xz) publications require the consumer to use Core's Kotlin toolchain,
@@ -147,11 +147,16 @@ point() {
     sed -i.bak -E "s/^kotlin *= *\"[^\"]*\"/kotlin = \"$core_kotlin\"/" "$catalog" && rm -f "$catalog.bak"
     echo "==> awake-plugins aligned to Core Kotlin $core_kotlin"
   fi
-  core_gradle=$(grep -E '^distributionUrl=' "$ENGINE_ROOT/gradle/wrapper/gradle-wrapper.properties" | head -n 1)
+  core_gradle=$(sed -n 's/^distributionUrl=//p' "$ENGINE_ROOT/gradle/wrapper/gradle-wrapper.properties" | head -n 1)
+  core_sha=$(sed -n 's/^distributionSha256Sum=//p' "$ENGINE_ROOT/gradle/wrapper/gradle-wrapper.properties" | head -n 1)
   if [[ -n "$core_gradle" && -f "$wrapper" ]] && grep -qE '^distributionUrl=' "$wrapper"; then
-    awk -v line="$core_gradle" '/^distributionUrl=/ { print line; next } { print }' "$wrapper" > "$wrapper.tmp"
+    grep -vE '^(distributionUrl|distributionSha256Sum)=' "$wrapper" > "$wrapper.tmp"
+    if [[ -n "$core_sha" ]]; then
+      printf 'distributionSha256Sum=%s\n' "$core_sha" >> "$wrapper.tmp"
+    fi
+    printf 'distributionUrl=%s\n' "$core_gradle" >> "$wrapper.tmp"
     mv "$wrapper.tmp" "$wrapper"
-    echo "==> awake-plugins aligned to Core Gradle wrapper"
+    echo "==> awake-plugins aligned to Core Gradle wrapper ($core_gradle)"
   fi
   if reads_version_property "$plugins"; then
     echo "==> awake-plugins builds against Core $version through -Pawake.version; its awake version is unchanged"
