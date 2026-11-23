@@ -30,6 +30,7 @@ import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.scene.runtime.SceneUpdateBlock
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
+import com.awakekt.awake.scene.runtime.session.SceneBridge
 import kotlin.reflect.KClass
 
 /**
@@ -127,6 +128,7 @@ class SceneAppDsl internal constructor() {
     private var ui: SceneContent? = null
     private val onReadyBlocks = mutableListOf<SceneReadyBlock>()
     private val onDisposeBlocks = mutableListOf<SceneDisposeBlock>()
+    private val bridgeFactories = mutableListOf<SceneAppLifecycleRuntime.() -> SceneBridge>()
     private val serviceRegistrations = mutableListOf<SceneServiceRegistration<*>>()
     private var infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems
@@ -334,6 +336,15 @@ class SceneAppDsl internal constructor() {
     }
 
     /**
+     * Registers a [SceneBridge] built once the scene is ready, stepped around the ECS schedule on
+     * each frame (`beforeAdvance` / `afterAdvance`), and closed automatically in reverse order when
+     * the scene disposes. Use this instead of ECS systems for UI/HUD store sync and effect draining.
+     */
+    fun bridge(factory: SceneAppLifecycleRuntime.() -> SceneBridge) {
+        bridgeFactories += factory
+    }
+
+    /**
      * Registers a callback executed once when the scene and its runtime have been fully initialized.
      *
      * @param block The lifecycle hook executed with the [SceneAppLifecycleRuntime] receiver.
@@ -454,6 +465,7 @@ class SceneAppDsl internal constructor() {
         spec.disabledSystems = disabledSystems
         spec.hostRole = hostRole
         spec.minShadowCasterRatio = shadowCasterRatio
+        spec.bridgeFactories = bridgeFactories.toList()
     }
 }
 

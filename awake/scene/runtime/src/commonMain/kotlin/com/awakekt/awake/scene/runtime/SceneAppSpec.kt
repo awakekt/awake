@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.platform.core.AppModule
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
+import com.awakekt.awake.scene.runtime.session.SceneBridge
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -95,6 +96,12 @@ class SceneAppSpec(
             require(value >= 0f && value.isFinite()) { "minShadowCasterRatio must be finite and >= 0, was $value" }
             field = value
         }
+
+    /**
+     * Factories for [SceneBridge] instances attached when the session becomes ready and closed in
+     * reverse order on session teardown. Set by `bridge { ... }` in the scene DSL.
+     */
+    var bridgeFactories: List<SceneAppLifecycleRuntime.() -> SceneBridge> = emptyList()
 
     /**
      * Installs this scene module into the host application specification.

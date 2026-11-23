@@ -1,0 +1,1 @@
+- Add `ContextualEffectDrainer<C>` and split `sync()`/`drainEffects()`/`onSync()` phases on `EffectDrainer`, plus UI-free `SceneBridge` (`SceneSession.addBridge`, `SceneAppDsl.bridge`) and public `LoadedProject.content` so UI/HUD store coordination runs at the session frame boundary instead of inside ECS systems.

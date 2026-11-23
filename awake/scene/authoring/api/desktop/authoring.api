@@ -1,5 +1,6 @@
 public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public final fun assets (Lkotlin/jvm/functions/Function1;)V
+	public final fun bridge (Lkotlin/jvm/functions/Function1;)V
 	public final fun content (Lkotlin/jvm/functions/Function1;)V
 	public final fun disableSystems ([Ljava/lang/String;)V
 	public final fun entity (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V

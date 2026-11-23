@@ -1,3 +1,18 @@
+public final class com/awakekt/awake/core/state/ContextualEffectDrainer : java/lang/AutoCloseable {
+	public fun <init> ()V
+	public final fun bind (Lcom/awakekt/awake/core/state/EffectSource;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljava/lang/AutoCloseable;
+	public final fun bind (Lcom/awakekt/awake/core/state/ReducerStore;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Ljava/lang/AutoCloseable;
+	public static synthetic fun bind$default (Lcom/awakekt/awake/core/state/ContextualEffectDrainer;Lcom/awakekt/awake/core/state/EffectSource;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/AutoCloseable;
+	public static synthetic fun bind$default (Lcom/awakekt/awake/core/state/ContextualEffectDrainer;Lcom/awakekt/awake/core/state/ReducerStore;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/AutoCloseable;
+	public fun close ()V
+	public final fun drain (Ljava/lang/Object;)V
+	public final fun drainEffects (Ljava/lang/Object;)V
+	public final fun getSize ()I
+	public final fun onSync (Ljava/lang/AutoCloseable;Lkotlin/jvm/functions/Function1;)Ljava/lang/AutoCloseable;
+	public static synthetic fun onSync$default (Lcom/awakekt/awake/core/state/ContextualEffectDrainer;Ljava/lang/AutoCloseable;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/AutoCloseable;
+	public final fun sync (Ljava/lang/Object;)V
+}
+
 public class com/awakekt/awake/core/state/DefaultReducerStore : com/awakekt/awake/core/state/MutableStore, com/awakekt/awake/core/state/ReducerStore {
 	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/state/Reducer;Lkotlinx/coroutines/CoroutineScope;)V
 	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/state/Reducer;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -26,7 +41,11 @@ public final class com/awakekt/awake/core/state/EffectDrainer : java/lang/AutoCl
 	public static synthetic fun bind$default (Lcom/awakekt/awake/core/state/EffectDrainer;Lcom/awakekt/awake/core/state/ReducerStore;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/AutoCloseable;
 	public fun close ()V
 	public final fun drain ()V
+	public final fun drainEffects ()V
 	public final fun getSize ()I
+	public final fun onSync (Ljava/lang/AutoCloseable;Lkotlin/jvm/functions/Function0;)Ljava/lang/AutoCloseable;
+	public static synthetic fun onSync$default (Lcom/awakekt/awake/core/state/EffectDrainer;Ljava/lang/AutoCloseable;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/AutoCloseable;
+	public final fun sync ()V
 }
 
 public abstract interface class com/awakekt/awake/core/state/EffectSource {
