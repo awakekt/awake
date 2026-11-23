@@ -53,6 +53,9 @@ object CoreFeatures {
     /** Skinned glTF animation. */
     val SkinnedAnimation: SceneFeature get() = SkinnedAnimationFeature
 
+    /** Cinematic camera director, virtual cameras, rails, lighting/audio cues, and input replay. */
+    val Director: SceneFeature get() = DirectorFeature
+
     /** Every one of Core's, in run order: what a project runs with before its own. */
     val all: List<SceneFeature> get() = CORE_FEATURES
 }

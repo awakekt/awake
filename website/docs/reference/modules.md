@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 116: 113 in Core, 3 in the Vulkan family. |
+| Published modules | 118: 115 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -108,6 +108,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:runtime` | `awake-scene-runtime` | The scene runtime: `SceneManager`, sessions, asset library, scheduling, app lifecycle. |
 | `com.awakekt.awake.scene:authoring` | `awake-scene-authoring` | The scene DSL and application DSL: entities, systems, assets and UI in Kotlin. |
 | `com.awakekt.awake.scene:controls` | `awake-scene-controls` | Camera rigs and input-driven movement. |
+| `com.awakekt.awake.scene:director` | `awake-scene-director` | Camera director components (`camera_director`, `virtual_camera`, `camera_rail`, `stage_marker`), `DirectorSystem`, and deterministic input replay. |
 | `com.awakekt.awake.scene:audio` | `awake-scene-audio` | Audio source and listener components and the spatial audio system. |
 | `com.awakekt.awake.scene:net` | `awake-scene-net` | The `predicted_entity` scene component and ECS binding of client prediction to root transforms. |
 | `com.awakekt.awake.scene:particles` | `awake-scene-particles` | The `particle_emitter` scene component and the systems that run its emitters in a scene. |
@@ -138,6 +139,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake:navigation` | `awake-navigation` | Heightmap-derived navigation grids, streamed navigation and path requests. |
+| `com.awakekt.awake:director` | `awake-director` | Camera director, semantic framing, shot sequencer, lighting/audio/action choreography, and framing telemetry, with no scene dependency. |
 | `com.awakekt.awake:tilemap` | `awake-tilemap` | Finite tile grids, atlas chunk geometry and visibility, with no scene dependency. |
 | `com.awakekt.awake:world` | `awake-world` | World cells: coordinates, partition radii and the cell streaming contract, with no scene dependency. |
 | `com.awakekt.awake:worldtext` | `awake-worldtext` | Text placed in a 3D world: laid out once, drawn as distance-field quads in the scene pass, with no scene dependency. |

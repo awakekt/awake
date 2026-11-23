@@ -134,6 +134,43 @@ public class com/awakekt/awake/core/audio/NoOpSoundHandle : com/awakekt/awake/co
 	public fun update (FF)V
 }
 
+public final class com/awakekt/awake/core/audio/OfflineAudioMixer : com/awakekt/awake/core/audio/AudioPlayer {
+	public static final field Companion Lcom/awakekt/awake/core/audio/OfflineAudioMixer$Companion;
+	public static final field DEFAULT_SAMPLE_RATE I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun advance (FF)V
+	public static synthetic fun advance$default (Lcom/awakekt/awake/core/audio/OfflineAudioMixer;FFILjava/lang/Object;)V
+	public fun dispose ()V
+	public final fun encodeWav ()[B
+	public final fun fadeMusicTo (FF)V
+	public fun getMasterVolume ()F
+	public final fun getMixedDurationSeconds ()F
+	public final fun getMixedFrameCount ()I
+	public fun getMusicVolume ()F
+	public final fun getSampleRate ()I
+	public fun getSfxVolume ()F
+	public final fun peakAmplitude ()F
+	public fun playMusic (Lcom/awakekt/awake/core/audio/AudioClip;FZ)V
+	public final fun playMusic (Lcom/awakekt/awake/core/audio/AudioClip;FZFF)V
+	public static synthetic fun playMusic$default (Lcom/awakekt/awake/core/audio/OfflineAudioMixer;Lcom/awakekt/awake/core/audio/AudioClip;FZFFILjava/lang/Object;)V
+	public fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FFZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public final fun playSoundPitched (Lcom/awakekt/awake/core/audio/AudioClip;FFFZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public static synthetic fun playSoundPitched$default (Lcom/awakekt/awake/core/audio/OfflineAudioMixer;Lcom/awakekt/awake/core/audio/AudioClip;FFFZILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public final fun rmsEnergy ()F
+	public fun setMasterVolume (F)V
+	public fun setMusicVolume (F)V
+	public fun setSfxVolume (F)V
+	public fun stopMusic ()V
+	public final fun triggerDuck (FFFF)V
+	public static synthetic fun triggerDuck$default (Lcom/awakekt/awake/core/audio/OfflineAudioMixer;FFFFILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/audio/OfflineAudioMixer$Companion {
+}
+
 public final class com/awakekt/awake/core/audio/PositionalAudioMath {
 	public static final field INSTANCE Lcom/awakekt/awake/core/audio/PositionalAudioMath;
 	public final fun computeAttenuation (FFF)F

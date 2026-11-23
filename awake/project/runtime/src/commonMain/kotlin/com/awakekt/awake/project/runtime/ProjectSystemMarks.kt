@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.UnscaledSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import com.awakekt.awake.scene.runtime.schedule.SceneSystemObserver
@@ -42,17 +43,22 @@ internal fun runMarked(
     outer: String,
     world: World,
     delta: Float,
+    unscaledDelta: Float = delta,
 ) {
     if (observer == null || names == null || systems.isEmpty()) {
         // By index: forEach takes an iterator, a small allocation every frame.
-        for (index in systems.indices) systems[index].update(world, delta)
+        for (index in systems.indices) {
+            val sys = systems[index]
+            sys.update(world, if (sys is UnscaledSystem) unscaledDelta else delta)
+        }
         return
     }
     observer.after(outer)
     for (index in systems.indices) {
         val name = names[index]
+        val sys = systems[index]
         observer.before(name)
-        systems[index].update(world, delta)
+        sys.update(world, if (sys is UnscaledSystem) unscaledDelta else delta)
         observer.after(name)
     }
     observer.before(outer)

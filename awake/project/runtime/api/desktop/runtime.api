@@ -32,6 +32,7 @@ public final class com/awakekt/awake/project/runtime/CoreFeatures {
 	public final fun getCanvas ()Lcom/awakekt/awake/project/runtime/SceneFeature;
 	public final fun getControls ()Lcom/awakekt/awake/project/runtime/SceneFeature;
 	public final fun getDayCycle ()Lcom/awakekt/awake/project/runtime/SceneFeature;
+	public final fun getDirector ()Lcom/awakekt/awake/project/runtime/SceneFeature;
 	public final fun getMotion ()Lcom/awakekt/awake/project/runtime/SceneFeature;
 	public final fun getParticles ()Lcom/awakekt/awake/project/runtime/SceneFeature;
 	public final fun getPhysics ()Lcom/awakekt/awake/project/runtime/SceneFeature;
@@ -79,6 +80,8 @@ public final class com/awakekt/awake/project/runtime/CoreSystems {
 	public static final field CHARACTER_CONTROLLER Ljava/lang/String;
 	public static final field CHARACTER_SENSOR_BODIES Ljava/lang/String;
 	public static final field DAY_CYCLE Ljava/lang/String;
+	public static final field DIRECTOR Ljava/lang/String;
+	public static final field INPUT_REPLAY Ljava/lang/String;
 	public static final field INSTANCE Lcom/awakekt/awake/project/runtime/CoreSystems;
 	public static final field KEYFRAMES Ljava/lang/String;
 	public static final field LOCOMOTION Ljava/lang/String;
@@ -101,6 +104,20 @@ public final class com/awakekt/awake/project/runtime/CoreSystems {
 	public static final field TERRAIN_COLLIDER Ljava/lang/String;
 	public static final field TEXTURE_CLIPS Ljava/lang/String;
 	public final fun getAll ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/project/runtime/DirectorRuntimeOverride {
+	public static final field DEFAULT_ASPECT F
+	public fun <init> (Lcom/awakekt/awake/director/DirectorScript;Lcom/awakekt/awake/core/input/InputTake;Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;Lkotlin/jvm/functions/Function0;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/DirectorScript;Lcom/awakekt/awake/core/input/InputTake;Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getActiveDirectorSystem ()Lcom/awakekt/awake/scene/director/DirectorSystem;
+	public final fun getActiveReplaySession ()Lcom/awakekt/awake/scene/director/InputReplaySession;
+	public final fun getAspectRatioProvider ()Lkotlin/jvm/functions/Function0;
+	public final fun getAudioPlayer ()Lcom/awakekt/awake/core/audio/AudioPlayer;
+	public final fun getExtraAudioClips ()Ljava/util/Map;
+	public final fun getInputTake ()Lcom/awakekt/awake/core/input/InputTake;
+	public final fun getLoop ()Z
+	public final fun getScript ()Lcom/awakekt/awake/director/DirectorScript;
 }
 
 public final class com/awakekt/awake/project/runtime/EntryGate {
@@ -217,9 +234,11 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;Z)V
+	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZLcom/awakekt/awake/project/runtime/DirectorRuntimeOverride;)V
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Ljava/util/Set;Z)V
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZILjava/lang/Object;)V
+	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZLcom/awakekt/awake/project/runtime/DirectorRuntimeOverride;ILjava/lang/Object;)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Ljava/util/Set;ZILjava/lang/Object;)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V
 	public static final synthetic fun sceneSystems (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;

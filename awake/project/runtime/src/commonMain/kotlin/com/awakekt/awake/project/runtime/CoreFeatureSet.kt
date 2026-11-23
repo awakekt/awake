@@ -60,6 +60,7 @@ internal val CORE_FEATURES: List<SceneFeature> = listOf(
     ShaderEffectsFeature,
     AudioFeature,
     SkinnedAnimationFeature,
+    DirectorFeature,
 )
 
 /**

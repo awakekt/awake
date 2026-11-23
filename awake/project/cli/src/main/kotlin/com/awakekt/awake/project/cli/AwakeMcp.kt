@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.project.cli
 
+import com.awakekt.awake.director.DirectorScript
+import com.awakekt.awake.director.ShotFramingMetrics
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -13,6 +15,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
@@ -37,6 +40,7 @@ import java.util.Base64
  * @param project The project whose files the tools work on.
  * @param workingDir Where a relative render output path starts.
  */
+@Suppress("TooManyFunctions")
 internal class AwakeMcp(private val project: ProjectScenes, private val workingDir: File) {
     private class Tool(
         val name: String,
@@ -151,6 +155,88 @@ internal class AwakeMcp(private val project: ProjectScenes, private val workingD
             ),
             required = listOf(SCENE),
         ) { args -> render(args) },
+        Tool(
+            "inspect_stage",
+            "Inspects a scene's world-space entities, lights, cameras, rails, stage markers, audio clips, director scripts, and recorded input takes on CPU without a GPU.",
+            readOnly = true,
+            properties = mapOf(SCENE to SCENE_PROPERTY),
+            required = listOf(SCENE),
+        ) { args ->
+            val inspector = StageInspector(project)
+            text(inspector.toJson(inspector.inspect(scene(args))))
+        },
+        Tool(
+            "validate_director",
+            "Validates a .director.json script or .reel.json trailer reel against the project's scenes, entities, rails, cameras, takes, and audio files before GPU capture.",
+            readOnly = true,
+            properties = mapOf(
+                "director" to string("Path to a .director.json script or .reel.json reel."),
+                SCENE to SCENE_PROPERTY,
+            ),
+            required = listOf("director"),
+        ) { args -> validateDirector(args) },
+        Tool(
+            "preview_storyboard",
+            "Renders a multi-shot storyboard contact sheet PNG (start/mid/end per shot) with optional Rule-of-Thirds/safe-frame guides and structured framing/occlusion/luminance telemetry.",
+            readOnly = true,
+            properties = mapOf(
+                SCENE to SCENE_PROPERTY,
+                "director" to string("Path to a .director.json script (either director or script is required)."),
+                "script" to buildJsonObject { put("description", "Inline DirectorScript JSON object or JSON string.") },
+                "take" to string("Optional path to a .take.json recorded gameplay input take."),
+                "tile_width" to integer("Tile width in pixels; $DEFAULT_TILE_WIDTH when omitted."),
+                "tile_height" to integer("Tile height in pixels; $DEFAULT_TILE_HEIGHT when omitted."),
+                "guides" to boolean("Draw Rule-of-Thirds, action-safe margin, projected subject box, and telemetry banner (default true)."),
+                "backend" to string("The GPU backend.", RenderBackend.entries.map { it.label }),
+                "output" to string("Also save the contact sheet PNG here."),
+            ),
+            required = listOf(SCENE),
+        ) { args -> previewStoryboard(args) },
+        Tool(
+            "preview_shot",
+            "Renders a single directed shot at a normalized timestamp (0..1) and returns its PNG plus framing, occlusion, clearance, and luminance telemetry.",
+            readOnly = true,
+            properties = mapOf(
+                SCENE to SCENE_PROPERTY,
+                "director" to string("Path to a .director.json script (either director or script is required)."),
+                "script" to buildJsonObject { put("description", "Inline DirectorScript JSON object or JSON string.") },
+                "shot" to string("The shot id inside the script."),
+                "at" to buildJsonObject {
+                    put("type", "number")
+                    put("description", "Normalized timestamp inside the shot in 0..1 (default 0.5).")
+                },
+                "take" to string("Optional path to a .take.json recorded gameplay input take."),
+                "width" to integer("Pixels wide; $DEFAULT_WIDTH when omitted."),
+                "height" to integer("Pixels high; $DEFAULT_HEIGHT when omitted."),
+                "guides" to boolean("Draw Rule-of-Thirds and telemetry banner (default true)."),
+                "backend" to string("The GPU backend.", RenderBackend.entries.map { it.label }),
+                "output" to string("Also save the PNG here."),
+            ),
+            required = listOf(SCENE, "shot"),
+        ) { args -> previewShot(args) },
+        Tool(
+            "capture_trailer",
+            "Records a deterministic headless gameplay trailer (single scene + director script or multi-scene .reel.json) to MP4, WebM, GIF, or PNG sequence + synced WAV.",
+            readOnly = false,
+            properties = mapOf(
+                SCENE to SCENE_PROPERTY,
+                "director" to string("Path to a .director.json script (required unless reel or script is given)."),
+                "script" to buildJsonObject { put("description", "Inline DirectorScript JSON object or JSON string.") },
+                "reel" to string("Path to a multi-scene .reel.json trailer reel."),
+                "take" to string("Optional path to a .take.json recorded gameplay input take."),
+                "output" to string("Output file path (.mp4, .webm, .gif) or directory for png-sequence."),
+                "preset" to string("Capture preset.", CapturePreset.entries.map { it.label }),
+                "width" to integer("Pixels wide; overrides preset width."),
+                "height" to integer("Pixels high; overrides preset height."),
+                "fps" to integer("Fixed frame rate; overrides preset fps (default 60)."),
+                "format" to string("Output format.", CaptureFormat.entries.map { it.label }),
+                "audio" to string("Optional WAV soundtrack file mixed into the capture."),
+                "hud" to string("Force HUD visibility.", listOf("show", "hide")),
+                "keep_frames" to boolean("Keep intermediate PNG frames alongside encoded video (default false)."),
+                "backend" to string("The GPU backend.", RenderBackend.entries.map { it.label }),
+            ),
+            required = listOf("output"),
+        ) { args -> captureTrailer(args) },
     )
 
     /** Answers each line of [input] on [out] until the input ends. */
@@ -256,6 +342,149 @@ internal class AwakeMcp(private val project: ProjectScenes, private val workingD
         )
     }
 
+    private fun validateDirector(args: JsonObject): List<JsonObject> {
+        val file = resolveFile(args.string("director"))
+        val sceneFile = args.optionalString(SCENE)?.let(project::resolve)
+        val validator = DirectorValidator(project)
+        val report = if (file.name.endsWith(".reel.json", ignoreCase = true)) {
+            validator.validateReelFile(file)
+        } else {
+            validator.validateScriptFile(file, sceneFile)
+        }
+        return text(validator.toJson(report))
+    }
+
+    private fun previewStoryboard(args: JsonObject): List<JsonObject> {
+        val sceneFile = scene(args)
+        val script = resolveScript(args)
+        val take = loadDirectorInputTake(project.root, workingDir, script, args.optionalString("take"))
+        val request = StoryboardRequest(
+            scene = sceneFile,
+            script = script,
+            inputTake = take,
+            tileWidth = args.int("tile_width", DEFAULT_TILE_WIDTH),
+            tileHeight = args.int("tile_height", DEFAULT_TILE_HEIGHT),
+            drawGuides = args.bool("guides", true),
+            backend = args.optionalString("backend")?.let(RenderBackend::named) ?: RenderBackend.default(),
+        )
+        val result = StoryboardRenderer(project).render(request)
+        args.optionalString("output")?.let { path ->
+            workingDir.resolve(path).also {
+                it.absoluteFile.parentFile?.mkdirs()
+                it.writeBytes(result.pngBytes)
+            }
+        }
+        return listOf(
+            imageContent(result.pngBytes),
+            textContent(PRETTY_JSON.encodeToString(StoryboardReport.serializer(), result.report)),
+        )
+    }
+
+    private fun previewShot(args: JsonObject): List<JsonObject> {
+        val sceneFile = scene(args)
+        val script = resolveScript(args)
+        val shotId = args.string("shot")
+        val at = args.float("at", DEFAULT_SHOT_AT).coerceIn(0f, 1f)
+        val take = loadDirectorInputTake(project.root, workingDir, script, args.optionalString("take"))
+        val request = StoryboardRequest(
+            scene = sceneFile,
+            script = script,
+            inputTake = take,
+            tileWidth = args.int("width", DEFAULT_WIDTH),
+            tileHeight = args.int("height", DEFAULT_HEIGHT),
+            samples = listOf(at),
+            drawGuides = args.bool("guides", true),
+            backend = args.optionalString("backend")?.let(RenderBackend::named) ?: RenderBackend.default(),
+            shotFilterId = shotId,
+        )
+        val result = StoryboardRenderer(project).render(request)
+        args.optionalString("output")?.let { path ->
+            workingDir.resolve(path).also {
+                it.absoluteFile.parentFile?.mkdirs()
+                it.writeBytes(result.pngBytes)
+            }
+        }
+        val metric = result.report.samples.firstOrNull()
+        return listOf(
+            imageContent(result.pngBytes),
+            textContent(
+                if (metric != null) {
+                    PRETTY_JSON.encodeToString(ShotFramingMetrics.serializer(), metric)
+                } else {
+                    PRETTY_JSON.encodeToString(StoryboardReport.serializer(), result.report)
+                },
+            ),
+        )
+    }
+
+    private fun captureTrailer(args: JsonObject): List<JsonObject> {
+        val preset = args.optionalString("preset")?.let(CapturePreset::named)
+        val width = args.int("width", preset?.width ?: DEFAULT_CAPTURE_WIDTH)
+        val height = args.int("height", preset?.height ?: DEFAULT_CAPTURE_HEIGHT)
+        val fps = args.int("fps", preset?.fps ?: DEFAULT_CAPTURE_FPS)
+        val reelPath = args.optionalString("reel")
+        val segments = if (reelPath != null) {
+            resolveReelSegments(project, workingDir, resolveFile(reelPath))
+        } else {
+            val sceneFile = scene(args)
+            val script = resolveScript(args)
+            val take = loadDirectorInputTake(project.root, workingDir, script, args.optionalString("take"))
+            listOf(CaptureSegment(sceneFile, script, take))
+        }
+        val output = workingDir.resolve(args.string("output"))
+        val format = CaptureFormat.fromOutputOrLabel(output, args.optionalString("format"))
+        val hudOverride = when (val hud = args.optionalString("hud")?.lowercase()) {
+            null -> null
+            "show" -> true
+            "hide" -> false
+            else -> throw UsageException("hud must be 'show' or 'hide'")
+        }
+        val audioOverride = args.optionalString("audio")?.let(::resolveFile)
+        val report = TrailerCapture(project).capture(
+            TrailerCaptureRequest(
+                segments = segments,
+                output = output,
+                format = format,
+                width = width,
+                height = height,
+                fps = fps,
+                backend = args.optionalString("backend")?.let(RenderBackend::named) ?: RenderBackend.default(),
+                audioOverride = audioOverride,
+                hudOverride = hudOverride,
+                keepFrames = args.bool("keep_frames", false),
+            ),
+        )
+        return text(PRETTY_JSON.encodeToString(TrailerCaptureReport.serializer(), report))
+    }
+
+    private fun resolveFile(path: String): File =
+        workingDir.resolve(path).takeIf(File::isFile)
+            ?: project.root.resolve(path).takeIf(File::isFile)
+            ?: throw UsageException("no file '$path'")
+
+    private fun resolveScript(args: JsonObject): DirectorScript {
+        val inline = args["script"]
+        if (inline != null && inline !is JsonNull) {
+            val jsonText = if (inline is JsonPrimitive && inline.isString) inline.content else inline.toString()
+            return decodeScriptOrFail("inline script", jsonText)
+        }
+        val path = args.optionalString("director") ?: throw UsageException("either 'director' file path or inline 'script' is required")
+        val file = resolveFile(path)
+        return decodeScriptOrFail(file.path, file.readText())
+    }
+
+    private fun decodeScriptOrFail(label: String, text: String): DirectorScript = try {
+        DirectorScript.decode(text)
+    } catch (@Suppress("TooGenericExceptionCaught") error: Exception) {
+        throw CommandFailure("could not decode director script $label: ${error.message}", error)
+    }
+
+    private fun imageContent(png: ByteArray): JsonObject = buildJsonObject {
+        put("type", "image")
+        put("data", Base64.getEncoder().encodeToString(png))
+        put("mimeType", "image/png")
+    }
+
     private fun view(show: SceneViews.() -> Unit): String = StringWriter().also { SceneViews(it, project, json = true).show() }.toString().trim()
 
     private fun scene(args: JsonObject): File = project.resolve(args.string(SCENE))
@@ -270,6 +499,12 @@ internal class AwakeMcp(private val project: ProjectScenes, private val workingD
         const val DRY_RUN = "dry_run"
         const val DEFAULT_WIDTH = 960
         const val DEFAULT_HEIGHT = 540
+        const val DEFAULT_TILE_WIDTH = 480
+        const val DEFAULT_TILE_HEIGHT = 270
+        const val DEFAULT_CAPTURE_WIDTH = 1280
+        const val DEFAULT_CAPTURE_HEIGHT = 720
+        const val DEFAULT_CAPTURE_FPS = 60
+        const val DEFAULT_SHOT_AT = 0.5f
         const val PARSE_ERROR = -32700
         const val INVALID_REQUEST = -32600
         const val METHOD_NOT_FOUND = -32601
@@ -286,7 +521,10 @@ internal class AwakeMcp(private val project: ProjectScenes, private val workingD
             "An Awake project's files, with no Studio running. Start with validate and list_scenes. A node is its path of names, " +
                 "such as Player/Camera. set_field takes component.field, such as spin_control.speed or transform.position.x. " +
                 "Every edit is checked before it is written, and the file changes only where it was edited; dry_run reports an edit " +
-                "without writing it. render shows a scene as a PNG, lit or in a debug view such as clay."
+                "without writing it. render shows a scene as a PNG, lit or in a debug view such as clay. For vibe-directing trailers, " +
+                "call inspect_stage to discover world-space entities, lights, rails, and audio assets, validate_director to cross-check " +
+                "a .director.json script or .reel.json reel, preview_storyboard or preview_shot to inspect contact sheets and framing/occlusion " +
+                "telemetry, and capture_trailer to record MP4/WebM/GIF/PNG+WAV output."
 
         fun string(description: String, choices: List<String> = emptyList()): JsonObject = buildJsonObject {
             put("type", "string")
@@ -296,6 +534,11 @@ internal class AwakeMcp(private val project: ProjectScenes, private val workingD
 
         fun integer(description: String): JsonObject = buildJsonObject {
             put("type", "integer")
+            put("description", description)
+        }
+
+        fun boolean(description: String): JsonObject = buildJsonObject {
+            put("type", "boolean")
             put("description", description)
         }
     }
@@ -310,6 +553,16 @@ private fun JsonObject.string(name: String): String = optionalString(name) ?: th
 private fun JsonObject.int(name: String, default: Int): Int {
     val value = this[name] ?: return default
     return (value as? JsonPrimitive)?.intOrNull?.takeIf { it > 0 } ?: throw UsageException("$name takes a positive whole number")
+}
+
+private fun JsonObject.float(name: String, default: Float): Float {
+    val value = this[name] ?: return default
+    return (value as? JsonPrimitive)?.floatOrNull?.takeIf(Float::isFinite) ?: throw UsageException("$name takes a finite number")
+}
+
+private fun JsonObject.bool(name: String, default: Boolean): Boolean {
+    val value = this[name] ?: return default
+    return (value as? JsonPrimitive)?.booleanOrNull ?: throw UsageException("$name takes true or false")
 }
 
 private fun text(json: JsonElement): List<JsonObject> = listOf(textContent(json.toString()))

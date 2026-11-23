@@ -1,0 +1,322 @@
+public final class com/awakekt/awake/scene/director/CameraDirectorBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/CameraDirectorBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/SceneCameraDirector;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/CameraDirectorComponent;)Lcom/awakekt/awake/scene/director/SceneCameraDirector;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/director/SceneCameraDirector;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/CameraDirectorComponent {
+	public fun <init> (Lcom/awakekt/awake/scene/director/SceneCameraDirector;Lcom/awakekt/awake/director/DirectorScript;ZZI)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/director/SceneCameraDirector;Lcom/awakekt/awake/director/DirectorScript;ZZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAuthored ()Lcom/awakekt/awake/scene/director/SceneCameraDirector;
+	public final fun getLoop ()Z
+	public final fun getPlaying ()Z
+	public final fun getPriority ()I
+	public final fun getResolvedScript ()Lcom/awakekt/awake/director/DirectorScript;
+	public final fun setLoop (Z)V
+	public final fun setPlaying (Z)V
+	public final fun setPriority (I)V
+	public final fun setResolvedScript (Lcom/awakekt/awake/director/DirectorScript;)V
+}
+
+public final class com/awakekt/awake/scene/director/CameraRailBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/CameraRailBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/SceneCameraRail;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/CameraRailComponent;)Lcom/awakekt/awake/scene/director/SceneCameraRail;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/director/SceneCameraRail;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/CameraRailComponent {
+	public fun <init> (Lcom/awakekt/awake/scene/director/SceneCameraRail;Lcom/awakekt/awake/core/math/ArcLengthSpline3f;)V
+	public final fun getAuthored ()Lcom/awakekt/awake/scene/director/SceneCameraRail;
+	public final fun getSpline ()Lcom/awakekt/awake/core/math/ArcLengthSpline3f;
+}
+
+public final class com/awakekt/awake/scene/director/DirectorSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/DirectorSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
+public final class com/awakekt/awake/scene/director/DirectorSystem : com/awakekt/awake/ecs/UnscaledSystem, java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/scene/director/DirectorSystem$Companion;
+	public static final field DIRECTOR_CAMERA_NAME Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/director/WorldStageQuery;Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/director/DirectorScript;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/director/WorldStageQuery;Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/director/DirectorScript;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun getActivePlayer ()Lcom/awakekt/awake/director/DirectorPlayer;
+	public final fun getLastAtmosphere ()Lcom/awakekt/awake/director/DirectedAtmosphereState;
+	public final fun getLastPose ()Lcom/awakekt/awake/director/DirectedCameraPose;
+	public final fun getStageQuery ()Lcom/awakekt/awake/scene/director/WorldStageQuery;
+	public final fun releaseDirectorTakeover (Lcom/awakekt/awake/ecs/World;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/director/DirectorSystem$Companion {
+}
+
+public final class com/awakekt/awake/scene/director/InputRecordSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/core/input/InputRecorder;Lkotlin/jvm/functions/Function0;)V
+	public final fun getRecorder ()Lcom/awakekt/awake/core/input/InputRecorder;
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/director/InputReplaySession {
+	public fun <init> (Lcom/awakekt/awake/core/input/InputTake;)V
+	public final fun currentGameplayInput ()Lcom/awakekt/awake/scene/controls/GameplayInput;
+	public final fun getSnapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
+	public final fun getTake ()Lcom/awakekt/awake/core/input/InputTake;
+	public final fun isFinished ()Z
+	public final fun reset ()V
+	public final fun stepFixed (Lcom/awakekt/awake/ecs/World;)V
+}
+
+public final class com/awakekt/awake/scene/director/InputReplaySystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/scene/director/InputReplaySession;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/director/SceneCameraDirector : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/director/SceneCameraDirector$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;ZZI)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;ZZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/director/DirectorScript;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()I
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;ZZI)Lcom/awakekt/awake/scene/director/SceneCameraDirector;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/director/SceneCameraDirector;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;ZZIILjava/lang/Object;)Lcom/awakekt/awake/scene/director/SceneCameraDirector;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getAutoPlay ()Z
+	public final fun getInlineScript ()Lcom/awakekt/awake/director/DirectorScript;
+	public final fun getInputTakePath ()Ljava/lang/String;
+	public final fun getLoop ()Z
+	public final fun getPriority ()I
+	public final fun getScriptPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/director/SceneCameraDirector$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/SceneCameraDirector$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/director/SceneCameraDirector;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/director/SceneCameraDirector;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/SceneCameraDirector$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/SceneCameraRail : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/director/SceneCameraRail$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;ZFZ)V
+	public synthetic fun <init> (Ljava/util/List;ZFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Z
+	public final fun component3 ()F
+	public final fun component4 ()Z
+	public final fun copy (Ljava/util/List;ZFZ)Lcom/awakekt/awake/scene/director/SceneCameraRail;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/director/SceneCameraRail;Ljava/util/List;ZFZILjava/lang/Object;)Lcom/awakekt/awake/scene/director/SceneCameraRail;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getAlpha ()F
+	public final fun getClosed ()Z
+	public final fun getLocalSpace ()Z
+	public final fun getWaypoints ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/director/SceneCameraRail$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/SceneCameraRail$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/director/SceneCameraRail;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/director/SceneCameraRail;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/SceneCameraRail$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/SceneStageMarker : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/director/SceneStageMarker$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;F)V
+	public synthetic fun <init> (Ljava/util/List;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()F
+	public final fun copy (Ljava/util/List;F)Lcom/awakekt/awake/scene/director/SceneStageMarker;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/director/SceneStageMarker;Ljava/util/List;FILjava/lang/Object;)Lcom/awakekt/awake/scene/director/SceneStageMarker;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getRadius ()F
+	public final fun getTags ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/director/SceneStageMarker$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/SceneStageMarker$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/director/SceneStageMarker;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/director/SceneStageMarker;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/SceneStageMarker$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/SceneVirtualCamera : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/director/SceneVirtualCamera$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/director/LensSpec;I)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/director/LensSpec;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component3 ()Lcom/awakekt/awake/director/LensSpec;
+	public final fun component4 ()I
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/director/LensSpec;I)Lcom/awakekt/awake/scene/director/SceneVirtualCamera;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/director/SceneVirtualCamera;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/director/LensSpec;IILjava/lang/Object;)Lcom/awakekt/awake/scene/director/SceneVirtualCamera;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getCenter ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getEye ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getLens ()Lcom/awakekt/awake/director/LensSpec;
+	public final fun getPriority ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/director/SceneVirtualCamera$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/SceneVirtualCamera$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/director/SceneVirtualCamera;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/director/SceneVirtualCamera;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/SceneVirtualCamera$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/StageMarkerBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/StageMarkerBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/SceneStageMarker;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/StageMarkerComponent;)Lcom/awakekt/awake/scene/director/SceneStageMarker;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/director/SceneStageMarker;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/StageMarkerComponent {
+	public fun <init> (Lcom/awakekt/awake/scene/director/SceneStageMarker;)V
+	public final fun getAuthored ()Lcom/awakekt/awake/scene/director/SceneStageMarker;
+}
+
+public abstract interface class com/awakekt/awake/scene/director/StageSightlineProbe {
+	public static final field Companion Lcom/awakekt/awake/scene/director/StageSightlineProbe$Companion;
+	public abstract fun cast-BareMt0 (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/director/StageRayHit;)Z
+	public fun prepare (Lcom/awakekt/awake/ecs/World;)V
+}
+
+public final class com/awakekt/awake/scene/director/StageSightlineProbe$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/scene/director/StageSightlineProbe;
+}
+
+public final class com/awakekt/awake/scene/director/StageSightlineProbe$DefaultImpls {
+	public static fun prepare (Lcom/awakekt/awake/scene/director/StageSightlineProbe;Lcom/awakekt/awake/ecs/World;)V
+}
+
+public final class com/awakekt/awake/scene/director/VirtualCameraBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/director/VirtualCameraBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/SceneVirtualCamera;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/director/VirtualCameraComponent;)Lcom/awakekt/awake/scene/director/SceneVirtualCamera;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/director/SceneVirtualCamera;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/director/VirtualCameraComponent {
+	public fun <init> (Lcom/awakekt/awake/scene/director/SceneVirtualCamera;)V
+	public final fun getAuthored ()Lcom/awakekt/awake/scene/director/SceneVirtualCamera;
+}
+
+public final class com/awakekt/awake/scene/director/WorldStageQuery : com/awakekt/awake/director/StageQuery {
+	public static final field DEFAULT_EYE_Z F
+	public static final field DEG_TO_RAD F
+	public static final field FALLBACK_HALF_WIDTH F
+	public static final field FALLBACK_HEIGHT F
+	public static final field MIN_DT F
+	public static final field MIN_LEN F
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;Lcom/awakekt/awake/scene/director/StageSightlineProbe;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;Lcom/awakekt/awake/scene/director/StageSightlineProbe;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun castSightline (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/lang/String;Lcom/awakekt/awake/director/StageRayHit;)Z
+	public final fun findEntity-XHcgaUg (Ljava/lang/String;)Lcom/awakekt/awake/ecs/Entity;
+	public fun getCameraGround ()Lcom/awakekt/awake/core/camera/CameraGround;
+	public fun getCameraObstruction ()Lcom/awakekt/awake/core/camera/CameraObstruction;
+	public fun groundHeight (FF)F
+	public final fun prepare (Lcom/awakekt/awake/ecs/World;F)V
+	public fun readNamedCamera (Ljava/lang/String;Lcom/awakekt/awake/director/DirectedCameraPose;)Z
+	public fun readSpline (Ljava/lang/String;)Lcom/awakekt/awake/core/math/ArcLengthSpline3f;
+	public fun readSubject (Ljava/lang/String;Lcom/awakekt/awake/director/StageSubjectState;)Z
+}
+

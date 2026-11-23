@@ -184,7 +184,7 @@ class SceneSystemNamesTest {
             "navigation-agents", "ai-intents", "ai-perception", "ai-definitions", "ai-trees", "ai-machines", "ai-patrol",
             "ai-chase", "ai-flee", "path-requests", "spin-clock", "spin", "locomotion", "keyframes", "texture-clips",
             "sprite-clips", "particles-2d", "particle-content", "particles", "day-cycle", "shader-effects",
-            "audio-listener", "audio", "animation",
+            "audio-listener", "audio", "animation", "input-replay", "director",
         )
     }
 }

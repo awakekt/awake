@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 113 | Existing root `v*` tags and the shared Core release train |
+| Core | 115 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -130,6 +130,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.core:settings` | `:awake:core:settings` | `core` | `api` → `:awake:core:config`; `api` → `:awake:core:io` |
 | `com.awakekt.awake.core:state` | `:awake:core:state` | `core` | — |
 | `com.awakekt.awake.core:text` | `:awake:core:text` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:logging` |
+| `com.awakekt.awake:director` | `:awake:director` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:camera`; `api` → `:awake:core:color`; `api` → `:awake:core:input` |
 | `com.awakekt.awake:ecs` | `:awake:ecs` | `core` | — |
 | `com.awakekt.awake.editor:contract` | `:awake:editor:contract` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:input`; `api` → `:awake:core:state`; `api` → `:awake:core:di`; `api` → `:awake:plugin-archive` |
 | `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` | `core` | `implementation` → `:awake:core:di`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:engine:platform` |
@@ -155,7 +156,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake:plugin-archive` | `:awake:plugin-archive` | `core` | — |
 | `com.awakekt.awake:project` | `:awake:project` | `core` | — |
 | `com.awakekt.awake.project:blueprint` | `:awake:project:blueprint` | `core` | `api` → `:awake:project:runtime`; `api` → `:awake:scene:blueprint` |
-| `com.awakekt.awake.project:runtime` | `:awake:project:runtime` | `core` | `api` → `:awake:project`; `api` → `:awake:scene:authoring`; `api` → `:awake:scene:gltf`; `api` → `:awake:scene:character`; `implementation` → `:awake:ai:behavior`; `implementation` → `:awake:scene:ai`; `api` → `:awake:core:geometry`; `api` → `:awake:core:io`; `api` → `:awake:core:localization`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-pack`; `implementation` → `:awake:core:animation`; `implementation` → `:awake:core:math`; `implementation` → `:awake:particles`; `implementation` → `:awake:scene:particles`; `api` → `:awake:scene:audio`; `implementation` → `:awake:scene:shader`; `api` → `:awake:scene:binding` |
+| `com.awakekt.awake.project:runtime` | `:awake:project:runtime` | `core` | `api` → `:awake:project`; `api` → `:awake:scene:authoring`; `api` → `:awake:scene:gltf`; `api` → `:awake:scene:character`; `api` → `:awake:scene:director`; `implementation` → `:awake:ai:behavior`; `implementation` → `:awake:scene:ai`; `api` → `:awake:core:geometry`; `api` → `:awake:core:io`; `api` → `:awake:core:localization`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-pack`; `implementation` → `:awake:core:animation`; `implementation` → `:awake:core:math`; `implementation` → `:awake:particles`; `implementation` → `:awake:scene:particles`; `api` → `:awake:scene:audio`; `implementation` → `:awake:scene:shader`; `api` → `:awake:scene:binding` |
 | `com.awakekt.awake.project:transport-browser` | `:awake:project:transport-browser` | `core` | `api` → `:awake:project` |
 | `com.awakekt.awake.project:transport-ktor` | `:awake:project:transport-ktor` | `core` | `api` → `:awake:project` |
 | `com.awakekt.awake.scene:ai` | `:awake:scene:ai` | `core` | `api` → `:awake:ai:behavior`; `api` → `:awake:scene:navigation`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding` |
@@ -167,6 +168,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.scene:blueprint` | `:awake:scene:blueprint` | `core` | `api` → `:awake:blueprint`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:scene:physics`; `implementation` → `:awake:scene:scene3d`; `implementation` → `:awake:core:animation`; `implementation` → `:awake:scene:canvas` |
 | `com.awakekt.awake.scene:character` | `:awake:scene:character` | `core` | `api` → `:awake:scene:physics`; `api` → `:awake:scene:controls`; `implementation` → `:awake:core:math` |
 | `com.awakekt.awake.scene:controls` | `:awake:scene:controls` | `core` | `api` → `:awake:core:input`; `api` → `:awake:scene:scene-core`; `implementation` → `:awake:core:math`; `api` → `:awake:core:camera`; `api` → `:awake:scene:scene3d`; `api` → `:awake:compose:ui` |
+| `com.awakekt.awake.scene:director` | `:awake:scene:director` | `core` | `api` → `:awake:director`; `api` → `:awake:core:math`; `api` → `:awake:core:camera`; `api` → `:awake:core:audio`; `api` → `:awake:core:input`; `api` → `:awake:core:io`; `implementation` → `:awake:core:animation`; `api` → `:awake:ecs`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:scene:scene3d`; `api` → `:awake:scene:controls`; `api` → `:awake:scene:audio`; `api` → `:awake:particles`; `api` → `:awake:scene:particles`; `api` → `:awake:engine:render:effects` |
 | `com.awakekt.awake.scene:document` | `:awake:scene:document` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:color`; `api` → `:awake:core:logging`; `api` → `:awake:core:host`; `api` → `:awake:core:io` |
 | `com.awakekt.awake.scene:gltf` | `:awake:scene:gltf` | `core` | `api` → `:awake:scene:runtime`; `api` → `:awake:asset:gltf`; `api` → `:awake:core:color`; `api` → `:awake:core:geometry`; `api` → `:awake:core:io`; `implementation` → `:awake:asset:mesh-lod`; `implementation` → `:awake:asset:shader-pack`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:image`; `implementation` → `:awake:core:math` |
 | `com.awakekt.awake.scene:navigation` | `:awake:scene:navigation` | `core` | `api` → `:awake:navigation`; `api` → `:awake:ecs`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding` |

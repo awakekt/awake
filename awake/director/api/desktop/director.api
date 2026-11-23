@@ -1,0 +1,2167 @@
+public abstract interface class com/awakekt/awake/director/ActionCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ActionCueSpec$Companion;
+	public abstract fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$ActorMove : com/awakekt/awake/director/ActionCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ActionCueSpec$ActorMove$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component7 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ActionCueSpec$ActorMove;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ActionCueSpec$ActorMove;Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ActionCueSpec$ActorMove;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEntity ()Ljava/lang/String;
+	public final fun getFaceTarget ()Ljava/lang/String;
+	public final fun getTargetMarker ()Ljava/lang/String;
+	public final fun getTargetPosition ()Lcom/awakekt/awake/director/DirectorVec3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ActionCueSpec$ActorMove$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ActionCueSpec$ActorMove$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ActionCueSpec$ActorMove;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ActionCueSpec$ActorMove;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$ActorMove$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$CameraTrauma : com/awakekt/awake/director/ActionCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ActionCueSpec$CameraTrauma$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;FF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;FF)Lcom/awakekt/awake/director/ActionCueSpec$CameraTrauma;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ActionCueSpec$CameraTrauma;Lcom/awakekt/awake/director/TimeRef;FFILjava/lang/Object;)Lcom/awakekt/awake/director/ActionCueSpec$CameraTrauma;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()F
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getDecaySeconds ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ActionCueSpec$CameraTrauma$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ActionCueSpec$CameraTrauma$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ActionCueSpec$CameraTrauma;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ActionCueSpec$CameraTrauma;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$CameraTrauma$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$InputAction : com/awakekt/awake/director/ActionCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ActionCueSpec$InputAction$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;)Lcom/awakekt/awake/director/ActionCueSpec$InputAction;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ActionCueSpec$InputAction;Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;ILjava/lang/Object;)Lcom/awakekt/awake/director/ActionCueSpec$InputAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAction ()Ljava/lang/String;
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ActionCueSpec$InputAction$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ActionCueSpec$InputAction$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ActionCueSpec$InputAction;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ActionCueSpec$InputAction;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$InputAction$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$ParticleBurst : com/awakekt/awake/director/ActionCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;ZI)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;ZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun component4 ()I
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;ZI)Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst;Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;ZIILjava/lang/Object;)Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getBurstCount ()I
+	public final fun getEnabled ()Z
+	public final fun getEntity ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ActionCueSpec$ParticleBurst$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$ParticleBurst$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$PlayAnimation : com/awakekt/awake/director/ActionCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Ljava/lang/String;FZF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Ljava/lang/String;FZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()F
+	public final fun component5 ()Z
+	public final fun component6 ()F
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Ljava/lang/String;FZF)Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation;Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;Ljava/lang/String;FZFILjava/lang/Object;)Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getClip ()Ljava/lang/String;
+	public final fun getCrossfadeSeconds ()F
+	public final fun getEntity ()Ljava/lang/String;
+	public final fun getLoop ()Z
+	public final fun getSpeed ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ActionCueSpec$PlayAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$PlayAnimation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$TimeScaleRamp : com/awakekt/awake/director/ActionCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ActionCueSpec$TimeScaleRamp$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;FFFFFZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;FFFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()Z
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;FFFFFZ)Lcom/awakekt/awake/director/ActionCueSpec$TimeScaleRamp;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ActionCueSpec$TimeScaleRamp;Lcom/awakekt/awake/director/TimeRef;FFFFFZILjava/lang/Object;)Lcom/awakekt/awake/director/ActionCueSpec$TimeScaleRamp;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getHitstopSeconds ()F
+	public final fun getHoldSeconds ()F
+	public final fun getPitchShiftAudio ()Z
+	public final fun getRampInSeconds ()F
+	public final fun getRampOutSeconds ()F
+	public final fun getTargetScale ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ActionCueSpec$TimeScaleRamp$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ActionCueSpec$TimeScaleRamp$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ActionCueSpec$TimeScaleRamp;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ActionCueSpec$TimeScaleRamp;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ActionCueSpec$TimeScaleRamp$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/AnglePreset : java/lang/Enum {
+	public static final field BirdsEye Lcom/awakekt/awake/director/AnglePreset;
+	public static final field Companion Lcom/awakekt/awake/director/AnglePreset$Companion;
+	public static final field EyeLevel Lcom/awakekt/awake/director/AnglePreset;
+	public static final field High Lcom/awakekt/awake/director/AnglePreset;
+	public static final field LowHero Lcom/awakekt/awake/director/AnglePreset;
+	public static final field OverShoulderLeft Lcom/awakekt/awake/director/AnglePreset;
+	public static final field OverShoulderRight Lcom/awakekt/awake/director/AnglePreset;
+	public static final field ProfileLeft Lcom/awakekt/awake/director/AnglePreset;
+	public static final field ProfileRight Lcom/awakekt/awake/director/AnglePreset;
+	public static final field WormsEye Lcom/awakekt/awake/director/AnglePreset;
+	public final fun getDefaultAzimuthDeg ()F
+	public final fun getDefaultElevationDeg ()F
+	public final fun getDefaultScreenOffsetX ()F
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/director/AnglePreset;
+	public static fun values ()[Lcom/awakekt/awake/director/AnglePreset;
+}
+
+public final class com/awakekt/awake/director/AnglePreset$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/director/AudioCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/AudioCueSpec$Companion;
+	public abstract fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+}
+
+public final class com/awakekt/awake/director/AudioCueSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/AudioCueSpec$MusicControl : com/awakekt/awake/director/AudioCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/AudioCueSpec$MusicControl$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/Float;FLjava/lang/Float;FZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/Float;FLjava/lang/Float;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun component3 ()F
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun component5 ()F
+	public final fun component6 ()Z
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/Float;FLjava/lang/Float;FZ)Lcom/awakekt/awake/director/AudioCueSpec$MusicControl;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/AudioCueSpec$MusicControl;Lcom/awakekt/awake/director/TimeRef;Ljava/lang/Float;FLjava/lang/Float;FZILjava/lang/Object;)Lcom/awakekt/awake/director/AudioCueSpec$MusicControl;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getDuckGain ()Ljava/lang/Float;
+	public final fun getDuckHoldSeconds ()F
+	public final fun getFadeSeconds ()F
+	public final fun getStop ()Z
+	public final fun getTargetVolume ()Ljava/lang/Float;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/AudioCueSpec$MusicControl$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/AudioCueSpec$MusicControl$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/AudioCueSpec$MusicControl;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/AudioCueSpec$MusicControl;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/AudioCueSpec$MusicControl$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/AudioCueSpec$PlaySfx : com/awakekt/awake/director/AudioCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;FFLjava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;FLjava/lang/Float;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;FFLjava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;FLjava/lang/Float;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component7 ()F
+	public final fun component8 ()Ljava/lang/Float;
+	public final fun component9 ()F
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;FFLjava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;FLjava/lang/Float;F)Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx;Lcom/awakekt/awake/director/TimeRef;Ljava/lang/String;FFLjava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;FLjava/lang/Float;FILjava/lang/Object;)Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getDuckHoldSeconds ()F
+	public final fun getDuckMusicGain ()Ljava/lang/Float;
+	public final fun getEntity ()Ljava/lang/String;
+	public final fun getMaxDistance ()F
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getPitch ()F
+	public final fun getPosition ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getVolume ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/AudioCueSpec$PlaySfx$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/AudioCueSpec$PlaySfx$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/BeatClock {
+	public static final field Companion Lcom/awakekt/awake/director/BeatClock$Companion;
+	public static final field DEFAULT_BEATS_PER_BAR I
+	public static final field DEFAULT_BPM F
+	public fun <init> ()V
+	public fun <init> (FIF)V
+	public synthetic fun <init> (FIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun beatAt (F)F
+	public final fun beatPhase (F)F
+	public final fun component1 ()F
+	public final fun component2 ()I
+	public final fun component3 ()F
+	public final fun copy (FIF)Lcom/awakekt/awake/director/BeatClock;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/BeatClock;FIFILjava/lang/Object;)Lcom/awakekt/awake/director/BeatClock;
+	public final fun durationForBeats (F)F
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBeatsPerBar ()I
+	public final fun getBpm ()F
+	public final fun getOffsetSeconds ()F
+	public final fun getSecondsPerBar ()F
+	public final fun getSecondsPerBeat ()F
+	public fun hashCode ()I
+	public final fun resolveDuration (Lcom/awakekt/awake/director/DurationRef;)F
+	public final fun resolveTime (Lcom/awakekt/awake/director/TimeRef;)F
+	public final fun secondsAtBeat (F)F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/BeatClock$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/BeatClock$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/BeatClock;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/BeatClock;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/BeatClock$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/CameraFeelRig {
+	public static final field Companion Lcom/awakekt/awake/director/CameraFeelRig$Companion;
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addTrauma (FLjava/lang/Float;)V
+	public static synthetic fun addTrauma$default (Lcom/awakekt/awake/director/CameraFeelRig;FLjava/lang/Float;ILjava/lang/Object;)V
+	public final fun apply (Lcom/awakekt/awake/director/DirectedCameraPose;FFFFFF)V
+	public static synthetic fun apply$default (Lcom/awakekt/awake/director/CameraFeelRig;Lcom/awakekt/awake/director/DirectedCameraPose;FFFFFFILjava/lang/Object;)V
+	public final fun getMaxShakeOffset ()F
+	public final fun getMaxShakePitchRadians ()F
+	public final fun getMaxShakeRollRadians ()F
+	public final fun getMaxShakeYawRadians ()F
+	public final fun getTrauma ()F
+	public final fun getTraumaDecayPerSecond ()F
+	public final fun reset ()V
+	public final fun setMaxShakeOffset (F)V
+	public final fun setMaxShakePitchRadians (F)V
+	public final fun setMaxShakeRollRadians (F)V
+	public final fun setMaxShakeYawRadians (F)V
+	public final fun setTraumaDecayPerSecond (F)V
+	public final fun snapTo (Lcom/awakekt/awake/director/DirectedCameraPose;)V
+}
+
+public final class com/awakekt/awake/director/CameraFeelRig$Companion {
+}
+
+public final class com/awakekt/awake/director/CameraFeelSpec {
+	public static final field Companion Lcom/awakekt/awake/director/CameraFeelSpec$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lcom/awakekt/awake/director/CameraFeelSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/CameraFeelSpec;FFFFILjava/lang/Object;)Lcom/awakekt/awake/director/CameraFeelSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBaseTrauma ()F
+	public final fun getHandheldFrequency ()F
+	public final fun getHandheldIntensity ()F
+	public final fun getSmoothTime ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/CameraFeelSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/CameraFeelSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/CameraFeelSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/CameraFeelSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/CameraFeelSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DirectedAtmosphereState {
+	public static final field Companion Lcom/awakekt/awake/director/DirectedAtmosphereState$Companion;
+	public static final field MAX_DYNAMIC_LIGHTS I
+	public fun <init> ()V
+	public final fun acquireDynamicLight ()Lcom/awakekt/awake/director/DynamicDirectorLight;
+	public final fun fogAsColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getActiveDynamicLightCount ()I
+	public final fun getBloomIntensity ()F
+	public final fun getBloomThreshold ()F
+	public final fun getContrast ()F
+	public final fun getDayTime ()F
+	public final fun getDynamicLights ()Ljava/util/List;
+	public final fun getExposure ()F
+	public final fun getFogColor ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getFogDensity ()F
+	public final fun getFogEnabled ()Z
+	public final fun getHasDayTime ()Z
+	public final fun getHasDirectionalLight ()Z
+	public final fun getHasFog ()Z
+	public final fun getHasGrade ()Z
+	public final fun getHasSky ()Z
+	public final fun getHasSunDirection ()Z
+	public final fun getSaturation ()F
+	public final fun getSkyExposure ()F
+	public final fun getSkyHorizon ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getSkyZenith ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getSunAmbient ()F
+	public final fun getSunColor ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getSunDirection ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getSunIntensity ()F
+	public final fun getWhiteBalanceTemperature ()F
+	public final fun getWhiteBalanceTint ()F
+	public final fun reset ()V
+	public final fun setActiveDynamicLightCount (I)V
+	public final fun setBloomIntensity (F)V
+	public final fun setBloomThreshold (F)V
+	public final fun setContrast (F)V
+	public final fun setDayTime (F)V
+	public final fun setExposure (F)V
+	public final fun setFogDensity (F)V
+	public final fun setFogEnabled (Z)V
+	public final fun setHasDayTime (Z)V
+	public final fun setHasDirectionalLight (Z)V
+	public final fun setHasFog (Z)V
+	public final fun setHasGrade (Z)V
+	public final fun setHasSky (Z)V
+	public final fun setHasSunDirection (Z)V
+	public final fun setSaturation (F)V
+	public final fun setSkyExposure (F)V
+	public final fun setSunAmbient (F)V
+	public final fun setSunIntensity (F)V
+	public final fun setWhiteBalanceTemperature (F)V
+	public final fun setWhiteBalanceTint (F)V
+	public final fun skyHorizonAsColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun skyZenithAsColor ()Lcom/awakekt/awake/core/color/Color;
+}
+
+public final class com/awakekt/awake/director/DirectedAtmosphereState$Companion {
+}
+
+public final class com/awakekt/awake/director/DirectedCameraPose {
+	public static final field Companion Lcom/awakekt/awake/director/DirectedCameraPose$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFFFZFLjava/lang/Float;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFFFZFLjava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun blendToward (Lcom/awakekt/awake/director/DirectedCameraPose;F)V
+	public final fun copyFrom (Lcom/awakekt/awake/director/DirectedCameraPose;)V
+	public final fun getCenter ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getEye ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getFadeBlack ()F
+	public final fun getFar ()F
+	public final fun getFovYRadians ()F
+	public final fun getHudVisible ()Z
+	public final fun getLetterboxAspect ()Ljava/lang/Float;
+	public final fun getNear ()F
+	public final fun getRollRadians ()F
+	public final fun getUp ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun reset ()V
+	public final fun setFadeBlack (F)V
+	public final fun setFar (F)V
+	public final fun setFovYRadians (F)V
+	public final fun setHudVisible (Z)V
+	public final fun setLetterboxAspect (Ljava/lang/Float;)V
+	public final fun setNear (F)V
+	public final fun setRollRadians (F)V
+}
+
+public final class com/awakekt/awake/director/DirectedCameraPose$Companion {
+}
+
+public final class com/awakekt/awake/director/DirectorColor {
+	public static final field Companion Lcom/awakekt/awake/director/DirectorColor$Companion;
+	public fun <init> ()V
+	public fun <init> (FFF)V
+	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lcom/awakekt/awake/director/DirectorColor;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/DirectorColor;FFFILjava/lang/Object;)Lcom/awakekt/awake/director/DirectorColor;
+	public final fun copyTo (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getB ()F
+	public final fun getG ()F
+	public final fun getR ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/DirectorColor$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/DirectorColor$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/DirectorColor;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/DirectorColor;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DirectorColor$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/director/DirectorCueSink {
+	public static final field Companion Lcom/awakekt/awake/director/DirectorCueSink$Companion;
+	public fun onActorCue (Lcom/awakekt/awake/director/ActionCueSpec$ActorMove;)V
+	public fun onAnimationCue (Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation;)V
+	public fun onHudVisibility (Z)V
+	public fun onInputAction (Ljava/lang/String;ZF)V
+	public fun onMusicState (Lcom/awakekt/awake/director/AudioCueSpec$MusicControl;)V
+	public fun onParticleCue (Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst;)V
+	public fun onPlaySfx (Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx;)V
+	public fun onStartMusic (Lcom/awakekt/awake/director/MusicTrackSpec;)V
+}
+
+public final class com/awakekt/awake/director/DirectorCueSink$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/director/DirectorCueSink;
+}
+
+public final class com/awakekt/awake/director/DirectorCueSink$DefaultImpls {
+	public static fun onActorCue (Lcom/awakekt/awake/director/DirectorCueSink;Lcom/awakekt/awake/director/ActionCueSpec$ActorMove;)V
+	public static fun onAnimationCue (Lcom/awakekt/awake/director/DirectorCueSink;Lcom/awakekt/awake/director/ActionCueSpec$PlayAnimation;)V
+	public static fun onHudVisibility (Lcom/awakekt/awake/director/DirectorCueSink;Z)V
+	public static fun onInputAction (Lcom/awakekt/awake/director/DirectorCueSink;Ljava/lang/String;ZF)V
+	public static fun onMusicState (Lcom/awakekt/awake/director/DirectorCueSink;Lcom/awakekt/awake/director/AudioCueSpec$MusicControl;)V
+	public static fun onParticleCue (Lcom/awakekt/awake/director/DirectorCueSink;Lcom/awakekt/awake/director/ActionCueSpec$ParticleBurst;)V
+	public static fun onPlaySfx (Lcom/awakekt/awake/director/DirectorCueSink;Lcom/awakekt/awake/director/AudioCueSpec$PlaySfx;)V
+	public static fun onStartMusic (Lcom/awakekt/awake/director/DirectorCueSink;Lcom/awakekt/awake/director/MusicTrackSpec;)V
+}
+
+public final class com/awakekt/awake/director/DirectorDslKt {
+	public static final fun directorScript (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/director/DirectorScript;
+	public static synthetic fun directorScript$default (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/director/DirectorScript;
+}
+
+public final class com/awakekt/awake/director/DirectorPlayer {
+	public static final field DEFAULT_SUN_AZ_DEG F
+	public static final field DEFAULT_SUN_ELEV_DEG F
+	public static final field DEG_TO_RAD F
+	public static final field EPSILON F
+	public static final field FLASH_DECAY_RATE F
+	public static final field HALF F
+	public static final field MIN_ASPECT F
+	public static final field MIN_AUDIO_PITCH_SCALE F
+	public static final field MIN_DURATION F
+	public static final field PI_F F
+	public static final field TIME_END_EPSILON D
+	public fun <init> (Lcom/awakekt/awake/director/DirectorScript;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/DirectorScript;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addTrauma (FLjava/lang/Float;)V
+	public static synthetic fun addTrauma$default (Lcom/awakekt/awake/director/DirectorPlayer;FLjava/lang/Float;ILjava/lang/Object;)V
+	public final fun findShotIndex (Ljava/lang/String;)I
+	public final fun getCurrentAudioPitchScale ()F
+	public final fun getCurrentBeat ()F
+	public final fun getCurrentShot ()Lcom/awakekt/awake/director/ShotSpec;
+	public final fun getCurrentShotIndex ()I
+	public final fun getCurrentTimeScale ()F
+	public final fun getCurrentTimeSeconds ()F
+	public final fun getLoop ()Z
+	public final fun getScript ()Lcom/awakekt/awake/director/DirectorScript;
+	public final fun getTotalDurationSeconds ()F
+	public final fun isFinished ()Z
+	public final fun reset ()V
+	public final fun shotDuration (I)F
+	public final fun shotStartTime (I)F
+	public final fun step (FFLcom/awakekt/awake/director/StageQuery;Lcom/awakekt/awake/director/DirectedCameraPose;Lcom/awakekt/awake/director/DirectedAtmosphereState;Lcom/awakekt/awake/director/DirectorCueSink;)V
+	public static synthetic fun step$default (Lcom/awakekt/awake/director/DirectorPlayer;FFLcom/awakekt/awake/director/StageQuery;Lcom/awakekt/awake/director/DirectedCameraPose;Lcom/awakekt/awake/director/DirectedAtmosphereState;Lcom/awakekt/awake/director/DirectorCueSink;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/director/DirectorScript {
+	public static final field CURRENT_VERSION I
+	public static final field Companion Lcom/awakekt/awake/director/DirectorScript$Companion;
+	public fun <init> ()V
+	public fun <init> (ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;ILjava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;ILjava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/awakekt/awake/director/BeatClock;
+	public final fun component4 ()I
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Float;
+	public final fun component7 ()Lcom/awakekt/awake/director/MusicTrackSpec;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;ILjava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/director/DirectorScript;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/DirectorScript;ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;ILjava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/director/DirectorScript;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActionTrack ()Ljava/util/List;
+	public final fun getAspectRatio ()Ljava/lang/Float;
+	public final fun getAudioTrack ()Ljava/util/List;
+	public final fun getClock ()Lcom/awakekt/awake/director/BeatClock;
+	public final fun getInputTake ()Ljava/lang/String;
+	public final fun getLightingTrack ()Ljava/util/List;
+	public final fun getMusic ()Lcom/awakekt/awake/director/MusicTrackSpec;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSeed ()I
+	public final fun getShots ()Ljava/util/List;
+	public final fun getVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun totalDurationSeconds ()F
+	public final fun validate ()Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/director/DirectorScript$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/DirectorScript$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/DirectorScript;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/DirectorScript;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DirectorScript$Companion {
+	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/director/DirectorScript;
+	public final fun encode (Lcom/awakekt/awake/director/DirectorScript;)Ljava/lang/String;
+	public final fun getJson ()Lkotlinx/serialization/json/Json;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DirectorScriptBuilder {
+	public static final field DEFAULT_SEED I
+	public fun <init> (Ljava/lang/String;)V
+	public final fun action (Lcom/awakekt/awake/director/ActionCueSpec;)V
+	public final fun audio (Lcom/awakekt/awake/director/AudioCueSpec;)V
+	public final fun build ()Lcom/awakekt/awake/director/DirectorScript;
+	public final fun getAspectRatio ()Ljava/lang/Float;
+	public final fun getBeatOffsetSeconds ()F
+	public final fun getBeatsPerBar ()I
+	public final fun getBpm ()F
+	public final fun getInputTake ()Ljava/lang/String;
+	public final fun getSeed ()I
+	public final fun lighting (Lcom/awakekt/awake/director/LightingCueSpec;)V
+	public final fun music (Ljava/lang/String;FFFFZ)V
+	public static synthetic fun music$default (Lcom/awakekt/awake/director/DirectorScriptBuilder;Ljava/lang/String;FFFFZILjava/lang/Object;)V
+	public final fun setAspectRatio (Ljava/lang/Float;)V
+	public final fun setBeatOffsetSeconds (F)V
+	public final fun setBeatsPerBar (I)V
+	public final fun setBpm (F)V
+	public final fun setInputTake (Ljava/lang/String;)V
+	public final fun setSeed (I)V
+	public final fun shot (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/awakekt/awake/director/DirectorValidationIssue {
+	public static final field Companion Lcom/awakekt/awake/director/DirectorValidationIssue$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/director/DirectorValidationIssue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/DirectorValidationIssue;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/director/DirectorValidationIssue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/DirectorValidationIssue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/DirectorValidationIssue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/DirectorValidationIssue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/DirectorValidationIssue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DirectorValidationIssue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DirectorVec3 {
+	public static final field Companion Lcom/awakekt/awake/director/DirectorVec3$Companion;
+	public fun <init> ()V
+	public fun <init> (FFF)V
+	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lcom/awakekt/awake/director/DirectorVec3;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/DirectorVec3;FFFILjava/lang/Object;)Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun copyTo (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun toVec3f ()Lcom/awakekt/awake/core/math/Vec3f;
+}
+
+public final synthetic class com/awakekt/awake/director/DirectorVec3$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/DirectorVec3$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/DirectorVec3;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/DirectorVec3;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DirectorVec3$Companion {
+	public final fun getZero ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DurationRef {
+	public static final field Companion Lcom/awakekt/awake/director/DurationRef$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Float;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun copy (Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/director/DurationRef;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/DurationRef;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/director/DurationRef;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBeats ()Ljava/lang/Float;
+	public final fun getSeconds ()Ljava/lang/Float;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/DurationRef$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/DurationRef$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/DurationRef;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/DurationRef;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DurationRef$Companion {
+	public final fun beats (F)Lcom/awakekt/awake/director/DurationRef;
+	public final fun seconds (F)Lcom/awakekt/awake/director/DurationRef;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/DynamicDirectorLight {
+	public static final field Companion Lcom/awakekt/awake/director/DynamicDirectorLight$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFZ)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public final fun getActive ()Z
+	public final fun getColor ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getIntensity ()F
+	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getRange ()F
+	public final fun setActive (Z)V
+	public final fun setId (Ljava/lang/String;)V
+	public final fun setIntensity (F)V
+	public final fun setRange (F)V
+}
+
+public final class com/awakekt/awake/director/DynamicDirectorLight$Companion {
+}
+
+public final class com/awakekt/awake/director/FramingAnalyzer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/FramingAnalyzer;
+	public final fun analyze (Ljava/lang/String;FFLcom/awakekt/awake/director/DirectedCameraPose;FLjava/util/List;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/StageQuery;Ljava/lang/Float;)Lcom/awakekt/awake/director/ShotFramingMetrics;
+	public static synthetic fun analyze$default (Lcom/awakekt/awake/director/FramingAnalyzer;Ljava/lang/String;FFLcom/awakekt/awake/director/DirectedCameraPose;FLjava/util/List;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/StageQuery;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotFramingMetrics;
+}
+
+public final class com/awakekt/awake/director/FramingSolver {
+	public static final field DEFAULT_FALLBACK_HEIGHT F
+	public static final field DEFAULT_FALLBACK_WIDTH F
+	public static final field DEG_TO_RAD F
+	public static final field HALF F
+	public static final field HORIZONTAL_FIT_FACTOR F
+	public static final field MAX_ELEVATION_DEG F
+	public static final field MAX_HORIZONTAL_FILL F
+	public static final field MAX_SCREEN_OFFSET F
+	public static final field MIN_ASPECT F
+	public static final field MIN_CAMERA_DISTANCE F
+	public static final field MIN_RADIUS_MULT F
+	public fun <init> ()V
+	public final fun resolveSubjects (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/StageQuery;Lcom/awakekt/awake/director/StageSubjectState;)Z
+	public final fun solve (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/StageQuery;FFFFFFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)F
+	public static synthetic fun solve$default (Lcom/awakekt/awake/director/FramingSolver;Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/StageQuery;FFFFFFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)F
+	public final fun solveOrbitFromPivot (Lcom/awakekt/awake/core/math/Vec3f;FFFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+}
+
+public final class com/awakekt/awake/director/FramingSpec {
+	public static final field Companion Lcom/awakekt/awake/director/FramingSpec$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/AnglePreset;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ZLcom/awakekt/awake/director/ScreenComposition;FFFLcom/awakekt/awake/director/DirectorVec3;)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/AnglePreset;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ZLcom/awakekt/awake/director/ScreenComposition;FFFLcom/awakekt/awake/director/DirectorVec3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component10 ()F
+	public final fun component11 ()F
+	public final fun component12 ()F
+	public final fun component13 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component2 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component3 ()Lcom/awakekt/awake/director/ShotSize;
+	public final fun component4 ()Lcom/awakekt/awake/director/AnglePreset;
+	public final fun component5 ()Ljava/lang/Float;
+	public final fun component6 ()Ljava/lang/Float;
+	public final fun component7 ()Ljava/lang/Float;
+	public final fun component8 ()Z
+	public final fun component9 ()Lcom/awakekt/awake/director/ScreenComposition;
+	public final fun copy (Ljava/util/List;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/AnglePreset;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ZLcom/awakekt/awake/director/ScreenComposition;FFFLcom/awakekt/awake/director/DirectorVec3;)Lcom/awakekt/awake/director/FramingSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/FramingSpec;Ljava/util/List;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/AnglePreset;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ZLcom/awakekt/awake/director/ScreenComposition;FFFLcom/awakekt/awake/director/DirectorVec3;ILjava/lang/Object;)Lcom/awakekt/awake/director/FramingSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAngle ()Lcom/awakekt/awake/director/AnglePreset;
+	public final fun getAzimuthDeg ()Ljava/lang/Float;
+	public final fun getComposition ()Lcom/awakekt/awake/director/ScreenComposition;
+	public final fun getDistanceOverride ()Ljava/lang/Float;
+	public final fun getElevationDeg ()Ljava/lang/Float;
+	public final fun getFallbackPoint ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getLookAheadSeconds ()F
+	public final fun getRelativeToSubjectFacing ()Z
+	public final fun getScreenOffsetX ()F
+	public final fun getScreenOffsetY ()F
+	public final fun getShotSize ()Lcom/awakekt/awake/director/ShotSize;
+	public final fun getSubjects ()Ljava/util/List;
+	public final fun getTargetOffset ()Lcom/awakekt/awake/director/DirectorVec3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/FramingSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/FramingSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/FramingSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/FramingSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/FramingSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/InputTakeJson {
+	public static final field INSTANCE Lcom/awakekt/awake/director/InputTakeJson;
+	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/core/input/InputTake;
+	public final fun encode (Lcom/awakekt/awake/core/input/InputTake;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/director/LensSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LensSpec$Companion;
+	public static final field DEFAULT_FOCAL_LENGTH_MM F
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Float;Ljava/lang/Float;FFF)V
+	public synthetic fun <init> (Ljava/lang/Float;Ljava/lang/Float;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Float;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (Ljava/lang/Float;Ljava/lang/Float;FFF)Lcom/awakekt/awake/director/LensSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/LensSpec;Ljava/lang/Float;Ljava/lang/Float;FFFILjava/lang/Object;)Lcom/awakekt/awake/director/LensSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFar ()F
+	public final fun getFocalLengthMm ()Ljava/lang/Float;
+	public final fun getFovYDegrees ()Ljava/lang/Float;
+	public final fun getNear ()F
+	public final fun getRollDeg ()F
+	public fun hashCode ()I
+	public final fun resolvedFovYRadians ()F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/LensSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/LensSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/LensSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/LensSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LensSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/director/LightingCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LightingCueSpec$Companion;
+	public abstract fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$ColorGrade : com/awakekt/awake/director/LightingCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LightingCueSpec$ColorGrade$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component10 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()Ljava/lang/Float;
+	public final fun component9 ()Ljava/lang/Float;
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/LightingCueSpec$ColorGrade;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/LightingCueSpec$ColorGrade;Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/LightingCueSpec$ColorGrade;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getBloomIntensity ()Ljava/lang/Float;
+	public final fun getBloomThreshold ()Ljava/lang/Float;
+	public final fun getContrast ()F
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getExposure ()F
+	public final fun getSaturation ()F
+	public final fun getWhiteBalanceTemperature ()F
+	public final fun getWhiteBalanceTint ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/LightingCueSpec$ColorGrade$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/LightingCueSpec$ColorGrade$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/LightingCueSpec$ColorGrade;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/LightingCueSpec$ColorGrade;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$ColorGrade$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$DayCycleSweep : com/awakekt/awake/director/LightingCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LightingCueSpec$DayCycleSweep$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFLcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFLcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFLcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/LightingCueSpec$DayCycleSweep;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/LightingCueSpec$DayCycleSweep;Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;FFLcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/LightingCueSpec$DayCycleSweep;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getFromTime ()F
+	public final fun getToTime ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/LightingCueSpec$DayCycleSweep$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/LightingCueSpec$DayCycleSweep$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/LightingCueSpec$DayCycleSweep;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/LightingCueSpec$DayCycleSweep;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$DayCycleSweep$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$DirectionalLight : com/awakekt/awake/director/LightingCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LightingCueSpec$DirectionalLight$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DirectorColor;FLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DirectorColor;FLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component3 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component4 ()F
+	public final fun component5 ()Ljava/lang/Float;
+	public final fun component6 ()Ljava/lang/Float;
+	public final fun component7 ()Ljava/lang/Float;
+	public final fun component8 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DirectorColor;FLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/LightingCueSpec$DirectionalLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/LightingCueSpec$DirectionalLight;Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DirectorColor;FLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/LightingCueSpec$DirectionalLight;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmbient ()Ljava/lang/Float;
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getAzimuthDeg ()Ljava/lang/Float;
+	public final fun getColor ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getElevationDeg ()Ljava/lang/Float;
+	public final fun getIntensity ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/LightingCueSpec$DirectionalLight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/LightingCueSpec$DirectionalLight$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/LightingCueSpec$DirectionalLight;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/LightingCueSpec$DirectionalLight;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$DirectionalLight$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$FogRamp : com/awakekt/awake/director/LightingCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LightingCueSpec$FogRamp$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;ZFFLcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;ZFFLcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component3 ()Z
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component7 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component8 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;ZFFLcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/LightingCueSpec$FogRamp;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/LightingCueSpec$FogRamp;Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;ZFFLcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/LightingCueSpec$FogRamp;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEnabled ()Z
+	public final fun getFromColor ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getFromDensity ()F
+	public final fun getToColor ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getToDensity ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/LightingCueSpec$FogRamp$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/LightingCueSpec$FogRamp$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/LightingCueSpec$FogRamp;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/LightingCueSpec$FogRamp;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$FogRamp$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$HeroRimLight : com/awakekt/awake/director/LightingCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LightingCueSpec$HeroRimLight$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorColor;FFFFFFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorColor;FFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component10 ()F
+	public final fun component11 ()F
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()F
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorColor;FFFFFFF)Lcom/awakekt/awake/director/LightingCueSpec$HeroRimLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/LightingCueSpec$HeroRimLight;Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorColor;FFFFFFFILjava/lang/Object;)Lcom/awakekt/awake/director/LightingCueSpec$HeroRimLight;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getAzimuthFromCameraDeg ()F
+	public final fun getColor ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getDistance ()F
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getFadeInSeconds ()F
+	public final fun getFadeOutSeconds ()F
+	public final fun getHeightOffset ()F
+	public final fun getIntensity ()F
+	public final fun getRange ()F
+	public final fun getSubject ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/LightingCueSpec$HeroRimLight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/LightingCueSpec$HeroRimLight$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/LightingCueSpec$HeroRimLight;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/LightingCueSpec$HeroRimLight;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$HeroRimLight$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$LightFlash : com/awakekt/awake/director/LightingCueSpec {
+	public static final field Companion Lcom/awakekt/awake/director/LightingCueSpec$LightFlash$Companion;
+	public fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorColor;FFIF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorColor;FFIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component5 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()I
+	public final fun component9 ()F
+	public final fun copy (Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorColor;FFIF)Lcom/awakekt/awake/director/LightingCueSpec$LightFlash;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/LightingCueSpec$LightFlash;Lcom/awakekt/awake/director/TimeRef;Lcom/awakekt/awake/director/DurationRef;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorColor;FFIFILjava/lang/Object;)Lcom/awakekt/awake/director/LightingCueSpec$LightFlash;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAt ()Lcom/awakekt/awake/director/TimeRef;
+	public final fun getBoostSunIntensity ()F
+	public final fun getColor ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getFlickerPeaks ()I
+	public final fun getPeakIntensity ()F
+	public final fun getPosition ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getRange ()F
+	public final fun getSubject ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/LightingCueSpec$LightFlash$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/LightingCueSpec$LightFlash$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/LightingCueSpec$LightFlash;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/LightingCueSpec$LightFlash;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/LightingCueSpec$LightFlash$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/MusicTrackSpec {
+	public static final field Companion Lcom/awakekt/awake/director/MusicTrackSpec$Companion;
+	public fun <init> (Ljava/lang/String;FFFFZ)V
+	public synthetic fun <init> (Ljava/lang/String;FFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Z
+	public final fun copy (Ljava/lang/String;FFFFZ)Lcom/awakekt/awake/director/MusicTrackSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/lang/String;FFFFZILjava/lang/Object;)Lcom/awakekt/awake/director/MusicTrackSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFadeInSeconds ()F
+	public final fun getFadeOutSeconds ()F
+	public final fun getLoop ()Z
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getStartOffsetSeconds ()F
+	public final fun getVolume ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/MusicTrackSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/MusicTrackSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/MusicTrackSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/MusicTrackSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/MusicTrackSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ReelSegmentSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ReelSegmentSpec$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;Lcom/awakekt/awake/director/ShotTransitionSpec;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;Lcom/awakekt/awake/director/ShotTransitionSpec;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/awakekt/awake/director/DirectorScript;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Lcom/awakekt/awake/director/ShotTransitionSpec;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;Lcom/awakekt/awake/director/ShotTransitionSpec;)Lcom/awakekt/awake/director/ReelSegmentSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ReelSegmentSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/director/DirectorScript;Ljava/lang/String;Lcom/awakekt/awake/director/ShotTransitionSpec;ILjava/lang/Object;)Lcom/awakekt/awake/director/ReelSegmentSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDirectorPath ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getInlineDirector ()Lcom/awakekt/awake/director/DirectorScript;
+	public final fun getInputTake ()Ljava/lang/String;
+	public final fun getScene ()Ljava/lang/String;
+	public final fun getTransitionIn ()Lcom/awakekt/awake/director/ShotTransitionSpec;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ReelSegmentSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ReelSegmentSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ReelSegmentSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ReelSegmentSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ReelSegmentSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ScreenComposition : java/lang/Enum {
+	public static final field Center Lcom/awakekt/awake/director/ScreenComposition;
+	public static final field Companion Lcom/awakekt/awake/director/ScreenComposition$Companion;
+	public static final field RuleOfThirdsLeft Lcom/awakekt/awake/director/ScreenComposition;
+	public static final field RuleOfThirdsRight Lcom/awakekt/awake/director/ScreenComposition;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getScreenOffsetX ()F
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/director/ScreenComposition;
+	public static fun values ()[Lcom/awakekt/awake/director/ScreenComposition;
+}
+
+public final class com/awakekt/awake/director/ScreenComposition$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotAtmosphereSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotAtmosphereSpec$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Float;
+	public final fun component10 ()Ljava/lang/Float;
+	public final fun component11 ()Ljava/lang/Float;
+	public final fun component12 ()Ljava/lang/Float;
+	public final fun component13 ()Ljava/lang/Float;
+	public final fun component14 ()Ljava/lang/Float;
+	public final fun component15 ()Ljava/lang/Float;
+	public final fun component16 ()Ljava/lang/Float;
+	public final fun component17 ()Ljava/lang/Float;
+	public final fun component2 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component3 ()Ljava/lang/Float;
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/Float;
+	public final fun component7 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component8 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun component9 ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun copy (Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/director/ShotAtmosphereSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotAtmosphereSpec;Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Lcom/awakekt/awake/director/DirectorColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotAtmosphereSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBloomIntensity ()Ljava/lang/Float;
+	public final fun getBloomThreshold ()Ljava/lang/Float;
+	public final fun getContrast ()Ljava/lang/Float;
+	public final fun getDayTime ()Ljava/lang/Float;
+	public final fun getExposure ()Ljava/lang/Float;
+	public final fun getFogColor ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getFogDensity ()Ljava/lang/Float;
+	public final fun getFogEnabled ()Ljava/lang/Boolean;
+	public final fun getSaturation ()Ljava/lang/Float;
+	public final fun getSkyExposure ()Ljava/lang/Float;
+	public final fun getSkyHorizon ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getSkyZenith ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getSunAmbient ()Ljava/lang/Float;
+	public final fun getSunColor ()Lcom/awakekt/awake/director/DirectorColor;
+	public final fun getSunIntensity ()Ljava/lang/Float;
+	public final fun getWhiteBalanceTemperature ()Ljava/lang/Float;
+	public final fun getWhiteBalanceTint ()Ljava/lang/Float;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotAtmosphereSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotAtmosphereSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotAtmosphereSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotAtmosphereSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotAtmosphereSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotBuilder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun beats (F)V
+	public final fun build ()Lcom/awakekt/awake/director/ShotSpec;
+	public final fun crane (Ljava/lang/String;Lcom/awakekt/awake/director/ShotSize;FFFFLcom/awakekt/awake/core/math/EasingCurve;)V
+	public static synthetic fun crane$default (Lcom/awakekt/awake/director/ShotBuilder;Ljava/lang/String;Lcom/awakekt/awake/director/ShotSize;FFFFLcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)V
+	public final fun dollyZoom (Ljava/lang/String;FFLcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public static synthetic fun dollyZoom$default (Lcom/awakekt/awake/director/ShotBuilder;Ljava/lang/String;FFLcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)V
+	public final fun getAtmosphere ()Lcom/awakekt/awake/director/ShotAtmosphereSpec;
+	public final fun getCollision ()Lcom/awakekt/awake/director/ShotCollisionSpec;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getFeel ()Lcom/awakekt/awake/director/CameraFeelSpec;
+	public final fun getHudVisible ()Z
+	public final fun getLens ()Lcom/awakekt/awake/director/LensSpec;
+	public final fun getLetterboxAspect ()Ljava/lang/Float;
+	public final fun getNotes ()Ljava/lang/String;
+	public final fun getRig ()Lcom/awakekt/awake/director/ShotRigSpec;
+	public final fun getTransitionIn ()Lcom/awakekt/awake/director/ShotTransitionSpec;
+	public final fun orbit (Ljava/lang/String;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/AnglePreset;FFFFLcom/awakekt/awake/director/ScreenComposition;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public static synthetic fun orbit$default (Lcom/awakekt/awake/director/ShotBuilder;Ljava/lang/String;Lcom/awakekt/awake/director/ShotSize;Lcom/awakekt/awake/director/AnglePreset;FFFFLcom/awakekt/awake/director/ScreenComposition;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)V
+	public final fun seconds (F)V
+	public final fun setAtmosphere (Lcom/awakekt/awake/director/ShotAtmosphereSpec;)V
+	public final fun setCollision (Lcom/awakekt/awake/director/ShotCollisionSpec;)V
+	public final fun setDuration (Lcom/awakekt/awake/director/DurationRef;)V
+	public final fun setFeel (Lcom/awakekt/awake/director/CameraFeelSpec;)V
+	public final fun setHudVisible (Z)V
+	public final fun setLens (Lcom/awakekt/awake/director/LensSpec;)V
+	public final fun setLetterboxAspect (Ljava/lang/Float;)V
+	public final fun setNotes (Ljava/lang/String;)V
+	public final fun setRig (Lcom/awakekt/awake/director/ShotRigSpec;)V
+	public final fun setTransitionIn (Lcom/awakekt/awake/director/ShotTransitionSpec;)V
+}
+
+public final class com/awakekt/awake/director/ShotCollisionSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotCollisionSpec$Companion;
+	public fun <init> ()V
+	public fun <init> (ZZFZFLjava/util/List;F)V
+	public synthetic fun <init> (ZZFZFLjava/util/List;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()F
+	public final fun component4 ()Z
+	public final fun component5 ()F
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()F
+	public final fun copy (ZZFZFLjava/util/List;F)Lcom/awakekt/awake/director/ShotCollisionSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotCollisionSpec;ZZFZFLjava/util/List;FILjava/lang/Object;)Lcom/awakekt/awake/director/ShotCollisionSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEaseOutSeconds ()F
+	public final fun getEnabled ()Z
+	public final fun getGround ()Z
+	public final fun getGroundMargin ()F
+	public final fun getObstacleLayers ()Ljava/util/List;
+	public final fun getRadius ()F
+	public final fun getTerrain ()Z
+	public fun hashCode ()I
+	public final fun toCameraCollision ()Lcom/awakekt/awake/core/camera/CameraCollision;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotCollisionSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotCollisionSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotCollisionSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotCollisionSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotCollisionSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotFramingMetrics {
+	public static final field Companion Lcom/awakekt/awake/director/ShotFramingMetrics$Companion;
+	public fun <init> (Ljava/lang/String;FFLjava/lang/String;ZFFFFLjava/util/List;FLjava/lang/String;Ljava/lang/Float;Ljava/lang/Float;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;FFLjava/lang/String;ZFFFFLjava/util/List;FLjava/lang/String;Ljava/lang/Float;Ljava/lang/Float;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()F
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Ljava/lang/Float;
+	public final fun component14 ()Ljava/lang/Float;
+	public final fun component15 ()Ljava/util/List;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()F
+	public final fun copy (Ljava/lang/String;FFLjava/lang/String;ZFFFFLjava/util/List;FLjava/lang/String;Ljava/lang/Float;Ljava/lang/Float;Ljava/util/List;)Lcom/awakekt/awake/director/ShotFramingMetrics;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotFramingMetrics;Ljava/lang/String;FFLjava/lang/String;ZFFFFLjava/util/List;FLjava/lang/String;Ljava/lang/Float;Ljava/lang/Float;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotFramingMetrics;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAverageLuminance ()Ljava/lang/Float;
+	public final fun getBeat ()F
+	public final fun getClippedEdges ()Ljava/util/List;
+	public final fun getCoverageHeight ()F
+	public final fun getCoverageWidth ()F
+	public final fun getGroundClearance ()Ljava/lang/Float;
+	public final fun getOccluderName ()Ljava/lang/String;
+	public final fun getOcclusionFraction ()F
+	public final fun getScreenCenterX ()F
+	public final fun getScreenCenterY ()F
+	public final fun getShotId ()Ljava/lang/String;
+	public final fun getSubjectName ()Ljava/lang/String;
+	public final fun getSubjectVisible ()Z
+	public final fun getTimeSeconds ()F
+	public final fun getWarnings ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotFramingMetrics$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotFramingMetrics$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotFramingMetrics;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotFramingMetrics;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotFramingMetrics$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$Companion;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$ChaseFollow : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$ChaseFollow$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/FramingSpec;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/FramingSpec;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component2 ()F
+	public final fun copy (Lcom/awakekt/awake/director/FramingSpec;F)Lcom/awakekt/awake/director/ShotRigSpec$ChaseFollow;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$ChaseFollow;Lcom/awakekt/awake/director/FramingSpec;FILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$ChaseFollow;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFollowSmoothTime ()F
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$ChaseFollow$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$ChaseFollow$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$ChaseFollow;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$ChaseFollow;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$ChaseFollow$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Crane : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$Crane$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ShotRigSpec$Crane;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$Crane;Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$Crane;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEndAzimuthDeg ()F
+	public final fun getEndHeightDelta ()F
+	public final fun getEndRadiusMultiplier ()F
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun getStartAzimuthDeg ()F
+	public final fun getStartHeightDelta ()F
+	public final fun getStartRadiusMultiplier ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$Crane$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$Crane$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$Crane;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$Crane;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Crane$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Dolly : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$Dolly$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component2 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component3 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component4 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component5 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component6 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component7 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component8 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ShotRigSpec$Dolly;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$Dolly;Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$Dolly;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEndOffset ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun getFromCenter ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getFromEye ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getStartOffset ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getToCenter ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getToEye ()Lcom/awakekt/awake/director/DirectorVec3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$Dolly$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$Dolly$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$Dolly;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$Dolly;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Dolly$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$DollyZoom : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$DollyZoom$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/FramingSpec;FFLcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/FramingSpec;FFLcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/FramingSpec;FFLcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ShotRigSpec$DollyZoom;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$DollyZoom;Lcom/awakekt/awake/director/FramingSpec;FFLcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$DollyZoom;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEndFocalLengthMm ()F
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun getStartFocalLengthMm ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$DollyZoom$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$DollyZoom$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$DollyZoom;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$DollyZoom;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$DollyZoom$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$NamedCamera : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$NamedCamera$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/director/ShotRigSpec$NamedCamera;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$NamedCamera;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$NamedCamera;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCameraName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$NamedCamera$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$NamedCamera$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$NamedCamera;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$NamedCamera;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$NamedCamera$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Orbit : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$Orbit$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ShotRigSpec$Orbit;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$Orbit;Lcom/awakekt/awake/director/FramingSpec;FFFFFFLcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$Orbit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEndAzimuthDeg ()F
+	public final fun getEndElevationDeg ()F
+	public final fun getEndRadiusMultiplier ()F
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun getStartAzimuthDeg ()F
+	public final fun getStartElevationDeg ()F
+	public final fun getStartRadiusMultiplier ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$Orbit$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$Orbit$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$Orbit;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$Orbit;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Orbit$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$SplineRail : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$SplineRail$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;ZLcom/awakekt/awake/director/SplineLookMode;Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;FFFFLcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ZLcom/awakekt/awake/director/SplineLookMode;Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;FFFFLcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()F
+	public final fun component11 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Z
+	public final fun component4 ()Lcom/awakekt/awake/director/SplineLookMode;
+	public final fun component5 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component6 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()F
+	public final fun copy (Ljava/lang/String;Ljava/util/List;ZLcom/awakekt/awake/director/SplineLookMode;Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;FFFFLcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ShotRigSpec$SplineRail;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$SplineRail;Ljava/lang/String;Ljava/util/List;ZLcom/awakekt/awake/director/SplineLookMode;Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;FFFFLcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$SplineRail;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBankDegrees ()F
+	public final fun getClosed ()Z
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEndFraction ()F
+	public final fun getFixedLookPoint ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun getLookAheadFraction ()F
+	public final fun getLookMode ()Lcom/awakekt/awake/director/SplineLookMode;
+	public final fun getRailName ()Ljava/lang/String;
+	public final fun getStartFraction ()F
+	public final fun getWaypoints ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$SplineRail$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$SplineRail$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$SplineRail;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$SplineRail;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$SplineRail$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Static : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$Static$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component2 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun component3 ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun copy (Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;)Lcom/awakekt/awake/director/ShotRigSpec$Static;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$Static;Lcom/awakekt/awake/director/FramingSpec;Lcom/awakekt/awake/director/DirectorVec3;Lcom/awakekt/awake/director/DirectorVec3;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$Static;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCenter ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getEye ()Lcom/awakekt/awake/director/DirectorVec3;
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$Static$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$Static$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$Static;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$Static;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$Static$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$WhipPan : com/awakekt/awake/director/ShotRigSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotRigSpec$WhipPan$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/FramingSpec;Ljava/lang/String;FFLcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/FramingSpec;Ljava/lang/String;FFLcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/FramingSpec;Ljava/lang/String;FFLcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ShotRigSpec$WhipPan;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotRigSpec$WhipPan;Lcom/awakekt/awake/director/FramingSpec;Ljava/lang/String;FFLcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotRigSpec$WhipPan;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun getEndAzimuthDeg ()F
+	public final fun getFraming ()Lcom/awakekt/awake/director/FramingSpec;
+	public final fun getStartAzimuthDeg ()F
+	public final fun getToSubject ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotRigSpec$WhipPan$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotRigSpec$WhipPan$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotRigSpec$WhipPan;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotRigSpec$WhipPan;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotRigSpec$WhipPan$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotSize : java/lang/Enum {
+	public static final field CloseUp Lcom/awakekt/awake/director/ShotSize;
+	public static final field Companion Lcom/awakekt/awake/director/ShotSize$Companion;
+	public static final field Cowboy Lcom/awakekt/awake/director/ShotSize;
+	public static final field Establishing Lcom/awakekt/awake/director/ShotSize;
+	public static final field ExtremeCloseUp Lcom/awakekt/awake/director/ShotSize;
+	public static final field Full Lcom/awakekt/awake/director/ShotSize;
+	public static final field Medium Lcom/awakekt/awake/director/ShotSize;
+	public static final field MediumCloseUp Lcom/awakekt/awake/director/ShotSize;
+	public static final field Wide Lcom/awakekt/awake/director/ShotSize;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getVerticalAnchor ()F
+	public final fun getVerticalFillRatio ()F
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/director/ShotSize;
+	public static fun values ()[Lcom/awakekt/awake/director/ShotSize;
+}
+
+public final class com/awakekt/awake/director/ShotSize$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotSpec$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/ShotRigSpec;Lcom/awakekt/awake/director/LensSpec;Lcom/awakekt/awake/director/CameraFeelSpec;Lcom/awakekt/awake/director/ShotTransitionSpec;Lcom/awakekt/awake/director/ShotCollisionSpec;ZLjava/lang/Float;Lcom/awakekt/awake/director/ShotAtmosphereSpec;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/ShotRigSpec;Lcom/awakekt/awake/director/LensSpec;Lcom/awakekt/awake/director/CameraFeelSpec;Lcom/awakekt/awake/director/ShotTransitionSpec;Lcom/awakekt/awake/director/ShotCollisionSpec;ZLjava/lang/Float;Lcom/awakekt/awake/director/ShotAtmosphereSpec;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Lcom/awakekt/awake/director/ShotAtmosphereSpec;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component3 ()Lcom/awakekt/awake/director/ShotRigSpec;
+	public final fun component4 ()Lcom/awakekt/awake/director/LensSpec;
+	public final fun component5 ()Lcom/awakekt/awake/director/CameraFeelSpec;
+	public final fun component6 ()Lcom/awakekt/awake/director/ShotTransitionSpec;
+	public final fun component7 ()Lcom/awakekt/awake/director/ShotCollisionSpec;
+	public final fun component8 ()Z
+	public final fun component9 ()Ljava/lang/Float;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/ShotRigSpec;Lcom/awakekt/awake/director/LensSpec;Lcom/awakekt/awake/director/CameraFeelSpec;Lcom/awakekt/awake/director/ShotTransitionSpec;Lcom/awakekt/awake/director/ShotCollisionSpec;ZLjava/lang/Float;Lcom/awakekt/awake/director/ShotAtmosphereSpec;Ljava/lang/String;)Lcom/awakekt/awake/director/ShotSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotSpec;Ljava/lang/String;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/ShotRigSpec;Lcom/awakekt/awake/director/LensSpec;Lcom/awakekt/awake/director/CameraFeelSpec;Lcom/awakekt/awake/director/ShotTransitionSpec;Lcom/awakekt/awake/director/ShotCollisionSpec;ZLjava/lang/Float;Lcom/awakekt/awake/director/ShotAtmosphereSpec;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAtmosphere ()Lcom/awakekt/awake/director/ShotAtmosphereSpec;
+	public final fun getCollision ()Lcom/awakekt/awake/director/ShotCollisionSpec;
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getFeel ()Lcom/awakekt/awake/director/CameraFeelSpec;
+	public final fun getHudVisible ()Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLens ()Lcom/awakekt/awake/director/LensSpec;
+	public final fun getLetterboxAspect ()Ljava/lang/Float;
+	public final fun getNotes ()Ljava/lang/String;
+	public final fun getRig ()Lcom/awakekt/awake/director/ShotRigSpec;
+	public final fun getTransitionIn ()Lcom/awakekt/awake/director/ShotTransitionSpec;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/director/ShotTransitionSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotTransitionSpec$Companion;
+}
+
+public final class com/awakekt/awake/director/ShotTransitionSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack : com/awakekt/awake/director/ShotTransitionSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DurationRef;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DurationRef;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component2 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun copy (Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DurationRef;)Lcom/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/director/DurationRef;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getFadeOutPreviousDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotTransitionSpec$FadeThroughBlack$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotTransitionSpec$HardCut : com/awakekt/awake/director/ShotTransitionSpec {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotTransitionSpec$HardCut;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/director/ShotTransitionSpec$SmoothBlend : com/awakekt/awake/director/ShotTransitionSpec {
+	public static final field Companion Lcom/awakekt/awake/director/ShotTransitionSpec$SmoothBlend$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun component2 ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public final fun copy (Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;)Lcom/awakekt/awake/director/ShotTransitionSpec$SmoothBlend;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/ShotTransitionSpec$SmoothBlend;Lcom/awakekt/awake/director/DurationRef;Lcom/awakekt/awake/core/math/EasingCurve;ILjava/lang/Object;)Lcom/awakekt/awake/director/ShotTransitionSpec$SmoothBlend;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDuration ()Lcom/awakekt/awake/director/DurationRef;
+	public final fun getEasing ()Lcom/awakekt/awake/core/math/EasingCurve;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/ShotTransitionSpec$SmoothBlend$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/ShotTransitionSpec$SmoothBlend$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/ShotTransitionSpec$SmoothBlend;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/ShotTransitionSpec$SmoothBlend;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ShotTransitionSpec$SmoothBlend$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/SplineLookMode : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/director/SplineLookMode$Companion;
+	public static final field FixedPoint Lcom/awakekt/awake/director/SplineLookMode;
+	public static final field ForwardTangent Lcom/awakekt/awake/director/SplineLookMode;
+	public static final field Subject Lcom/awakekt/awake/director/SplineLookMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/director/SplineLookMode;
+	public static fun values ()[Lcom/awakekt/awake/director/SplineLookMode;
+}
+
+public final class com/awakekt/awake/director/SplineLookMode$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/director/StageQuery {
+	public static final field Companion Lcom/awakekt/awake/director/StageQuery$Companion;
+	public fun castSightline (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/lang/String;Lcom/awakekt/awake/director/StageRayHit;)Z
+	public fun getCameraGround ()Lcom/awakekt/awake/core/camera/CameraGround;
+	public fun getCameraObstruction ()Lcom/awakekt/awake/core/camera/CameraObstruction;
+	public fun groundHeight (FF)F
+	public fun readNamedCamera (Ljava/lang/String;Lcom/awakekt/awake/director/DirectedCameraPose;)Z
+	public fun readSpline (Ljava/lang/String;)Lcom/awakekt/awake/core/math/ArcLengthSpline3f;
+	public abstract fun readSubject (Ljava/lang/String;Lcom/awakekt/awake/director/StageSubjectState;)Z
+}
+
+public final class com/awakekt/awake/director/StageQuery$Companion {
+	public final fun getEmpty ()Lcom/awakekt/awake/director/StageQuery;
+}
+
+public final class com/awakekt/awake/director/StageQuery$DefaultImpls {
+	public static fun castSightline (Lcom/awakekt/awake/director/StageQuery;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/lang/String;Lcom/awakekt/awake/director/StageRayHit;)Z
+	public static fun getCameraGround (Lcom/awakekt/awake/director/StageQuery;)Lcom/awakekt/awake/core/camera/CameraGround;
+	public static fun getCameraObstruction (Lcom/awakekt/awake/director/StageQuery;)Lcom/awakekt/awake/core/camera/CameraObstruction;
+	public static fun groundHeight (Lcom/awakekt/awake/director/StageQuery;FF)F
+	public static fun readNamedCamera (Lcom/awakekt/awake/director/StageQuery;Ljava/lang/String;Lcom/awakekt/awake/director/DirectedCameraPose;)Z
+	public static fun readSpline (Lcom/awakekt/awake/director/StageQuery;Ljava/lang/String;)Lcom/awakekt/awake/core/math/ArcLengthSpline3f;
+}
+
+public final class com/awakekt/awake/director/StageRayHit {
+	public fun <init> ()V
+	public fun <init> (ZFLjava/lang/String;)V
+	public synthetic fun <init> (ZFLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFraction ()F
+	public final fun getOccluded ()Z
+	public final fun getOccluderName ()Ljava/lang/String;
+	public final fun reset ()V
+	public final fun setFraction (F)V
+	public final fun setOccluded (Z)V
+	public final fun setOccluderName (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/director/StageSubjectState {
+	public static final field Companion Lcom/awakekt/awake/director/StageSubjectState$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun boundsCenter (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun expandToInclude (Lcom/awakekt/awake/director/StageSubjectState;)V
+	public final fun getBoundsMax ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getBoundsMin ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getForward ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getFound ()Z
+	public final fun getHeight ()F
+	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getVelocity ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getWidth ()F
+	public final fun reset ()V
+	public final fun setFound (Z)V
+}
+
+public final class com/awakekt/awake/director/StageSubjectState$Companion {
+}
+
+public final class com/awakekt/awake/director/TimeRef {
+	public static final field Companion Lcom/awakekt/awake/director/TimeRef$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Float;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun copy (Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/director/TimeRef;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/TimeRef;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/director/TimeRef;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBeat ()Ljava/lang/Float;
+	public final fun getSeconds ()Ljava/lang/Float;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/director/TimeRef$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/TimeRef$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/TimeRef;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/TimeRef;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/TimeRef$Companion {
+	public final fun beat (F)Lcom/awakekt/awake/director/TimeRef;
+	public final fun seconds (F)Lcom/awakekt/awake/director/TimeRef;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/TrailerReel {
+	public static final field CURRENT_VERSION I
+	public static final field Companion Lcom/awakekt/awake/director/TrailerReel$Companion;
+	public fun <init> ()V
+	public fun <init> (ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;)V
+	public synthetic fun <init> (ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/awakekt/awake/director/BeatClock;
+	public final fun component4 ()Lcom/awakekt/awake/director/MusicTrackSpec;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;)Lcom/awakekt/awake/director/TrailerReel;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/director/TrailerReel;ILjava/lang/String;Lcom/awakekt/awake/director/BeatClock;Lcom/awakekt/awake/director/MusicTrackSpec;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/director/TrailerReel;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClock ()Lcom/awakekt/awake/director/BeatClock;
+	public final fun getMusic ()Lcom/awakekt/awake/director/MusicTrackSpec;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSegments ()Ljava/util/List;
+	public final fun getVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun validate ()Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/director/TrailerReel$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/director/TrailerReel$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/director/TrailerReel;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/director/TrailerReel;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/TrailerReel$Companion {
+	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/director/TrailerReel;
+	public final fun encode (Lcom/awakekt/awake/director/TrailerReel;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/director/ViewportEdge : java/lang/Enum {
+	public static final field Bottom Lcom/awakekt/awake/director/ViewportEdge;
+	public static final field Companion Lcom/awakekt/awake/director/ViewportEdge$Companion;
+	public static final field Left Lcom/awakekt/awake/director/ViewportEdge;
+	public static final field Right Lcom/awakekt/awake/director/ViewportEdge;
+	public static final field Top Lcom/awakekt/awake/director/ViewportEdge;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/director/ViewportEdge;
+	public static fun values ()[Lcom/awakekt/awake/director/ViewportEdge;
+}
+
+public final class com/awakekt/awake/director/ViewportEdge$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

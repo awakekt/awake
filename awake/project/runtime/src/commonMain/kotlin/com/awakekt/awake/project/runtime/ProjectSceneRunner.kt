@@ -11,6 +11,7 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.UnscaledSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.AppErrorSource
 import com.awakekt.awake.engine.platform.error.childScope
@@ -28,6 +29,12 @@ import com.awakekt.awake.scene.binding.destroy
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.binding.renderableRequests
 import com.awakekt.awake.scene.controls.GameplayInput
+import com.awakekt.awake.scene.director.DirectorSystem
+import com.awakekt.awake.scene.director.InputReplaySession
+import com.awakekt.awake.scene.director.InputReplaySystem
+import com.awakekt.awake.scene.director.SceneCameraDirector
+import com.awakekt.awake.scene.director.StageSightlineProbe
+import com.awakekt.awake.scene.director.WorldStageQuery
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
@@ -41,6 +48,7 @@ import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.scene.runtime.prewarm
 import com.awakekt.awake.scene.runtime.schedule.guardedFor
+import com.awakekt.awake.scene.runtime.timeScale
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import kotlinx.coroutines.CancellationException
@@ -100,6 +108,7 @@ internal class ProjectSceneRunner(
     private val project: LoadedProject,
     private val disabledSystems: Set<String> = emptySet(),
     private val hostRole: SceneHostRole = SceneHostRole.Full,
+    private val directorOverride: DirectorRuntimeOverride? = null,
 ) : SceneSwitch,
     SceneSwitchStatus {
     /** Resolves the playing scene's glTF models for the app's asset library, whichever scene plays. */
@@ -157,7 +166,10 @@ internal class ProjectSceneRunner(
     private var spawnedModelsFailed = false
     private var frameOpen = false
 
-    private val input: () -> GameplayInput = { runtime.gameplayInput() }
+    private val replaySession: InputReplaySession? = directorOverride?.inputTake?.let { take ->
+        InputReplaySession(take).also { directorOverride.activeReplaySession = it }
+    }
+    private val input: () -> GameplayInput = { replaySession?.currentGameplayInput() ?: runtime.gameplayInput() }
     private val spawner: (SceneNode) -> SpawnedNode = { node -> runtime.spawn(project, node) }
 
     init {
@@ -402,13 +414,47 @@ internal class ProjectSceneRunner(
             if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) add(SPRITE_CLIPS_SYSTEM)
             if (runtime.hasInfrastructureSystem(Particle2DSystem::class)) add(PARTICLES_2D_SYSTEM)
         }
-        val built = sceneSystemSetFor(scene.document, services(scene, sceneLoads), project.capabilities, disabledSystems, hostRuns)
+        val hostServices = services(scene, sceneLoads)
+        val built = sceneSystemSetFor(scene.document, hostServices, project.capabilities, disabledSystems, hostRuns)
+
+        val extraFixed = buildList {
+            replaySession?.let { add(InputReplaySystem(it)) }
+        }
+        val extraFrame = buildList {
+            if (directorOverride != null) {
+                val clips = buildMap {
+                    hostServices.content[CoreSceneContent.AudioClips]?.let(::putAll)
+                    putAll(directorOverride.extraAudioClips)
+                }
+                val probes = SceneCameraCollisionProbes(
+                    hostServices.physics,
+                    hostServices.content[StreamedTerrainFeature.Terrain]?.terrain?.heights,
+                )
+                val sightline = hostServices.physics?.let { physics ->
+                    PhysicsStageSightlineProbe(physics, built.fixed.filterIsInstance<com.awakekt.awake.scene.physics.PhysicsSystem>().firstOrNull())
+                } ?: StageSightlineProbe.None
+                val dirSystem = DirectorSystem(
+                    stageQuery = WorldStageQuery(collisionProbes = probes, sightlineProbe = sightline),
+                    audioPlayer = directorOverride.audioPlayer ?: hostServices.audio,
+                    audioClips = clips,
+                    overrideScript = directorOverride.script,
+                    loopOverride = directorOverride.loop,
+                    aspectRatioProvider = directorOverride.aspectRatioProvider,
+                    onTimeScaleChanged = { runtime.timeScale = it },
+                    onHudVisibilityChanged = { runtime.drawsSceneCanvas = it },
+                )
+                directorOverride.activeDirectorSystem = dirSystem
+                add(dirSystem)
+            }
+        }
+
         // Each system guarded, so one that throws is reported to the app's error handler and skipped, not
         // the frame. Built once per scene; the guard adds no allocation to a frame. The set still closes the systems themselves.
         return SceneSystemSet(
-            built.fixed.map { it.guardedFor(runtime) },
-            built.frame.map { it.guardedFor(runtime) },
+            (extraFixed + built.fixed).map { it.guardedFor(runtime) },
+            (built.frame + extraFrame).map { it.guardedFor(runtime) },
             {
+                extraFrame.filterIsInstance<AutoCloseable>().forEach(AutoCloseable::close)
                 built.close()
                 sceneLoads.close()
             },
@@ -421,7 +467,7 @@ internal class ProjectSceneRunner(
 
     private fun services(scene: ProjectScene, sceneLoads: PlayedSceneLoads): SceneHostServices {
         val content = scene.content + sceneLoads.content
-        val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = content)
+        val base = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = content)
             .withHostRole(hostRole)
             .withSpawner(spawner)
             .withPrewarmer(runtime::prewarm, runtime::prewarm)
@@ -429,7 +475,16 @@ internal class ProjectSceneRunner(
             .withSceneSwitch(this)
             .withSceneSwitchStatus(this)
             .withCoroutineScope(runtime.session.coroutineScope)
-        return if (scene.document.uses(SceneAudioSource::class)) services.withAudio(audio.value) else services
+            .provide(
+                DirectorHostHooks::class,
+                DirectorHostHooks(
+                    onTimeScaleChanged = { runtime.timeScale = it },
+                    onHudVisibilityChanged = { runtime.drawsSceneCanvas = it },
+                ),
+            )
+        val audioPlayer = directorOverride?.audioPlayer
+            ?: if (scene.document.uses(SceneAudioSource::class) || scene.document.uses(SceneCameraDirector::class)) audio.value else null
+        return if (audioPlayer != null) base.withAudio(audioPlayer) else base
     }
 
     private inner class FixedSystems : InterpolatedSystem {
@@ -461,7 +516,7 @@ internal class ProjectSceneRunner(
         }
     }
 
-    private inner class FrameSystems : System {
+    private inner class FrameSystems : UnscaledSystem {
         override fun update(world: World, delta: Float) {
             if (!frameOpen) {
                 status.frameStarted()
@@ -473,7 +528,8 @@ internal class ProjectSceneRunner(
             val set = systems
             if (set != null) {
                 val observer = runtime.systemObserver
-                runMarked(set.frame, observer?.let { marksFor(set).frame }, observer, PROJECT_FRAME_SYSTEMS, world, delta)
+                val simDelta = delta * runtime.timeScale.coerceAtLeast(0f)
+                runMarked(set.frame, observer?.let { marksFor(set).frame }, observer, PROJECT_FRAME_SYSTEMS, world, simDelta, unscaledDelta = delta)
             }
             status.frameEnded()
         }

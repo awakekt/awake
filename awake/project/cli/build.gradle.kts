@@ -43,6 +43,10 @@ dependencies {
     // decode as their own types and validate themselves.
     implementation(project(":awake:project:runtime"))
     implementation(project(":awake:project"))
+    implementation(project(":awake:director"))
+    implementation(project(":awake:scene:director"))
+    implementation(project(":awake:core:audio"))
+    implementation(project(":awake:core:input"))
     implementation(project(":awake:scene:document"))
     implementation(project(":awake:scene:binding"))
     implementation(project(":awake:scene:scene-core"))
