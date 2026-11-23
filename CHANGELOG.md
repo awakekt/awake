@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.70.0] - 2026-11-23
+
+### Added
+
+- **Vibe Camera Director and Gameplay Trailer Capture.** Added `:awake:director` (beat-synced multi-track director timelines, intent-driven auto-framing, arc-length splines, photographic optics, handheld/trauma feel rig, live lighting/atmosphere/color-grade orchestration, and quantitative framing/occlusion analyzer), `:awake:scene:director` (`camera_director`, `virtual_camera`, `camera_rail`, `stage_marker`, `DirectorSystem` on `UnscaledSystem`, and deterministic `InputTake` replay), `OfflineAudioMixer` WAV mixing, and `awake stage` / `awake director validate` / `awake storyboard` / `awake capture` CLI commands with matching MCP tools (`inspect_stage`, `validate_director`, `preview_storyboard`, `preview_shot`, `capture_trailer`).
+
+### Changed
+
+- **Organic noise-warped water ripples, 3-shell volumetric `CloudLayerShader`, `ContentPaint.BeforeTransparent`, and dynamic `SceneDepth` content features.** Replaced repeating sine-grid waves in `StylizedWaterShader` (`Standard` tier) with domain-warped quintic `mod289` value noise and exact analytic gradients; upgraded `CloudLayerShader` (`Standard` tier) to single-pass 3-shell parallax cumulus volume with sun-offset self-shadowing and noise-warped perimeter fade; added `ContentPaint.BeforeTransparent` so world-space water and cloud features paint after opaque geometry and before transparent scene particles/effects; exposed `ContentFeatureHost.supportsSceneDepth` so dynamically attached `samplesSceneDepth = true` features work whenever `RenderPlan.sceneDepthShaderSet` is configured; and registered content-feature depth casters (such as clipmap terrain) into `SceneDepth` on both Vulkan and WebGPU (`Fast` mobile tiers remain zero-texture and untouched).
+
 ## [0.69.0] - 2026-11-23
 
 ### Changed
