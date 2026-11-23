@@ -73,6 +73,10 @@ internal class DepthPrePassFeature(
     /** Whether each pass this records counts as a shadow pass: true for the light's cascades, not the camera's depth. */
     internal var countsShadowPasses = false
 
+    /** Total depth render passes recorded over this feature's lifetime, for pass-count regression tests. */
+    internal var passesRecorded: Long = 0L
+        private set
+
     /** A content feature's depth pipeline and what hands it a draw each frame. Its pipeline is
      * the caller's to destroy, once removed from [contentCasters]. */
     internal class ContentCaster(val pipeline: DepthOnlyPipeline, val source: ContentDepthSource)
@@ -80,16 +84,37 @@ internal class DepthPrePassFeature(
     /** Drawn in every rendered sub-pass, after the frame's draws. */
     val contentCasters = ArrayList<ContentCaster>()
 
+    private val baseCascadePipelines: List<DepthOnlyPipeline> = buildList {
+        add(depthOnlyPipeline)
+        addAll(variantPipelines.values)
+        addAll(keyedVariantPipelines.values)
+        addAll(formatPipelines.values)
+        addAll(instancedFormatPipelines.values)
+    }.distinct()
+    private val cachedCascadePipelines = ArrayList<DepthOnlyPipeline>(baseCascadePipelines)
+    private val cachedContentCasterPipelines = ArrayList<DepthOnlyPipeline>()
+
     /** Every pipeline the cascade matrices are written to, content casters' included. */
     private val cascadePipelines: List<DepthOnlyPipeline>
-        get() = buildList {
-            add(depthOnlyPipeline)
-            addAll(variantPipelines.values)
-            addAll(keyedVariantPipelines.values)
-            addAll(formatPipelines.values)
-            addAll(instancedFormatPipelines.values)
-            contentCasters.forEach { add(it.pipeline) }
-        }.distinct()
+        get() {
+            var matches = contentCasters.size == cachedContentCasterPipelines.size
+            var checkIndex = 0
+            while (matches && checkIndex < contentCasters.size) {
+                matches = contentCasters[checkIndex].pipeline === cachedContentCasterPipelines[checkIndex]
+                checkIndex += 1
+            }
+            if (!matches) {
+                cachedCascadePipelines.clear()
+                cachedCascadePipelines.addAll(baseCascadePipelines)
+                cachedContentCasterPipelines.clear()
+                for (i in contentCasters.indices) {
+                    val p = contentCasters[i].pipeline
+                    cachedContentCasterPipelines.add(p)
+                    if (p !in cachedCascadePipelines) cachedCascadePipelines.add(p)
+                }
+            }
+            return cachedCascadePipelines
+        }
 
     internal fun pipelineFor(kind: DepthCasterKind, format: VertexFormat): DepthOnlyPipeline? {
         val pipeline = when (kind) {
@@ -133,6 +158,7 @@ internal class DepthPrePassFeature(
     ) = recordCommands(commandBuffer, frameIndex, drawCalls, castFormat, cascades.viewProjections, environment)
 
     private var initializedLayers = BooleanArray(depthTarget.layers)
+    private var dirtyLayers = BooleanArray(depthTarget.layers)
 
     /**
      * Holds [layers] at [size] in [depthTarget], or releases it to its 1x1 stand-in when [layers] is
@@ -147,6 +173,7 @@ internal class DepthPrePassFeature(
         if (layers == resident && (layers == 0 || sameExtent)) return false
         if (layers == 0) depthTarget.release() else depthTarget.reallocate(layers, width, height)
         initializedLayers = BooleanArray(depthTarget.layers)
+        dirtyLayers = BooleanArray(depthTarget.layers)
         return true
     }
 
@@ -167,11 +194,12 @@ internal class DepthPrePassFeature(
         val activeCount = minOf(viewProjections.size, depthTarget.layers)
         for (cascade in 0 until activeCount) {
             val source = viewProjections[cascade]
-            allPipelines.forEach { it.writeCascade(frameIndex, cascade, source) }
+            for (i in allPipelines.indices) allPipelines[i].writeCascade(frameIndex, cascade, source)
             if (countsShadowPasses) stats?.beginShadowPass()
             recordCascade(commandBuffer, frameIndex, drawCalls, castFormat, cascade, environment)
             stats?.countAs(RenderPassKind.Other)
             initializedLayers[cascade] = true
+            dirtyLayers[cascade] = true
         }
         initializeLayers(commandBuffer, castFormat)
     }
@@ -189,22 +217,29 @@ internal class DepthPrePassFeature(
     ) {
         if (subPasses.isEmpty()) return
         val allPipelines = cascadePipelines
-        for (subPass in subPasses) {
+        var activeLayersMask = 0L
+        for (i in subPasses.indices) {
+            val subPass = subPasses[i]
             val layer = subPass.targetLayer
             if (layer in 0 until depthTarget.layers) {
-                allPipelines.forEach { it.writeCascade(frameIndex, layer, subPass.viewProjection) }
+                if (layer < Long.SIZE_BITS) activeLayersMask = activeLayersMask or (1L shl layer)
+                for (p in allPipelines.indices) allPipelines[p].writeCascade(frameIndex, layer, subPass.viewProjection)
                 if (countsShadowPasses) stats?.beginShadowPass()
                 recordCascade(commandBuffer, frameIndex, subPass.resolvedDraws, castFormat, layer, environment)
                 stats?.countAs(RenderPassKind.Other)
                 initializedLayers[layer] = true
+                dirtyLayers[layer] = true
             }
         }
-        val activeLayers = subPasses.map { it.targetLayer }.toSet()
-        for (cascade in 0 until minOf(4, depthTarget.layers)) {
-            if (cascade !in activeLayers) {
-                allPipelines.forEach { it.writeCascade(frameIndex, cascade, Mat4()) }
+        // Only clear inactive layers that previously held rendered depth; clean initialized layers
+        // stay at far depth across frames without re-running empty full-screen CLEAR+STORE passes.
+        val clearLimit = minOf(4, depthTarget.layers)
+        for (cascade in 0 until clearLimit) {
+            val renderedThisFrame = (activeLayersMask and (1L shl cascade)) != 0L
+            if (!renderedThisFrame && dirtyLayers[cascade]) {
                 recordCascade(commandBuffer, frameIndex, emptyList(), castFormat, cascade)
                 initializedLayers[cascade] = true
+                dirtyLayers[cascade] = false
             }
         }
         initializeLayers(commandBuffer, castFormat)
@@ -212,16 +247,16 @@ internal class DepthPrePassFeature(
 
     /**
      * Moves every layer no pass has rendered yet out of `UNDEFINED`, once, with an empty pass.
-     *
-     * Also called on frames that render no depth at all: the scene pass binds the whole array
-     * whether or not shadows ran, and sampling an `UNDEFINED` layer is invalid.
+     * When [clearDirty] is true, also clears any layer dirtied by a previous active frame once so
+     * subsequent empty frames pay zero render passes and zero barriers.
      */
-    fun initializeLayers(commandBuffer: Long, castFormat: VertexFormat) {
+    fun initializeLayers(commandBuffer: Long, castFormat: VertexFormat, clearDirty: Boolean = false) {
         for (layer in 0 until depthTarget.layers) {
-            if (!initializedLayers[layer]) {
+            if (!initializedLayers[layer] || (clearDirty && dirtyLayers[layer])) {
                 // No draws, so no cascade set is bound and any frame's slot would do.
                 recordCascade(commandBuffer, 0, emptyList(), castFormat, layer)
                 initializedLayers[layer] = true
+                dirtyLayers[layer] = false
             }
         }
     }
@@ -234,6 +269,7 @@ internal class DepthPrePassFeature(
         cascade: Int,
         content: GpuEnvironmentState? = null,
     ) {
+        passesRecorded += 1L
         // The render pass's incoming dependency states this too, and MoltenVK drops it like the
         // outgoing one below. Without it, this pass can overwrite the layer while an earlier scene
         // pass still samples it: the previous frame's, or the main frame's when an offscreen render
@@ -272,6 +308,11 @@ internal class DepthPrePassFeature(
         )
         var boundPipeline: DepthOnlyPipeline? = null
         var boundMaterialSet = NO_SET
+        var boundVertex0 = NO_SET
+        var boundVertex1 = NO_SET
+        var boundVertex2 = NO_SET
+        var boundVertex3 = NO_SET
+        var boundIndex = NO_SET
         var drawIndex = 0
         while (drawIndex < drawCalls.size) {
             val prepared = drawCalls[drawIndex]
@@ -296,56 +337,79 @@ internal class DepthPrePassFeature(
             val depthMaterial = prepared.depthMaterialBinding ?: prepared.materialBinding
             val paletteBinding = prepared.depthJointPaletteBinding ?: prepared.jointPaletteBinding
             val instanceBuffer = prepared.instanceVertexBuffer as? VulkanBufferBinding
-            if (pipeline != null && vertexBuffer != null && depthMaterial != null) {
-                if (boundPipeline !== pipeline) {
-                    pipeline.bind(commandBuffer)
-                    if (pipeline.hasCascadeBlock) {
-                        VulkanDescriptors.vkCmdBindDescriptorSet(
-                            commandBuffer,
-                            pipeline.pipelineLayout,
-                            SHADOW_CASCADE_PASS_GROUP,
-                            pipeline.cascadeBinding(frameIndex, cascade),
-                        )
-                    }
-                    boundPipeline = pipeline
-                    boundMaterialSet = NO_SET
-                }
-                VulkanBuffers.vkCmdBindVertexBuffers(
-                    commandBuffer,
-                    0,
-                    vertexBuffer.asArray,
-                    ZERO_OFFSET,
-                )
-                if (kind != DepthCasterKind.Ordinary && instanceBuffer != null) {
-                    VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 1, instanceBuffer.asArray, ZERO_OFFSET)
-                    (prepared.instanceColorBuffer as? VulkanBufferBinding)?.let {
-                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 2, it.asArray, ZERO_OFFSET)
-                    }
-                    (prepared.instanceFrameBuffer as? VulkanBufferBinding)?.let {
-                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 3, it.asArray, ZERO_OFFSET)
-                    }
-                }
-                // Alike instanced casters share one set (#1555): bound once until the pipeline changes.
-                val materialSet = (depthMaterial as VulkanMaterialBinding).descriptorSetHandle
-                if (materialSet != boundMaterialSet) {
-                    VulkanDescriptors.vkCmdBindDescriptorSet(
-                        commandBuffer,
-                        pipeline.pipelineLayout,
-                        BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
-                        materialSet,
-                    )
-                    boundMaterialSet = materialSet
-                }
-                if (kind == DepthCasterKind.SkinnedInstanced && paletteBinding != null) {
-                    VulkanDescriptors.vkCmdBindDescriptorSet(
-                        commandBuffer,
-                        pipeline.pipelineLayout,
-                        BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.JointPalette),
-                        (paletteBinding as VulkanMaterialBinding).descriptorSetHandle,
-                    )
-                }
-                issueDraw(commandBuffer, prepared, indexBuffer)
+            if (pipeline == null || vertexBuffer == null || depthMaterial == null) {
+                drawIndex += 1
+                continue
             }
+            if (boundPipeline !== pipeline) {
+                pipeline.bind(commandBuffer)
+                if (pipeline.hasCascadeBlock) {
+                    VulkanDescriptors.vkCmdBindDescriptorSet(
+                        commandBuffer,
+                        pipeline.pipelineLayout,
+                        SHADOW_CASCADE_PASS_GROUP,
+                        pipeline.cascadeBinding(frameIndex, cascade),
+                    )
+                }
+                boundPipeline = pipeline
+                boundMaterialSet = NO_SET
+            }
+            if (vertexBuffer.handle != boundVertex0) {
+                VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffer.asArray, ZERO_OFFSET)
+                boundVertex0 = vertexBuffer.handle
+            }
+            if (kind != DepthCasterKind.Ordinary && instanceBuffer != null) {
+                if (instanceBuffer.handle != boundVertex1) {
+                    VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 1, instanceBuffer.asArray, ZERO_OFFSET)
+                    boundVertex1 = instanceBuffer.handle
+                }
+                (prepared.instanceColorBuffer as? VulkanBufferBinding)?.let {
+                    if (it.handle != boundVertex2) {
+                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 2, it.asArray, ZERO_OFFSET)
+                        boundVertex2 = it.handle
+                    }
+                }
+                (prepared.instanceFrameBuffer as? VulkanBufferBinding)?.let {
+                    if (it.handle != boundVertex3) {
+                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 3, it.asArray, ZERO_OFFSET)
+                        boundVertex3 = it.handle
+                    }
+                }
+            }
+            // Alike instanced casters share one set (#1555): bound once until the pipeline changes.
+            val materialSet = (depthMaterial as VulkanMaterialBinding).descriptorSetHandle
+            if (materialSet != boundMaterialSet) {
+                VulkanDescriptors.vkCmdBindDescriptorSet(
+                    commandBuffer,
+                    pipeline.pipelineLayout,
+                    BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
+                    materialSet,
+                )
+                boundMaterialSet = materialSet
+            }
+            if (kind == DepthCasterKind.SkinnedInstanced && paletteBinding != null) {
+                VulkanDescriptors.vkCmdBindDescriptorSet(
+                    commandBuffer,
+                    pipeline.pipelineLayout,
+                    BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.JointPalette),
+                    (paletteBinding as VulkanMaterialBinding).descriptorSetHandle,
+                )
+            }
+            if (indexBuffer != null) {
+                if (indexBuffer.handle != boundIndex) {
+                    VulkanBuffers.vkCmdBindIndexBuffer(
+                        commandBuffer,
+                        indexBuffer.handle,
+                        0,
+                        com.awakekt.awake.vulkan.models.info.VkIndexType.VK_INDEX_TYPE_UINT32,
+                    )
+                    boundIndex = indexBuffer.handle
+                }
+                VulkanBuffers.vkCmdDrawIndexed(commandBuffer, prepared.elementCount, prepared.instances, 0, 0, 0)
+            } else {
+                Vulkan.vkCmdDraw(commandBuffer, prepared.elementCount, prepared.instances, 0, 0)
+            }
+            stats?.recordDraw(prepared.elementCount, prepared.instances)
             drawIndex += 1
         }
         if (content != null) recordContentCasters(commandBuffer, frameIndex, cascade, content)

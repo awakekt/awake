@@ -17,6 +17,7 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
+import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuEnvironmentState
@@ -24,6 +25,7 @@ import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
+import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.mesh.GpuDynamicMeshes
@@ -751,19 +753,51 @@ class Renderer internal constructor(
         feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, camera, environment)
     }
 
+    private val filteredMasks = ArrayList<GpuSubPass>(MASK_LAYER_COUNT)
+
+    private fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean {
+        for (i in renderFeatures.indices) {
+            if (renderFeatures[i].needsCoveringExemptMask(environment)) return true
+        }
+        return false
+    }
+
     /**
      * Records [masks], the frame's mask sub-passes, into the mask's layers, outside the scene pass
-     * as [recordSceneDepthPass] is. Nothing on a frame with nothing masked: the overlay that reads
-     * the mask draws nothing then either, so the layers are neither drawn nor sampled.
+     * as [recordSceneDepthPass] is. Skips [COVERING_EXEMPT_MASK_LAYER] when no attached feature
+     * reads it (e.g. when depth fog is absent or hidden), and clears previously-dirty layers once
+     * when a frame masks nothing so idle frames pay zero mask passes and zero barriers.
      */
     internal fun recordMaskPass(commandBuffer: Long, frameIndex: Int, masks: List<GpuSubPass>, environment: GpuEnvironmentState) {
         val feature = maskPass ?: return
-        if (masks.isNotEmpty()) {
-            feature.recordCommands(commandBuffer, frameIndex, masks, renderPipeline.vertexFormat, environment)
+        val effective = filterMasksForFrame(masks, environment)
+        if (effective.isNotEmpty()) {
+            feature.recordCommands(commandBuffer, frameIndex, effective, renderPipeline.vertexFormat, environment)
         } else {
-            // Fog reads the mask every frame: a target just resized holds UNDEFINED layers until cleared.
-            feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
+            feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat, clearDirty = true)
         }
+    }
+
+    private fun filterMasksForFrame(masks: List<GpuSubPass>, environment: GpuEnvironmentState): List<GpuSubPass> {
+        var result = masks
+        if (masks.isNotEmpty() && !needsCoveringExemptMask(environment)) {
+            var hasExempt = false
+            for (i in masks.indices) {
+                if (masks[i].targetLayer == COVERING_EXEMPT_MASK_LAYER) {
+                    hasExempt = true
+                    break
+                }
+            }
+            if (hasExempt) {
+                filteredMasks.clear()
+                for (i in masks.indices) {
+                    val pass = masks[i]
+                    if (pass.targetLayer != COVERING_EXEMPT_MASK_LAYER) filteredMasks.add(pass)
+                }
+                result = filteredMasks
+            }
+        }
+        return result
     }
 
     override fun waitIdle() {

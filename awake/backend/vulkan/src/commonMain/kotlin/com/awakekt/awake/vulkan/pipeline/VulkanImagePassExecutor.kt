@@ -302,12 +302,16 @@ internal class VulkanImagePassExecutor(
         chain: ImagePassChain,
         hasMoreImagePasses: Boolean,
         stats: RenderStatsCounter,
+        parentPassOpenOnEntry: Boolean = true,
+        leaveParentPassOpen: Boolean = true,
     ) {
         val safeFrame = frameIndex.coerceIn(0, maxFramesInFlight.coerceAtLeast(1) - 1)
         val canExecute = !chain.isEmpty && (!chain.requiresDestinationSnapshot || parentTarget.sampleable)
         if (!canExecute) {
-            if (!parentTarget.isOffscreen && !hasMoreImagePasses) {
+            if (parentPassOpenOnEntry && !leaveParentPassOpen) {
                 Vulkan.vkCmdEndRenderPass(commandBuffer)
+            } else if (leaveParentPassOpen && !parentTarget.isOffscreen && !hasMoreImagePasses) {
+                if (parentPassOpenOnEntry) Vulkan.vkCmdEndRenderPass(commandBuffer)
                 stats.recordPass()
                 beginParentRenderPass(commandBuffer, parentTarget, parentTarget.finalRenderPass)
             }
@@ -326,7 +330,7 @@ internal class VulkanImagePassExecutor(
             )
         }
 
-        Vulkan.vkCmdEndRenderPass(commandBuffer)
+        if (parentPassOpenOnEntry) Vulkan.vkCmdEndRenderPass(commandBuffer)
         var parentInShaderReadOnly = false
         var parentPassOpen = false
         var currentParentRenderPass = 0L
@@ -454,6 +458,21 @@ internal class VulkanImagePassExecutor(
                     )
                 }
             }
+        }
+
+        if (!leaveParentPassOpen) {
+            if (parentPassOpen) {
+                Vulkan.vkCmdEndRenderPass(commandBuffer)
+            }
+            if (parentInShaderReadOnly) {
+                VulkanImages.vkTransitionImageLayout(
+                    commandBuffer,
+                    parentTarget.colorImage,
+                    VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    VkImageLayout2.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                )
+            }
+            return
         }
 
         val finalResumeRenderPass = resolveParentResumeRenderPass(parentTarget, hasMoreImagePasses)

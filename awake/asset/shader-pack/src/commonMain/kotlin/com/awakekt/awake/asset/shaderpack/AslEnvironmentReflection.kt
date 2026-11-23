@@ -64,37 +64,45 @@ internal fun AslBlockBuilder.environmentReflection(
     val smoothness = let("envSmoothness", 1f.lit - roughness)
     val reflStrength = let("envReflStrength", saturate(reflectance))
     val envWeight = let("envWeight", max(metallic * smoothness * METALLIC_ENV_SCALE.lit, reflStrength))
-    val nDotV = let("envNDotV", clamp(dot(normal, viewDir), 0f.lit, 1f.lit))
-    // Reflected direction R = 2 * (N·V) * N - V.
-    val refl = let("envRefl", normalize(normal * (2f.lit * dot(normal, viewDir)) - viewDir))
-    val upFactor = let("envUp", saturate(refl.y * 0.5f.lit + 0.5f.lit))
-    val groundColor = vec3(0.18f.lit, 0.16f.lit, 0.14f.lit)
-    val horizonColor = vec3(0.75f.lit, 0.82f.lit, 0.90f.lit)
-    val zenithColor = vec3(0.32f.lit, 0.52f.lit, 0.82f.lit)
-    val lower = mix(groundColor, horizonColor, saturate(upFactor * 2f.lit))
-    val upper = mix(horizonColor, zenithColor, saturate((upFactor - 0.5f.lit) * 2f.lit))
-    val hemi = let("envHemi", mix(lower, upper, saturate((refl.y + 0.1f.lit) * 5f.lit)))
-    // Rougher surfaces blur toward a neutral hemisphere average; smoother surfaces keep sharp sky contrast + sun glint.
-    val blurred = let("envBlurred", mix(vec3(0.45f.lit, 0.48f.lit, 0.52f.lit), hemi, smoothness))
-    val sunAlign = let("envSunAlign", max(dot(refl, lightDir), 0f.lit))
-    val sunGlint = let("envSunGlint", pow(sunAlign, mix(4f.lit, 48f.lit, smoothness)) * lightColor.xyz * (SKY_GLINT_STRENGTH.lit * smoothness))
-    // Roughness-attenuated Fresnel-Schlick so grazing reflective edges gleam naturally.
-    val fMax = max(vec3(smoothness), f0)
-    val envFresnel = let("envFresnel", f0 + (fMax - f0) * pow(1f.lit - nDotV, 5f.lit))
-    val baseRefl = let("envBaseRefl", (blurred + sunGlint) * envFresnel * occlusion * envWeight)
+    val envTotal = variable("envTotal", vec3(0f.lit))
+    // Skip hemisphere gradient, sun glint, Fresnel pow(), and analytic chrome trig on matte dielectrics.
+    iff(envWeight gt 0.0001f.lit) {
+        val nDotV = let("envNDotV", clamp(dot(normal, viewDir), 0f.lit, 1f.lit))
+        // Reflected direction R = 2 * (N·V) * N - V.
+        val refl = let("envRefl", normalize(normal * (2f.lit * dot(normal, viewDir)) - viewDir))
+        val upFactor = let("envUp", saturate(refl.y * 0.5f.lit + 0.5f.lit))
+        val groundColor = vec3(0.18f.lit, 0.16f.lit, 0.14f.lit)
+        val horizonColor = vec3(0.75f.lit, 0.82f.lit, 0.90f.lit)
+        val zenithColor = vec3(0.32f.lit, 0.52f.lit, 0.82f.lit)
+        val lower = mix(groundColor, horizonColor, saturate(upFactor * 2f.lit))
+        val upper = mix(horizonColor, zenithColor, saturate((upFactor - 0.5f.lit) * 2f.lit))
+        val hemi = let("envHemi", mix(lower, upper, saturate((refl.y + 0.1f.lit) * 5f.lit)))
+        // Rougher surfaces blur toward a neutral hemisphere average; smoother surfaces keep sharp sky contrast + sun glint.
+        val blurred = let("envBlurred", mix(vec3(0.45f.lit, 0.48f.lit, 0.52f.lit), hemi, smoothness))
+        val sunAlign = let("envSunAlign", max(dot(refl, lightDir), 0f.lit))
+        val sunGlint = let("envSunGlint", pow(sunAlign, mix(4f.lit, 48f.lit, smoothness)) * lightColor.xyz * (SKY_GLINT_STRENGTH.lit * smoothness))
+        // Roughness-attenuated Fresnel-Schlick so grazing reflective edges gleam naturally.
+        val fMax = max(vec3(smoothness), f0)
+        val envFresnel = let("envFresnel", f0 + (fMax - f0) * pow(1f.lit - nDotV, 5f.lit))
+        val baseRefl = let("envBaseRefl", (blurred + sunGlint) * envFresnel * occlusion * envWeight)
+        assign(envTotal, baseRefl)
 
-    // Analytic sphere-map chrome bands (zero when reflectance == 0): bright shimmering reflection
-    // highlights across R with a grazing rim gleam, tinted slightly by the surface albedo.
-    val bandA = let("envBandA", sin(refl.x * 3.6f.lit + refl.y * 4.8f.lit + refl.z * 2.2f.lit) * 0.5f.lit + 0.5f.lit)
-    val bandB = let("envBandB", sin(refl.x * (-5.2f).lit + refl.y * 2.4f.lit + refl.z * 4.4f.lit) * 0.5f.lit + 0.5f.lit)
-    val chromePeak = let("envChromePeak", pow(saturate(bandA * 0.65f.lit + bandB * 0.35f.lit), mix(1.5f.lit, 3.2f.lit, smoothness)))
-    val sheenTint = let("envSheenTint", mix(vec3(1f.lit), albedo + vec3(0.45f.lit), 0.5f.lit))
-    val rimGleam = let("envRimGleam", pow(1f.lit - nDotV, 2.5f.lit) * CHROME_RIM_STRENGTH.lit)
-    val chromeGlow = let(
-        "envChromeGlow",
-        sheenTint * lightColor.xyz * (chromePeak * CHROME_BAND_STRENGTH.lit + rimGleam) * reflStrength * smoothness * occlusion,
-    )
-    return baseRefl + chromeGlow
+        // Analytic sphere-map chrome bands (zero when reflectance == 0): bright shimmering reflection
+        // highlights across R with a grazing rim gleam, tinted slightly by the surface albedo.
+        iff(reflStrength gt 0.0001f.lit) {
+            val bandA = let("envBandA", sin(refl.x * 3.6f.lit + refl.y * 4.8f.lit + refl.z * 2.2f.lit) * 0.5f.lit + 0.5f.lit)
+            val bandB = let("envBandB", sin(refl.x * (-5.2f).lit + refl.y * 2.4f.lit + refl.z * 4.4f.lit) * 0.5f.lit + 0.5f.lit)
+            val chromePeak = let("envChromePeak", pow(saturate(bandA * 0.65f.lit + bandB * 0.35f.lit), mix(1.5f.lit, 3.2f.lit, smoothness)))
+            val sheenTint = let("envSheenTint", mix(vec3(1f.lit), albedo + vec3(0.45f.lit), 0.5f.lit))
+            val rimGleam = let("envRimGleam", pow(1f.lit - nDotV, 2.5f.lit) * CHROME_RIM_STRENGTH.lit)
+            val chromeGlow = let(
+                "envChromeGlow",
+                sheenTint * lightColor.xyz * (chromePeak * CHROME_BAND_STRENGTH.lit + rimGleam) * reflStrength * smoothness * occlusion,
+            )
+            assign(envTotal, envTotal + chromeGlow)
+        }
+    }
+    return envTotal
 }
 
 /**
@@ -113,23 +121,27 @@ internal fun AslBlockBuilder.unlitSignedChrome(
     reflectance: AslExpr,
 ): AslExpr {
     val strength = let("unlitReflStrength", saturate(reflectance))
-    val upRef = select(vec3(0f.lit, 1f.lit, 0f.lit), vec3(1f.lit, 0f.lit, 0f.lit), abs(viewDir.y) gt 0.99f.lit)
-    val viewRight = let("unlitViewRight", normalize(cross(upRef, viewDir)))
-    val viewUp = let("unlitViewUp", cross(viewDir, viewRight))
-    val vnx = let("unlitVnx", dot(normal, viewRight))
-    val vny = let("unlitVny", dot(normal, viewUp))
-    val w1 = let("unlitWave1", sin(vnx * 4.4f.lit + vny * 2.9f.lit))
-    val w2 = let("unlitWave2", sin(vnx * (-3.2f).lit + vny * 4.8f.lit + 1.15f.lit))
-    val w3 = let("unlitWave3", cos(vnx * 2.3f.lit - vny * 3.6f.lit + 0.65f.lit))
-    val rawField = let("unlitRawField", saturate((w1 * 0.45f.lit + w2 * 0.35f.lit + w3 * 0.20f.lit) * 0.5f.lit + 0.5f.lit))
-    // Bias median toward ~0.30 (matching classic dark-lobe / bright-ridge chrome matcaps).
-    val shaped = let("unlitChromeShaped", pow(rawField, 1.85f.lit))
-    val nDotV = let("unlitNDotV", saturate(dot(normal, viewDir)))
-    val rim = let("unlitChromeRim", pow(1f.lit - nDotV, 2.4f.lit) * UNLIT_CHROME_RIM_BOOST.lit)
-    val chromeMap = let(
-        "unlitChromeMap",
-        clamp(mix(UNLIT_CHROME_DARK_LOBE.lit, UNLIT_CHROME_BRIGHT_RIDGE.lit, shaped) + rim, 0f.lit, 1f.lit),
-    )
-    val signed2x = let("unlitSigned2x", clamp((stored + vec3(chromeMap) - vec3(0.5f.lit)) * 2f.lit, vec3(0f.lit), vec3(1f.lit)))
-    return mix(stored, signed2x, strength)
+    val result = variable("unlitChromeResult", stored)
+    iff(strength gt 0.0001f.lit) {
+        val upRef = select(vec3(0f.lit, 1f.lit, 0f.lit), vec3(1f.lit, 0f.lit, 0f.lit), abs(viewDir.y) gt 0.99f.lit)
+        val viewRight = let("unlitViewRight", normalize(cross(upRef, viewDir)))
+        val viewUp = let("unlitViewUp", cross(viewDir, viewRight))
+        val vnx = let("unlitVnx", dot(normal, viewRight))
+        val vny = let("unlitVny", dot(normal, viewUp))
+        val w1 = let("unlitWave1", sin(vnx * 4.4f.lit + vny * 2.9f.lit))
+        val w2 = let("unlitWave2", sin(vnx * (-3.2f).lit + vny * 4.8f.lit + 1.15f.lit))
+        val w3 = let("unlitWave3", cos(vnx * 2.3f.lit - vny * 3.6f.lit + 0.65f.lit))
+        val rawField = let("unlitRawField", saturate((w1 * 0.45f.lit + w2 * 0.35f.lit + w3 * 0.20f.lit) * 0.5f.lit + 0.5f.lit))
+        // Bias median toward ~0.30 (matching classic dark-lobe / bright-ridge chrome matcaps).
+        val shaped = let("unlitChromeShaped", pow(rawField, 1.85f.lit))
+        val nDotV = let("unlitNDotV", saturate(dot(normal, viewDir)))
+        val rim = let("unlitChromeRim", pow(1f.lit - nDotV, 2.4f.lit) * UNLIT_CHROME_RIM_BOOST.lit)
+        val chromeMap = let(
+            "unlitChromeMap",
+            clamp(mix(UNLIT_CHROME_DARK_LOBE.lit, UNLIT_CHROME_BRIGHT_RIDGE.lit, shaped) + rim, 0f.lit, 1f.lit),
+        )
+        val signed2x = let("unlitSigned2x", clamp((stored + vec3(chromeMap) - vec3(0.5f.lit)) * 2f.lit, vec3(0f.lit), vec3(1f.lit)))
+        assign(result, mix(stored, signed2x, strength))
+    }
+    return result
 }

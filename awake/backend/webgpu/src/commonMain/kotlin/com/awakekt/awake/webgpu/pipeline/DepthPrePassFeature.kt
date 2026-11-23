@@ -53,6 +53,10 @@ class DepthPrePassFeature(
     /** Whether each pass this records counts as a shadow pass: true for the light's cascades, not the camera's depth. */
     internal var countsShadowPasses = false
 
+    /** Total depth render passes recorded over this feature's lifetime, for pass-count regression tests. */
+    internal var passesRecorded: Long = 0L
+        private set
+
     /** What a cascade's retained bundle declares: no colour, [depthTarget]'s own depth format. */
     private val cascadeLayout = BundleLayout(emptyList(), depthTarget.textureFormat, sampleCount = 1)
 
@@ -63,16 +67,39 @@ class DepthPrePassFeature(
     /** Drawn in every rendered sub-pass, after the frame's draws. */
     internal val contentCasters = ArrayList<ContentCaster>()
 
+    private val baseCascadePipelines: List<DepthOnlyPipeline> = buildList {
+        add(depthOnlyPipeline)
+        addAll(variantPipelines.values)
+        addAll(keyedVariantPipelines.values)
+        addAll(formatPipelines.values)
+        addAll(instancedFormatPipelines.values)
+    }.distinct()
+    private val cachedCascadePipelines = ArrayList<DepthOnlyPipeline>(baseCascadePipelines)
+    private val cachedContentCasterPipelines = ArrayList<DepthOnlyPipeline>()
+    internal var initializedLayers = BooleanArray(depthTarget.layers)
+    internal var dirtyLayers = BooleanArray(depthTarget.layers)
+
     /** Every pipeline the cascade matrices are written to, content casters' included. */
     private val cascadePipelines: List<DepthOnlyPipeline>
-        get() = buildList {
-            add(depthOnlyPipeline)
-            addAll(variantPipelines.values)
-            addAll(keyedVariantPipelines.values)
-            addAll(formatPipelines.values)
-            addAll(instancedFormatPipelines.values)
-            contentCasters.forEach { add(it.pipeline) }
-        }.distinct()
+        get() {
+            var matches = contentCasters.size == cachedContentCasterPipelines.size
+            var checkIndex = 0
+            while (matches && checkIndex < contentCasters.size) {
+                matches = contentCasters[checkIndex].pipeline === cachedContentCasterPipelines[checkIndex]
+                checkIndex += 1
+            }
+            if (!matches) {
+                cachedCascadePipelines.clear()
+                cachedCascadePipelines.addAll(baseCascadePipelines)
+                cachedContentCasterPipelines.clear()
+                for (i in contentCasters.indices) {
+                    val p = contentCasters[i].pipeline
+                    cachedContentCasterPipelines.add(p)
+                    if (p !in cachedCascadePipelines) cachedCascadePipelines.add(p)
+                }
+            }
+            return cachedCascadePipelines
+        }
 
     /** Casters' depth groups built by this pass's pipelines, over its life: for tests (#1621). */
     internal val depthGroupsCreated: Long get() = cascadePipelines.sumOf { it.groupsCreated }
@@ -136,18 +163,27 @@ class DepthPrePassFeature(
         environment: GpuEnvironmentState? = null,
     ) {
         require(viewProjections.isNotEmpty()) { "A layered depth pass needs at least one matrix." }
+        if (dirtyLayers.size != depthTarget.layers) {
+            initializedLayers = BooleanArray(depthTarget.layers)
+            dirtyLayers = BooleanArray(depthTarget.layers)
+        }
         val allPipelines = cascadePipelines
         val activeCount = minOf(viewProjections.size, depthTarget.layers)
         for (cascade in 0 until activeCount) {
             val source = viewProjections[cascade]
-            allPipelines.forEach { it.writeCascade(cascade, source) }
+            for (i in allPipelines.indices) allPipelines[i].writeCascade(cascade, source)
             if (countsShadowPasses) stats?.beginShadowPass()
             recordCascade(encoder, draws, cascade, environment)
             stats?.countAs(RenderPassKind.Other)
+            initializedLayers[cascade] = true
+            dirtyLayers[cascade] = true
         }
         for (layer in activeCount until minOf(4, depthTarget.layers)) {
-            allPipelines.forEach { it.writeCascade(layer, UnusedCascade) }
-            recordCascade(encoder, emptyList(), layer)
+            if (!initializedLayers[layer] || dirtyLayers[layer]) {
+                recordCascade(encoder, emptyList(), layer)
+                initializedLayers[layer] = true
+                dirtyLayers[layer] = false
+            }
         }
     }
 
@@ -163,27 +199,54 @@ class DepthPrePassFeature(
         view: Any? = null,
     ) {
         if (subPasses.isEmpty()) return
+        if (dirtyLayers.size != depthTarget.layers) {
+            initializedLayers = BooleanArray(depthTarget.layers)
+            dirtyLayers = BooleanArray(depthTarget.layers)
+        }
         val allPipelines = cascadePipelines
-        for (subPass in subPasses) {
+        var activeLayersMask = 0L
+        for (i in subPasses.indices) {
+            val subPass = subPasses[i]
             val layer = subPass.targetLayer
             if (layer in 0 until depthTarget.layers) {
-                allPipelines.forEach { it.writeCascade(layer, subPass.viewProjection) }
+                if (layer < Long.SIZE_BITS) activeLayersMask = activeLayersMask or (1L shl layer)
+                for (p in allPipelines.indices) allPipelines[p].writeCascade(layer, subPass.viewProjection)
                 if (countsShadowPasses) stats?.beginShadowPass()
                 recordCascade(encoder, subPass.resolvedDraws, layer, environment, view)
                 stats?.countAs(RenderPassKind.Other)
+                initializedLayers[layer] = true
+                dirtyLayers[layer] = true
             }
         }
-        for (cascade in 0 until minOf(4, depthTarget.layers)) {
-            if (!subPasses.rendersLayer(cascade)) {
-                allPipelines.forEach { it.writeCascade(cascade, UnusedCascade) }
+        val clearLimit = minOf(4, depthTarget.layers)
+        for (cascade in 0 until clearLimit) {
+            val renderedThisFrame = (activeLayersMask and (1L shl cascade)) != 0L
+            if (!renderedThisFrame && (!initializedLayers[cascade] || dirtyLayers[cascade])) {
                 recordCascade(encoder, emptyList(), cascade, view = view)
+                initializedLayers[cascade] = true
+                dirtyLayers[cascade] = false
             }
         }
     }
 
-    /** Clears every layer to the far plane, with an empty pass each: what a frame drawing none of them reads. */
-    fun clearLayers(encoder: GPUCommandEncoder) {
-        for (layer in 0 until depthTarget.layers) recordCascade(encoder, emptyList(), layer)
+    /**
+     * Clears layers to the far plane with an empty pass each. When [onlyDirty] is true, skips
+     * already-initialized clean layers so idle unmasked frames pay zero render passes.
+     */
+    fun clearLayers(encoder: GPUCommandEncoder, onlyDirty: Boolean = false) {
+        val resized = dirtyLayers.size != depthTarget.layers
+        if (resized) {
+            initializedLayers = BooleanArray(depthTarget.layers)
+            dirtyLayers = BooleanArray(depthTarget.layers)
+        }
+        val forceAll = !onlyDirty || resized
+        for (layer in 0 until depthTarget.layers) {
+            if (forceAll || !initializedLayers[layer] || dirtyLayers[layer]) {
+                recordCascade(encoder, emptyList(), layer)
+                initializedLayers[layer] = true
+                dirtyLayers[layer] = false
+            }
+        }
     }
 
     private fun recordCascade(
@@ -193,6 +256,7 @@ class DepthPrePassFeature(
         content: GpuEnvironmentState? = null,
         view: Any? = null,
     ) {
+        passesRecorded += 1L
         encoder.beginRenderPass(
             RenderPassDescriptor(
                 colorAttachments = emptyList(),
@@ -298,6 +362,12 @@ class DepthPrePassFeature(
         }.distinct().forEach { it.destroy() }
         depthTarget.destroy()
     }
+}
+
+/** Marks every layer uninitialized after the underlying `depthTarget` is reallocated. */
+internal fun DepthPrePassFeature.resetLayerState() {
+    initializedLayers = BooleanArray(depthTarget.layers)
+    dirtyLayers = BooleanArray(depthTarget.layers)
 }
 
 /** Each of [casters]' draw for this frame, through its own pipeline and its own group 0. */

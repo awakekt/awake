@@ -158,6 +158,13 @@ interface RenderFeature<in C : RenderFrameContext> {
     /** Prepares writable frame resources before any depth, scene or UI pass records. */
     fun prepareFrame(frameIndex: Int, uploads: TextureUploadRecorder) = Unit
 
+    /**
+     * Whether this feature reads [com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER]
+     * during [environment]'s frame. Backends omit that mask layer when no attached feature needs
+     * it, avoiding a full-scene depth re-render of unlit draws on frames without covering effects.
+     */
+    fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean = false
+
     /** Records drawing commands for this feature into the command buffer using [context]. */
     fun recordCommands(context: C)
 

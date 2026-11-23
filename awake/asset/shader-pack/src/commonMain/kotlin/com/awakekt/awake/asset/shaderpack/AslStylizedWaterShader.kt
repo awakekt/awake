@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.abs
+import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.cos
 import com.awakekt.awake.asset.shaderdsl.div
@@ -16,9 +17,11 @@ import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.floor
+import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.length
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.min
 import com.awakekt.awake.asset.shaderdsl.minus
@@ -313,38 +316,6 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
             val baseAlpha = let("baseAlpha", clamp(zenithColor.w * 0.85f.lit + fresnel * 0.28f.lit, 0f.lit, 1f.lit))
 
             if (depthSample != null && clipPos != null) {
-                // Multi-octave rotated cellular noise (zero trig, FMA-safe) for lacy shore/rock foam and caustics.
-                val foamUv1 = let(
-                    "foamUv1",
-                    vec2(flowX, flowZ) * (scale * 2.8f.lit) +
-                        vec2((g1.x - 0.5f.lit) * 0.65f.lit, (g2.x - 0.5f.lit) * 0.65f.lit) +
-                        vec2(time * 0.18f.lit, -time * 0.14f.lit),
-                )
-                val nCoarse = let("nCoarse", valueNoise(foamUv1))
-                val domainWarp = let(
-                    "domainWarp",
-                    vec2((nCoarse - 0.5f.lit) * 0.95f.lit, (g2.x - g3.x) * 0.45f.lit),
-                )
-                val foamUv2 = let(
-                    "foamUv2",
-                    rotateOctave(foamUv1 + domainWarp) + vec2(7.3f.lit - time * 0.24f.lit, 11.1f.lit + time * 0.19f.lit),
-                )
-                val nMid = let("nMid", valueNoise(foamUv2))
-                val foamUv3 = let(
-                    "foamUv3",
-                    rotateOctave(foamUv2 + vec2((nMid - 0.5f.lit) * 0.75f.lit, (nCoarse - 0.5f.lit) * 0.75f.lit)) +
-                        vec2(-5.4f.lit + time * 0.31f.lit, 13.7f.lit - time * 0.22f.lit),
-                )
-                val nFine = let("nFine", valueNoise(foamUv3))
-                val ridgeMid = let("ridgeMid", 1f.lit - abs(nMid * 2f.lit - 1f.lit))
-                val ridgeFine = let("ridgeFine", 1f.lit - abs(nFine * 2f.lit - 1f.lit))
-                val foamLace = let("foamLace", clamp(ridgeMid * 0.56f.lit + ridgeFine * 0.44f.lit, 0f.lit, 1f.lit))
-                val foamPattern = let(
-                    "foamPattern",
-                    clamp(foamLace * 0.62f.lit + nCoarse * 0.16f.lit + nFine * 0.30f.lit, 0f.lit, 1f.lit),
-                )
-                val foamLit = let("foamLit", clamp(dayTint * 1.34f.lit, vec3(0.22f.lit), vec3(1.35f.lit)))
-
                 val ndc = let("ndc", clipPos.xy / max(abs(clipPos.w), 1e-4f.lit))
                 val uv = let("sceneDepthUv", ndcToUv(ndc, clipSpace))
                 val sceneD = let("sceneD", depthSample(uv))
@@ -355,89 +326,135 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
                 val rayDepth = let("rayDepth", max(length(sceneWorld - cameraEye.xyz) - dist, 0f.lit))
                 val contactDepth = let("contactDepth", min(vertDepth, rayDepth))
                 val foamWidth = let("foamWidth", max(flowAndFoam.z, 0.01f.lit))
-
-                // Shallow-to-deep optical color absorption + animated underwater caustics.
                 val absorbDepth = let("absorbDepth", max(foamWidth * 2.5f.lit, 0.25f.lit))
-                val depthFactor = let(
-                    "depthFactor",
-                    mix(1f.lit, smoothstep(0f.lit, absorbDepth, contactDepth), validDepth),
-                )
-                val shallowLift = let(
-                    "shallowLift",
-                    clamp(
-                        shallowColor.rgb * 1.28f.lit + vec3(0.03f.lit, 0.13f.lit, 0.09f.lit),
-                        vec3(0f.lit),
-                        vec3(1.25f.lit),
-                    ) * dayTint,
-                )
-                val absorbedBody = let("absorbedBody", mix(shallowLift, bodyColor, depthFactor))
-                val causticNet = let(
-                    "causticNet",
-                    clamp(pow(ridgeMid, 4.2f.lit) * 0.90f.lit + pow(ridgeFine, 4.5f.lit) * 0.38f.lit, 0f.lit, 1f.lit),
-                )
-                val causticZone = let(
-                    "causticZone",
-                    (1f.lit - depthFactor) * smoothstep(0.03f.lit, 0.20f.lit, contactDepth) * validDepth * sunVis,
-                )
-                val causticsRgb = let("causticsRgb", lightColor.rgb * (causticNet * causticZone * 0.62f.lit))
-                val withCrest = let("withCrest", mix(absorbedBody + causticsRgb, crestTint, crestMask))
-                val reflWeight = let(
-                    "reflWeight",
-                    clamp(fresnel * mix(0.28f.lit, 0.62f.lit, depthFactor), 0f.lit, 0.68f.lit),
-                )
-                val blended = let("blended", mix(withCrest, skyRefl, reflWeight) + sunGlint)
+                // Beyond shoreCutoff, depthFactor == 1, causticZone == 0, and contactRatio == 1 so
+                // open deep water skips 3-octave cellular noise, caustics pow(), and lapWave sin().
+                val shoreCutoff = let("shoreCutoff", max(absorbDepth, foamWidth * 1.35f.lit))
+                val inShoreZone = (validDepth gt 0.5f.lit) and (contactDepth lt shoreCutoff)
 
-                // Frothy, lacy eroding contact foam around rocks and shorelines (no smooth stripes).
-                val lapWave = let("lapWave", sin(contactDepth * 9.0f.lit - time * 2.8f.lit + nCoarse * 5.4f.lit))
-                val warpedDepth = let(
-                    "warpedDepth",
-                    max(
-                        contactDepth + (nCoarse - 0.5f.lit) * (foamWidth * 0.42f.lit) -
-                            lapWave * (foamWidth * 0.07f.lit),
-                        0f.lit,
-                    ),
+                val deepWithCrest = let("deepWithCrest", mix(bodyColor, crestTint, crestMask))
+                val deepBlended = let(
+                    "deepBlended",
+                    mix(deepWithCrest, skyRefl, clamp(fresnel * 0.62f.lit, 0f.lit, 0.68f.lit)) + sunGlint,
                 )
-                val contactRatio = let("contactRatio", saturate(warpedDepth / foamWidth))
-                val rimEdge = let(
-                    "rimEdge",
-                    (1f.lit - smoothstep(0f.lit, foamWidth * 0.16f.lit, contactDepth)) *
-                        smoothstep(0.24f.lit, 0.58f.lit, foamPattern),
-                )
-                val swashBoost = let(
-                    "swashBoost",
-                    smoothstep(0.25f.lit, 0.95f.lit, lapWave) * 0.16f.lit * (1f.lit - contactRatio),
-                )
-                val erodeThreshold = let(
-                    "erodeThreshold",
-                    clamp(0.38f.lit + contactRatio * 0.60f.lit - swashBoost, 0.22f.lit, 0.96f.lit),
-                )
-                val lacyFoam = let(
-                    "lacyFoam",
-                    smoothstep(erodeThreshold - 0.08f.lit, erodeThreshold + 0.06f.lit, foamPattern) *
-                        (1f.lit - smoothstep(0.58f.lit, 1f.lit, contactRatio)),
-                )
-                val bubbleSpecks = let(
-                    "bubbleSpecks",
-                    smoothstep(0.72f.lit, 0.90f.lit, nFine) *
-                        (1f.lit - smoothstep(0.10f.lit, 0.88f.lit, contactRatio)) * 0.62f.lit,
-                )
-                val contactFoam = let(
-                    "contactFoam",
-                    clamp((max(rimEdge, lacyFoam) + bubbleSpecks) * validDepth * flowAndFoam.w, 0f.lit, 1f.lit),
-                )
-                val thinFoamTint = let("thinFoamTint", mix(shallowColor.rgb, foamColor.rgb, 0.78f.lit))
-                val foamShade = let(
-                    "foamShade",
-                    mix(
-                        thinFoamTint,
-                        foamColor.rgb * 1.12f.lit,
-                        smoothstep(0.14f.lit, 0.72f.lit, contactFoam),
-                    ) * foamLit,
-                )
-                val shallowAlpha = let("shallowAlpha", mix(0.28f.lit, baseAlpha, depthFactor))
-                val edgeSoft = let("edgeSoft", mix(1f.lit, smoothstep(0f.lit, 0.08f.lit, contactDepth), validDepth))
-                assign(surfaceRgb, mix(blended, foamShade, contactFoam))
-                assign(surfaceAlpha, clamp(max(shallowAlpha * edgeSoft, contactFoam * 0.96f.lit), 0f.lit, 1f.lit))
+                assign(surfaceRgb, deepBlended)
+                assign(surfaceAlpha, baseAlpha)
+
+                iff(inShoreZone) {
+                    // Multi-octave rotated cellular noise (zero trig, FMA-safe) for lacy shore/rock foam and caustics.
+                    val foamUv1 = let(
+                        "foamUv1",
+                        vec2(flowX, flowZ) * (scale * 2.8f.lit) +
+                            vec2((g1.x - 0.5f.lit) * 0.65f.lit, (g2.x - 0.5f.lit) * 0.65f.lit) +
+                            vec2(time * 0.18f.lit, -time * 0.14f.lit),
+                    )
+                    val nCoarse = let("nCoarse", valueNoise(foamUv1))
+                    val domainWarp = let(
+                        "domainWarp",
+                        vec2((nCoarse - 0.5f.lit) * 0.95f.lit, (g2.x - g3.x) * 0.45f.lit),
+                    )
+                    val foamUv2 = let(
+                        "foamUv2",
+                        rotateOctave(foamUv1 + domainWarp) + vec2(7.3f.lit - time * 0.24f.lit, 11.1f.lit + time * 0.19f.lit),
+                    )
+                    val nMid = let("nMid", valueNoise(foamUv2))
+                    val foamUv3 = let(
+                        "foamUv3",
+                        rotateOctave(foamUv2 + vec2((nMid - 0.5f.lit) * 0.75f.lit, (nCoarse - 0.5f.lit) * 0.75f.lit)) +
+                            vec2(-5.4f.lit + time * 0.31f.lit, 13.7f.lit - time * 0.22f.lit),
+                    )
+                    val nFine = let("nFine", valueNoise(foamUv3))
+                    val ridgeMid = let("ridgeMid", 1f.lit - abs(nMid * 2f.lit - 1f.lit))
+                    val ridgeFine = let("ridgeFine", 1f.lit - abs(nFine * 2f.lit - 1f.lit))
+                    val foamLace = let("foamLace", clamp(ridgeMid * 0.56f.lit + ridgeFine * 0.44f.lit, 0f.lit, 1f.lit))
+                    val foamPattern = let(
+                        "foamPattern",
+                        clamp(foamLace * 0.62f.lit + nCoarse * 0.16f.lit + nFine * 0.30f.lit, 0f.lit, 1f.lit),
+                    )
+                    val foamLit = let("foamLit", clamp(dayTint * 1.34f.lit, vec3(0.22f.lit), vec3(1.35f.lit)))
+
+                    // Shallow-to-deep optical color absorption + animated underwater caustics.
+                    val depthFactor = let(
+                        "depthFactor",
+                        mix(1f.lit, smoothstep(0f.lit, absorbDepth, contactDepth), validDepth),
+                    )
+                    val shallowLift = let(
+                        "shallowLift",
+                        clamp(
+                            shallowColor.rgb * 1.28f.lit + vec3(0.03f.lit, 0.13f.lit, 0.09f.lit),
+                            vec3(0f.lit),
+                            vec3(1.25f.lit),
+                        ) * dayTint,
+                    )
+                    val absorbedBody = let("absorbedBody", mix(shallowLift, bodyColor, depthFactor))
+                    val causticNet = let(
+                        "causticNet",
+                        clamp(pow(ridgeMid, 4.2f.lit) * 0.90f.lit + pow(ridgeFine, 4.5f.lit) * 0.38f.lit, 0f.lit, 1f.lit),
+                    )
+                    val causticZone = let(
+                        "causticZone",
+                        (1f.lit - depthFactor) * smoothstep(0.03f.lit, 0.20f.lit, contactDepth) * validDepth * sunVis,
+                    )
+                    val causticsRgb = let("causticsRgb", lightColor.rgb * (causticNet * causticZone * 0.62f.lit))
+                    val withCrest = let("withCrest", mix(absorbedBody + causticsRgb, crestTint, crestMask))
+                    val reflWeight = let(
+                        "reflWeight",
+                        clamp(fresnel * mix(0.28f.lit, 0.62f.lit, depthFactor), 0f.lit, 0.68f.lit),
+                    )
+                    val blended = let("blended", mix(withCrest, skyRefl, reflWeight) + sunGlint)
+
+                    // Frothy, lacy eroding contact foam around rocks and shorelines (no smooth stripes).
+                    val lapWave = let("lapWave", sin(contactDepth * 9.0f.lit - time * 2.8f.lit + nCoarse * 5.4f.lit))
+                    val warpedDepth = let(
+                        "warpedDepth",
+                        max(
+                            contactDepth + (nCoarse - 0.5f.lit) * (foamWidth * 0.42f.lit) -
+                                lapWave * (foamWidth * 0.07f.lit),
+                            0f.lit,
+                        ),
+                    )
+                    val contactRatio = let("contactRatio", saturate(warpedDepth / foamWidth))
+                    val rimEdge = let(
+                        "rimEdge",
+                        (1f.lit - smoothstep(0f.lit, foamWidth * 0.16f.lit, contactDepth)) *
+                            smoothstep(0.24f.lit, 0.58f.lit, foamPattern),
+                    )
+                    val swashBoost = let(
+                        "swashBoost",
+                        smoothstep(0.25f.lit, 0.95f.lit, lapWave) * 0.16f.lit * (1f.lit - contactRatio),
+                    )
+                    val erodeThreshold = let(
+                        "erodeThreshold",
+                        clamp(0.38f.lit + contactRatio * 0.60f.lit - swashBoost, 0.22f.lit, 0.96f.lit),
+                    )
+                    val lacyFoam = let(
+                        "lacyFoam",
+                        smoothstep(erodeThreshold - 0.08f.lit, erodeThreshold + 0.06f.lit, foamPattern) *
+                            (1f.lit - smoothstep(0.58f.lit, 1f.lit, contactRatio)),
+                    )
+                    val bubbleSpecks = let(
+                        "bubbleSpecks",
+                        smoothstep(0.72f.lit, 0.90f.lit, nFine) *
+                            (1f.lit - smoothstep(0.10f.lit, 0.88f.lit, contactRatio)) * 0.62f.lit,
+                    )
+                    val contactFoam = let(
+                        "contactFoam",
+                        clamp((max(rimEdge, lacyFoam) + bubbleSpecks) * validDepth * flowAndFoam.w, 0f.lit, 1f.lit),
+                    )
+                    val thinFoamTint = let("thinFoamTint", mix(shallowColor.rgb, foamColor.rgb, 0.78f.lit))
+                    val foamShade = let(
+                        "foamShade",
+                        mix(
+                            thinFoamTint,
+                            foamColor.rgb * 1.12f.lit,
+                            smoothstep(0.14f.lit, 0.72f.lit, contactFoam),
+                        ) * foamLit,
+                    )
+                    val shallowAlpha = let("shallowAlpha", mix(0.28f.lit, baseAlpha, depthFactor))
+                    val edgeSoft = let("edgeSoft", mix(1f.lit, smoothstep(0f.lit, 0.08f.lit, contactDepth), validDepth))
+                    assign(surfaceRgb, mix(blended, foamShade, contactFoam))
+                    assign(surfaceAlpha, clamp(max(shallowAlpha * edgeSoft, contactFoam * 0.96f.lit), 0f.lit, 1f.lit))
+                }
             } else {
                 val withCrest = let("withCrest", mix(bodyColor, crestTint, crestMask))
                 val blended = let(
