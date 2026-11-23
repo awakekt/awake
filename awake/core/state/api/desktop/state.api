@@ -67,6 +67,8 @@ public abstract interface class com/awakekt/awake/core/state/Reducer {
 
 public abstract interface class com/awakekt/awake/core/state/ReducerStore : com/awakekt/awake/core/state/EffectSource, com/awakekt/awake/core/state/Store {
 	public abstract fun dispatch (Ljava/lang/Object;)V
+	public abstract fun drainEffects ()Ljava/util/List;
+	public abstract fun getEffects ()Lkotlinx/coroutines/flow/Flow;
 }
 
 public final class com/awakekt/awake/core/state/ReducerStore$DefaultImpls {

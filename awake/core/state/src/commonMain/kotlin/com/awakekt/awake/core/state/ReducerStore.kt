@@ -93,6 +93,10 @@ interface ReducerStore<S, in I, out E> :
      * @param intent The user action or event to dispatch.
      */
     fun dispatch(intent: I)
+
+    override fun drainEffects(): List<E>
+
+    override val effects: Flow<E>
 }
 
 /**
