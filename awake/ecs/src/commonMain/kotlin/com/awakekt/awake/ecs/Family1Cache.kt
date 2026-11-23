@@ -14,14 +14,21 @@ internal class Family1Cache<A : Any>(
     private val type: KClass<A>,
     private val typeId: ComponentTypeId,
     private val store: ComponentStore<A>,
-    private val excludeTypes: Set<KClass<out Any>>,
-    private val excludeMask: LongArray,
 ) : FamilyCache() {
     internal constructor(
         type: KClass<A>,
         typeId: ComponentTypeId,
         store: ComponentStore<A>,
-    ) : this(type, typeId, store, emptySet(), EMPTY_SIGNATURE_MASK)
+        excludeTypes: Set<KClass<out Any>>,
+        excludeMask: LongArray,
+    ) : this(type, typeId, store) {
+        this.excludeTypes = excludeTypes
+        this.excludeMask = excludeMask
+        this.hasExcludes = excludeMask.isNotEmpty()
+        this.excludeWide = excludeMask.size > 1
+        this.excludeLow = excludeMask.firstOrNull() ?: 0L
+    }
+
     @PublishedApi
     internal var entities = LongArray(DEFAULT_FAMILY_CAPACITY)
 
@@ -32,9 +39,11 @@ internal class Family1Cache<A : Any>(
     internal var count: Int = 0
 
     private val sparse = EntityIndexMap()
-    private val hasExcludes: Boolean = excludeMask.isNotEmpty()
-    private val excludeWide: Boolean = excludeMask.size > 1
-    private val excludeLow: Long = excludeMask.firstOrNull() ?: 0L
+    private var excludeTypes: Set<KClass<out Any>> = emptySet()
+    private var excludeMask: LongArray = EMPTY_SIGNATURE_MASK
+    private var hasExcludes: Boolean = false
+    private var excludeWide: Boolean = false
+    private var excludeLow: Long = 0L
 
     override fun types(): Set<KClass<out Any>> = if (excludeTypes.isEmpty()) setOf(type) else excludeTypes + type
 

@@ -277,7 +277,7 @@ public final class com/awakekt/awake/ecs/Family1 {
 }
 
 public final class com/awakekt/awake/ecs/Family1Cache : com/awakekt/awake/ecs/FamilyCache {
-	public synthetic fun <init> (Lkotlin/reflect/KClass;ILcom/awakekt/awake/ecs/ComponentStore;Ljava/util/Set;[JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;ILcom/awakekt/awake/ecs/ComponentStore;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun add-smMvhPQ (JLjava/lang/Object;)V
 	public fun addComponent-nhSEk7M (Lcom/awakekt/awake/ecs/World;JILjava/lang/Object;)V
 	public final fun componentAt (I)Ljava/lang/Object;
@@ -322,7 +322,7 @@ public final class com/awakekt/awake/ecs/Family2 {
 }
 
 public final class com/awakekt/awake/ecs/Family2Cache : com/awakekt/awake/ecs/FamilyCache {
-	public synthetic fun <init> (Lkotlin/reflect/KClass;ILcom/awakekt/awake/ecs/ComponentStore;Lkotlin/reflect/KClass;ILcom/awakekt/awake/ecs/ComponentStore;Ljava/util/Set;[JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;ILcom/awakekt/awake/ecs/ComponentStore;Lkotlin/reflect/KClass;ILcom/awakekt/awake/ecs/ComponentStore;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun add-t50VA2I (JLjava/lang/Object;Ljava/lang/Object;)V
 	public fun addComponent-nhSEk7M (Lcom/awakekt/awake/ecs/World;JILjava/lang/Object;)V
 	public final fun componentA (I)Ljava/lang/Object;
