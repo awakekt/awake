@@ -6,7 +6,7 @@
 package com.awakekt.awake.scene.character
 
 import com.awakekt.awake.ecs.ComponentTypeId
-import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.EntityList
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.HeightFieldShape
@@ -26,7 +26,7 @@ import com.awakekt.awake.scene.physics.PhysicsBody
  */
 internal class SceneTerrainColliders {
     private val surfaces = ArrayList<TerrainCollider>()
-    private val owners = ArrayList<Entity>()
+    private val owners = EntityList()
     private var cachedWorld: World? = null
     private var cachedGeneration = -1
     private var bodyTypeId = ComponentTypeId(0)
@@ -60,7 +60,7 @@ internal class SceneTerrainColliders {
                     waiting = true
                 } else {
                     surfaces += TerrainCollider(handle, shape, transform.position)
-                    owners += entity
+                    owners.add(entity)
                 }
             }
         }

@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.character
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.EntityList
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
@@ -53,7 +54,7 @@ class CharacterControllerSystem(
     // carries of its own (CharacterConfig.innerBody) is destroyed when the character goes. Left in
     // the physics world, it stands where the character was, solid, and still trips every sensor.
     // Lists rather than a map, so checking them each step allocates nothing.
-    private val builtFor = ArrayList<Entity>()
+    private val builtFor = EntityList()
     private val built = ArrayList<KinematicCharacterController>()
 
     /** The scene's terrain bodies, for lifting a character found under one. */
@@ -175,7 +176,7 @@ class CharacterControllerSystem(
     private fun track(entity: Entity, controller: KinematicCharacterController) {
         val index = builtFor.indexOf(entity)
         if (index < 0) {
-            builtFor += entity
+            builtFor.add(entity)
             built += controller
         } else {
             built[index].dispose()
