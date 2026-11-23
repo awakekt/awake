@@ -1,1 +1,0 @@
-- Support stylized signed-2x liquid-chrome sphere-map reflection on unlit textured and skinned materials (`unlit = true` with `reflectance > 0`), deepening color saturation in dark lobes while flashing bright trim and ridges in sRGB without ACES desaturation (zero overhead when `reflectance == 0`).

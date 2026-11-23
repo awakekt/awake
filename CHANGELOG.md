@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.67.3] - 2026-11-23
+
+### Added
+
+- Support stylized signed-2x liquid-chrome sphere-map reflection on unlit textured and skinned materials (`unlit = true` with `reflectance > 0`), deepening color saturation in dark lobes while flashing bright trim and ridges in sRGB without ACES desaturation (zero overhead when `reflectance == 0`).
+
 ## [0.67.2] - 2026-11-23
 
 ### Added
