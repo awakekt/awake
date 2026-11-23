@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-23
+
+### Added
+
+- Add `World.familyExcluding` overloads so packed `Family1` and `Family2` SoA caches can incrementally exclude component types without falling back to per-entity `World.get` lookups.
+- Add `IteratingSystem`, `Family1System`, and `Family2System` base classes in `:awake:ecs` that cache maintained families per world generation and iterate dense entity/component bags with zero per-frame allocations.
+- Add `EffectSource`, zero-allocation callback `drainEffects(action)`, and `EffectDrainer` in `:awake:core:state` to coordinate per-frame store syncing and effect draining without per-system loops.
+- Fix unbounded effect retention in `DefaultReducerStore` and `MutableEffectStore` by backing `drainEffects` and `effects` with a single `Channel` closed on `Store.close()`.
+
+### Changed
+
+- Forward `effectQuality` from `SceneRenderPlanner3D` into `PostProcessingStack.buildChain` so `EffectQuality.Off` skips camera post-processing and `EffectQuality.Low` runs quarter-resolution bloom.
+- Guard `texturedShader` unlit and unlit-additive draws behind a uniform branch so they skip PBR texture fetches, normal perturbation, GGX BRDF, cascaded shadow sampling, and point lights.
+- Guard paged terrain page-table lookups (`TerrainPageSampling.sampleIn`, `samplePairIn`, and `pageHeightKnot`) with `iff` branches and shared paired control-map lookups instead of eager `select()`, eliminating wasted fallback/resident texture fetches on mobile GPUs.
+
+### Fixed
+
+- Avoid per-step `O(N)` scans over settled static `PhysicsBody` entities in `PhysicsSystem.update` and `PhysicsSystem.interpolate`, eliminate per-frame `O(N^2)` lookups and `KClass` map probes in `TerrainContentSystem`, and replace `KClass` lookups and allocating lambdas in `SceneTerrainColliders` and `CharacterControllerSystem`.
+- **Vulkan:** Allocated the dedicated offscreen frame slot (`maxFramesInFlight + 1`) on `VulkanDynamicMesh` so offscreen captures containing dynamic meshes (such as trails) no longer fail with `Frame index 2 is outside 0..1`.
+
 ## [0.66.0] - 2026-11-23
 
 ### Added

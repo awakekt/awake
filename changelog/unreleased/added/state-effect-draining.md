@@ -1,2 +1,0 @@
-- Add `EffectSource`, zero-allocation callback `drainEffects(action)`, and `EffectDrainer` in `:awake:core:state` to coordinate per-frame store syncing and effect draining without per-system loops.
-- Fix unbounded effect retention in `DefaultReducerStore` and `MutableEffectStore` by backing `drainEffects` and `effects` with a single `Channel` closed on `Store.close()`.
