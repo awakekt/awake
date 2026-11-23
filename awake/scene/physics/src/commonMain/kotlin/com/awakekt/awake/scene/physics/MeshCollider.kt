@@ -15,6 +15,8 @@ import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.MeshShape
 import com.awakekt.awake.physics.MotionType
+import com.awakekt.awake.physics.PhysicsShape
+import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.physics.defaultLayerFor
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
@@ -123,9 +125,14 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
         require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
             "Node $node has a zero scale, which flattens its collision mesh ${collider.mesh}"
         }
+        val placed: PhysicsShape = if (scale.x == 1f && scale.y == 1f && scale.z == 1f) {
+            shape
+        } else {
+            ScaledShape(shape, Vec3f(scale.x, scale.y, scale.z))
+        }
         world.add(
             entity,
-            PhysicsBody(shape.scaledBy(scale), MotionType.STATIC, collider.layer, degreesOfFreedom = collider.degreesOfFreedom),
+            PhysicsBody(placed, MotionType.STATIC, collider.layer, degreesOfFreedom = collider.degreesOfFreedom),
         )
     }
 
@@ -160,29 +167,7 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
     }
 }
 
-/**
- * Scale is baked into the vertices because a body takes only a position and rotation. Applied in
- * model space, before the body's rotation, so any per-axis scale is exact.
- */
-private fun MeshShape.scaledBy(scale: Vec3f): MeshShape {
-    if (scale.x == 1f && scale.y == 1f && scale.z == 1f) return this
-    val scaled = FloatArray(vertices.size) { index ->
-        vertices[index] * when (index % 3) {
-            0 -> scale.x
-            1 -> scale.y
-            else -> scale.z
-        }
-    }
-    // A mirror turns every triangle's winding, and so its solid side, around; swapping two corners turns it back.
-    val mirrored = scale.x * scale.y * scale.z < 0f
-    val wound = if (mirrored) IntArray(indices.size) { index -> indices[index + MIRROR_SWAP[index % 3]] } else indices
-    return MeshShape(scaled, wound)
-}
-
 /** First size of [MeshColliderSystem]'s reused batch; it grows to the largest batch seen. */
 private const val INITIAL_BATCH = 16
 
 private val WITHOUT_BODY = FamilySpec.exclude(PhysicsBody::class)
-
-/** Swaps each triangle's second and third corner. */
-private val MIRROR_SWAP = intArrayOf(0, 1, -1)

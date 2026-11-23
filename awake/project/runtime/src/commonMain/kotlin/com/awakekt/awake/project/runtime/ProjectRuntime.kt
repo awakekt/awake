@@ -12,6 +12,7 @@ import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.host.FixedStepReport
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.ioDispatcher
 import com.awakekt.awake.core.localization.StringLayer
 import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
@@ -35,7 +36,6 @@ import com.awakekt.awake.scene.runtime.AssetSourceTextureResolver
 import com.awakekt.awake.scene.runtime.SceneHostRole
 import com.awakekt.awake.scene.runtime.SceneSystemRole
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.PI
 
@@ -129,7 +129,7 @@ class LoadedProject internal constructor(
         componentRegistry ?: defaultSpawnRegistry ?: SceneComponentRegistry().also { defaultSpawnRegistry = it }
 
     /** Where a switch reads its next scene: off the frame thread. A test passes one that runs at once. */
-    internal var sceneLoads: CoroutineContext = Dispatchers.Default
+    internal var sceneLoads: CoroutineContext = ioDispatcher
 
     /**
      * Destroys the playing scene's physics world, if it has one, and stops loading models for spawned

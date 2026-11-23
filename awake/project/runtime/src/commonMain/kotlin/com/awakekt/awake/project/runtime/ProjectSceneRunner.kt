@@ -211,6 +211,8 @@ internal class ProjectSceneRunner(
         systems = null
         marks = null
         playLoads = null
+        instance = null
+        models.target = GltfAssetResolver()
         if (audio.isInitialized()) audio.value.dispose()
         loads?.cancel()
         finished.close()

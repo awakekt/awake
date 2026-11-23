@@ -38,6 +38,7 @@ import com.awakekt.awake.physics.PhysicsCapabilityException
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.RaycastHit
+import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.physics.ShapeCastHit
 import com.awakekt.awake.physics.SphereShape
 import com.awakekt.awake.physics.requireCanBeSensor
@@ -177,6 +178,7 @@ import platform.joltc.JPC_RegisterDefaultAllocator
 import platform.joltc.JPC_RegisterTypes
 import platform.joltc.JPC_ShapeCastResult
 import platform.joltc.JPC_ShapeCastSettings_default
+import platform.joltc.JPC_Shape_Release
 import platform.joltc.JPC_SixDOFConstraintSettings
 import platform.joltc.JPC_SixDOFConstraintSettings_Create
 import platform.joltc.JPC_SixDOFConstraintSettings_default
@@ -323,12 +325,62 @@ private fun MemScope.convexShape(shape: PhysicsShape): CPointer<JPC_Shape> = whe
     is SphereShape -> sphereShape(shape)
     is CapsuleShape -> capsuleShape(shape)
     is ConvexHullShape -> hullShape(shape)
+    is ScaledShape -> scaledConvexShape(shape)
     is MeshShape -> meshShape(shape)
     // JoltC wraps no heightfield at all, so this target collides with the same surface expressed
     // as triangles. A heightfield is a compressed grid of them, so what is lost is the compression
     // and the grid-aware queries, not the collision -- see toMeshShape for what that costs.
     is HeightFieldShape -> meshShape(shape.toMeshShape())
 }
+
+@OptIn(ExperimentalForeignApi::class)
+private fun MemScope.scaledConvexShape(scaled: ScaledShape): CPointer<JPC_Shape> {
+    val s = scaled.scale
+    return when (val inner = scaled.shape) {
+        is BoxShape -> boxShape(
+            BoxShape(
+                Vec3f(
+                    kotlin.math.abs(inner.halfExtents.x * s.x),
+                    kotlin.math.abs(inner.halfExtents.y * s.y),
+                    kotlin.math.abs(inner.halfExtents.z * s.z),
+                ),
+            ),
+        )
+        is SphereShape -> {
+            val factor = uniformScaleOrThrow(s, "SphereShape")
+            sphereShape(SphereShape(inner.radius * factor))
+        }
+        is CapsuleShape -> {
+            val factor = uniformScaleOrThrow(s, "CapsuleShape")
+            capsuleShape(CapsuleShape(inner.halfHeight * factor, inner.radius * factor))
+        }
+        is ConvexHullShape -> {
+            val points = FloatArray(inner.points.size) { index ->
+                inner.points[index] * when (index % VALUES_PER_POINT) {
+                    0 -> s.x
+                    1 -> s.y
+                    else -> s.z
+                }
+            }
+            hullShape(ConvexHullShape(points))
+        }
+        is MeshShape -> meshShape(inner, s)
+        is HeightFieldShape, is ScaledShape ->
+            throw PhysicsCapabilityException("ScaledShape cannot wrap ${inner::class.simpleName}")
+    }
+}
+
+private fun uniformScaleOrThrow(scale: Vec3f, shapeName: String): Float {
+    val ax = kotlin.math.abs(scale.x)
+    val ay = kotlin.math.abs(scale.y)
+    val az = kotlin.math.abs(scale.z)
+    if (kotlin.math.abs(ax - ay) > SCALE_EPSILON || kotlin.math.abs(ay - az) > SCALE_EPSILON) {
+        throw PhysicsCapabilityException("$shapeName requires uniform scale, got $scale")
+    }
+    return ax
+}
+
+private const val SCALE_EPSILON = 1e-4f
 
 /** Every `*_Create` here follows the same shape: fill settings, create, or report why not. */
 @OptIn(ExperimentalForeignApi::class)
@@ -395,23 +447,32 @@ private fun MemScope.hullShape(shape: ConvexHullShape): CPointer<JPC_Shape> {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun MemScope.meshShape(shape: MeshShape): CPointer<JPC_Shape> {
+private fun MemScope.meshShape(shape: MeshShape, scale: Vec3f? = null): CPointer<JPC_Shape> {
     val settings = alloc<JPC_MeshShapeSettings>()
     JPC_MeshShapeSettings_default(settings.ptr)
     val vertexCount = shape.vertices.size / VALUES_PER_POINT
     val vertices = allocArray<JPC_Float3>(vertexCount)
+    val sx = scale?.x ?: 1f
+    val sy = scale?.y ?: 1f
+    val sz = scale?.z ?: 1f
+    val mirrored = sx * sy * sz < 0f
     for (index in 0 until vertexCount) {
         val base = index * VALUES_PER_POINT
-        vertices[index].x = shape.vertices[base]
-        vertices[index].y = shape.vertices[base + 1]
-        vertices[index].z = shape.vertices[base + 2]
+        vertices[index].x = shape.vertices[base] * sx
+        vertices[index].y = shape.vertices[base + 1] * sy
+        vertices[index].z = shape.vertices[base + 2] * sz
     }
     val triangles = allocArray<JPC_IndexedTriangle>(shape.triangleCount)
     for (index in 0 until shape.triangleCount) {
         val base = index * VALUES_PER_POINT
         triangles[index].idx[0] = shape.indices[base].convert()
-        triangles[index].idx[1] = shape.indices[base + 1].convert()
-        triangles[index].idx[2] = shape.indices[base + 2].convert()
+        if (mirrored) {
+            triangles[index].idx[1] = shape.indices[base + 2].convert()
+            triangles[index].idx[2] = shape.indices[base + 1].convert()
+        } else {
+            triangles[index].idx[1] = shape.indices[base + 1].convert()
+            triangles[index].idx[2] = shape.indices[base + 2].convert()
+        }
     }
     settings.TriangleVertices = vertices
     settings.TriangleVerticesLen = vertexCount.convert()
@@ -421,6 +482,8 @@ private fun MemScope.meshShape(shape: MeshShape): CPointer<JPC_Shape> {
         JPC_MeshShapeSettings_Create(settings.ptr, out, err)
     }
 }
+
+private data class ScaledMeshKey(val mesh: MeshShape, val scale: Vec3f)
 
 /** x, y, z -- the stride of every point, vertex and triangle index array above. */
 private const val VALUES_PER_POINT = 3
@@ -661,6 +724,9 @@ class JoltPhysicsWorld(
     // `trackedBodyIds` (JoltC exposes no cheap "iterate my bodies" call either).
     private val trackedBodyIds = mutableListOf<JPC_BodyID>()
 
+    // Built MeshShape BVHs reused across placements in this world; released in destroy().
+    private val meshCache = JoltMeshShapeCache()
+
     /** Live constraints and the bodies each joins; see [destroyBody] for why the pairing is kept. */
     // LinkedHashMap and LinkedHashSet, not the hash forms: teardown iterates these, and
     // destruction order decides which body ids Jolt hands back out next, which feeds its
@@ -719,43 +785,28 @@ class JoltPhysicsWorld(
         sensor: Boolean,
         degreesOfFreedom: DegreesOfFreedom,
     ): BodyHandle = memScoped {
-        // A triangle mesh is a surface with no inside, so Jolt cannot simulate one. Checked here
-        // rather than in the shape builder, which has no motion type to judge against.
-        (shape as? MeshShape)?.requireSupportedMotionType(motionType)
-        // Enforced here even though this target builds the field as a mesh: a heightfield is
-        // static on every backend, and a target that quietly accepted a dynamic one would let a
-        // scene load on iOS and fail everywhere else.
-        (shape as? HeightFieldShape)?.requireSupportedMotionType(motionType)
-        if (sensor) shape.requireCanBeSensor()
-        val joltShape = convexShape(shape)
-
-        val joltMotionType: JPC_MotionType = when (motionType) {
-            MotionType.STATIC -> JPC_MotionType.JPC_MOTION_TYPE_STATIC
-            MotionType.KINEMATIC -> JPC_MotionType.JPC_MOTION_TYPE_KINEMATIC
-            MotionType.DYNAMIC -> JPC_MotionType.JPC_MOTION_TYPE_DYNAMIC
-        }
-        require(layer.index < layers.count) {
-            "layer ${layer.index} is outside this world's ${layers.count} layers"
-        }
-        val objectLayer: JPC_ObjectLayer = layer.index.toUShort()
-
+        validateIosBodyRequest(shape, motionType, layer, layers.count, sensor)
+        val cachedShape = meshCache.getOrNull(this, shape)
+        val joltShape = cachedShape ?: convexShape(shape)
         val bodyCreationSettings = alloc<JPC_BodyCreationSettings>()
         JPC_BodyCreationSettings_default(bodyCreationSettings.ptr)
         bodyCreationSettings.apply {
             Position.write(position)
             Rotation.write(rotation.w, rotation.x, rotation.y, rotation.z)
-            MotionType = joltMotionType
-            ObjectLayer = objectLayer
+            MotionType = toIosMotionType(motionType)
+            ObjectLayer = layer.index.toUShort()
             IsSensor = sensor
-            AllowedDOFs = when (degreesOfFreedom) {
-                DegreesOfFreedom.ALL -> JPC_AllowedDOFs.JPC_ALLOWED_DOFS_ALL
-                DegreesOfFreedom.PLANE_2D -> JPC_AllowedDOFs.JPC_ALLOWED_DOFS_PLANE2D
-            }
+            AllowedDOFs = toIosAllowedDofs(degreesOfFreedom)
             Shape = joltShape
         }
 
-        val body = JPC_BodyInterface_CreateBody(bodyInterface, bodyCreationSettings.ptr)
-            ?: error("JPC_BodyInterface_CreateBody failed")
+        val body = try {
+            JPC_BodyInterface_CreateBody(bodyInterface, bodyCreationSettings.ptr)
+                ?: error("JPC_BodyInterface_CreateBody failed")
+        } finally {
+            // JPC_*ShapeSettings_Create adds a caller reference; CreateBody takes its own on the body.
+            if (cachedShape == null) JPC_Shape_Release(joltShape)
+        }
         val bodyId = JPC_Body_GetID(body)
         val activation: JPC_Activation = if (motionType == MotionType.STATIC) {
             JPC_ACTIVATION_DONT_ACTIVATE
@@ -1157,12 +1208,13 @@ class JoltPhysicsWorld(
         onlyLayer: CollisionLayer?,
         ignore: BodyHandle?,
     ): ShapeCastHit? = memScoped {
-        if (shape is HeightFieldShape) {
+        val effective = if (shape is ScaledShape) shape.shape else shape
+        if (effective is HeightFieldShape) {
             throw PhysicsCapabilityException(
                 "A HeightFieldShape is terrain to cast against, not a shape to cast with",
             )
         }
-        if (shape is MeshShape) {
+        if (effective is MeshShape) {
             throw PhysicsCapabilityException(
                 "A MeshShape is a surface with no inside, so it cannot be swept -- " +
                     "use a ConvexHullShape",
@@ -1224,6 +1276,7 @@ class JoltPhysicsWorld(
             JPC_CastShapeCollector_delete(collector)
             bestRef.dispose()
             filters.dispose()
+            JPC_Shape_Release(joltShape)
         }
 
         if (!best.hasHit) return@memScoped null
@@ -1245,7 +1298,8 @@ class JoltPhysicsWorld(
         onlyLayer: CollisionLayer?,
         onOverlap: (BodyHandle) -> Unit,
     ) = memScoped {
-        if (shape is HeightFieldShape || shape is MeshShape) {
+        val effective = if (shape is ScaledShape) shape.shape else shape
+        if (effective is HeightFieldShape || effective is MeshShape) {
             throw PhysicsCapabilityException(
                 "A ${shape::class.simpleName} is a surface with no inside, so nothing can be inside it",
             )
@@ -1295,6 +1349,7 @@ class JoltPhysicsWorld(
             JPC_CollideShapeCollector_delete(collector)
             hitsRef.dispose()
             filters.dispose()
+            JPC_Shape_Release(joltShape)
         }
         hits.bodyIds.forEach { onOverlap(BodyHandle(it.toLong())) }
     }
@@ -1306,6 +1361,7 @@ class JoltPhysicsWorld(
         }
         constraints.keys.toList().forEach { destroyConstraint(ConstraintHandle(it)) }
         trackedBodyIds.clear()
+        meshCache.releaseAll()
         layersRef.dispose()
         JPC_ContactListener_delete(contactListener)
         contactsRef.dispose()
@@ -1321,6 +1377,59 @@ class JoltPhysicsWorld(
         // `init` above being called at most once too), and a second JoltPhysicsWorld could
         // still be constructed later in the same process.
     }
+}
+
+/**
+ * Caches built triangle-mesh BVHs for one iOS [JoltPhysicsWorld]. JoltC does not expose
+ * `JPC_ScaledShapeSettings_Create`, so distinct `(mesh, scale)` pairs are also cached here and
+ * released deterministically when the world is destroyed.
+ */
+@OptIn(ExperimentalForeignApi::class)
+private class JoltMeshShapeCache {
+    private val base = HashMap<MeshShape, CPointer<JPC_Shape>>()
+    private val scaled = HashMap<ScaledMeshKey, CPointer<JPC_Shape>>()
+
+    fun getOrNull(scope: MemScope, shape: PhysicsShape): CPointer<JPC_Shape>? = when (shape) {
+        is MeshShape -> base.getOrPut(shape) { scope.meshShape(shape) }
+        is ScaledShape -> (shape.shape as? MeshShape)?.let { inner ->
+            scaled.getOrPut(ScaledMeshKey(inner, shape.scale)) { scope.meshShape(inner, shape.scale) }
+        }
+        else -> null
+    }
+
+    fun releaseAll() {
+        base.values.forEach(::JPC_Shape_Release)
+        base.clear()
+        scaled.values.forEach(::JPC_Shape_Release)
+        scaled.clear()
+    }
+}
+
+private fun validateIosBodyRequest(
+    shape: PhysicsShape,
+    motionType: MotionType,
+    layer: CollisionLayer,
+    layerCount: Int,
+    sensor: Boolean,
+) {
+    (shape as? MeshShape)?.requireSupportedMotionType(motionType)
+    (shape as? ScaledShape)?.requireSupportedMotionType(motionType)
+    (shape as? HeightFieldShape)?.requireSupportedMotionType(motionType)
+    if (sensor) shape.requireCanBeSensor()
+    require(layer.index < layerCount) { "layer ${layer.index} is outside this world's $layerCount layers" }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun toIosMotionType(motionType: MotionType): JPC_MotionType = when (motionType) {
+    MotionType.STATIC -> JPC_MotionType.JPC_MOTION_TYPE_STATIC
+    MotionType.KINEMATIC -> JPC_MotionType.JPC_MOTION_TYPE_KINEMATIC
+    MotionType.DYNAMIC -> JPC_MotionType.JPC_MOTION_TYPE_DYNAMIC
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun toIosAllowedDofs(degreesOfFreedom: DegreesOfFreedom): JPC_AllowedDOFs = when (degreesOfFreedom) {
+    DegreesOfFreedom.ALL -> JPC_AllowedDOFs.JPC_ALLOWED_DOFS_ALL
+    DegreesOfFreedom.PLANE_2D -> JPC_AllowedDOFs.JPC_ALLOWED_DOFS_PLANE2D
 }
 
 /**

@@ -28,18 +28,23 @@ import com.awakekt.awake.scene.physics.ScenePhysicsBody
  * a model can't be read or has no such primitive.
  */
 suspend fun loadCollisionMeshes(scene: SceneDocument, files: AssetSource): CollisionMeshSource {
-    val models = HashMap<String, LoadedScene>()
-    val shapes = HashMap<Pair<String, Int?>, MeshShape>()
+    // Group references by model file so each glTF/GLB is parsed once, its collision shapes are
+    // extracted immediately, and the full LoadedScene can be collected before the next model loads.
+    val byModel = LinkedHashMap<String, MutableList<Pair<String, Int?>>>()
     for ((node, modelRef) in scene.nodes.modelCollisionRefs(parent = null)) {
         val (meshPath, primitive) = modelRef
-        val key = meshPath to primitive
-        if (key in shapes) continue
-        val model = models.getOrPut(meshPath) {
-            suspendRunCatching { readGltfScene(meshPath, files) }.getOrElse { cause ->
-                throw IllegalArgumentException("Can't load $meshPath, the collision mesh of node $node: ${cause.message}", cause)
-            }
+        byModel.getOrPut(meshPath) { mutableListOf() }.add(node to primitive)
+    }
+    val shapes = HashMap<Pair<String, Int?>, MeshShape>()
+    for ((meshPath, refs) in byModel) {
+        val firstNode = refs.first().first
+        val model = suspendRunCatching { readGltfScene(meshPath, files) }.getOrElse { cause ->
+            throw IllegalArgumentException("Can't load $meshPath, the collision mesh of node $firstNode: ${cause.message}", cause)
         }
-        shapes[key] = model.collisionShape(meshPath, primitive, node)
+        for ((node, primitive) in refs) {
+            val key = meshPath to primitive
+            if (key !in shapes) shapes[key] = model.collisionShape(meshPath, primitive, node)
+        }
     }
     return CollisionMeshSource { mesh, primitive -> shapes[mesh to primitive] }
 }

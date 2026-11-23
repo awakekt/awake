@@ -30,6 +30,7 @@ import com.awakekt.awake.physics.PhysicsCapabilityException
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.RaycastHit
+import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.physics.ShapeCastHit
 import com.awakekt.awake.physics.SphereShape
 import com.awakekt.awake.physics.requireCanBeSensor
@@ -50,11 +51,8 @@ import com.github.stephengold.joltjni.ClosestHitCastShapeCollector
 import com.github.stephengold.joltjni.CollideShapeSettings
 import com.github.stephengold.joltjni.ConvexHullShapeSettings
 import com.github.stephengold.joltjni.DistanceConstraintSettings
-import com.github.stephengold.joltjni.Float3
 import com.github.stephengold.joltjni.HeightFieldShapeSettings
 import com.github.stephengold.joltjni.HingeConstraintSettings
-import com.github.stephengold.joltjni.IndexedTriangle
-import com.github.stephengold.joltjni.IndexedTriangleList
 import com.github.stephengold.joltjni.JobSystem
 import com.github.stephengold.joltjni.JobSystemThreadPool
 import com.github.stephengold.joltjni.Jolt
@@ -69,9 +67,12 @@ import com.github.stephengold.joltjni.RShapeCast
 import com.github.stephengold.joltjni.RVec3
 import com.github.stephengold.joltjni.RayCastResult
 import com.github.stephengold.joltjni.RayCastSettings
+import com.github.stephengold.joltjni.ScaledShapeSettings
 import com.github.stephengold.joltjni.ShapeCastResult
 import com.github.stephengold.joltjni.ShapeCastSettings
 import com.github.stephengold.joltjni.ShapeFilter
+import com.github.stephengold.joltjni.ShapeRefC
+import com.github.stephengold.joltjni.ShapeResult
 import com.github.stephengold.joltjni.SixDofConstraintSettings
 import com.github.stephengold.joltjni.SpecifiedObjectLayerFilter
 import com.github.stephengold.joltjni.TempAllocator
@@ -88,6 +89,18 @@ import com.github.stephengold.joltjni.enumerate.EMotionQuality
 import com.github.stephengold.joltjni.enumerate.EMotionType
 import com.github.stephengold.joltjni.readonly.ConstShape
 import kotlin.math.sqrt
+
+private fun shapeResultGet(result: ShapeResult, what: String): ShapeRefC {
+    if (result.hasError()) {
+        throw PhysicsCapabilityException("$what failed: ${result.error}")
+    }
+    return result.get()
+}
+
+private fun scaledShapeOf(inner: ConstShape, scale: Vec3f): ShapeRefC =
+    ScaledShapeSettings(inner, scale.x, scale.y, scale.z).use { settings ->
+        settings.create().use { result -> shapeResultGet(result, "ScaledShapeSettings") }
+    }
 
 /**
  * The jolt-jni shape for a convex [PhysicsShape].
@@ -111,15 +124,19 @@ private fun convexShapeOf(shape: PhysicsShape): ConstShape = when (shape) {
             val base = index * 3
             points += Vec3(shape.points[base], shape.points[base + 1], shape.points[base + 2])
         }
-        val settings = ConvexHullShapeSettings(points)
-        val result = settings.create()
-        try {
+        ConvexHullShapeSettings(points).use { settings ->
             // The shape lives as long as this reference does: body creation copies a reference of
             // its own, and JoltQueryShapes keeps the ones queries reuse.
-            result.get()
+            settings.create().use { result -> shapeResultGet(result, "ConvexHullShapeSettings") }
+        }
+    }
+
+    is ScaledShape -> {
+        val inner = convexShapeOf(shape.shape)
+        try {
+            scaledShapeOf(inner, shape.scale)
         } finally {
-            result.close()
-            settings.close()
+            (inner as? AutoCloseable)?.close()
         }
     }
 
@@ -135,59 +152,50 @@ private fun convexShapeOf(shape: PhysicsShape): ConstShape = when (shape) {
 /**
  * The jolt-jni shape for a triangle mesh.
  *
- * Jolt wants a vertex array and a triangle list of indices into it, which is the same pair the
- * renderer's geometry already carries -- so a collider is built from the mesh being drawn rather
- * than from a second description that can disagree with it.
+ * Packs triangle corners into a single direct [java.nio.FloatBuffer] so JNI is crossed once per
+ * unique mesh (zero per-vertex `Float3` or per-triangle `IndexedTriangle` allocations) and Jolt's
+ * native `MeshShapeSettings(TriangleList)` constructor runs `Indexify()` + `Sanitize()` to weld
+ * vertices and drop quantized-space degenerate triangles.
  */
-private fun meshShapeOf(shape: MeshShape): ConstShape {
-    val vertices = Array(shape.vertices.size / VALUES_PER_VERTEX) { index ->
-        val base = index * VALUES_PER_VERTEX
-        Float3(shape.vertices[base], shape.vertices[base + 1], shape.vertices[base + 2])
-    }
-    val triangles = IndexedTriangleList()
-    triangles.resize(shape.triangleCount)
+private fun meshShapeOf(shape: MeshShape): ShapeRefC {
+    val buffer = Jolt.newDirectFloatBuffer(shape.triangleCount * FLOATS_PER_TRIANGLE)
+    val vertices = shape.vertices
+    val indices = shape.indices
     for (index in 0 until shape.triangleCount) {
         val base = index * INDICES_PER_TRIANGLE
-        triangles[index] = IndexedTriangle(
-            shape.indices[base],
-            shape.indices[base + 1],
-            shape.indices[base + 2],
-        )
+        for (corner in 0 until INDICES_PER_TRIANGLE) {
+            val v = indices[base + corner] * VALUES_PER_VERTEX
+            buffer.put(vertices[v])
+            buffer.put(vertices[v + 1])
+            buffer.put(vertices[v + 2])
+        }
     }
-    val settings = MeshShapeSettings(vertices, triangles)
-    val result = settings.create()
-    try {
-        return result.get()
-    } finally {
-        result.close()
-        settings.close()
+    buffer.rewind()
+    return MeshShapeSettings(buffer).use { settings ->
+        settings.create().use { result -> shapeResultGet(result, "MeshShapeSettings") }
     }
 }
 
 /** The jolt-jni shape for a heightfield, offset so the field is centred if the engine's is. */
-private fun heightFieldShapeOf(shape: HeightFieldShape): ConstShape {
+private fun heightFieldShapeOf(shape: HeightFieldShape): ShapeRefC {
     val offset = com.github.stephengold.joltjni.Vec3(
         heightFieldOffset(shape.origin, shape.sampleCount, shape.scale.x),
         0f,
         heightFieldOffset(shape.origin, shape.sampleCount, shape.scale.z),
     )
-    val settings = HeightFieldShapeSettings(
+    return HeightFieldShapeSettings(
         shape.heights,
         offset,
         com.github.stephengold.joltjni.Vec3(shape.scale.x, shape.scale.y, shape.scale.z),
         shape.sampleCount,
-    )
-    val result = settings.create()
-    try {
-        return result.get()
-    } finally {
-        result.close()
-        settings.close()
+    ).use { settings ->
+        settings.create().use { result -> shapeResultGet(result, "HeightFieldShapeSettings") }
     }
 }
 
 private const val VALUES_PER_VERTEX = 3
 private const val INDICES_PER_TRIANGLE = 3
+private const val FLOATS_PER_TRIANGLE = VALUES_PER_VERTEX * INDICES_PER_TRIANGLE
 
 // Jolt Physics integration slice 1 (see docs/reference/decision-log.md): only 2 object
 // layers, matching jolt-jni's own HelloJoltJni tutorial -- fine-grained per-game layer
@@ -273,6 +281,10 @@ class JoltPhysicsWorld(
     // still built per query. The explicit filters also stop jolt-jni building defaults inside every
     // call. Rays reuse the same set.
     private val queryShapes = JoltQueryShapes()
+
+    // Built base MeshShape BVHs reused across unit-scale and ScaledShape placements in this world.
+    // Closed in destroy() so native memory is released deterministically with the world.
+    private val meshShapes = HashMap<MeshShape, ShapeRefC>()
     private val queryOrigin = RVec3()
     private val queryTransform = RMat44().apply { loadIdentity() }
     private val queryDirection = com.github.stephengold.joltjni.Vec3()
@@ -377,60 +389,63 @@ class JoltPhysicsWorld(
         sensor: Boolean,
         degreesOfFreedom: DegreesOfFreedom,
     ): BodyHandle {
-        (shape as? HeightFieldShape)?.requireSupportedMotionType(motionType)
-        if (sensor) shape.requireCanBeSensor()
-        var heightFieldReference: AutoCloseable? = null
-        val joltShape = when (shape) {
-            is BoxShape, is SphereShape, is CapsuleShape, is ConvexHullShape -> convexShapeOf(shape)
-            is MeshShape -> {
-                shape.requireSupportedMotionType(motionType)
-                meshShapeOf(shape)
-            }
+        validateBodyRequest(shape, motionType, layer, sensor)
+        val resolved = resolveBodyShape(shape)
+        val joltMotionType = toJoltMotionType(motionType)
+        try {
+            BodyCreationSettings().use { bcs ->
+                bcs.setShape(resolved.shape)
+                bcs.setPosition(position.x.toDouble(), position.y.toDouble(), position.z.toDouble())
+                bcs.setRotation(rotation.x, rotation.y, rotation.z, rotation.w)
+                bcs.setMotionType(joltMotionType)
+                bcs.setObjectLayer(layer.index)
+                bcs.setIsSensor(sensor)
+                bcs.setAllowedDofs(toJoltAllowedDofs(degreesOfFreedom))
+                val body = bodyInterface.createBody(bcs)
+                val activation =
+                    if (motionType == MotionType.STATIC) EActivation.DontActivate else EActivation.Activate
+                bodyInterface.addBody(body, activation)
 
-            is HeightFieldShape -> {
-                shape.requireSupportedMotionType(motionType)
-                heightFieldShapeOf(shape).also { heightFieldReference = it }
+                trackedBodyIds.add(body.id)
+                if (sensor) contacts.setReporting(body.id, true)
+                return BodyHandle(body.id.toLong())
             }
+        } finally {
+            // Cached base MeshShapes stay alive until destroy(); temporary handles are released once
+            // the body holds its own Jolt reference.
+            resolved.owned?.close()
         }
-        val joltMotionType = when (motionType) {
-            MotionType.STATIC -> EMotionType.Static
-            MotionType.KINEMATIC -> EMotionType.Kinematic
-            MotionType.DYNAMIC -> EMotionType.Dynamic
-        }
+    }
+
+    private fun validateBodyRequest(
+        shape: PhysicsShape,
+        motionType: MotionType,
+        layer: CollisionLayer,
+        sensor: Boolean,
+    ) {
+        (shape as? HeightFieldShape)?.requireSupportedMotionType(motionType)
+        (shape as? MeshShape)?.requireSupportedMotionType(motionType)
+        (shape as? ScaledShape)?.requireSupportedMotionType(motionType)
+        if (sensor) shape.requireCanBeSensor()
         require(layer.index < layers.count) {
             "layer ${layer.index} is outside this world's ${layers.count} layers"
         }
-
-        val bcs = BodyCreationSettings().apply {
-            setShape(joltShape)
-            setPosition(RVec3(position.x.toDouble(), position.y.toDouble(), position.z.toDouble()))
-            setRotation(
-                com.github.stephengold.joltjni.Quat(rotation.x, rotation.y, rotation.z, rotation.w),
-            )
-            setMotionType(joltMotionType)
-            setObjectLayer(layer.index)
-            setIsSensor(sensor)
-            setAllowedDofs(
-                when (degreesOfFreedom) {
-                    DegreesOfFreedom.ALL -> EAllowedDofs.All
-                    DegreesOfFreedom.PLANE_2D -> EAllowedDofs.Plane2D
-                },
-            )
-        }
-        try {
-            val body = bodyInterface.createBody(bcs)
-            val activation =
-                if (motionType == MotionType.STATIC) EActivation.DontActivate else EActivation.Activate
-            bodyInterface.addBody(body, activation)
-
-            trackedBodyIds.add(body.id)
-            if (sensor) contacts.setReporting(body.id, true)
-            return BodyHandle(body.id.toLong())
-        } finally {
-            // BodyCreationSettings retained its own Jolt reference in setShape().
-            heightFieldReference?.close()
-        }
     }
+
+    private fun resolveBodyShape(shape: PhysicsShape): ResolvedShape = when (shape) {
+        is BoxShape, is SphereShape, is CapsuleShape, is ConvexHullShape -> {
+            val built = convexShapeOf(shape)
+            ResolvedShape(built, built as? AutoCloseable)
+        }
+        is MeshShape -> ResolvedShape(cachedMeshShape(shape), owned = null)
+        is ScaledShape -> when (val inner = shape.shape) {
+            is MeshShape -> scaledShapeOf(cachedMeshShape(inner), shape.scale).let { ResolvedShape(it, it) }
+            else -> convexShapeOf(shape).let { ResolvedShape(it, it as? AutoCloseable) }
+        }
+        is HeightFieldShape -> heightFieldShapeOf(shape).let { ResolvedShape(it, it) }
+    }
+
+    private fun cachedMeshShape(shape: MeshShape): ShapeRefC = meshShapes.getOrPut(shape) { meshShapeOf(shape) }
 
     override fun destroyBody(handle: BodyHandle) {
         val id = handle.id.toInt()
@@ -940,6 +955,8 @@ class JoltPhysicsWorld(
             contacts.setReporting(id, false)
         }
         trackedBodyIds.clear()
+        meshShapes.values.forEach { it.close() }
+        meshShapes.clear()
         queryShapes.clear()
         listOf(
             queryTransform, shapeCastSettings, closestCastHit, allCastHits, collideSettings, overlapHits,
@@ -951,6 +968,19 @@ class JoltPhysicsWorld(
         tempAllocator.close()
         physicsSystem.close()
     }
+}
+
+private class ResolvedShape(val shape: ConstShape, val owned: AutoCloseable?)
+
+private fun toJoltMotionType(motionType: MotionType): EMotionType = when (motionType) {
+    MotionType.STATIC -> EMotionType.Static
+    MotionType.KINEMATIC -> EMotionType.Kinematic
+    MotionType.DYNAMIC -> EMotionType.Dynamic
+}
+
+private fun toJoltAllowedDofs(degreesOfFreedom: DegreesOfFreedom): Int = when (degreesOfFreedom) {
+    DegreesOfFreedom.ALL -> EAllowedDofs.All
+    DegreesOfFreedom.PLANE_2D -> EAllowedDofs.Plane2D
 }
 
 /**
@@ -974,12 +1004,19 @@ private fun heightFieldOffset(origin: GridOrigin, sampleCount: Int, scale: Float
  */
 private class JoltQueryShapes {
     private val shapes = object : LinkedHashMap<PhysicsShape, ConstShape>(CAPACITY, LOAD_FACTOR, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<PhysicsShape, ConstShape>) = size > CAPACITY
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<PhysicsShape, ConstShape>): Boolean {
+            if (size <= CAPACITY) return false
+            (eldest.value as? AutoCloseable)?.close()
+            return true
+        }
     }
 
     fun of(shape: PhysicsShape): ConstShape = shapes.getOrPut(shape) { convexShapeOf(shape) }
 
-    fun clear() = shapes.clear()
+    fun clear() {
+        shapes.values.forEach { (it as? AutoCloseable)?.close() }
+        shapes.clear()
+    }
 
     private companion object {
         const val CAPACITY = 64

@@ -408,6 +408,20 @@ public final class com/awakekt/awake/physics/RaycastHit {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/physics/ScaledShape : com/awakekt/awake/physics/PhysicsShape {
+	public fun <init> (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun component1 ()Lcom/awakekt/awake/physics/PhysicsShape;
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun copy (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/physics/ScaledShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/ScaledShape;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ScaledShape;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getScale ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getShape ()Lcom/awakekt/awake/physics/PhysicsShape;
+	public fun hashCode ()I
+	public final fun requireSupportedMotionType (Lcom/awakekt/awake/physics/MotionType;)V
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/physics/ShapeCastHit {
 	public synthetic fun <init> (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-IB_h3Cs ()J

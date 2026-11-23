@@ -244,6 +244,38 @@ data class ConvexHullShape(val points: FloatArray) : PhysicsShape {
     }
 }
 
+/**
+ * A non-zero per-axis [scale] applied to an underlying [shape] without duplicating its geometry.
+ *
+ * Primarily used by `MeshColliderSystem` so thousands of differently scaled placements of the same
+ * collision model share one built backend triangle BVH rather than copying vertices and rebuilding
+ * a separate BVH per placement. Negative scales mirror the shape; Jolt flips triangle winding
+ * automatically when the scale determinant is negative.
+ *
+ * @property shape Underlying unscaled shape (not another [ScaledShape] or a [HeightFieldShape]).
+ * @property scale Non-zero finite per-axis scale factors.
+ */
+data class ScaledShape(
+    val shape: PhysicsShape,
+    val scale: Vec3f,
+) : PhysicsShape {
+    init {
+        require(shape !is ScaledShape) { "ScaledShape cannot wrap another ScaledShape" }
+        require(shape !is HeightFieldShape) { "HeightFieldShape already carries its own scale" }
+        require(scale.x.isFinite() && scale.y.isFinite() && scale.z.isFinite()) {
+            "scale must contain only finite values: $scale"
+        }
+        require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
+            "scale components must be non-zero: $scale"
+        }
+    }
+
+    /** Asserts that [motionType] is supported by the wrapped [shape]. */
+    fun requireSupportedMotionType(motionType: MotionType) {
+        (shape as? MeshShape)?.requireSupportedMotionType(motionType)
+    }
+}
+
 /** A requested physics capability is not available on the selected backend or body type. */
 class PhysicsCapabilityException(message: String) : UnsupportedOperationException(message)
 
@@ -255,7 +287,8 @@ class PhysicsCapabilityException(message: String) : UnsupportedOperationExceptio
  * trigger volume that is built without complaint and then never fires.
  */
 fun PhysicsShape.requireCanBeSensor() {
-    if (this is MeshShape || this is HeightFieldShape) {
+    val effective = if (this is ScaledShape) shape else this
+    if (effective is MeshShape || effective is HeightFieldShape) {
         throw PhysicsCapabilityException(
             "${this::class.simpleName} is a surface with no inside, so it cannot be a sensor -- " +
                 "use a BoxShape or a ConvexHullShape for a trigger volume",

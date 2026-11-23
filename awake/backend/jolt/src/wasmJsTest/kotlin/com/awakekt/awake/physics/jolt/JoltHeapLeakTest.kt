@@ -18,6 +18,7 @@ import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.HingeConstraint
 import com.awakekt.awake.physics.MeshShape
 import com.awakekt.awake.physics.MotionType
+import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.physics.SphereShape
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -57,6 +58,12 @@ class JoltHeapLeakTest {
                 "a box body" to { world.destroyBody(world.createBody(BoxShape(HALF), ABOVE, Quat.IDENTITY, MotionType.STATIC)) },
                 "a hull body" to { world.destroyBody(world.createBody(HULL, ABOVE, Quat.IDENTITY, MotionType.DYNAMIC)) },
                 "a mesh body" to { world.destroyBody(world.createBody(MESH, ABOVE, Quat.IDENTITY, MotionType.STATIC)) },
+                "a scaled mesh body" to {
+                    world.destroyBody(world.createBody(SCALED_MESH, ABOVE, Quat.IDENTITY, MotionType.STATIC))
+                },
+                "a mirrored scaled mesh body" to {
+                    world.destroyBody(world.createBody(MIRRORED_MESH, ABOVE, Quat.IDENTITY, MotionType.STATIC))
+                },
                 "a height field body" to {
                     world.destroyBody(world.createBody(TERRAIN, Vec3f.ZERO, Quat.IDENTITY, MotionType.STATIC))
                 },
@@ -96,6 +103,8 @@ class JoltHeapLeakTest {
         val DOWN = Vec3f(0f, -1f, 0f)
         val HULL = ConvexHullShape(floatArrayOf(-0.5f, 0f, -0.5f, 0.5f, 0f, -0.5f, 0f, 0f, 0.5f, 0f, 1f, 0f))
         val MESH = MeshShape(floatArrayOf(-1f, 0f, -1f, 1f, 0f, -1f, 1f, 0f, 1f, -1f, 0f, 1f), intArrayOf(0, 1, 2, 0, 2, 3))
+        val SCALED_MESH = ScaledShape(MESH, Vec3f(2f, 3f, 0.5f))
+        val MIRRORED_MESH = ScaledShape(MESH, Vec3f(-2f, 1f, 2f))
         val TERRAIN = HeightFieldShape(FloatArray(16), sampleCount = 4, scale = Vec3f(1f, 1f, 1f))
     }
 }
