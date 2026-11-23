@@ -8,7 +8,14 @@
 package com.awakekt.awake.webgpu
 
 import io.ygdrasil.webgpu.ArrayBuffer
+import io.ygdrasil.webgpu.Buffer
+import io.ygdrasil.webgpu.GPUBuffer
+import io.ygdrasil.webgpu.GPUQueue
+import io.ygdrasil.webgpu.Queue
+import io.ygdrasil.webgpu.WGPUBuffer
+import io.ygdrasil.webgpu.WGPUQueue
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.js.JsAny
 import kotlin.wasm.unsafe.Pointer
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
 import kotlin.wasm.unsafe.wasmMemory
@@ -51,5 +58,50 @@ private inline fun fromLinearMemory(size: Int, store: (Pointer) -> Unit): ArrayB
 @Suppress("UnusedParameter") // Read by the JS body.
 private fun copyOfLinearMemory(memory: JsAny, byteOffset: Int, byteSize: Int): js.buffer.ArrayBuffer =
     js("memory.buffer.slice(byteOffset, byteOffset + byteSize)")
+
+internal actual fun GPUQueue.writeBufferFloats(buffer: GPUBuffer, bufferOffset: ULong, data: FloatArray, count: Int) {
+    if (count == 0) return
+    val byteSize = count * Float.SIZE_BYTES
+    withScopedMemoryAllocator { allocator ->
+        val base = allocator.allocate(byteSize)
+        for (index in 0 until count) (base + index * Float.SIZE_BYTES).storeInt(data[index].toRawBits())
+        writeFromLinearMemoryDirect(
+            (this as Queue).handler,
+            (buffer as Buffer).handler,
+            bufferOffset.toDouble(),
+            wasmMemory,
+            base.address.toInt(),
+            byteSize,
+        )
+    }
+}
+
+internal actual fun GPUQueue.writeBufferInts(buffer: GPUBuffer, bufferOffset: ULong, data: IntArray, count: Int) {
+    if (count == 0) return
+    val byteSize = count * Int.SIZE_BYTES
+    withScopedMemoryAllocator { allocator ->
+        val base = allocator.allocate(byteSize)
+        for (index in 0 until count) (base + index * Int.SIZE_BYTES).storeInt(data[index])
+        writeFromLinearMemoryDirect(
+            (this as Queue).handler,
+            (buffer as Buffer).handler,
+            bufferOffset.toDouble(),
+            wasmMemory,
+            base.address.toInt(),
+            byteSize,
+        )
+    }
+}
+
+/** Read [memory] after the allocation, which may have grown linear memory and replaced its buffer. */
+@Suppress("UnusedParameter") // Read by the JS body.
+private fun writeFromLinearMemoryDirect(
+    queue: WGPUQueue,
+    buffer: WGPUBuffer,
+    bufferOffset: Double,
+    memory: JsAny,
+    byteOffset: Int,
+    byteSize: Int,
+): Unit = js("queue.writeBuffer(buffer, bufferOffset, memory.buffer, byteOffset, byteSize)")
 
 private const val BYTE = 0xFF

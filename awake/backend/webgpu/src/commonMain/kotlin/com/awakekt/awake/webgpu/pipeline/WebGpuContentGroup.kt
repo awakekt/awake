@@ -10,10 +10,9 @@ import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.renderer.sameBitsAs
 import com.awakekt.awake.webgpu.texture.Texture
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -86,7 +85,7 @@ internal class WebGpuContentGroup(
         if (prev != null && prev.sameBitsAs(floats)) return
         lastWritten = if (prev != null && prev.size == floats.size) floats.copyInto(prev) else floats.copyOf()
         graphicsDevice.contentUniformWrites += 1
-        device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+        device.queue.writeBufferFloats(buffer, 0uL, floats)
     }
 
     /** Call once, after the last frame that binds it. */

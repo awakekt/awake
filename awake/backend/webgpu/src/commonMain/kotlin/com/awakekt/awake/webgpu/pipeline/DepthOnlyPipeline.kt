@@ -23,8 +23,7 @@ import com.awakekt.awake.render.pipeline.ResourceBinding
 import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.pipeline.ShaderStage
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferBinding
@@ -236,7 +235,7 @@ class DepthOnlyPipeline(
         if (cascadeHolds[cascade] && data.contentEquals(written)) return
         data.copyInto(written)
         cascadeHolds[cascade] = true
-        device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(data))
+        device.queue.writeBufferFloats(buffer, 0uL, data)
     }
 
     init {

@@ -160,3 +160,10 @@ internal fun FloatArray.sameBitsAs(other: FloatArray): Boolean {
     while (index < size && this[index].toRawBits() == other[index].toRawBits()) index++
     return index == size
 }
+
+internal fun FloatArray.sameBitsAs(other: FloatArray, count: Int): Boolean {
+    if (size < count || other.size < count) return false
+    var index = 0
+    while (index < count && this[index].toRawBits() == other[index].toRawBits()) index++
+    return index == count
+}

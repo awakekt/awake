@@ -41,3 +41,14 @@ internal expect fun fastArrayBufferOf(data: ByteArray): ArrayBuffer
 internal fun GPUQueue.writeBufferData(buffer: GPUBuffer, bufferOffset: ULong, data: ArrayBuffer) {
     writeBuffer(buffer, bufferOffset, data, dataOffset = 0uL, size = data.size)
 }
+
+/**
+ * Writes the first [count] floats of [data] into [buffer] at [bufferOffset].
+ *
+ * On WebAssembly (`wasmJs`), stages into scoped linear memory and calls `queue.writeBuffer`
+ * directly with a byte slice of `wasmMemory.buffer` -- zero JS `ArrayBuffer` `.slice()` copies.
+ */
+internal expect fun GPUQueue.writeBufferFloats(buffer: GPUBuffer, bufferOffset: ULong, data: FloatArray, count: Int = data.size)
+
+/** Writes the first [count] ints of [data] into [buffer] at [bufferOffset] without slicing on WebAssembly. */
+internal expect fun GPUQueue.writeBufferInts(buffer: GPUBuffer, bufferOffset: ULong, data: IntArray, count: Int = data.size)

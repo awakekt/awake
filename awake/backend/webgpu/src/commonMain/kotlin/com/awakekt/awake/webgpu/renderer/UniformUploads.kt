@@ -91,6 +91,13 @@ internal fun FloatArray.sameBitsAs(other: FloatArray): Boolean {
     return index == size
 }
 
+internal fun FloatArray.sameBitsAs(other: FloatArray, count: Int): Boolean {
+    if (size < count || other.size < count) return false
+    var index = 0
+    while (index < count && this[index].toRawBits() == other[index].toRawBits()) index++
+    return index == count
+}
+
 /** Writes the draws staged so far. Called before anything records them, and before a new batch restages slots. */
 internal fun Renderer.flushUniformUploads() = uniformUploads.flush(graphicsDevice.wgpuContext.device.queue)
 

@@ -52,6 +52,41 @@ class InstancePacker<T>(
     val floatsPerInstance: Int = shape.componentCount * repeat
 
     private var packed = FloatArray(0)
+    private var sliceBuffer = FloatArray(0)
+
+    /** Backing array populated by the most recent [packSlice] call; only indices `0..<count` are valid. */
+    val buffer: FloatArray get() = sliceBuffer
+
+    /**
+     * Packs [items] into a grow-only [buffer] without reallocating when the instance count shrinks
+     * or fluctuates within capacity.
+     *
+     * @return Number of valid floats written into [buffer], or `0` when [items] is empty.
+     */
+    fun packSlice(items: List<T>, maxInstances: Int): Int {
+        val needed = reserveSlice(items.size, maxInstances)
+        if (needed == 0) return 0
+        val out = sliceBuffer
+        var index = 0
+        while (index < items.size) {
+            write.write(out, index * floatsPerInstance, items[index])
+            index += 1
+        }
+        return needed
+    }
+
+    /** Indexed form of [packSlice], returning the number of floats written into [buffer]. */
+    fun packSlice(instanceCount: Int, maxInstances: Int, itemAt: InstanceSource<T>): Int {
+        val needed = reserveSlice(instanceCount, maxInstances)
+        if (needed == 0) return 0
+        val out = sliceBuffer
+        var index = 0
+        while (index < instanceCount) {
+            write.write(out, index * floatsPerInstance, itemAt.at(index))
+            index += 1
+        }
+        return needed
+    }
 
     /**
      * Packs [items] into a reused array of exactly `items.size * floatsPerInstance` floats.
@@ -98,6 +133,17 @@ class InstancePacker<T>(
         val needed = instanceCount * floatsPerInstance
         if (packed.size != needed) packed = FloatArray(needed)
         return packed
+    }
+
+    private fun reserveSlice(instanceCount: Int, maxInstances: Int): Int {
+        require(instanceCount in 0..maxInstances) {
+            "Instance count ($instanceCount) exceeds $label capacity ($maxInstances) -- " +
+                "raise maxInstances or draw fewer instances."
+        }
+        if (instanceCount == 0) return 0
+        val needed = instanceCount * floatsPerInstance
+        if (sliceBuffer.size < needed) sliceBuffer = FloatArray(needed)
+        return needed
     }
 }
 

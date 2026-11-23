@@ -19,13 +19,12 @@ import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.webgpu.WebGpuHandles
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.webgpu.renderer.sameBitsAs
 import com.awakekt.awake.webgpu.renderer.uniformBufferAt
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.Texture
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BlendComponent
@@ -354,7 +353,7 @@ class RenderPipeline(
                 if (prev != null && prev.sameBitsAs(floats)) return
                 lastWritten = if (prev != null && prev.size == floats.size) floats.copyInto(prev) else floats.copyOf()
                 graphicsDevice.contentUniformWrites += 1
-                device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+                device.queue.writeBufferFloats(buffer, 0uL, floats)
             }
         }
     }

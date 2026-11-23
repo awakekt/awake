@@ -67,8 +67,9 @@ class FrameInstanceBuffer(
      * [frameIndex] is not a valid slot.
      */
     fun update(frameIndex: Int, frames: List<Float>) {
-        val floats = packer.pack(frames, maxInstances) ?: return
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
+        val count = packer.packSlice(frames, maxInstances)
+        if (count == 0) return
+        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, packer.buffer, 0, count)
     }
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 3. */

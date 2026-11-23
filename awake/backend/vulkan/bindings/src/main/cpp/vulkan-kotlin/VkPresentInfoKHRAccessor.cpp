@@ -27,85 +27,74 @@ VkPresentInfoKHRAccessor::getsType() {
 
 void
 VkPresentInfoKHRAccessor::getpImageIndices(VkPresentInfoKHR &clazzInfo) {
+    imageIndicesStorage.clear();
     auto pImageIndicesArray = (jintArray) env->GetObjectField(obj, pImageIndicesField);
     if (pImageIndicesArray == nullptr) {
         clazzInfo.pImageIndices = nullptr;
-        env->DeleteLocalRef(pImageIndicesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pImageIndicesArray);
-    // primitive array?
-    std::vector<uint32_t> pImageIndices(size);
-    env->GetIntArrayRegion(pImageIndicesArray, 0, size,
-                           reinterpret_cast<jint *>(pImageIndices.data()));
-    // processing array data
-    // Make a copy of the primitive to ensure proper memory management;
-    auto copy = new uint32_t[size];
-    std::copy(pImageIndices.begin(), pImageIndices.end(), copy);
-    clazzInfo.pImageIndices = copy;
-    env->DeleteLocalRef(pImageIndicesArray); // release reference
+    if (size > 0) {
+        imageIndicesStorage.resize(static_cast<size_t>(size));
+        env->GetIntArrayRegion(pImageIndicesArray, 0, size,
+                               reinterpret_cast<jint *>(imageIndicesStorage.data()));
+    }
+    clazzInfo.pImageIndices = imageIndicesStorage.empty() ? nullptr : imageIndicesStorage.data();
+    env->DeleteLocalRef(pImageIndicesArray);
 }
 
 void
 VkPresentInfoKHRAccessor::getpSwapchains(VkPresentInfoKHR &clazzInfo) {
+    swapchainsStorage.clear();
     auto pSwapchainsArray = (jobjectArray) env->GetObjectField(obj, pSwapchainsField);
     if (pSwapchainsArray == nullptr) {
         clazzInfo.swapchainCount = 0;
         clazzInfo.pSwapchains = nullptr;
-        env->DeleteLocalRef(pSwapchainsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pSwapchainsArray);
-    // vkhandle array?
-    std::vector<VkSwapchainKHR> pSwapchains;
-    for (int i = 0; i < size; ++i) {
-        auto element = env->GetObjectArrayElement(pSwapchainsArray, i);
-        jmethodID getValueMethod = env->GetMethodID(env->GetObjectClass(element), "longValue",
-                                                    "()J");
-        jlong value = env->CallLongMethod(element, getValueMethod);
-        pSwapchains.push_back(reinterpret_cast<VkSwapchainKHR>(value)); //vkhandle
-        env->DeleteLocalRef(element); // release element reference
+    if (size > 0) {
+        swapchainsStorage.reserve(static_cast<size_t>(size));
+        jclass longClass = env->FindClass("java/lang/Long");
+        jmethodID getValueMethod = env->GetMethodID(longClass, "longValue", "()J");
+        for (int i = 0; i < size; ++i) {
+            auto element = env->GetObjectArrayElement(pSwapchainsArray, i);
+            jlong value = env->CallLongMethod(element, getValueMethod);
+            swapchainsStorage.push_back(reinterpret_cast<VkSwapchainKHR>(value));
+            env->DeleteLocalRef(element);
+        }
+        env->DeleteLocalRef(longClass);
     }
-    // processing array data
-    auto swapchainCount = static_cast<uint32_t>(pSwapchains.size());
-    clazzInfo.swapchainCount = swapchainCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSwapchainKHR[size];
-    std::copy(pSwapchains.begin(), pSwapchains.end(), copy);
-    clazzInfo.pSwapchains = copy;
-    env->DeleteLocalRef(pSwapchainsArray); // release reference
+    clazzInfo.swapchainCount = static_cast<uint32_t>(swapchainsStorage.size());
+    clazzInfo.pSwapchains = swapchainsStorage.empty() ? nullptr : swapchainsStorage.data();
+    env->DeleteLocalRef(pSwapchainsArray);
 }
 
 void
 VkPresentInfoKHRAccessor::getpWaitSemaphores(VkPresentInfoKHR &clazzInfo) {
+    waitSemaphoresStorage.clear();
     auto pWaitSemaphoresArray = (jobjectArray) env->GetObjectField(obj, pWaitSemaphoresField);
     if (pWaitSemaphoresArray == nullptr) {
         clazzInfo.waitSemaphoreCount = 0;
         clazzInfo.pWaitSemaphores = nullptr;
-        env->DeleteLocalRef(pWaitSemaphoresArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pWaitSemaphoresArray);
-    // vkhandle array?
-    std::vector<VkSemaphore> pWaitSemaphores;
-    for (int i = 0; i < size; ++i) {
-        auto element = env->GetObjectArrayElement(pWaitSemaphoresArray, i);
-        jmethodID getValueMethod = env->GetMethodID(env->GetObjectClass(element), "longValue",
-                                                    "()J");
-        jlong value = env->CallLongMethod(element, getValueMethod);
-        pWaitSemaphores.push_back(reinterpret_cast<VkSemaphore>(value)); //vkhandle
-        env->DeleteLocalRef(element); // release element reference
+    if (size > 0) {
+        waitSemaphoresStorage.reserve(static_cast<size_t>(size));
+        jclass longClass = env->FindClass("java/lang/Long");
+        jmethodID getValueMethod = env->GetMethodID(longClass, "longValue", "()J");
+        for (int i = 0; i < size; ++i) {
+            auto element = env->GetObjectArrayElement(pWaitSemaphoresArray, i);
+            jlong value = env->CallLongMethod(element, getValueMethod);
+            waitSemaphoresStorage.push_back(reinterpret_cast<VkSemaphore>(value));
+            env->DeleteLocalRef(element);
+        }
+        env->DeleteLocalRef(longClass);
     }
-    // processing array data
-    auto waitSemaphoreCount = static_cast<uint32_t>(pWaitSemaphores.size());
-    clazzInfo.waitSemaphoreCount = waitSemaphoreCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSemaphore[size];
-    std::copy(pWaitSemaphores.begin(), pWaitSemaphores.end(), copy);
-    clazzInfo.pWaitSemaphores = copy;
-    env->DeleteLocalRef(pWaitSemaphoresArray); // release reference
+    clazzInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphoresStorage.size());
+    clazzInfo.pWaitSemaphores = waitSemaphoresStorage.empty() ? nullptr : waitSemaphoresStorage.data();
+    env->DeleteLocalRef(pWaitSemaphoresArray);
 }
 
 void
@@ -126,27 +115,24 @@ VkPresentInfoKHRAccessor::fromObject(VkPresentInfoKHR &clazzInfo) {
 
 void
 VkPresentInfoKHRAccessor::getpResults(VkPresentInfoKHR &clazzInfo) {
+    resultsStorage.clear();
     auto pResultsArray = (jobjectArray) env->GetObjectField(obj, pResultsField);
     if (pResultsArray == nullptr) {
         clazzInfo.pResults = nullptr;
-        env->DeleteLocalRef(pResultsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pResultsArray);
-    std::vector<VkResult> pResults;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobjectArray) env->GetObjectArrayElement(pResultsArray,
-                                                                 i); // actual type is VkResult[];
-        pResults.push_back(
-                static_cast<VkResult>(enum_utils::getEnumFromObject(env, element))); // type is enum
+    if (size > 0) {
+        resultsStorage.reserve(static_cast<size_t>(size));
+        for (int i = 0; i < size; ++i) {
+            auto element = env->GetObjectArrayElement(pResultsArray, i);
+            resultsStorage.push_back(
+                    static_cast<VkResult>(enum_utils::getEnumFromObject(env, element)));
+            env->DeleteLocalRef(element);
+        }
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkResult[size];
-    std::copy(pResults.begin(), pResults.end(), copy);
-    clazzInfo.pResults = copy;
-    env->DeleteLocalRef(pResultsArray); // release reference
+    clazzInfo.pResults = resultsStorage.empty() ? nullptr : resultsStorage.data();
+    env->DeleteLocalRef(pResultsArray);
 }
 
 VkPresentInfoKHRAccessor::~VkPresentInfoKHRAccessor() {

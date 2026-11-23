@@ -24,11 +24,10 @@ import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.ui.DynamicMesh
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BlendComponent
@@ -357,11 +356,7 @@ internal class WebGpuImagePassExecutor(
         )
         val slot = acquireStepSlot(compiled)
         if (slot.uniformBuffer != null && step.uniformData.isNotEmpty()) {
-            device.queue.writeBufferData(
-                slot.uniformBuffer,
-                0uL,
-                fastArrayBufferOf(step.uniformData),
-            )
+            device.queue.writeBufferFloats(slot.uniformBuffer, 0uL, step.uniformData)
         }
         val bindGroup = createStepBindGroup(
             pipeline = pipeline,

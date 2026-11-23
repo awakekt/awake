@@ -31,6 +31,7 @@ import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorType
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
+import com.awakekt.awake.vulkan.renderer.sameBitsAs
 
 /**
  * The per-instance joint palettes and tints behind one animated instanced draw call -- [InstanceBuffer]'s
@@ -67,6 +68,27 @@ class SkinnedInstanceBuffer(
     private val descriptorSetLayout: DescriptorSetLayoutHandle =
         createDescriptorSetLayout(graphicsDevice)
 
+    private class ResidentFloatSlice {
+        private var cached: FloatArray? = null
+        private var count = 0
+
+        fun matches(floats: FloatArray, floatCount: Int): Boolean {
+            val held = cached
+            return held != null && count == floatCount && held.sameBitsAs(floats, floatCount)
+        }
+
+        fun record(floats: FloatArray, floatCount: Int) {
+            val held = cached
+            val target = if (held != null && held.size >= floatCount) {
+                held
+            } else {
+                FloatArray(floatCount).also { cached = it }
+            }
+            floats.copyInto(target, 0, 0, floatCount)
+            count = floatCount
+        }
+    }
+
     private data class FrameResources(
         val buffer: BufferHandle,
         val memory: DeviceMemoryHandle,
@@ -74,7 +96,13 @@ class SkinnedInstanceBuffer(
         val descriptorSet: DescriptorSetHandle,
     ) : VulkanMaterialBinding {
         override val descriptorSetHandle: Long get() = descriptorSet.handle
+        val residentPalettes = ResidentFloatSlice()
+        val residentTints = ResidentFloatSlice()
     }
+
+    /** Palette and tint buffer uploads made, for tests: unchanged static/idle skeletons skip upload. */
+    internal var uploads = 0L
+        private set
 
     private val byteSize = (maxInstances.toLong() * FLOATS_PER_INSTANCE * Float.SIZE_BYTES)
     private val tintByteSize = maxInstances.toLong() * SkinnedInstanceLayout.TINT_FLOATS * Float.SIZE_BYTES
@@ -138,10 +166,25 @@ class SkinnedInstanceBuffer(
 
     /** Uploads index-aligned tints, defaulting to white when omitted. */
     fun update(frameIndex: Int, palettes: List<FloatArray>, colors: List<Vec4>?) {
-        val tints = tintPacker.pack(colors, palettes.size, maxInstances) ?: return
-        val floats = packer.pack(palettes, maxInstances) ?: return
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, byteSize, tints)
+        val tintCount = tintPacker.packSlice(colors, palettes.size, maxInstances)
+        val paletteCount = packer.packSlice(palettes, maxInstances)
+        if (tintCount == 0 || paletteCount == 0) return
+        val resources = resourcesFor(frameIndex)
+        uploadSliceIfChanged(resources.memory.handle, 0, packer.buffer, paletteCount, resources.residentPalettes)
+        uploadSliceIfChanged(resources.memory.handle, byteSize, tintPacker.buffer, tintCount, resources.residentTints)
+    }
+
+    private fun uploadSliceIfChanged(
+        memory: Long,
+        offset: Long,
+        floats: FloatArray,
+        count: Int,
+        resident: ResidentFloatSlice,
+    ) {
+        if (resident.matches(floats, count)) return
+        VulkanBuffers.writeBufferMemoryFloats(device, memory, offset, floats, 0, count)
+        uploads += 1
+        resident.record(floats, count)
     }
 
     /** This frame slot's descriptor set, bound at the shared joint-palette semantic slot. */

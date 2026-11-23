@@ -22,6 +22,7 @@ private:
     jfieldID pNextField;
     jfieldID flagsField;
     jfieldID pInheritanceInfoField;
+    std::vector<VkCommandBufferInheritanceInfo> inheritanceInfoStorage;
 public:
     VkCommandBufferBeginInfoAccessor(JNIEnv *env, jobject obj);
 

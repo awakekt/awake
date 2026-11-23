@@ -77,8 +77,9 @@ class AlphaInstanceBuffer(
      * [frameIndex] is not a valid slot.
      */
     fun update(frameIndex: Int, colors: List<Vec4>) {
-        val floats = packer.pack(colors, maxInstances) ?: return
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
+        val count = packer.packSlice(colors, maxInstances)
+        if (count == 0) return
+        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, packer.buffer, 0, count)
         holdsWhite[frameIndex] = false
     }
 
