@@ -180,7 +180,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
                 val f0 = let("f0", mix(vec3(0.04f.lit), stored, metallic))
                 val envRefl = let(
                     "envReflection",
-                    environmentReflection(n, v, l, lightColor, f0, metallic, roughness, glow.w, 1f.lit),
+                    environmentReflection(n, v, l, lightColor, stored, f0, metallic, roughness, glow.w, 1f.lit),
                 )
                 val litShaded = applySceneFog(
                     displayTransform.displayReferred(lit * tint.xyz + envRefl + glow.xyz, exposure.x),
@@ -363,7 +363,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val ambientShare = let("ambientShare", select(ambient, lightColor.w, lightColor.w gt 0f.lit))
         val envRefl = let(
             "envReflection",
-            environmentReflection(n, v, l, lightColor, f0, metallic, roughness, glow.w, occlusion),
+            environmentReflection(n, v, l, lightColor, albedo, f0, metallic, roughness, glow.w, occlusion),
         )
         val litColor = variable("lit", albedo * ambientShare * occlusion + (diffuse + specular) * radiance + envRefl + emissive)
 
