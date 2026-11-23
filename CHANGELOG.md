@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.68.0] - 2026-11-23
+
+### Added
+
+- Add `ContextualEffectDrainer<C>` and split `sync()`/`drainEffects()`/`onSync()` phases on `EffectDrainer`, plus UI-free `SceneBridge` / `SceneBridgeHandle<T>` (`SceneSession.addBridge`, `SceneAppDsl.bridge`, declarative `ui(handle)` / `ui(bridge = { ... })`) and public `LoadedProject.content` so presentation state and store coordination run at the session frame boundary instead of inside ECS systems.
+- Extended `FamilySpec` with composable helpers (`None`, `all`, `one`, `exclude`, `+`, `familySpec {}`), added `FamilySpec`-filtered packed `World.family` overloads with zero-allocation lookup, added `shouldProcess(world, delta)` and monomorphic inline `runTick` to `IteratingSystem`/`Family1System`/`Family2System`, and adopted `Family1System`/`Family2System`, packed filtered families, and `DefaultReducerStore` across engine systems and samples.
+
+### Changed
+
+- **Frothy cellular water foam, shallow absorption, and underwater caustics in `StylizedWaterShader` (`Standard` tier).** Replaced smooth contact-foam bands with zero-trig `mod289` multi-octave cellular foam erosion, bubble specks, shallow-to-deep optical color absorption, and animated underwater caustics when `samplesDepth` is enabled, plus clean translucent wave-crest shading on open water; `Fast` mobile tier remains zero-texture and untouched.
+
+### Fixed
+
+- Budgeted streamed glTF model uploads in `SpawnedModels.attachLoaded` with an O(1) path-indexed waiter table, exposed `retainedMeshBudgetBytes` and `minShadowCasterRatio` on the scene DSL and runtime, made `SpawnedNode.attachRenderers` single-pass O(N), and added shared-budget `stepSpawns`/`stepDespawns` entrypoints on `BudgetedCellNodeSpawner`.
+
 ## [0.67.3] - 2026-11-23
 
 ### Added

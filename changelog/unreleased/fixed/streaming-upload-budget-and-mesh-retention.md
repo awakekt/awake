@@ -1,1 +1,0 @@
-- Budgeted streamed glTF model uploads in `SpawnedModels.attachLoaded` with an O(1) path-indexed waiter table, exposed `retainedMeshBudgetBytes` and `minShadowCasterRatio` on the scene DSL and runtime, made `SpawnedNode.attachRenderers` single-pass O(N), and added shared-budget `stepSpawns`/`stepDespawns` entrypoints on `BudgetedCellNodeSpawner`.
