@@ -48,6 +48,7 @@ class SceneSession internal constructor(
     }
 
     internal val schedule = SceneSchedule(spec)
+    internal val bridges = SceneBridgeList()
     private var assetLibrary: SceneAssetLibrary? = null
 
     private var scope: CoroutineScope? = null
@@ -88,24 +89,40 @@ class SceneSession internal constructor(
         schedule.initialize(runtime)
         spec.scenePopulationBlock(runtime)
         spec.onReadyBlock(runtime)
+        for (registration in spec.bridgeRegistrations) {
+            bridges.register(registration.handle, registration.factory(runtime))
+        }
         schedule.synchronize(world)
     }
+
+    /**
+     * Attaches a [SceneBridge] to this session's frame boundaries ([SceneBridge.beforeAdvance] and
+     * [SceneBridge.afterAdvance]). Still-attached bridges are closed automatically in reverse
+     * registration order when this session disposes.
+     *
+     * Closing the returned handle detaches [bridge] without closing it.
+     */
+    fun addBridge(bridge: SceneBridge): AutoCloseable = bridges.add(bridge)
 
     internal fun advance(delta: Float, fixedUpdate: (Float) -> Unit) {
         // Before anything this frame draws, so a texture forgotten from another thread is asked for again whole.
         assetLibrary?.applyRequestedForgets()
         // Before the frame's systems, so a prewarm that became ready lets this frame's spawns draw at once.
         assetLibrary?.runPrewarms()
+        bridges.beforeAdvance(world, delta)
         schedule.advance(world, delta, fixedUpdate)
+        bridges.afterAdvance(world, delta)
     }
 
     internal fun dispose(runtime: SceneAppLifecycleRuntime) {
+        val bridgeFailure = bridges.closeAll()
         if (becameReady) spec.onDisposeBlock(runtime)
         sceneManager.close()
         assetLibrary?.dispose()
         assetLibrary = null
         scope?.cancel()
         schedule.dispose()
+        bridgeFailure?.let { throw it }
     }
 
     /**

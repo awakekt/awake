@@ -5,11 +5,13 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.core.host.FixedTimestepLoop
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.platform.core.AppModule
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
+import com.awakekt.awake.scene.runtime.session.SceneBridgeRegistration
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +99,32 @@ class SceneAppSpec(
         }
 
     /**
+     * Registrations for [com.awakekt.awake.scene.runtime.session.SceneBridge] instances attached
+     * when the session becomes ready and closed in reverse order on session teardown. Set by
+     * `bridge { ... }` or `ui(bridge = { ... }) { ... }` in the scene DSL.
+     */
+    var bridgeRegistrations: List<SceneBridgeRegistration> = emptyList()
+
+    /**
+     * Scene-level Compose UI content that resolves scene-scoped bridges via the active
+     * [SceneAppLifecycleRuntime] (used by `ui(bridgeHandle) { ... }` and
+     * `ui(bridge = { ... }) { ... }`).
+     */
+    var sessionUi: (
+        context(Composer)
+        (SceneAppLifecycleRuntime) -> Unit
+    )? = null
+
+    internal val hasUi: Boolean
+        get() = ui != null || sessionUi != null
+
+    context(_: Composer)
+    internal fun composeUi(runtime: SceneAppLifecycleRuntime) {
+        val plain = ui
+        if (plain != null) plain() else sessionUi?.let { it(runtime) }
+    }
+
+    /**
      * Installs this scene module into the host application specification.
      *
      * @param into The builder receiving module configuration.
@@ -112,7 +140,7 @@ class SceneAppSpec(
      * @return The active [SceneAppLifecycleRuntime] instance managing this scene.
      */
     fun installInto(into: AppSpecBuilder): SceneAppLifecycleRuntime {
-        check(ui == null || into.service(ComposeAppRuntime::class) == null) {
+        check(!hasUi || into.service(ComposeAppRuntime::class) == null) {
             "A scene cannot declare legacy content { } when an application-level Compose module is installed."
         }
         val runtime = SceneAppLifecycleRuntime(this)

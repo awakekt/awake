@@ -84,6 +84,8 @@ import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 import com.awakekt.awake.scene.runtime.schedule.RenderStageMarks
 import com.awakekt.awake.scene.runtime.schedule.SceneSystemObserver
 import com.awakekt.awake.scene.runtime.schedule.UiBuildStageMarks
+import com.awakekt.awake.scene.runtime.session.SceneBridge
+import com.awakekt.awake.scene.runtime.session.SceneBridgeHandle
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
@@ -550,7 +552,7 @@ class SceneAppLifecycleRuntime internal constructor(
         }
 
         // A scene's own canvas elements need the UI frame even when the app declares no `ui { }`.
-        val uiFrame = (spec.ui ?: SceneCanvasOnly.takeIf { world.family<CanvasElement>().size > 0 })?.let {
+        val uiFrame = Unit.takeIf { spec.hasUi || world.family<CanvasElement>().size > 0 }?.let {
             // The backend only knows the real display scale once its window exists, which is after
             // `uiHost` was constructed -- see ComposeHost.density's own doc comment for why this is
             // a live per-frame assignment rather than a constructor argument.
@@ -701,11 +703,8 @@ class SceneAppLifecycleRuntime internal constructor(
         viewportWidth: Float,
         viewportHeight: Float,
     ): SceneFrame {
-        val content = spec.ui
         val hasCanvas = drawsSceneCanvas && world.family<CanvasElement>().size > 0
-        if (content == null && !hasCanvas) {
-            return emptySceneFrame()
-        }
+        if (!spec.hasUi && !hasCanvas) return emptySceneFrame()
         val frame = uiHost.frame(
             snapshot.toFrameInput(viewportWidth.roundToInt(), viewportHeight.roundToInt(), delta),
         ) {
@@ -742,7 +741,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         slotContent = canvasSlotContent,
                     )
                 }
-                if (content != null) ProvideAppCoroutineScope(appScope, content)
+                if (spec.hasUi) ProvideAppCoroutineScope(appScope) { spec.composeUi(this@SceneAppLifecycleRuntime) }
             }
         }
         return SceneFrame(
@@ -1207,14 +1206,17 @@ fun pointerCursorImageOf(game: AwakeAppLifecycle): () -> CursorImage? =
         ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.effectiveCursorImage } }
         ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
 
+/**
+ * Resolves a registered [SceneBridge] by its typed [SceneBridgeHandle] once the scene is ready.
+ */
+fun <T : SceneBridge> SceneAppLifecycleRuntime.bridge(handle: SceneBridgeHandle<T>): T =
+    session.bridges.get(handle)
+
 /** The subjects of the frame work the app supplies, as an `AppError` names them. */
 private const val UPDATE_BLOCK = "updateBlock"
 private const val UI_BUILD = "ui"
 
 private val log = Logger("scene.runtime")
-
-/** Stands in for `spec.ui` when only the scene's canvas elements need a UI frame. */
-private val SceneCanvasOnly: SceneContent = {}
 
 /** These insets as the canvas's, the same dp from each edge. */
 private fun DisplayInsets.toCanvasInsets(): CanvasInsets =
