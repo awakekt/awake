@@ -194,6 +194,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getSortingLayers ()Lcom/awakekt/awake/scene/scene2d/SortingLayers;
 	public final fun getSpec ()Lcom/awakekt/awake/scene/runtime/SceneAppSpec;
 	public final fun getSystemObserver ()Lcom/awakekt/awake/scene/runtime/schedule/SceneSystemObserver;
+	public final fun getTimeScale ()F
 	public final fun getUiHost ()Lcom/awakekt/awake/compose/ui/platform/ComposeHost;
 	public final fun getUiOwnership ()Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
 	public final fun getUiPrimitives ()Ljava/util/List;
@@ -238,6 +239,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun setShowTouchControls (Z)V
 	public final fun setSortingLayers (Lcom/awakekt/awake/scene/scene2d/SortingLayers;)V
 	public final fun setSystemObserver (Lcom/awakekt/awake/scene/runtime/schedule/SceneSystemObserver;)V
+	public final fun setTimeScale (F)V
 	public final fun setUiOwnership (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
 	public final fun stageUi (Ljava/util/List;)V
 	public final fun system (Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;)Lcom/awakekt/awake/ecs/System;

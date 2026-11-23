@@ -124,6 +124,12 @@ object CoreSystems {
     /** `animation`: Skinned glTF animation. */
     const val ANIMATION: String = "animation"
 
+    /** `input-replay`: Deterministically replays a recorded `InputTake` and preserves gameplay camera basis. */
+    const val INPUT_REPLAY: String = "input-replay"
+
+    /** `director`: Drives cinematic camera direction, atmosphere/lighting choreography, audio cues, and speed ramps. */
+    const val DIRECTOR: String = "director"
+
     /** Every Core system name, in the order Core plans them. */
     val all: List<String> = listOf(
         PLAYER_INPUT,
@@ -163,5 +169,7 @@ object CoreSystems {
         AUDIO_LISTENER,
         AUDIO,
         ANIMATION,
+        INPUT_REPLAY,
+        DIRECTOR,
     )
 }

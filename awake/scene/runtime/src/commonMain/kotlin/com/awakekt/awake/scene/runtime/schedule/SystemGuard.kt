@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.runtime.schedule
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.UnscaledSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.AppErrorSource
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -35,8 +36,11 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
  * @param runtime The scene runtime, whose app services hold the handler.
  * @return The guarded system, which is not [this] but delegates to it.
  */
-fun System.guardedFor(runtime: SceneAppLifecycleRuntime): System =
-    if (this is InterpolatedSystem) GuardedInterpolatedSystem(this, runtime) else GuardedSystem(this, runtime)
+fun System.guardedFor(runtime: SceneAppLifecycleRuntime): System = when {
+    this is InterpolatedSystem -> GuardedInterpolatedSystem(this, runtime)
+    this is UnscaledSystem -> GuardedUnscaledSystem(this, runtime)
+    else -> GuardedSystem(this, runtime)
+}
 
 private open class GuardedSystem(private val inner: System, private val runtime: SceneAppLifecycleRuntime) : System {
     private var skipped = false
@@ -83,5 +87,11 @@ private class GuardedInterpolatedSystem(
         }
     }
 }
+
+private class GuardedUnscaledSystem(
+    target: UnscaledSystem,
+    runtime: SceneAppLifecycleRuntime,
+) : GuardedSystem(target, runtime),
+    UnscaledSystem
 
 private val log = Logger("scene.systems")

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project.cli
 
+import com.awakekt.awake.director.DirectorScript
 import com.awakekt.awake.project.runtime.PROJECT_MANIFEST
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -14,6 +15,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import java.io.BufferedReader
 import java.io.File
+import kotlin.math.roundToInt
 
 /**
  * `awake`, the command line for an Awake project's files. It validates a project and reads and edits
@@ -23,6 +25,7 @@ import java.io.File
  * Exits 0 when a command succeeds, 1 when it finds errors or refuses an edit, and 2 when the command
  * line itself is wrong.
  */
+@Suppress("TooManyFunctions")
 class AwakeCli(
     private val out: Appendable,
     private val err: Appendable,
@@ -47,6 +50,10 @@ class AwakeCli(
         null, "help" -> help()
         "validate" -> validate(arguments)
         "scene" -> scene(arguments)
+        "stage" -> stage(arguments)
+        "director" -> director(arguments)
+        "storyboard" -> storyboard(arguments)
+        "capture" -> capture(arguments)
         "render" -> render(arguments)
         "bundle" -> bundle(arguments)
         "mcp" -> OK.also { AwakeMcp(ProjectScenes(projectRoot(arguments.value("project"))), workingDir).serve(input(), out) }
@@ -127,6 +134,172 @@ class AwakeCli(
         return OK
     }
 
+    private fun stage(arguments: CliArguments): Int {
+        val project = ProjectScenes(projectRoot(arguments.value("project")))
+        val scene = project.resolve(arguments.required(1, "scene"))
+        val inspector = StageInspector(project)
+        val report = inspector.inspect(scene)
+        if (arguments.flag("json")) {
+            out.appendLine(inspector.toJson(report))
+        } else {
+            out.append(inspector.formatHuman(report))
+        }
+        return OK
+    }
+
+    private fun director(arguments: CliArguments): Int {
+        val subcommand = arguments.words.getOrNull(1) ?: throw UsageException("missing director command (use validate)")
+        if (subcommand != "validate") throw UsageException("unknown director command '$subcommand'")
+        val project = ProjectScenes(projectRoot(arguments.value("project")))
+        val targetArg = arguments.required(2, "director script or reel file")
+        val targetFile = resolveExistingFile(project.root, targetArg)
+        val sceneFile = arguments.value("scene")?.let(project::resolve)
+        val validator = DirectorValidator(project)
+        val report = if (targetFile.name.endsWith(".reel.json", ignoreCase = true)) {
+            validator.validateReelFile(targetFile)
+        } else {
+            validator.validateScriptFile(targetFile, sceneFile)
+        }
+        if (arguments.flag("json")) {
+            out.appendLine(validator.toJson(report))
+        } else {
+            report.errors.forEach { out.appendLine("error    ${it.path}: ${it.message}") }
+            report.warnings.forEach { out.appendLine("warning  ${it.path}: ${it.message}") }
+            val status = if (report.valid) "valid" else "invalid"
+            out.appendLine(
+                "${report.file}: $status (${report.shotCount ?: 0} shots, " +
+                    "${formatSeconds(report.durationSeconds ?: 0f)}s, " +
+                    "${report.errors.size} error${plural(report.errors.size)}, " +
+                    "${report.warnings.size} warning${plural(report.warnings.size)})",
+            )
+        }
+        return if (report.valid) OK else FAILED
+    }
+
+    private fun storyboard(arguments: CliArguments): Int {
+        val project = ProjectScenes(projectRoot(arguments.value("project")))
+        val scene = project.resolve(arguments.required(1, "scene"))
+        val scriptPath = arguments.value("director") ?: throw UsageException("storyboard needs --director <file>")
+        val scriptFile = resolveExistingFile(project.root, scriptPath)
+        val script = decodeDirectorScript(scriptFile)
+        val take = loadDirectorInputTake(project.root, workingDir, script, arguments.value("take"))
+        val shotId = arguments.value("shot")
+        val samples = parseSamples(arguments.value("samples"), arguments.value("at"), shotId != null)
+        val defaultW = if (shotId != null) DEFAULT_PREVIEW_WIDTH else DEFAULT_TILE_WIDTH
+        val defaultH = if (shotId != null) DEFAULT_PREVIEW_HEIGHT else DEFAULT_TILE_HEIGHT
+        val request = StoryboardRequest(
+            scene = scene,
+            script = script,
+            inputTake = take,
+            tileWidth = arguments.int("width", defaultW, PIXELS),
+            tileHeight = arguments.int("height", defaultH, PIXELS),
+            samples = samples,
+            drawGuides = arguments.flag("guides"),
+            backend = arguments.value("backend")?.let(RenderBackend::named) ?: RenderBackend.default(),
+            shotFilterId = shotId,
+        )
+        val result = StoryboardRenderer(project).render(request)
+        val output = workingDir.resolve(arguments.value("output") ?: "${scriptFile.name.substringBefore('.')}-storyboard.png")
+        output.absoluteFile.parentFile?.mkdirs()
+        output.writeBytes(result.pngBytes)
+        if (arguments.flag("json")) {
+            out.appendLine(PRETTY_JSON.encodeToString(StoryboardReport.serializer(), result.report))
+        } else {
+            val warnings = result.report.samples.sumOf { it.warnings.size }
+            out.appendLine(
+                "storyboard ${result.report.scriptName} -> ${output.path} " +
+                    "(${result.report.width}x${result.report.height}, ${result.report.samples.size} samples, " +
+                    "$warnings warning${plural(warnings)})",
+            )
+            result.report.samples.forEach { sample ->
+                sample.warnings.forEach { w -> out.appendLine("  warning [${sample.shotId} @ ${formatSeconds(sample.timeSeconds)}s]: $w") }
+            }
+        }
+        return OK
+    }
+
+    @Suppress("CyclomaticComplexMethod")
+    private fun capture(arguments: CliArguments): Int {
+        val project = ProjectScenes(projectRoot(arguments.value("project")))
+        val preset = arguments.value("preset")?.let(CapturePreset::named)
+        val width = arguments.int("width", preset?.width ?: DEFAULT_WIDTH, PIXELS)
+        val height = arguments.int("height", preset?.height ?: DEFAULT_HEIGHT, PIXELS)
+        val fps = arguments.int("fps", preset?.fps ?: DEFAULT_FPS, FPS_RANGE)
+        val reelArg = arguments.value("reel")
+        val segments = if (reelArg != null) {
+            resolveReelSegments(project, workingDir, resolveExistingFile(project.root, reelArg))
+        } else {
+            val scene = project.resolve(arguments.required(1, "scene"))
+            val scriptPath = arguments.value("director") ?: throw UsageException("capture needs --director <file> or --reel <file>")
+            val scriptFile = resolveExistingFile(project.root, scriptPath)
+            val script = decodeDirectorScript(scriptFile)
+            val take = loadDirectorInputTake(project.root, workingDir, script, arguments.value("take"))
+            listOf(CaptureSegment(scene, script, take))
+        }
+        val defaultOut = if (reelArg != null) "reel-capture.mp4" else "trailer-capture.mp4"
+        val output = workingDir.resolve(arguments.value("output") ?: defaultOut)
+        val format = CaptureFormat.fromOutputOrLabel(output, arguments.value("format"))
+        val hudOverride = when (val hud = arguments.value("hud")?.lowercase()) {
+            null -> null
+            "show" -> true
+            "hide" -> false
+            else -> throw UsageException("--hud takes show or hide (got '$hud')")
+        }
+        val audioOverride = arguments.value("audio")?.let { resolveExistingFile(project.root, it) }
+        val request = TrailerCaptureRequest(
+            segments = segments,
+            output = output,
+            format = format,
+            width = width,
+            height = height,
+            fps = fps,
+            backend = arguments.value("backend")?.let(RenderBackend::named) ?: RenderBackend.default(),
+            audioOverride = audioOverride,
+            hudOverride = hudOverride,
+            keepFrames = arguments.flag("keep-frames"),
+        )
+        val report = TrailerCapture(project).capture(request)
+        if (arguments.flag("json")) {
+            out.appendLine(PRETTY_JSON.encodeToString(TrailerCaptureReport.serializer(), report))
+        } else {
+            out.appendLine(
+                "captured ${report.framesCaptured} frames (${formatSeconds(report.durationSeconds)}s @ ${report.fps}fps, " +
+                    "${report.width}x${report.height}) via ${report.encoder} -> ${report.output}",
+            )
+        }
+        return OK
+    }
+
+    private fun resolveExistingFile(projectRoot: File, path: String): File =
+        workingDir.resolve(path).takeIf(File::isFile)
+            ?: projectRoot.resolve(path).takeIf(File::isFile)
+            ?: throw UsageException("no file $path")
+
+    private fun decodeDirectorScript(file: File): DirectorScript = try {
+        DirectorScript.decode(file.readText())
+    } catch (@Suppress("TooGenericExceptionCaught") error: Exception) {
+        throw CommandFailure("could not decode director script ${file.path}: ${error.message}", error)
+    }
+
+    private fun parseSamples(samplesArg: String?, atArg: String?, singleShot: Boolean): List<Float> = when {
+        atArg != null -> listOf(parseUnitFloat(atArg, "--at"))
+        samplesArg != null -> samplesArg.split(',')
+            .filter(String::isNotBlank)
+            .map { parseUnitFloat(it.trim(), "--samples") }
+            .ifEmpty { throw UsageException("--samples cannot be empty") }
+        singleShot -> listOf(0.5f)
+        else -> DEFAULT_STORYBOARD_SAMPLES
+    }
+
+    private fun parseUnitFloat(token: String, flagName: String): Float =
+        token.toFloatOrNull()?.takeIf { it in 0f..1f }
+            ?: throw UsageException("$flagName takes number(s) from 0.0 to 1.0")
+
+    private fun formatSeconds(value: Float): String {
+        val hundredths = (value * HUNDRED).roundToInt()
+        return "${hundredths / HUNDRED}.${(hundredths % HUNDRED).toString().padStart(2, '0')}"
+    }
+
     private fun edit(project: ProjectScenes, command: String, arguments: CliArguments): Int {
         val edits = SceneEdits(project, project.resolve(arguments.required(2, "scene")), arguments.flag("dry-run"))
         val edit = when (command) {
@@ -182,8 +355,16 @@ class AwakeCli(
         const val INDENT = "  "
         const val DEFAULT_WIDTH = 1280
         const val DEFAULT_HEIGHT = 720
+        const val DEFAULT_TILE_WIDTH = 480
+        const val DEFAULT_TILE_HEIGHT = 270
+        const val DEFAULT_PREVIEW_WIDTH = 960
+        const val DEFAULT_PREVIEW_HEIGHT = 540
+        const val DEFAULT_FPS = 60
+        const val HUNDRED = 100
+        val DEFAULT_STORYBOARD_SAMPLES = listOf(0.05f, 0.50f, 0.95f)
         val PIXELS = 16..8192
         val FRAMES = 1..36_000
+        val FPS_RANGE = 1..240
 
         val HELP = """
             |awake: validate an Awake project, and read and edit its scenes.
@@ -197,6 +378,10 @@ class AwakeCli(
             |  awake scene remove-node <scene> <node>
             |  awake scene add-component <scene> <node> <type> [fields-json]
             |  awake scene remove-component <scene> <node> <type>
+            |  awake stage <scene>                            Inspect a scene's world-space entities, lights, rails, cameras and audio.
+            |  awake director validate <file> [--scene <s>]   Validate a .director.json script or .reel.json trailer reel.
+            |  awake storyboard <scene> --director <file>     Render a multi-shot storyboard contact sheet PNG and framing report.
+            |  awake capture [scene] --director <f>|--reel <f> Record a deterministic headless gameplay trailer (MP4/WebM/GIF/PNG+WAV).
             |  awake render <scene> [--output <png>]          Play a scene headless and save what its camera sees.
             |  awake bundle <index> --output <dir>            Pack a project index's files into content bundles.
             |  awake mcp                                      Serve these commands to an AI agent over MCP (stdio).
@@ -215,6 +400,18 @@ class AwakeCli(
             |  --backend vulkan|webgpu     The GPU backend (default Vulkan; WebGPU on Windows).
             |  --view <view>    lit, clay, normals, depth, albedo, shadows, joint-weights or wireframe.
             |  --camera <name>  Render from the camera on that node instead of the primary one.
+            |  --director <file>  Director script (.director.json) for storyboard or trailer capture.
+            |  --reel <file>    Multi-scene trailer reel (.reel.json) for capture.
+            |  --take <file>    Recorded gameplay input take (.take.json) replayed during capture.
+            |  --preset <name>  youtube-1080p, youtube-720p, shorts-1080p, cinemascope-1080p or gif-preview.
+            |  --fps <n>        Fixed capture frame rate (default 60).
+            |  --format <fmt>   mp4, webm, gif or png-sequence (inferred from --output when omitted).
+            |  --audio <wav>    Override soundtrack WAV mixed into the trailer capture.
+            |  --hud show|hide  Force HUD visibility on or off for trailer capture.
+            |  --guides         Draw Rule-of-Thirds, action-safe box and framing telemetry on storyboards.
+            |  --shot <id> --at <0..1>  Render one shot at a normalized timestamp inside storyboard.
+            |  --samples <csv>  Comma-separated fractions in 0..1 per shot for storyboard (default 0.05,0.5,0.95).
+            |  --keep-frames    Keep rendered PNG frames alongside an encoded MP4/WebM/GIF capture.
             |  --group folder|one  How bundle writes group files (default folder, by top folder).
             |  --depth <n>      How many leading folders name a group (default 1).
             |  --target-mb <n>  The size a bundle fills to before the next starts (default 16).

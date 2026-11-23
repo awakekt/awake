@@ -104,16 +104,25 @@ internal class RenderedImage(val width: Int, val height: Int, val rgba: ByteArra
         file.writeBytes(png())
     }
 
-    /** This image as a PNG, alpha included. */
-    fun png(): ByteArray {
+    /** This image as a [BufferedImage], alpha included. */
+    fun toBufferedImage(): BufferedImage {
         val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
         for (pixel in 0 until width * height) {
             val at = pixel * CHANNELS
             fun byte(offset: Int) = rgba[at + offset].toInt() and BYTE
-            image.setRGB(pixel % width, pixel / width, (byte(ALPHA) shl ALPHA_SHIFT) or (byte(0) shl RED_SHIFT) or (byte(1) shl GREEN_SHIFT) or byte(2))
+            image.setRGB(
+                pixel % width,
+                pixel / width,
+                (byte(ALPHA) shl ALPHA_SHIFT) or (byte(0) shl RED_SHIFT) or (byte(1) shl GREEN_SHIFT) or byte(2),
+            )
         }
+        return image
+    }
+
+    /** This image as a PNG, alpha included. */
+    fun png(): ByteArray {
         val bytes = ByteArrayOutputStream()
-        if (!ImageIO.write(image, "png", bytes)) throw CommandFailure("no PNG writer")
+        if (!ImageIO.write(toBufferedImage(), "png", bytes)) throw CommandFailure("no PNG writer")
         return bytes.toByteArray()
     }
 
@@ -164,7 +173,18 @@ internal class ProjectRender(private val project: ProjectScenes) {
             showWireframe = request.view.wireframe
         }
         repeat(request.frames) { game.update(STEP, request.width.toFloat(), request.height.toFloat()) }
-        val frame = runtime.readbackAttachment(request.width, request.height, FramebufferAttachment.Color0)
+        val rgba = readbackRgba(runtime, request.width, request.height, name)
+        return RenderedImage(request.width, request.height, rgba)
+    }
+
+    /** Reads the active color framebuffer back into tightly packed top-down RGBA bytes. */
+    internal suspend fun readbackRgba(
+        runtime: SceneAppLifecycleRuntime,
+        width: Int,
+        height: Int,
+        name: String,
+    ): ByteArray {
+        val frame = runtime.readbackAttachment(width, height, FramebufferAttachment.Color0)
         if (!frame.available) throw CommandFailure("$name has nothing to render: ${frame.reason}")
         val rgba = ByteArray(frame.width * frame.height * RGBA)
         for (pixel in 0 until frame.width * frame.height) {
@@ -173,7 +193,7 @@ internal class ProjectRender(private val project: ProjectScenes) {
                 rgba[pixel * RGBA + channel] = (value.coerceIn(0f, 1f) * MAX_BYTE + HALF).toInt().toByte()
             }
         }
-        return RenderedImage(frame.width, frame.height, rgba)
+        return rgba
     }
 
     /** Makes the camera on the entity called [camera] the one the picture is taken with. */
@@ -185,7 +205,7 @@ internal class ProjectRender(private val project: ProjectScenes) {
     }
 
     /** The project's files, with [scene] as the manifest's entry scene, which is the one a project loads. */
-    private fun sceneAsEntry(scene: String): AssetSource {
+    internal fun sceneAsEntry(scene: String): AssetSource {
         val files = FileSystemAssetSource(createPlatformFileSystem(project.root.absolutePath))
         return object : AssetSource {
             override suspend fun read(path: AssetPath): Result<ByteArray> {
@@ -204,10 +224,15 @@ internal class ProjectRender(private val project: ProjectScenes) {
         }
     }
 
-    private suspend fun open(request: RenderRequest, game: AwakeAppLifecycle): HeadlessRenderSession {
-        val surface = HeadlessSurface(request.width, request.height)
+    internal suspend fun openSession(
+        width: Int,
+        height: Int,
+        backend: RenderBackend,
+        game: AwakeAppLifecycle,
+    ): HeadlessRenderSession {
+        val surface = HeadlessSurface(width, height)
         return try {
-            when (request.backend) {
+            when (backend) {
                 RenderBackend.Vulkan -> {
                     val renderer = HeadlessVulkan(game).boot(surface)
                     object : HeadlessRenderSession {
@@ -218,7 +243,7 @@ internal class ProjectRender(private val project: ProjectScenes) {
                 }
                 RenderBackend.WebGpu -> {
                     val session = webGpuHeadlessPlan(ProjectRenderPlan, surface = surface)
-                    val frames = OffscreenFrames(session.renderer, request.width, request.height)
+                    val frames = OffscreenFrames(session.renderer, width, height)
                     object : HeadlessRenderSession {
                         override val renderer: Renderer = frames
 
@@ -231,10 +256,13 @@ internal class ProjectRender(private val project: ProjectScenes) {
             }
         } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
             // A missing driver or native library surfaces as an error or an exception, depending on the backend.
-            val other = RenderBackend.entries.first { it != request.backend }.label
-            throw CommandFailure("${request.backend.label} didn't start (${error.message ?: error}). Is a driver installed? Try --backend $other.", error)
+            val other = RenderBackend.entries.first { it != backend }.label
+            throw CommandFailure("${backend.label} didn't start (${error.message ?: error}). Is a driver installed? Try --backend $other.", error)
         }
     }
+
+    private suspend fun open(request: RenderRequest, game: AwakeAppLifecycle): HeadlessRenderSession =
+        openSession(request.width, request.height, request.backend, game)
 
     /** Vulkan with a windowless swapchain, drawing [ProjectRenderPlan]. */
     private class HeadlessVulkan(game: AwakeAppLifecycle) : VulkanEngine(game, ProjectRenderPlan) {

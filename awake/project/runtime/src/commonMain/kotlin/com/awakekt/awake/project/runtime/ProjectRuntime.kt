@@ -453,7 +453,21 @@ fun SceneAppDsl.runProject(
     disabledSystems: Set<String> = emptySet(),
     touchControls: Boolean = false,
 ) {
-    val scenes = ProjectSceneRunner(project, disabledSystems, hostRole)
+    runProject(project, hostRole, disabledSystems, touchControls, directorOverride = null)
+}
+
+/**
+ * [runProject] directed by an external [directorOverride] (for headless trailer capture,
+ * storyboard contact sheets, or scripted showcases without editing the scene file on disk).
+ */
+fun SceneAppDsl.runProject(
+    project: LoadedProject,
+    hostRole: SceneHostRole = SceneHostRole.Full,
+    disabledSystems: Set<String> = emptySet(),
+    touchControls: Boolean = false,
+    directorOverride: DirectorRuntimeOverride? = null,
+) {
+    val scenes = ProjectSceneRunner(project, disabledSystems, hostRole, directorOverride)
     service(ProjectSystemPlan::class) { ProjectSystemPlan(scenes::plannedSystems) }
     // Every scene's sprite and tilemap textures, read from the project as they are first drawn: the
     // KTX2 file each was cooked to when the project ships one, else the image. The device's block

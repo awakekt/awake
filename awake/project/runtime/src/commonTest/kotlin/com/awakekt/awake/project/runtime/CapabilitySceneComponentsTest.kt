@@ -12,6 +12,7 @@ import com.awakekt.awake.scene.binding.SceneComponentModule
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.character.CharacterSceneComponents
 import com.awakekt.awake.scene.controls.ControlsSceneComponents
+import com.awakekt.awake.scene.director.DirectorSceneComponents
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.navigation.NavigationSceneComponents
 import com.awakekt.awake.scene.physics.PhysicsSceneComponents
@@ -31,6 +32,7 @@ class CapabilitySceneComponentsTest {
         AiSceneComponents,
         NavigationSceneComponents,
         AudioSceneComponents,
+        DirectorSceneComponents,
     )
 
     @Test
@@ -41,6 +43,7 @@ class CapabilitySceneComponentsTest {
         assertEquals(AiFeature.components, AiBehaviorBindings.bindings)
         assertEquals(AudioSceneComponents.bindings, AudioFeature.components)
         assertEquals(WorldstreamSceneComponents.bindings, StreamedTerrainFeature.components)
+        assertEquals(DirectorSceneComponents.bindings, DirectorFeature.components)
 
         val capabilityBindings = CORE_FEATURES.flatMap { it.components }
         assertEquals(capabilityModules.flatMap { it.bindings }, capabilityBindings)

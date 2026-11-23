@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.runtime.schedule
 import com.awakekt.awake.core.host.FixedTimestepLoop
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.UnscaledSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.RenderSystem3D
@@ -70,6 +71,10 @@ class SceneSchedule internal constructor(
 
     /** Whether [advance] splits its time into [gameMs] and [renderMs]. Off, it reads no clock. */
     internal var timed = false
+
+    /** Simulation time multiplier (`1f` normal, `< 1f` slow motion, `0f` hitstop); [UnscaledSystem]s ignore this. */
+    internal var timeScale: Float = 1f
+
     private var gameNanos = 0L
     private var renderNanos = 0L
 
@@ -134,7 +139,7 @@ class SceneSchedule internal constructor(
     }
 
     internal fun synchronize(world: World) {
-        runFrame(world, 0f)
+        runFrame(world, 0f, 0f)
     }
 
     internal fun advance(
@@ -144,11 +149,12 @@ class SceneSchedule internal constructor(
     ) {
         gameNanos = 0L
         renderNanos = 0L
+        val simDelta = delta * timeScale.coerceAtLeast(0f)
         fixedTimestepLoop.advance(
-            frameDelta = delta,
+            frameDelta = simDelta,
             fixedUpdate = { step ->
                 gameNanos += timed {
-                    runAll(fixedSystems, fixedNames, world, step)
+                    runAll(fixedSystems, fixedNames, world, step, step)
                     observed(SceneSystemObserver.APP_UPDATE) { fixedUpdate(step) }
                 }
             },
@@ -160,7 +166,7 @@ class SceneSchedule internal constructor(
                         observed(interpolatedNames[index]) { interpolatedSystems[index].interpolate(world, alpha) }
                     }
                 }
-                runFrame(world, delta)
+                runFrame(world, simDelta, delta)
             },
         )
         gameMs = gameNanos / NANOS_PER_MS
@@ -205,17 +211,21 @@ class SceneSchedule internal constructor(
         preFrameTransform = null
     }
 
-    private fun runFrame(world: World, delta: Float) {
-        gameNanos += timed { runAll(preAnimationSystems, preAnimationNames, world, delta) }
+    private fun runFrame(world: World, simDelta: Float, unscaledDelta: Float) {
+        gameNanos += timed { runAll(preAnimationSystems, preAnimationNames, world, simDelta, unscaledDelta) }
         renderNanos += timed {
-            preFrameTransform?.let { transforms -> observed(PRE_FRAME_TRANSFORMS) { transforms.update(world, delta) } }
+            preFrameTransform?.let { transforms -> observed(PRE_FRAME_TRANSFORMS) { transforms.update(world, simDelta) } }
         }
-        gameNanos += timed { runAll(frameSystems, frameNames, world, delta) }
-        renderNanos += timed { runAll(guardedInfrastructure, infrastructureNames, world, delta) }
+        gameNanos += timed { runAll(frameSystems, frameNames, world, simDelta, unscaledDelta) }
+        renderNanos += timed { runAll(guardedInfrastructure, infrastructureNames, world, simDelta, unscaledDelta) }
     }
 
-    private fun runAll(systems: List<System>, names: List<String>, world: World, delta: Float) {
-        for (index in systems.indices) observed(names[index]) { systems[index].update(world, delta) }
+    private fun runAll(systems: List<System>, names: List<String>, world: World, simDelta: Float, unscaledDelta: Float) {
+        for (index in systems.indices) {
+            val system = systems[index]
+            val step = if (system is UnscaledSystem) unscaledDelta else simDelta
+            observed(names[index]) { system.update(world, step) }
+        }
     }
 
     /** Runs [block] between [observer]'s marks for [name], or bare when none is installed. */

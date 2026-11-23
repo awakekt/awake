@@ -23,6 +23,10 @@ awake/project/cli/build/install/awake/bin/awake validate path/to/project
 | `awake scene remove-node <scene> <node>` | Removes a node and its children |
 | `awake scene add-component <scene> <node> <type> [fields-json]` | Adds a component, with the fields given set on it |
 | `awake scene remove-component <scene> <node> <type>` | Removes the node's component of that type |
+| `awake stage <scene>` | Inspects a scene's composed world-space entities, lights, cameras, rails, stage markers, and project audio/director/take assets on CPU |
+| `awake director validate <file> [--scene <scene>]` | Validates a `.director.json` script or `.reel.json` trailer reel against the project's scenes, rails, cameras, takes, and audio assets |
+| `awake storyboard <scene> --director <file> [--guides] [--output <png>]` | Renders a multi-shot storyboard contact sheet PNG (or single shot with `--shot <id> --at <0..1>`) plus quantitative framing/occlusion/luminance telemetry |
+| `awake capture [scene] --director <file> \| --reel <file> --output <path>` | Records a deterministic headless gameplay trailer (MP4/WebM/GIF or PNG sequence + sample-accurate mixed WAV) with `--preset`, `--take`, `--audio`, and `--hud` |
 | `awake render <scene> [--output <png>]` | Plays the scene headless and saves what its primary camera sees |
 | `awake bundle <index> --output <dir>` | Packs the files a loose project index lists into content bundles under `<dir>/bundles`, named by SHA-256, and writes the bundled index to `<dir>/project.index.json`: see [Content bundles](../../../website/docs/guides/content-bundles.md) |
 | `awake mcp` | Serves these commands to an AI agent over the Model Context Protocol, on stdin and stdout |
@@ -67,8 +71,10 @@ bindings where they can't be built.
 [Model Context Protocol](https://modelcontextprotocol.io) over stdio: Claude Code, Codex CLI, Gemini
 CLI, Cursor and others. The agent starts it and works on the project's files with no Studio running,
 so it suits a cloud agent or a CI job as well as a desktop. Its tools are `validate`, `list_scenes`,
-`show_scene`, `set_field`, `add_node`, `remove_node`, `add_component`, `remove_component` and `render`,
-which returns the picture as an image the agent sees. Edits take `dry_run`, and go through the same
+`show_scene`, `set_field`, `add_node`, `remove_node`, `add_component`, `remove_component`, `render`,
+`inspect_stage`, `validate_director`, `preview_storyboard`, `preview_shot`, and `capture_trailer`,
+where `render`, `preview_storyboard`, and `preview_shot` return PNG images directly alongside
+structured framing/occlusion telemetry. Edits take `dry_run`, and go through the same
 checks and minimal patch as the commands. Where the tools overlap with Studio's MCP server, they take
 the same names and the same `component.field` form.
 

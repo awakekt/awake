@@ -48,6 +48,20 @@ public abstract interface class com/awakekt/awake/core/camera/CameraObstruction 
 	public abstract fun clearFraction (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FI)F
 }
 
+public final class com/awakekt/awake/core/camera/CameraOptics {
+	public static final field FULL_FRAME_SENSOR_HEIGHT_MM F
+	public static final field INSTANCE Lcom/awakekt/awake/core/camera/CameraOptics;
+	public static final field MAX_FOV_Y_RADIANS F
+	public static final field MIN_FOV_Y_RADIANS F
+	public final fun cameraBasis (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun dollyZoomDistance (FFF)F
+	public final fun focalLengthMmToFovYRadians (FF)F
+	public static synthetic fun focalLengthMmToFovYRadians$default (Lcom/awakekt/awake/core/camera/CameraOptics;FFILjava/lang/Object;)F
+	public final fun fovYRadiansToFocalLengthMm (FF)F
+	public static synthetic fun fovYRadiansToFocalLengthMm$default (Lcom/awakekt/awake/core/camera/CameraOptics;FFILjava/lang/Object;)F
+	public final fun rolledUp (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
 public final class com/awakekt/awake/core/camera/CameraOrbitButtons : java/lang/Enum {
 	public static final field PrimaryOrSecondary Lcom/awakekt/awake/core/camera/CameraOrbitButtons;
 	public static final field SecondaryOnly Lcom/awakekt/awake/core/camera/CameraOrbitButtons;
