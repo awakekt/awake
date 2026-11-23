@@ -49,6 +49,8 @@ data class LoadedPrimitive(
     val alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
     /** Whether the primitive's glTF material disables back-face culling (`false` per glTF 2.0 when omitted). */
     val doubleSided: Boolean = false,
+    /** Authored per-vertex glTF `NORMAL` vectors (3 floats per vertex), or null when omitted. */
+    val normals: FloatArray? = null,
 ) {
     /** [LoadedPrimitive] before [doubleSided]: hidden, kept for binary compatibility. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -80,6 +82,43 @@ data class LoadedPrimitive(
         roughnessFactor,
         emissiveFactor,
         alphaMode,
+        doubleSided = false,
+        normals = null,
+    )
+
+    /** [LoadedPrimitive] before [normals]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        vertices: FloatArray,
+        indices: IntArray,
+        localTransform: Mat4,
+        baseColorImageBytes: ByteArray? = null,
+        metallicRoughnessImageBytes: ByteArray? = null,
+        normalImageBytes: ByteArray? = null,
+        occlusionImageBytes: ByteArray? = null,
+        emissiveImageBytes: ByteArray? = null,
+        baseColorFactor: FloatArray = floatArrayOf(1f, 1f, 1f, 1f),
+        metallicFactor: Float = 1f,
+        roughnessFactor: Float = 1f,
+        emissiveFactor: FloatArray = floatArrayOf(0f, 0f, 0f),
+        alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
+        doubleSided: Boolean = false,
+    ) : this(
+        vertices,
+        indices,
+        localTransform,
+        baseColorImageBytes,
+        metallicRoughnessImageBytes,
+        normalImageBytes,
+        occlusionImageBytes,
+        emissiveImageBytes,
+        baseColorFactor,
+        metallicFactor,
+        roughnessFactor,
+        emissiveFactor,
+        alphaMode,
+        doubleSided,
+        normals = null,
     )
 
     /** [copy] before [doubleSided]: hidden, kept for binary compatibility. */
@@ -113,6 +152,42 @@ data class LoadedPrimitive(
         emissiveFactor,
         alphaMode,
         this.doubleSided,
+        this.normals,
+    )
+
+    /** [copy] before [normals]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        vertices: FloatArray = this.vertices,
+        indices: IntArray = this.indices,
+        localTransform: Mat4 = this.localTransform,
+        baseColorImageBytes: ByteArray? = this.baseColorImageBytes,
+        metallicRoughnessImageBytes: ByteArray? = this.metallicRoughnessImageBytes,
+        normalImageBytes: ByteArray? = this.normalImageBytes,
+        occlusionImageBytes: ByteArray? = this.occlusionImageBytes,
+        emissiveImageBytes: ByteArray? = this.emissiveImageBytes,
+        baseColorFactor: FloatArray = this.baseColorFactor,
+        metallicFactor: Float = this.metallicFactor,
+        roughnessFactor: Float = this.roughnessFactor,
+        emissiveFactor: FloatArray = this.emissiveFactor,
+        alphaMode: GltfAlphaMode = this.alphaMode,
+        doubleSided: Boolean = this.doubleSided,
+    ): LoadedPrimitive = copy(
+        vertices,
+        indices,
+        localTransform,
+        baseColorImageBytes,
+        metallicRoughnessImageBytes,
+        normalImageBytes,
+        occlusionImageBytes,
+        emissiveImageBytes,
+        baseColorFactor,
+        metallicFactor,
+        roughnessFactor,
+        emissiveFactor,
+        alphaMode,
+        doubleSided,
+        this.normals,
     )
 }
 

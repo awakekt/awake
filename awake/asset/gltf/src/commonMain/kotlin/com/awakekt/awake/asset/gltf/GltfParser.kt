@@ -321,4 +321,5 @@ private fun GltfMesh.placedAt(world: Mat4): LoadedPrimitive = LoadedPrimitive(
     emissiveFactor,
     alphaMode,
     doubleSided,
+    normals,
 )
