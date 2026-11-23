@@ -30,6 +30,7 @@ import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -77,6 +78,7 @@ class RenderSystemTest {
         var lastViewport: RenderViewport? = null
         var lastPostPassChain: ImagePassChain = ImagePassChain.Empty
         override var antiAliasing: AntiAliasing = AntiAliasing.Off
+        override var effectQuality: EffectQuality = EffectQuality.High
 
         override val gpuDrawPreparer = GpuDrawPreparer { command, sourceIndex, _ ->
             if (sourceIndex == 0) lastDrawCalls = emptyList()

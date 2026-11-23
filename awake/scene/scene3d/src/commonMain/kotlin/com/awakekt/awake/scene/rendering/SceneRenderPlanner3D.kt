@@ -170,7 +170,8 @@ internal class SceneRenderPlanner3D(
     ): com.awakekt.awake.render.imagepass.ImagePassChain {
         val postProcessing = cameraEntity?.let { world.get<com.awakekt.awake.scene.rendering.postprocessing.PostProcessing>(it) }
         val cameraEffects = postProcessing?.takeIf { it.enabled }?.effects.orEmpty()
-        val postEffects = effectsForAntiAliasing(cameraEffects, antiAliasing(), effectQuality())
+        val quality = effectQuality()
+        val postEffects = effectsForAntiAliasing(cameraEffects, antiAliasing(), quality)
         val hasDimensions = targetWidth > 0 && targetHeight > 0
         return if (postEffects.isNotEmpty() && hasDimensions) {
             com.awakekt.awake.render.effects.PostProcessingStack.buildChain(
@@ -182,6 +183,7 @@ internal class SceneRenderPlanner3D(
                     // Every lit shader applies exposure, the tone curve and the encode itself, so
                     // the camera's colour is display-ready; ScenePostProcessing.validate relies on it.
                     colorEncoding = com.awakekt.awake.render.imagepass.ImagePassColorEncoding.DisplayReferred,
+                    effectQuality = quality,
                 ),
             )
         } else {

@@ -206,7 +206,7 @@ private fun AslBlockBuilder.samplePagedLight(pages: TerrainPageSampling, image: 
     val fraction = let("lightFraction", texel - base)
     val taps = List(4) { tap ->
         val knot = clamp(base + vec2((tap % 2).toFloat().lit, (tap / 2).toFloat().lit), vec2(0f.lit, 0f.lit), limit - vec2(1f.lit, 1f.lit))
-        let("lightTap$tap", pages.sample(image, fallback, (knot + vec2(0.5f.lit, 0.5f.lit)) / pageSize * pages.grid.z, endpoints = false, coarseLinear = true))
+        let("lightTap$tap", pages.sampleIn(this, "lightTap$tap", image, fallback, (knot + vec2(0.5f.lit, 0.5f.lit)) / pageSize * pages.grid.z, endpoints = false, coarseLinear = true))
     }
     return mix(mix(taps[0], taps[1], fraction.x), mix(taps[2], taps[3], fraction.x), fraction.y)
 }
@@ -280,8 +280,13 @@ private fun AslBlockBuilder.mergeControlTaps(
         for (part in 0 until texelsPerControl) {
             val u = let("tap${tap}U$part", (column + (part + 0.5f).lit) / textureWidth)
             val relative = if (pages == null) null else vec2((column / texelsPerControl.toFloat().lit + 0.5f.lit) / pageWidth * pages.grid.z, v * sizeZ / pageDepth * pages.grid.z)
-            val layers = let("tap${tap}Layers$part", if (pages != null && relative != null) pages.sample(indices, requireNotNull(fallbackIndices), relative, false, texelsPerControl, part) else textureSampleLevel(indices, sampler, vec2(u, v), 0f.lit))
-            val shares = let("tap${tap}Shares$part", if (pages != null && relative != null) pages.sample(weights, requireNotNull(fallbackWeights), relative, false, texelsPerControl, part) else textureSampleLevel(weights, sampler, vec2(u, v), 0f.lit))
+            val (layersExpr, sharesExpr) = if (pages != null && relative != null) {
+                pages.samplePairIn(this, "tap${tap}Control$part", indices, requireNotNull(fallbackIndices), weights, requireNotNull(fallbackWeights), relative, texelsPerControl, part)
+            } else {
+                textureSampleLevel(indices, sampler, vec2(u, v), 0f.lit) to textureSampleLevel(weights, sampler, vec2(u, v), 0f.lit)
+            }
+            val layers = let("tap${tap}Layers$part", layersExpr)
+            val shares = let("tap${tap}Shares$part", sharesExpr)
             listOf(layers.x to shares.x, layers.y to shares.y, layers.z to shares.z, layers.w to shares.w)
                 .forEachIndexed { channel, (layerChannel, shareChannel) ->
                     val slot = part * CONTROL_SLOTS + channel
