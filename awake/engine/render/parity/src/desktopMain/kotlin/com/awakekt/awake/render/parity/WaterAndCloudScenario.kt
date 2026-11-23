@@ -288,7 +288,6 @@ fun renderStylizedWaterWithRockScene(
     timeSeconds: Float = 1.2f,
     size: Int = SCENE_SIZE,
     attachDynamically: Boolean = false,
-    includeTransparentOverlay: Boolean = false,
 ): ByteArray {
     val look = StylizedWaterLook(
         enabled = true,
@@ -319,7 +318,7 @@ fun renderStylizedWaterWithRockScene(
             null
         }
         try {
-            renderDepthWaterFrame(r, size, includeTransparentOverlay)
+            renderDepthWaterFrame(r, size)
         } finally {
             r.waitIdle()
             attached?.detach()
@@ -327,19 +326,13 @@ fun renderStylizedWaterWithRockScene(
     }
 }
 
-private fun renderDepthWaterFrame(r: Renderer, size: Int, includeTransparentOverlay: Boolean): ByteArray {
+private fun renderDepthWaterFrame(r: Renderer, size: Int): ByteArray {
     val target = r.createRenderTarget(size, size)
     val rockMesh = r.createMesh(rockAndRiverbedGeometry())
     val rockMaterial = r.createMaterial(LitShadowUniformLayout)
-    val overlayMesh = if (includeTransparentOverlay) r.createMesh(transparentOverlayGeometry()) else null
     try {
         val lens = Lens(eye = Vec3f(0f, 6.2f, 12.5f), center = Vec3f(0f, 0f, -1.5f), fovYRadians = 0.85f, near = 0.2f, far = 150f)
-        val draws = buildList {
-            add(RenderDrawCommand(mesh = rockMesh, material = rockMaterial, model = Mat4()))
-            if (overlayMesh != null) {
-                add(RenderDrawCommand(mesh = overlayMesh, material = rockMaterial, model = Mat4(), transparent = true))
-            }
-        }
+        val draws = listOf(RenderDrawCommand(mesh = rockMesh, material = rockMaterial, model = Mat4()))
         r.renderToTexture(
             target,
             ScenePassCompiler.compile(
@@ -364,30 +357,10 @@ private fun renderDepthWaterFrame(r: Renderer, size: Int, includeTransparentOver
         return runBlocking { r.readPixels(target) }.data
     } finally {
         r.waitIdle()
-        overlayMesh?.destroy()
         rockMesh.destroy()
         rockMaterial.destroy()
         target.destroy()
     }
-}
-
-/** Alpha-zero transparent sheet coplanar with the water surface (`y = 0`) to prove `SceneDepth` ignores transparent draws. */
-private fun transparentOverlayGeometry(): MeshGeometry {
-    val verts = InterleavedVertices(VertexFormat.PositionNormalColor, 4)
-    val half = 24f
-    val corners = arrayOf(
-        floatArrayOf(-half, 0f, -half),
-        floatArrayOf(half, 0f, -half),
-        floatArrayOf(half, 0f, half),
-        floatArrayOf(-half, 0f, half),
-    )
-    for (i in corners.indices) {
-        val c = corners[i]
-        verts.put(i, VertexSemantic.Position, c[0], c[1], c[2])
-        verts.put(i, VertexSemantic.Normal, 0f, 1f, 0f)
-        verts.put(i, VertexSemantic.Color, 0f, 0f, 0f)
-    }
-    return verts.build(intArrayOf(0, 2, 1, 0, 3, 2))
 }
 
 /** Appends stylized water and cloud-layer frames to the PR render evidence gallery. */

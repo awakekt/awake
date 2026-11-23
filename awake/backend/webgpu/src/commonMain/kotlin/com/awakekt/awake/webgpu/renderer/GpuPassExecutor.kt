@@ -9,6 +9,7 @@ import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.command.allDraws
 import com.awakekt.awake.render.command.drawsForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.recordPassFeatures
@@ -61,7 +62,7 @@ internal class RendererGpuPassExecutor(
             stages.next(RenderDrawStage.Upload, RenderDrawStage.Record)
             val colorTexture = renderingContext.getCurrentTexture()
             val colorView = colorTexture.createView()
-            recordDepthPasses(encoder, input, view = swapchainManager)
+            recordDepthPasses(encoder, input, sorted, view = swapchainManager)
             val output = com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget(
                 colorTexture = colorTexture,
                 colorView = colorView,
@@ -129,7 +130,7 @@ internal class RendererGpuPassExecutor(
             0,
             com.awakekt.awake.webgpu.texture.TextureUploads(renderer.graphicsDevice),
         )
-        recordDepthPasses(encoder, input, view = offscreen)
+        recordDepthPasses(encoder, input, sorted, view = offscreen)
         recordScene(encoder, offscreen.attachment(), input, sorted, primary)
         recordPostPasses(encoder, input.postPasses)
         renderer.submitRenderCommands(encoder)
@@ -138,14 +139,13 @@ internal class RendererGpuPassExecutor(
     private fun recordDepthPasses(
         encoder: io.ygdrasil.webgpu.GPUCommandEncoder,
         input: GpuPassInput,
+        sorted: com.awakekt.awake.render.command.SortedDraws<out PreparedDraw>,
         view: Any,
     ) {
         renderer.depthPrePass?.recordCommands(encoder, input.prePasses, input.environment, view)
-        // SceneDepth holds opaque (and alpha-tested masked) geometry only; alpha-blended transparent
-        // draws do not write scene depth and must not occlude water contact foam or depth fog reads.
         renderer.sceneDepthPass?.recordCommands(
             encoder,
-            input.resolvedOpaqueDraws,
+            sorted.allDraws,
             GpuShadowCascadeData(
                 viewProjections = listOf(input.viewProjection),
                 splitDistances = floatArrayOf(Float.MAX_VALUE),

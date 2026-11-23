@@ -132,9 +132,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
 
 private fun Renderer.prepareDepthDraws(input: GpuPassInput): List<PreparedDraw> {
     if (input.prePasses.isEmpty() && sceneDepthTarget == null) return emptyList()
-    // SceneDepth holds opaque (and alpha-tested masked) geometry only; alpha-blended transparent
-    // draws do not write scene depth and must not occlude water contact foam or depth fog reads.
-    return input.resolvedOpaqueDraws
+    return input.resolvedDraws
 }
 
 /**
