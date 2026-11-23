@@ -316,7 +316,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
                 val ambient = let("ambient", albedo * ambientShare * occlusion)
                 val envRefl = let(
                     "envReflection",
-                    environmentReflection(n, v, l, lightColor, f0, metallic, roughness, emissiveFactor.w, occlusion),
+                    environmentReflection(n, v, l, lightColor, albedo, f0, metallic, roughness, emissiveFactor.w, occlusion),
                 )
                 val litColor = variable("lit", ambient + (diffuse + specular) * radiance + envRefl + emissive)
                 // Point lights: unrolled over fixed slots; a disabled slot is one compare.
