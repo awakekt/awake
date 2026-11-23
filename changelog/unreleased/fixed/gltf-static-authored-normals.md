@@ -1,1 +1,0 @@
-- Preserve authored glTF `NORMAL` attributes in `LoadedPrimitive` and `toStaticGeometry` (transforming them by the inverse-transpose of the node transform instead of discarding them and recomputing flat per-triangle face normals on unshared vertices).

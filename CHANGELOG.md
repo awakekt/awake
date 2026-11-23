@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.67.2] - 2026-11-23
+
+### Added
+
+- Added procedural, zero-texture `stylizedWaterContentFeature` (`StylizedWaterShader`, `StylizedWaterLook`, `StylizedWaterQuality.Fast` / `Standard`) and single-pass `cloudLayerContentFeature` (`CloudLayerShader`, `CloudLayerLook`, `CloudLayerQuality.Fast` / `Standard`) in `:awake:asset:shader-pack` with uniform tier switching, analytic Fresnel sky reflection, sun sparkle, dual-layer parallax clouds, smooth horizon fade, and automatic day/night lighting on both Vulkan and WebGPU.
+
+### Fixed
+
+- Preserve authored glTF `NORMAL` attributes in `LoadedPrimitive` and `toStaticGeometry` (transforming them by the inverse-transpose of the node transform instead of discarding them and recomputing flat per-triangle face normals on unshared vertices).
+
 ## [0.67.1] - 2026-11-23
 
 ### Changed
