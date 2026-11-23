@@ -10,9 +10,8 @@ import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -58,8 +57,9 @@ class AlphaInstanceBuffer(
      * capacity.
      */
     fun update(colors: List<Vec4>) {
-        val floats = packer.pack(colors, maxInstances) ?: return
-        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+        val count = packer.packSlice(colors, maxInstances)
+        if (count == 0) return
+        graphicsDevice.wgpuContext.device.queue.writeBufferFloats(buffer, 0uL, packer.buffer, count)
         holdsWhite = false
     }
 
@@ -70,7 +70,7 @@ class AlphaInstanceBuffer(
     fun fillWhite() {
         if (holdsWhite) return
         val white = FloatArray(maxInstances * FLOATS_PER_INSTANCE) { 1f }
-        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(white))
+        graphicsDevice.wgpuContext.device.queue.writeBufferFloats(buffer, 0uL, white)
         holdsWhite = true
     }
 

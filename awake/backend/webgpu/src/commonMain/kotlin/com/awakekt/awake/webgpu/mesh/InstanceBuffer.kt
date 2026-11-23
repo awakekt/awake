@@ -11,11 +11,10 @@ import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
 import com.awakekt.awake.webgpu.renderer.GpuBufferCreations
 import com.awakekt.awake.webgpu.renderer.sameBitsAs
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -48,6 +47,7 @@ class InstanceBuffer(
 
     /** What [buffer] holds, as [update] last wrote it, or null when it holds nothing yet. */
     private var resident: FloatArray? = null
+    private var residentCount = 0
 
     /** Packs [models] into this buffer. `Mat4.data` is already column-major, which is the order
      * `instanced.wgsl`'s 4 `vec4` attributes reassemble into a `mat4x4` -- a straight copy, no
@@ -78,7 +78,9 @@ class InstanceBuffer(
      */
 
     fun update(models: List<Mat4>) {
-        val floats = packer.pack(models, maxInstances) ?: return
+        val count = packer.packSlice(models, maxInstances)
+        if (count == 0) return
+        val floats = packer.buffer
         if (models.size > capacity) {
             while (capacity < models.size) capacity *= 2
             capacity = capacity.coerceAtMost(maxInstances)
@@ -86,13 +88,16 @@ class InstanceBuffer(
             buffer.close()
             buffer = createBuffer(capacity)
             binding = WebGpuBufferHandle(buffer)
-            resident = null
+            residentCount = 0
         }
         // Copies of a static prop hold still frame after frame: the buffer already has them (#1452).
-        if (resident?.sameBitsAs(floats) == true) return
-        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+        val cached = resident
+        if (cached != null && residentCount == count && cached.sameBitsAs(floats, count)) return
+        graphicsDevice.wgpuContext.device.queue.writeBufferFloats(buffer, 0uL, floats, count)
         uploads += 1
-        resident = resident?.takeIf { it.size == floats.size }?.let { floats.copyInto(it) } ?: floats.copyOf()
+        val target = if (cached != null && cached.size >= count) cached else FloatArray(count).also { resident = it }
+        floats.copyInto(target, 0, 0, count)
+        residentCount = count
     }
 
     /**

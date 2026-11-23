@@ -132,7 +132,7 @@ class SceneSchedule internal constructor(
         }
         val transformIndex = infrastructureSystems.indexOfFirst { it is TransformSystem }
         preFrameTransform = when {
-            transformIndex >= 0 -> guardedInfrastructure[transformIndex]
+            transformIndex >= 0 -> if (frameSystems.isNotEmpty()) guardedInfrastructure[transformIndex] else null
             preAnimationSystems.isNotEmpty() -> TransformSystem().guardedFor(runtime)
             else -> null
         }

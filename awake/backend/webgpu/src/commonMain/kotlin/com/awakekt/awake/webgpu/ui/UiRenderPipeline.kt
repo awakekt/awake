@@ -23,7 +23,7 @@ import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BlendComponent
@@ -389,7 +389,7 @@ private val NO_FONT_INFO = Vec4(0f, 0f, 0f, 0f)
  * on every side than Vulkan's. Writing both halves together removes the whole class of question.
  */
 private fun GPUDevice.writeUiUniforms(buffer: GPUBuffer, screenToNdc: Vec4, fontInfo: Vec4) {
-    queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(uiUniformFloats(screenToNdc, fontInfo)))
+    queue.writeBufferFloats(buffer, 0uL, uiUniformFloats(screenToNdc, fontInfo))
 }
 
 /** A buffer sized for one UI uniform block. */

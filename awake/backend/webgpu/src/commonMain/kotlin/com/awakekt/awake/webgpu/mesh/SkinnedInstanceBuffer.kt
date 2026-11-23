@@ -15,12 +15,12 @@ import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.SkinnedInstanceLayout
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.renderer.sameBitsAs
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferBinding
@@ -58,10 +58,37 @@ class SkinnedInstanceBuffer(
         ),
     )
 
+    private class ResidentFloatSlice {
+        private var cached: FloatArray? = null
+        private var count = 0
+
+        fun matches(floats: FloatArray, floatCount: Int): Boolean {
+            val held = cached
+            return held != null && count == floatCount && held.sameBitsAs(floats, floatCount)
+        }
+
+        fun record(floats: FloatArray, floatCount: Int) {
+            val held = cached
+            val target = if (held != null && held.size >= floatCount) {
+                held
+            } else {
+                FloatArray(floatCount).also { cached = it }
+            }
+            floats.copyInto(target, 0, 0, floatCount)
+            count = floatCount
+        }
+    }
+
     // Cached per pipeline object for the same reason Renderer's uniform bind groups are: an
     // "auto"-layout bind group is only valid against the exact pipeline layout it came from.
     private var bindGroup: GPUBindGroup? = null
     private var bindGroupPipeline: GPURenderPipeline? = null
+    private val residentPalettes = ResidentFloatSlice()
+    private val residentTints = ResidentFloatSlice()
+
+    /** Palette and tint buffer uploads made, for tests: unchanged static/idle skeletons skip upload. */
+    internal var uploads = 0L
+        private set
 
     // Reused across frames so a steady instance count allocates nothing per frame.
 
@@ -91,10 +118,23 @@ class SkinnedInstanceBuffer(
 
     /** Uploads index-aligned tints, defaulting to white when omitted. */
     fun update(palettes: List<FloatArray>, colors: List<Vec4>?) {
-        val tints = tintPacker.pack(colors, palettes.size, maxInstances) ?: return
-        val floats = packer.pack(palettes, maxInstances) ?: return
-        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
-        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, paletteByteSize, fastArrayBufferOf(tints))
+        val tintCount = tintPacker.packSlice(colors, palettes.size, maxInstances)
+        val paletteCount = packer.packSlice(palettes, maxInstances)
+        if (tintCount == 0 || paletteCount == 0) return
+        uploadSliceIfChanged(0uL, packer.buffer, paletteCount, residentPalettes)
+        uploadSliceIfChanged(paletteByteSize, tintPacker.buffer, tintCount, residentTints)
+    }
+
+    private fun uploadSliceIfChanged(
+        offset: ULong,
+        floats: FloatArray,
+        count: Int,
+        resident: ResidentFloatSlice,
+    ) {
+        if (resident.matches(floats, count)) return
+        graphicsDevice.wgpuContext.device.queue.writeBufferFloats(buffer, offset, floats, count)
+        uploads += 1
+        resident.record(floats, count)
     }
 
     /**

@@ -9,12 +9,11 @@ import com.awakekt.awake.render.passes2d.UiTargetCompositeUniformLayout
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferInts
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferBinding
@@ -52,7 +51,7 @@ internal class UiTargetCompositePipeline(
         private set
 
     init {
-        device.queue.writeBufferData(modeBuffer, 0uL, fastArrayBufferOf(intArrayOf(mode.ordinal)))
+        device.queue.writeBufferInts(modeBuffer, 0uL, intArrayOf(mode.ordinal))
         pipeline = buildPipeline(shaderCode.decodeToString(), vertexEntryPoint = "vertexMain", fragmentEntryPoint = "fragmentMain")
     }
 

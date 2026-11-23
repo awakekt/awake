@@ -32,54 +32,47 @@ VkSubmitInfoAccessor::getpNext(VkSubmitInfo &clazzInfo) {
 
 void
 VkSubmitInfoAccessor::getpSignalSemaphores(VkSubmitInfo &clazzInfo) {
+    signalSemaphoresStorage.clear();
     auto pSignalSemaphoresArray = (jobjectArray) env->GetObjectField(obj, pSignalSemaphoresField);
     if (pSignalSemaphoresArray == nullptr) {
         clazzInfo.signalSemaphoreCount = 0;
         clazzInfo.pSignalSemaphores = nullptr;
-        env->DeleteLocalRef(pSignalSemaphoresArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pSignalSemaphoresArray);
-    // vkhandle array?
-    std::vector<VkSemaphore> pSignalSemaphores;
-    for (int i = 0; i < size; ++i) {
-        auto element = env->GetObjectArrayElement(pSignalSemaphoresArray, i);
-        jmethodID getValueMethod = env->GetMethodID(env->GetObjectClass(element), "longValue",
-                                                    "()J");
-        jlong value = env->CallLongMethod(element, getValueMethod);
-        pSignalSemaphores.push_back(reinterpret_cast<VkSemaphore>(value)); //vkhandle
-        env->DeleteLocalRef(element); // release element reference
+    if (size > 0) {
+        signalSemaphoresStorage.reserve(static_cast<size_t>(size));
+        jclass longClass = env->FindClass("java/lang/Long");
+        jmethodID getValueMethod = env->GetMethodID(longClass, "longValue", "()J");
+        for (int i = 0; i < size; ++i) {
+            auto element = env->GetObjectArrayElement(pSignalSemaphoresArray, i);
+            jlong value = env->CallLongMethod(element, getValueMethod);
+            signalSemaphoresStorage.push_back(reinterpret_cast<VkSemaphore>(value));
+            env->DeleteLocalRef(element);
+        }
+        env->DeleteLocalRef(longClass);
     }
-    // processing array data
-    auto signalSemaphoreCount = static_cast<uint32_t>(pSignalSemaphores.size());
-    clazzInfo.signalSemaphoreCount = signalSemaphoreCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSemaphore[size];
-    std::copy(pSignalSemaphores.begin(), pSignalSemaphores.end(), copy);
-    clazzInfo.pSignalSemaphores = copy;
-    env->DeleteLocalRef(pSignalSemaphoresArray); // release reference
+    clazzInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphoresStorage.size());
+    clazzInfo.pSignalSemaphores = signalSemaphoresStorage.empty() ? nullptr : signalSemaphoresStorage.data();
+    env->DeleteLocalRef(pSignalSemaphoresArray);
 }
 
 void
 VkSubmitInfoAccessor::getpWaitDstStageMask(VkSubmitInfo &clazzInfo) {
+    waitDstStageMaskStorage.clear();
     auto pWaitDstStageMaskArray = (jintArray) env->GetObjectField(obj, pWaitDstStageMaskField);
     if (pWaitDstStageMaskArray == nullptr) {
         clazzInfo.pWaitDstStageMask = nullptr;
-        env->DeleteLocalRef(pWaitDstStageMaskArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pWaitDstStageMaskArray);
-    // primitive array?
-    std::vector<uint32_t> pWaitDstStageMask(size);
-    env->GetIntArrayRegion(pWaitDstStageMaskArray, 0, size,
-                           reinterpret_cast<jint *>(pWaitDstStageMask.data()));
-    // processing array data
-    // Make a copy of the primitive to ensure proper memory management;
-    auto copy = new uint32_t[size];
-    std::copy(pWaitDstStageMask.begin(), pWaitDstStageMask.end(), copy);
-    clazzInfo.pWaitDstStageMask = copy;
-    env->DeleteLocalRef(pWaitDstStageMaskArray); // release reference
+    if (size > 0) {
+        waitDstStageMaskStorage.resize(static_cast<size_t>(size));
+        env->GetIntArrayRegion(pWaitDstStageMaskArray, 0, size,
+                               reinterpret_cast<jint *>(waitDstStageMaskStorage.data()));
+    }
+    clazzInfo.pWaitDstStageMask = waitDstStageMaskStorage.empty() ? nullptr : waitDstStageMaskStorage.data();
+    env->DeleteLocalRef(pWaitDstStageMaskArray);
 }
 
 void
@@ -94,64 +87,56 @@ VkSubmitInfoAccessor::fromObject(VkSubmitInfo &clazzInfo) {
 
 void
 VkSubmitInfoAccessor::getpCommandBuffers(VkSubmitInfo &clazzInfo) {
+    commandBuffersStorage.clear();
     auto pCommandBuffersArray = (jobjectArray) env->GetObjectField(obj, pCommandBuffersField);
     if (pCommandBuffersArray == nullptr) {
         clazzInfo.commandBufferCount = 0;
         clazzInfo.pCommandBuffers = nullptr;
-        env->DeleteLocalRef(pCommandBuffersArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pCommandBuffersArray);
-    // vkhandle array?
-    std::vector<VkCommandBuffer> pCommandBuffers;
-    for (int i = 0; i < size; ++i) {
-        auto element = env->GetObjectArrayElement(pCommandBuffersArray, i);
-        jmethodID getValueMethod = env->GetMethodID(env->GetObjectClass(element), "longValue",
-                                                    "()J");
-        jlong value = env->CallLongMethod(element, getValueMethod);
-        pCommandBuffers.push_back(reinterpret_cast<VkCommandBuffer>(value)); //vkhandle
-        env->DeleteLocalRef(element); // release element reference
+    if (size > 0) {
+        commandBuffersStorage.reserve(static_cast<size_t>(size));
+        jclass longClass = env->FindClass("java/lang/Long");
+        jmethodID getValueMethod = env->GetMethodID(longClass, "longValue", "()J");
+        for (int i = 0; i < size; ++i) {
+            auto element = env->GetObjectArrayElement(pCommandBuffersArray, i);
+            jlong value = env->CallLongMethod(element, getValueMethod);
+            commandBuffersStorage.push_back(reinterpret_cast<VkCommandBuffer>(value));
+            env->DeleteLocalRef(element);
+        }
+        env->DeleteLocalRef(longClass);
     }
-    // processing array data
-    auto commandBufferCount = static_cast<uint32_t>(pCommandBuffers.size());
-    clazzInfo.commandBufferCount = commandBufferCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkCommandBuffer[size];
-    std::copy(pCommandBuffers.begin(), pCommandBuffers.end(), copy);
-    clazzInfo.pCommandBuffers = copy;
-    env->DeleteLocalRef(pCommandBuffersArray); // release reference
+    clazzInfo.commandBufferCount = static_cast<uint32_t>(commandBuffersStorage.size());
+    clazzInfo.pCommandBuffers = commandBuffersStorage.empty() ? nullptr : commandBuffersStorage.data();
+    env->DeleteLocalRef(pCommandBuffersArray);
 }
 
 void
 VkSubmitInfoAccessor::getpWaitSemaphores(VkSubmitInfo &clazzInfo) {
+    waitSemaphoresStorage.clear();
     auto pWaitSemaphoresArray = (jobjectArray) env->GetObjectField(obj, pWaitSemaphoresField);
     if (pWaitSemaphoresArray == nullptr) {
         clazzInfo.waitSemaphoreCount = 0;
         clazzInfo.pWaitSemaphores = nullptr;
-        env->DeleteLocalRef(pWaitSemaphoresArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pWaitSemaphoresArray);
-    // vkhandle array?
-    std::vector<VkSemaphore> pWaitSemaphores;
-    for (int i = 0; i < size; ++i) {
-        auto element = env->GetObjectArrayElement(pWaitSemaphoresArray, i);
-        jmethodID getValueMethod = env->GetMethodID(env->GetObjectClass(element), "longValue",
-                                                    "()J");
-        jlong value = env->CallLongMethod(element, getValueMethod);
-        pWaitSemaphores.push_back(reinterpret_cast<VkSemaphore>(value)); //vkhandle
-        env->DeleteLocalRef(element); // release element reference
+    if (size > 0) {
+        waitSemaphoresStorage.reserve(static_cast<size_t>(size));
+        jclass longClass = env->FindClass("java/lang/Long");
+        jmethodID getValueMethod = env->GetMethodID(longClass, "longValue", "()J");
+        for (int i = 0; i < size; ++i) {
+            auto element = env->GetObjectArrayElement(pWaitSemaphoresArray, i);
+            jlong value = env->CallLongMethod(element, getValueMethod);
+            waitSemaphoresStorage.push_back(reinterpret_cast<VkSemaphore>(value));
+            env->DeleteLocalRef(element);
+        }
+        env->DeleteLocalRef(longClass);
     }
-    // processing array data
-    auto waitSemaphoreCount = static_cast<uint32_t>(pWaitSemaphores.size());
-    clazzInfo.waitSemaphoreCount = waitSemaphoreCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSemaphore[size];
-    std::copy(pWaitSemaphores.begin(), pWaitSemaphores.end(), copy);
-    clazzInfo.pWaitSemaphores = copy;
-    env->DeleteLocalRef(pWaitSemaphoresArray); // release reference
+    clazzInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphoresStorage.size());
+    clazzInfo.pWaitSemaphores = waitSemaphoresStorage.empty() ? nullptr : waitSemaphoresStorage.data();
+    env->DeleteLocalRef(pWaitSemaphoresArray);
 }
 
 VkSubmitInfoAccessor::~VkSubmitInfoAccessor() {

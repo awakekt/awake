@@ -17,6 +17,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
+import com.awakekt.awake.scene.runtime.schedule.SceneSystemObserver
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -199,6 +200,52 @@ class ScenePreAnimationScheduleTest {
         assertEquals(1, brokenCalls, "the failing pre-animation system is skipped on later frames")
         assertEquals(3, siblingCalls)
         assertEquals(listOf(2f, 4f, 6f), frameSeenX)
+    }
+
+    @Test
+    fun emptyFrameSystemsSkipsRedundantPreFrameTransformWhenInfrastructureRunsTransformSystem() = runTest {
+        val actorTransform = Transform()
+        var infrastructureSeenX = -1f
+        val runs = mutableListOf<String>()
+        val builder = AppSpecBuilder()
+        val runtime = SceneAppSpec(
+            sceneName = "pre-animation-no-frame",
+            systems = listOf(
+                registration("pose", SceneSystemPhase.PreAnimation) {
+                    system { _, delta -> if (delta > 0f) actorTransform.position.x = 7f }
+                },
+            ),
+            scenePopulationBlock = { world.add(world.create(), actorTransform) },
+            renderableFactory = { error("unused") },
+            assetLibraryFactory = null,
+            updateBlock = { _, _ -> },
+            ui = null,
+            onReadyBlock = {},
+            onDisposeBlock = {},
+            serviceRegistrations = emptyList(),
+            infrastructureSystemsFactory = {
+                listOf(
+                    TransformSystem(),
+                    system { _, _ -> infrastructureSeenX = actorTransform.worldMatrix.m03 },
+                )
+            },
+        ).installInto(builder)
+        val app = builder.build().createLifecycle().also { it.ready(NoopRenderer()) }
+        runtime.systemObserver = object : SceneSystemObserver {
+            override fun before(name: String) {
+                runs += name
+            }
+            override fun after(name: String) = Unit
+        }
+
+        app.update(STEP, WIDTH, HEIGHT)
+
+        assertEquals(
+            listOf(SceneSystemObserver.APP_UPDATE, "pose", "infrastructure:TransformSystem", "infrastructure:1"),
+            runs.map { if (it.startsWith("infrastructure:") && it != "infrastructure:TransformSystem" && it != "infrastructure:pre-frame transforms") "infrastructure:1" else it },
+            "pre-frame transforms are skipped when no frame systems sit between pre-animation and infrastructure",
+        )
+        assertEquals(7f, infrastructureSeenX, "infrastructure still sees world matrices updated after pre-animation")
     }
 
     private fun fixedProbe(actorTransform: Transform, events: MutableList<String>): InterpolatedSystem =

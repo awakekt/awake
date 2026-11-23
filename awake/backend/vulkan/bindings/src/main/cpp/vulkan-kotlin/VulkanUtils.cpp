@@ -6,6 +6,7 @@
 #include <includes/VulkanUtils.h>
 
 #include <atomic>
+#include <deque>
 
 namespace awake {
 jobjectArray
@@ -116,7 +117,8 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         auto commandBuffer = reinterpret_cast<VkCommandBuffer>(arg0);
         // object accessor?
         VkRenderPassBeginInfo info{};
-        VkRenderPassBeginInfoAccessor(env, arg1).fromObject(info);
+        VkRenderPassBeginInfoAccessor accessor(env, arg1);
+        accessor.fromObject(info);
         // enum
         auto vkarg2 = enum_utils::getEnumFromObject(env, arg2);
         // process cmd??
@@ -274,7 +276,8 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         auto queue = reinterpret_cast<VkQueue>(arg0);
         // object accessor?
         VkPresentInfoKHR info{};
-        VkPresentInfoKHRAccessor(env, arg1).fromObject(info);
+        VkPresentInfoKHRAccessor accessor(env, arg1);
+        accessor.fromObject(info);
         // process default??
         VkResult result = vkQueuePresentKHR(queue, &info);
         if (result != VK_SUCCESS) {
@@ -298,7 +301,8 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
     queuePresentKHRStatus(JNIEnv *env, jlong arg0, jobject arg1) {
         auto queue = reinterpret_cast<VkQueue>(arg0);
         VkPresentInfoKHR info{};
-        VkPresentInfoKHRAccessor(env, arg1).fromObject(info);
+        VkPresentInfoKHRAccessor accessor(env, arg1);
+        accessor.fromObject(info);
         PresentHook hook = presentHook.load(std::memory_order_acquire);
         VkResult result = hook != nullptr ? hook(queue, &info) : vkQueuePresentKHR(queue, &info);
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR && result != VK_ERROR_OUT_OF_DATE_KHR) {
@@ -324,11 +328,14 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         auto queue = reinterpret_cast<VkQueue>(arg0);
         // process array
         auto size = env->GetArrayLength(arg1);
+        std::deque<VkSubmitInfoAccessor> accessors;
         std::vector<VkSubmitInfo> vkArray;
+        vkArray.reserve(static_cast<size_t>(size));
         for (int i = 0; i < size; ++i) {
             VkSubmitInfo info{};
             auto element = (jobject) env->GetObjectArrayElement(arg1, i);
-            VkSubmitInfoAccessor(env, element).fromObject(info);
+            accessors.emplace_back(env, element);
+            accessors.back().fromObject(info);
             vkArray.push_back(info);
             env->DeleteLocalRef(element);
         }
@@ -775,7 +782,8 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         auto commandBuffer = reinterpret_cast<VkCommandBuffer>(arg0);
         // object accessor?
         VkCommandBufferBeginInfo info{};
-        VkCommandBufferBeginInfoAccessor(env, arg1).fromObject(info);
+        VkCommandBufferBeginInfoAccessor accessor(env, arg1);
+        accessor.fromObject(info);
         // process default??
         VkResult result = vkBeginCommandBuffer(commandBuffer, &info);
         if (result != VK_SUCCESS) {

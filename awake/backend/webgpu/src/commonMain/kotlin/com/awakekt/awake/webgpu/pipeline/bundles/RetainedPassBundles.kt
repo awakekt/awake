@@ -5,11 +5,10 @@
  */
 package com.awakekt.awake.webgpu.pipeline.bundles
 
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.mesh.meshIndexFormat
 import com.awakekt.awake.webgpu.pipeline.PassBindings
 import com.awakekt.awake.webgpu.pipeline.bindGroup
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferInts
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBuffer
@@ -138,7 +137,7 @@ internal class RetainedPassBundles(
             words[draw * ARGS_WORDS] = stream.counts[draw * 2]
             words[draw * ARGS_WORDS + 1] = stream.counts[draw * 2 + 1]
         }
-        device.queue.writeBufferData(bundle.args.buffer, 0uL, fastArrayBufferOf(words))
+        device.queue.writeBufferInts(bundle.args.buffer, 0uL, words)
     }
 
     private fun release(bundle: RetainedBundle) {
