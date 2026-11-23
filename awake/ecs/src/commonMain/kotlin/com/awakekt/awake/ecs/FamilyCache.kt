@@ -24,3 +24,20 @@ internal sealed class FamilyCache {
 
 internal const val DEFAULT_FAMILY_CAPACITY = 16
 internal const val FAMILY_CAPACITY_GROWTH_FACTOR = 2
+internal val EMPTY_SIGNATURE_MASK = LongArray(0)
+
+/** Encodes [types] as a signature-shaped bit set, one 64-bit word per 64 component type IDs. */
+internal fun buildSignatureMask(world: World, types: Set<KClass<out Any>>): LongArray {
+    if (types.isEmpty()) return EMPTY_SIGNATURE_MASK
+    var maxId = -1
+    for (type in types) {
+        val id = world.typeId(type).value
+        if (id > maxId) maxId = id
+    }
+    val mask = LongArray((maxId ushr 6) + 1)
+    for (type in types) {
+        val id = world.typeId(type).value
+        mask[id ushr 6] = mask[id ushr 6] or (1L shl (id and 63))
+    }
+    return mask
+}

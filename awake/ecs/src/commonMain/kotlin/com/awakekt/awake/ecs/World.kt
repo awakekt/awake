@@ -353,6 +353,74 @@ class World {
     }
 
     /**
+     * Returns a maintained [Family] matching the pre-built [spec].
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familyFromSpec")
+    fun family(spec: FamilySpec): Family = Family(familyRegistry.familySpecCache(spec))
+
+    /**
+     * Returns a maintained [Family1] for [type] whose dense bag excludes any entity carrying [exclude].
+     *
+     * Unlike [family] with a [FamilySpec], this keeps [type] in a packed component column so hot loops
+     * iterate directly without per-entity [get] lookups while still skipping excluded entities incrementally.
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family1Excluding")
+    fun <A : Any> familyExcluding(type: KClass<A>, exclude: KClass<out Any>): Family1<A> =
+        familyRegistry.familyExcluding(type, setOf(exclude))
+
+    /**
+     * Returns a maintained [Family1] for [type] whose dense bag excludes any entity carrying any type in [exclude].
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family1ExcludingSet")
+    fun <A : Any> familyExcluding(type: KClass<A>, exclude: Set<KClass<out Any>>): Family1<A> =
+        familyRegistry.familyExcluding(type, exclude)
+
+    /**
+     * Returns a maintained [Family1] for [A] whose dense bag excludes any entity carrying [exclude].
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familyOf1Excluding")
+    inline fun <reified A : Any> familyExcluding(exclude: KClass<out Any>): Family1<A> =
+        familyExcluding(A::class, exclude)
+
+    /**
+     * Returns a maintained [Family2] for [typeA] and [typeB] whose dense SoA bags exclude any entity carrying [exclude].
+     *
+     * Keeps both component columns packed alongside the dense entity bag so hot loops avoid per-entity
+     * [get] lookups while incrementally excluding inactive or tagged entities.
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family2Excluding")
+    fun <A : Any, B : Any> familyExcluding(
+        typeA: KClass<A>,
+        typeB: KClass<B>,
+        exclude: KClass<out Any>,
+    ): Family2<A, B> = familyRegistry.familyExcluding(typeA, typeB, setOf(exclude))
+
+    /**
+     * Returns a maintained [Family2] for [typeA] and [typeB] whose dense SoA bags exclude any entity carrying
+     * any type in [exclude].
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family2ExcludingSet")
+    fun <A : Any, B : Any> familyExcluding(
+        typeA: KClass<A>,
+        typeB: KClass<B>,
+        exclude: Set<KClass<out Any>>,
+    ): Family2<A, B> = familyRegistry.familyExcluding(typeA, typeB, exclude)
+
+    /**
+     * Returns a maintained [Family2] for [A] and [B] whose dense SoA bags exclude any entity carrying [exclude].
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familyOf2Excluding")
+    inline fun <reified A : Any, reified B : Any> familyExcluding(exclude: KClass<out Any>): Family2<A, B> =
+        familyExcluding(A::class, B::class, exclude)
+
+    /**
      * Returns a list of entities matching the specified type [T].
      */
     inline fun <reified T : Any> query(): List<Entity> = query(T::class)
