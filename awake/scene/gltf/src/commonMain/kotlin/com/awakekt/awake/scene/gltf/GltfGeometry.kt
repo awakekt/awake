@@ -25,6 +25,7 @@ internal fun GltfMesh.toStaticGeometry(): MeshGeometry =
             localTransform = com.awakekt.awake.core.math.Mat4(),
             baseColorFactor = baseColorFactor,
             doubleSided = doubleSided,
+            normals = normals,
         ),
     ).toStaticGeometry()
 
@@ -44,6 +45,7 @@ internal fun GltfMesh.toLoadedPrimitive(transform: Mat4): LoadedPrimitive = Load
     emissiveFactor = emissiveFactor,
     alphaMode = alphaMode,
     doubleSided = doubleSided,
+    normals = normals,
 )
 
 /** Converts parsed scene primitives into the vertex format the `lit-shadow` pipeline draws. */
@@ -55,7 +57,8 @@ internal fun List<LoadedPrimitive>.toStaticGeometry(textured: Boolean = false): 
         val stride = 8
         val count = primitive.vertices.size / stride
         val positions = primitive.worldPositions(stride)
-        val normals = faceNormalSums(positions, primitive.indices)
+        val authored = primitive.normals?.takeIf { it.size == count * 3 }
+        val normals = authored?.let { primitive.worldNormals(it) } ?: faceNormalSums(positions, primitive.indices)
         val vertexOffset = vertices.size / if (textured) 11 else 9
         for (index in 0 until count) {
             val source = index * stride
@@ -103,6 +106,60 @@ private fun LoadedPrimitive.worldPositions(stride: Int): FloatArray {
         positions[target + 2] = transformed.z
     }
     return positions
+}
+
+/**
+ * Authored glTF vertex normals moved by the inverse-transpose of [localTransform]'s upper-left 3x3
+ * (the cofactor matrix divided by its determinant), preserving smooth shading across unshared
+ * vertices and handling non-uniform scale or mirrored node transforms accurately.
+ */
+private fun LoadedPrimitive.worldNormals(authored: FloatArray): FloatArray {
+    val m = localTransform.data
+    val a00 = m[0]
+    val a10 = m[1]
+    val a20 = m[2]
+    val a01 = m[4]
+    val a11 = m[5]
+    val a21 = m[6]
+    val a02 = m[8]
+    val a12 = m[9]
+    val a22 = m[10]
+
+    val c00 = a11 * a22 - a12 * a21
+    val c10 = a02 * a21 - a01 * a22
+    val c20 = a01 * a12 - a02 * a11
+    val c01 = a12 * a20 - a10 * a22
+    val c11 = a00 * a22 - a02 * a20
+    val c21 = a02 * a10 - a00 * a12
+    val c02 = a10 * a21 - a11 * a20
+    val c12 = a01 * a20 - a00 * a21
+    val c22 = a00 * a11 - a01 * a10
+    val det = a00 * c00 + a10 * c10 + a20 * c20
+
+    val useCofactor = kotlin.math.abs(det) > SINGULAR_DETERMINANT_EPSILON
+    val invDet = if (useCofactor) 1f / det else 1f
+    val n00 = if (useCofactor) c00 * invDet else a00
+    val n10 = if (useCofactor) c10 * invDet else a10
+    val n20 = if (useCofactor) c20 * invDet else a20
+    val n01 = if (useCofactor) c01 * invDet else a01
+    val n11 = if (useCofactor) c11 * invDet else a11
+    val n21 = if (useCofactor) c21 * invDet else a21
+    val n02 = if (useCofactor) c02 * invDet else a02
+    val n12 = if (useCofactor) c12 * invDet else a12
+    val n22 = if (useCofactor) c22 * invDet else a22
+
+    val out = FloatArray(authored.size)
+    var i = 0
+    while (i < authored.size) {
+        val nx = authored[i]
+        val ny = authored[i + 1]
+        val nz = authored[i + 2]
+        out[i] = n00 * nx + n01 * ny + n02 * nz
+        out[i + 1] = n10 * nx + n11 * ny + n12 * nz
+        out[i + 2] = n20 * nx + n21 * ny + n22 * nz
+        i += 3
+    }
+    return out
 }
 
 /** Per-vertex sums of the face normals around it, unnormalised, packed xyz. */
@@ -158,4 +215,5 @@ private const val GLB_VERSION = 2
 private const val GLB_HEADER_BYTES = 12
 private const val GLB_CHUNK_HEADER_BYTES = 8
 private const val GLB_JSON_CHUNK = 0x4E4F534A
+private const val SINGULAR_DETERMINANT_EPSILON = 1e-8f
 private const val JSON_PADDING: Byte = 0x20
