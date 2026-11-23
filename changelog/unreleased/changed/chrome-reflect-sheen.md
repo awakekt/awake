@@ -1,1 +1,0 @@
-- Enhance analytic environment reflection (`PbrMaterial.reflectance`) on static and skinned PBR shaders with albedo-tinted chrome reflection bands and a grazing rim gleam, removing the flat grey reflection floor on dark regions.
