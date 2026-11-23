@@ -6,12 +6,12 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.clamp
-import com.awakekt.awake.asset.shaderdsl.dot
+import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.floor
-import com.awakekt.awake.asset.shaderdsl.fract
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.length
@@ -25,7 +25,6 @@ import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
-import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.smoothstep
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toU32
@@ -81,22 +80,45 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
         worldPos set pos
     }
 
+    // Exact integer-safe mod289 polynomial hash (Gustavson permute): zero trig/SFU ops and immune to
+    // GPU FMA reassociation seams across lattice corners (unlike fract(sin(dot) * 43758.5453)).
+    val mod289 = fn("mod289") {
+        val xVal by param(GpuDataShape.Float)
+        returnValue(xVal - floor((xVal + 0.25f.lit) / 289f.lit) * 289f.lit)
+    }
+
+    val permute = fn("permute") {
+        val xVal by param(GpuDataShape.Float)
+        returnValue(mod289((xVal * 34f.lit + 1f.lit) * xVal))
+    }
+
     val hash2d = fn("hash2d") {
         val p by param(GpuDataShape.Vec2)
-        val h = let("h", dot(p, vec2(127.1f.lit, 311.7f.lit)))
-        returnValue(fract(sin(h) * 43758.5453f.lit))
+        val px = let("px", mod289(p.x))
+        val py = let("py", mod289(p.y))
+        returnValue(permute(permute(px) + py) / 289f.lit)
     }
 
     val valueNoise = fn("valueNoise") {
         val p by param(GpuDataShape.Vec2)
         val i = let("i", floor(p))
-        val f = let("f", fract(p))
-        val uSmooth = let("uSmooth", f * f * (vec2(3f.lit) - f * 2f.lit))
+        val f = let("f", p - i)
+        // Quintic Hermite (C2-continuous): eliminates grid-axis crease artifacts in billowing clouds.
+        val uSmooth = let(
+            "uSmooth",
+            f * f * f * (f * (f * 6f.lit - vec2(15f.lit)) + vec2(10f.lit)),
+        )
         val a = let("a", hash2d(i))
         val b = let("b", hash2d(i + vec2(1f.lit, 0f.lit)))
         val c = let("c", hash2d(i + vec2(0f.lit, 1f.lit)))
         val d = let("d", hash2d(i + vec2(1f.lit, 1f.lit)))
         returnValue(mix(mix(a, b, uSmooth.x), mix(c, d, uSmooth.x), uSmooth.y))
+    }
+
+    val rotateOctave = fn("rotateOctave", returns = AslType.Data(GpuDataShape.Vec2)) {
+        val p by param(GpuDataShape.Vec2)
+        // 2x scale rotated by atan(3/4) (~36.9 deg) breaks axis alignment between FBM octaves.
+        returnValue(vec2(p.x * 1.6f.lit - p.y * 1.2f.lit, p.x * 1.2f.lit + p.y * 1.6f.lit))
     }
 
     val displayTransform = sceneDisplayTransform()
@@ -125,7 +147,7 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
 
         iff(isFast) {
             val n1 = let("n1", valueNoise(uvBase))
-            val n2 = let("n2", valueNoise(uvBase * 2.03f.lit + vec2(13.7f.lit, 7.1f.lit)))
+            val n2 = let("n2", valueNoise(rotateOctave(uvBase) + vec2(13.7f.lit, 7.1f.lit)))
             val fbm = let("fbmFast", n1 * 0.65f.lit + n2 * 0.35f.lit)
             assign(density, smoothstep(threshold, threshold + softness, fbm))
             assign(litFactor, clamp(0.45f.lit + fbm * 0.55f.lit, 0f.lit, 1f.lit))
@@ -134,15 +156,17 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
         iff(isStandard) {
             // Lower wispy cloud deck drifting at 1.0x speed.
             val l1a = let("l1a", valueNoise(uvBase))
-            val l1b = let("l1b", valueNoise(uvBase * 2.07f.lit + vec2(11.3f.lit, 5.9f.lit)))
+            val l1b = let("l1b", valueNoise(rotateOctave(uvBase) + vec2(11.3f.lit, 5.9f.lit)))
             val lowerNoise = let("lowerNoise", l1a * 0.62f.lit + l1b * 0.38f.lit)
             val lowerDensity = let("lowerDensity", smoothstep(threshold, threshold + softness, lowerNoise))
 
             // Upper billowing cloud deck drifting faster at 1.55x parallax speed in the same pass.
             val uvUpper = let("uvUpper", vec2(worldPos.x * scale, worldPos.z * scale) * 1.35f.lit + drift * 1.55f.lit + vec2(4.2f.lit, 9.6f.lit))
+            val uvUpper2 = let("uvUpper2", rotateOctave(uvUpper) + vec2(19.4f.lit, 3.7f.lit))
+            val uvUpper3 = let("uvUpper3", rotateOctave(uvUpper2) - vec2(6.8f.lit, 14.2f.lit))
             val u1 = let("u1", valueNoise(uvUpper))
-            val u2 = let("u2", valueNoise(uvUpper * 2.11f.lit + vec2(19.4f.lit, 3.7f.lit)))
-            val u3 = let("u3", valueNoise(uvUpper * 4.19f.lit - vec2(6.8f.lit, 14.2f.lit)))
+            val u2 = let("u2", valueNoise(uvUpper2))
+            val u3 = let("u3", valueNoise(uvUpper3))
             val upperNoise = let("upperNoise", u1 * 0.55f.lit + u2 * 0.30f.lit + u3 * 0.15f.lit)
             val upperDensity = let("upperDensity", smoothstep(threshold + 0.04f.lit, threshold + 0.04f.lit + softness, upperNoise))
 

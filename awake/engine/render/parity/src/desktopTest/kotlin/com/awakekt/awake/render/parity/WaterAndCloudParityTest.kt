@@ -98,16 +98,21 @@ class WaterAndCloudParityTest {
         val spatialSpread = bandLumaStdDev(stdT0, SCENE_SIZE, yStart = SCENE_SIZE / 2, yEnd = SCENE_SIZE - 4)
         val nearContrast = bandMeanDiffFromRef(stdT0, off, SCENE_SIZE, yStart = (SCENE_SIZE * 3) / 4, yEnd = SCENE_SIZE - 4)
         val farContrast = bandMeanDiffFromRef(stdT0, off, SCENE_SIZE, yStart = SCENE_SIZE / 3, yEnd = SCENE_SIZE / 2)
+        val maxStdJump = maxHorizontalJump(stdT0, SCENE_SIZE, yStart = (SCENE_SIZE * 3) / 4, yEnd = SCENE_SIZE - 4)
+        val maxFastJump = maxHorizontalJump(fastT0, SCENE_SIZE, yStart = (SCENE_SIZE * 3) / 4, yEnd = SCENE_SIZE - 4)
 
         println(
             "CLOUD[$backend] offDiff=$offDiff animDiff=$animDiff tierDiff=$tierDiff " +
-                "spread=$spatialSpread nearContrast=$nearContrast farContrast=$farContrast",
+                "spread=$spatialSpread nearContrast=$nearContrast farContrast=$farContrast " +
+                "maxStdJump=$maxStdJump maxFastJump=$maxFastJump",
         )
         assertTrue(offDiff > 5f, "$backend: cloud layer draws visibly over sky backdrop (offDiff=$offDiff)")
         assertTrue(spatialSpread > 3f, "$backend: clouds form soft billowing variation instead of a flat sheet (spread=$spatialSpread)")
         assertTrue(animDiff > 1.0f, "$backend: clouds drift over time (animDiff=$animDiff)")
         assertTrue(tierDiff > 0.5f, "$backend: Standard dual-layer differs from Fast single-layer (tierDiff=$tierDiff)")
         assertTrue(nearContrast > farContrast, "$backend: clouds fade gently toward the horizon (near=$nearContrast far=$farContrast)")
+        assertTrue(maxStdJump < MAX_CLOUD_SEAM_JUMP, "$backend: Standard cloud noise has no cell-boundary seams (maxJump=$maxStdJump)")
+        assertTrue(maxFastJump < MAX_CLOUD_SEAM_JUMP, "$backend: Fast cloud noise has no cell-boundary seams (maxJump=$maxFastJump)")
     }
 
     private fun meanRgbDiff(a: ByteArray, b: ByteArray): Float {
@@ -178,8 +183,24 @@ class WaterAndCloudParityTest {
         return (sum / count).toFloat()
     }
 
+    private fun maxHorizontalJump(pixels: ByteArray, size: Int, yStart: Int, yEnd: Int): Int {
+        var worst = 0
+        for (y in yStart until yEnd) {
+            for (x in 0 until size - 1) {
+                val o = (y * size + x) * 4
+                val r = (y * size + x + 1) * 4
+                for (c in 0..2) {
+                    val v = pixels[o + c].toInt() and 0xFF
+                    worst = maxOf(worst, abs(v - (pixels[r + c].toInt() and 0xFF)))
+                }
+            }
+        }
+        return worst
+    }
+
     private companion object {
         val NIGHT_SUN = Vec3f(0.1f, -0.55f, -0.83f)
         const val MAX_BACKEND_DIFF = 3.5f
+        const val MAX_CLOUD_SEAM_JUMP = 55
     }
 }
