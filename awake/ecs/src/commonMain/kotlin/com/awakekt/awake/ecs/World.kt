@@ -360,65 +360,144 @@ class World {
     fun family(spec: FamilySpec): Family = Family(familyRegistry.familySpecCache(spec))
 
     /**
-     * Returns a maintained [Family1] for [type] whose dense bag excludes any entity carrying [exclude].
+     * Returns a maintained [Family1] for [type] filtered by [filter].
      *
-     * Unlike [family] with a [FamilySpec], this keeps [type] in a packed component column so hot loops
-     * iterate directly without per-entity [get] lookups while still skipping excluded entities incrementally.
+     * Keeps [type] in a packed component column while incrementally evaluating [filter]'s `all`,
+     * `one`, and `exclude` predicates so hot loops avoid per-entity [get] lookups.
      */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family1Filtered")
+    fun <A : Any> family(type: KClass<A>, filter: FamilySpec): Family1<A> =
+        familyRegistry.family(type, filter)
+
+    /**
+     * Returns a maintained [Family1] for [A] filtered by [filter].
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familyOf1Filtered")
+    inline fun <reified A : Any> family(filter: FamilySpec): Family1<A> {
+        val typeId = components.typeIdForKeyOrNull(componentTypeKey<A>())
+        if (typeId != null) cachedFamily<A>(typeId, filter)?.let { return it }
+        return family(A::class, filter)
+    }
+
+    /** Returns an already resolved filtered family for an ID belonging to this generation. */
+    @PublishedApi
+    internal fun <A : Any> cachedFamily(typeId: ComponentTypeId, filter: FamilySpec): Family1<A>? =
+        familyRegistry.cachedFamily(typeId, filter)
+
+    /**
+     * Returns a maintained [Family2] for [typeA] and [typeB] filtered by [filter].
+     *
+     * Keeps both component columns packed alongside the dense entity bag while incrementally
+     * evaluating [filter]'s `all`, `one`, and `exclude` predicates.
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family2Filtered")
+    fun <A : Any, B : Any> family(
+        typeA: KClass<A>,
+        typeB: KClass<B>,
+        filter: FamilySpec,
+    ): Family2<A, B> = familyRegistry.family(typeA, typeB, filter)
+
+    /**
+     * Returns a maintained [Family2] for [A] and [B] filtered by [filter].
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familyOf2Filtered")
+    inline fun <reified A : Any, reified B : Any> family(filter: FamilySpec): Family2<A, B> {
+        val typeIdA = components.typeIdForKeyOrNull(componentTypeKey<A>())
+        val typeIdB = components.typeIdForKeyOrNull(componentTypeKey<B>())
+        if (typeIdA != null && typeIdB != null) cachedFamily<A, B>(typeIdA, typeIdB, filter)?.let { return it }
+        return family(A::class, B::class, filter)
+    }
+
+    /** Returns an already resolved filtered pair family for ordered IDs belonging to this generation. */
+    @PublishedApi
+    internal fun <A : Any, B : Any> cachedFamily(
+        typeIdA: ComponentTypeId,
+        typeIdB: ComponentTypeId,
+        filter: FamilySpec,
+    ): Family2<A, B>? = familyRegistry.cachedFamily(typeIdA, typeIdB, filter)
+
+    /**
+     * Returns a maintained [Family1] for [type] whose dense bag excludes any entity carrying [exclude].
+     */
+    @Deprecated(
+        message = "Use family(type, FamilySpec.exclude(exclude)) instead.",
+        replaceWith = ReplaceWith("family(type, FamilySpec.exclude(exclude))"),
+    )
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("family1Excluding")
     fun <A : Any> familyExcluding(type: KClass<A>, exclude: KClass<out Any>): Family1<A> =
-        familyRegistry.familyExcluding(type, setOf(exclude))
+        family(type, FamilySpec.exclude(exclude))
 
     /**
      * Returns a maintained [Family1] for [type] whose dense bag excludes any entity carrying any type in [exclude].
      */
+    @Deprecated(
+        message = "Use family(type, FamilySpec(exclude = exclude)) instead.",
+        replaceWith = ReplaceWith("family(type, FamilySpec(exclude = exclude))"),
+    )
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("family1ExcludingSet")
     fun <A : Any> familyExcluding(type: KClass<A>, exclude: Set<KClass<out Any>>): Family1<A> =
-        familyRegistry.familyExcluding(type, exclude)
+        family(type, if (exclude.isEmpty()) FamilySpec.None else FamilySpec(exclude = exclude))
 
     /**
      * Returns a maintained [Family1] for [A] whose dense bag excludes any entity carrying [exclude].
      */
+    @Deprecated(
+        message = "Use family<A>(FamilySpec.exclude(exclude)) instead.",
+        replaceWith = ReplaceWith("family<A>(FamilySpec.exclude(exclude))"),
+    )
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("familyOf1Excluding")
     inline fun <reified A : Any> familyExcluding(exclude: KClass<out Any>): Family1<A> =
-        familyExcluding(A::class, exclude)
+        family(A::class, FamilySpec.exclude(exclude))
 
     /**
      * Returns a maintained [Family2] for [typeA] and [typeB] whose dense SoA bags exclude any entity carrying [exclude].
-     *
-     * Keeps both component columns packed alongside the dense entity bag so hot loops avoid per-entity
-     * [get] lookups while incrementally excluding inactive or tagged entities.
      */
+    @Deprecated(
+        message = "Use family(typeA, typeB, FamilySpec.exclude(exclude)) instead.",
+        replaceWith = ReplaceWith("family(typeA, typeB, FamilySpec.exclude(exclude))"),
+    )
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("family2Excluding")
     fun <A : Any, B : Any> familyExcluding(
         typeA: KClass<A>,
         typeB: KClass<B>,
         exclude: KClass<out Any>,
-    ): Family2<A, B> = familyRegistry.familyExcluding(typeA, typeB, setOf(exclude))
+    ): Family2<A, B> = family(typeA, typeB, FamilySpec.exclude(exclude))
 
     /**
      * Returns a maintained [Family2] for [typeA] and [typeB] whose dense SoA bags exclude any entity carrying
      * any type in [exclude].
      */
+    @Deprecated(
+        message = "Use family(typeA, typeB, FamilySpec(exclude = exclude)) instead.",
+        replaceWith = ReplaceWith("family(typeA, typeB, FamilySpec(exclude = exclude))"),
+    )
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("family2ExcludingSet")
     fun <A : Any, B : Any> familyExcluding(
         typeA: KClass<A>,
         typeB: KClass<B>,
         exclude: Set<KClass<out Any>>,
-    ): Family2<A, B> = familyRegistry.familyExcluding(typeA, typeB, exclude)
+    ): Family2<A, B> = family(typeA, typeB, if (exclude.isEmpty()) FamilySpec.None else FamilySpec(exclude = exclude))
 
     /**
      * Returns a maintained [Family2] for [A] and [B] whose dense SoA bags exclude any entity carrying [exclude].
      */
+    @Deprecated(
+        message = "Use family<A, B>(FamilySpec.exclude(exclude)) instead.",
+        replaceWith = ReplaceWith("family<A, B>(FamilySpec.exclude(exclude))"),
+    )
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("familyOf2Excluding")
     inline fun <reified A : Any, reified B : Any> familyExcluding(exclude: KClass<out Any>): Family2<A, B> =
-        familyExcluding(A::class, B::class, exclude)
+        family(A::class, B::class, FamilySpec.exclude(exclude))
 
     /**
      * Returns a list of entities matching the specified type [T].

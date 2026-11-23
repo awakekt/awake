@@ -5,7 +5,8 @@
  */
 package com.awakekt.awake.scene.core.transform
 
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 
 /**
@@ -22,10 +23,12 @@ import com.awakekt.awake.ecs.World
  * whoever owns the spin rate -- an auto-play clock, a UI scrub slider, gameplay code -- before this
  * runs. Control carries the state, system only applies it.
  */
-class SpinSystem : System {
-    override fun update(world: World, delta: Float) {
-        world.queryEach(Transform::class, SpinControl::class) { _, transform, spin ->
-            transform.rotation.y = spin.radians
-        }
+class SpinSystem : Family2System<Transform, SpinControl>(Transform::class, SpinControl::class) {
+    override fun process(world: World, delta: Float, entity: Entity, first: Transform, second: SpinControl) {
+        first.rotation.y = second.radians
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
     }
 }

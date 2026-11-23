@@ -156,8 +156,9 @@ public final class com/awakekt/awake/scene/core/transform/SpinControlBinding : c
 	public final fun toSceneComponent (Lcom/awakekt/awake/scene/core/transform/SpinControl;)Lcom/awakekt/awake/scene/core/transform/SceneSpinControl;
 }
 
-public final class com/awakekt/awake/scene/core/transform/SpinSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/core/transform/SpinSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> ()V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

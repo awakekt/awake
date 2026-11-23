@@ -7,7 +7,7 @@ package com.awakekt.awake.scene.rendering.animation
 
 import com.awakekt.awake.core.animation.AnimationPlayer
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ecs.componentType
 import com.awakekt.awake.ecs.family
@@ -34,30 +34,31 @@ import com.awakekt.awake.ecs.has
  *
  * @param hasRenderer Whether anything draws the poses; false skips posing all but the characters named above.
  */
-class ModularSkeletalSystem(private val hasRenderer: Boolean) : System {
+class ModularSkeletalSystem(private val hasRenderer: Boolean) : Family2System<ModularCharacterComponent, Animator>(ModularCharacterComponent::class, Animator::class) {
     /** A system for a host that draws, posing every visible character every frame. */
     constructor() : this(hasRenderer = true)
 
-    /**
-     * Updates all animated [ModularCharacterComponent] entities in [world] by [delta] seconds.
-     *
-     * @param world Active ECS world containing modular character and animator components.
-     * @param delta Elapsed time in seconds since the previous frame.
-     */
-    override fun update(world: World, delta: Float) {
+    override fun begin(world: World, delta: Float) {
         if (!hasRenderer) {
             world.family(SOCKET).forEach { _, socket ->
                 if (socket.enabled) world.get(socket.targetEntity, SKINNED_POSE)?.boneRead = true
             }
         }
-        world.family(CHARACTER, ANIMATOR).forEach { entity, character, animator ->
-            if (!character.isVisible) return@forEach
-            val skinnedPose = world.get(entity, SKINNED_POSE)
-            if (hasRenderer || skinnedPose == null || readsBones(world, entity, skinnedPose)) {
-                pose(world, entity, character, animator.player, skinnedPose, delta)
-            } else {
-                animator.player.advance(delta)
-            }
+    }
+
+    override fun process(
+        world: World,
+        delta: Float,
+        entity: Entity,
+        first: ModularCharacterComponent,
+        second: Animator,
+    ) {
+        if (!first.isVisible) return
+        val skinnedPose = world.get(entity, SKINNED_POSE)
+        if (hasRenderer || skinnedPose == null || readsBones(world, entity, skinnedPose)) {
+            pose(world, entity, first, second.player, skinnedPose, delta)
+        } else {
+            second.player.advance(delta)
         }
     }
 
@@ -93,10 +94,12 @@ class ModularSkeletalSystem(private val hasRenderer: Boolean) : System {
         }
     }
 
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
+    }
+
     // Resolved once for the process, not per entity per frame (#1429).
     private companion object {
-        val CHARACTER = componentType<ModularCharacterComponent>()
-        val ANIMATOR = componentType<Animator>()
         val SKINNED_POSE = componentType<SkinnedPose>()
         val SOCKET = componentType<SocketAttachmentComponent>()
         val POSED_WITHOUT_RENDERER = componentType<PosedWithoutRenderer>()

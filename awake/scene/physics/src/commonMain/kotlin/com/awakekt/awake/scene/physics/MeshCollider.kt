@@ -7,7 +7,8 @@ package com.awakekt.awake.scene.physics
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.Family
+import com.awakekt.awake.ecs.Family2
+import com.awakekt.awake.ecs.FamilySpec
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.CollisionLayer
@@ -84,8 +85,8 @@ fun interface CollisionMeshSource {
 class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
     private var familiesWorld: World? = null
     private var familiesGeneration = -1
-    private lateinit var pendingMeshes: Family
-    private lateinit var pendingHulls: Family
+    private lateinit var pendingMeshes: Family2<Transform, MeshCollider>
+    private lateinit var pendingHulls: Family2<Transform, ConvexHullCollider>
 
     // Reused: adding a body takes the entity out of the family being read, so the batch is copied first.
     private var batch = LongArray(INITIAL_BATCH)
@@ -98,16 +99,16 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
 
     private fun resolveFamilies(world: World) {
         if (familiesWorld === world && familiesGeneration == world.generation) return
-        pendingMeshes = world.family { all(Transform::class, MeshCollider::class).exclude(PhysicsBody::class) }
-        pendingHulls = world.family { all(Transform::class, ConvexHullCollider::class).exclude(PhysicsBody::class) }
+        pendingMeshes = world.family(Transform::class, MeshCollider::class, WITHOUT_BODY)
+        pendingHulls = world.family(Transform::class, ConvexHullCollider::class, WITHOUT_BODY)
         familiesWorld = world
         familiesGeneration = world.generation
     }
 
-    private inline fun drain(family: Family, build: (Entity) -> Unit) {
+    private inline fun <A : Any, B : Any> drain(family: Family2<A, B>, build: (Entity) -> Unit) {
         if (batch.size < family.size) batch = LongArray(family.size)
         var count = 0
-        family.forEach { entity -> batch[count++] = entity.packed }
+        family.forEach { entity, _, _ -> batch[count++] = entity.packed }
         for (index in 0 until count) build(Entity(batch[index]))
     }
 
@@ -180,6 +181,8 @@ private fun MeshShape.scaledBy(scale: Vec3f): MeshShape {
 
 /** First size of [MeshColliderSystem]'s reused batch; it grows to the largest batch seen. */
 private const val INITIAL_BATCH = 16
+
+private val WITHOUT_BODY = FamilySpec.exclude(PhysicsBody::class)
 
 /** Swaps each triangle's second and third corner. */
 private val MIRROR_SWAP = intArrayOf(0, 1, -1)

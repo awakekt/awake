@@ -8,10 +8,10 @@ package com.awakekt.awake.scene.rendering.animation
 import com.awakekt.awake.core.animation.LocomotionPlayer
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family2System
+import com.awakekt.awake.ecs.FamilySpec
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ecs.componentType
-import com.awakekt.awake.ecs.family
 import com.awakekt.awake.ecs.get
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -325,32 +325,46 @@ object LocomotionAnimationBinding : SceneComponentBinding<LocomotionAnimation, S
  * Plays each [LocomotionAnimation] entity's clip for how far it moved since the last frame. Runs
  * before [AnimationSystem], which advances the chosen clip.
  */
-class LocomotionAnimationSystem : System {
-    override fun update(world: World, delta: Float) {
-        if (!delta.isFinitePositive()) return
-        world.family(TRANSFORM, LOCOMOTION).forEach { entity, transform, locomotion ->
-            val animator = world.get(entity, ANIMATOR) ?: return@forEach
-            val placed = transform.worldMatrix
-            val contact = world.groundContactOf(entity)
-            locomotion.runtime.update(
-                animator.player,
-                placed.m03,
-                placed.m13,
-                placed.m23,
-                delta,
-                grounded = contact?.grounded,
-                freeMotion = contact?.freeMotion == true,
-            )
-        }
+class LocomotionAnimationSystem :
+    Family2System<Transform, LocomotionAnimation>(
+        Transform::class,
+        LocomotionAnimation::class,
+        WITH_ANIMATOR,
+    ) {
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
+    }
+
+    override fun shouldProcess(world: World, delta: Float): Boolean = delta.isFinitePositive()
+
+    override fun process(
+        world: World,
+        delta: Float,
+        entity: Entity,
+        first: Transform,
+        second: LocomotionAnimation,
+    ) {
+        val animator = world.get(entity, ANIMATOR) ?: return
+        val placed = first.worldMatrix
+        val contact = world.groundContactOf(entity)
+        second.runtime.update(
+            animator.player,
+            placed.m03,
+            placed.m13,
+            placed.m23,
+            delta,
+            grounded = contact?.grounded,
+            freeMotion = contact?.freeMotion == true,
+        )
     }
 
     // Resolved once for the process, not per entity per frame (#1442): a handle reads each world's
     // type id from an array, and stays valid across World.clear and in every world (#1429).
     private companion object {
         val TRANSFORM = componentType<Transform>()
-        val LOCOMOTION = componentType<LocomotionAnimation>()
         val ANIMATOR = componentType<Animator>()
         val GROUND_CONTACT = componentType<GroundContact>()
+        val WITH_ANIMATOR = FamilySpec.all(Animator::class)
     }
 
     /**

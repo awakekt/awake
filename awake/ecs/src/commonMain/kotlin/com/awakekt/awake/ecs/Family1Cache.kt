@@ -19,14 +19,9 @@ internal class Family1Cache<A : Any>(
         type: KClass<A>,
         typeId: ComponentTypeId,
         store: ComponentStore<A>,
-        excludeTypes: Set<KClass<out Any>>,
-        excludeMask: LongArray,
+        filter: CompiledFamilySpec,
     ) : this(type, typeId, store) {
-        this.excludeTypes = excludeTypes
-        this.excludeMask = excludeMask
-        this.hasExcludes = excludeMask.isNotEmpty()
-        this.excludeWide = excludeMask.size > 1
-        this.excludeLow = excludeMask.firstOrNull() ?: 0L
+        this.filter = filter
     }
 
     @PublishedApi
@@ -39,24 +34,12 @@ internal class Family1Cache<A : Any>(
     internal var count: Int = 0
 
     private val sparse = EntityIndexMap()
-    private var excludeTypes: Set<KClass<out Any>> = emptySet()
-    private var excludeMask: LongArray = EMPTY_SIGNATURE_MASK
-    private var hasExcludes: Boolean = false
-    private var excludeWide: Boolean = false
-    private var excludeLow: Long = 0L
+    private var filter: CompiledFamilySpec? = null
 
-    override fun types(): Set<KClass<out Any>> = if (excludeTypes.isEmpty()) setOf(type) else excludeTypes + type
+    override fun types(): Set<KClass<out Any>> = filter?.allTypes(type) ?: setOf(type)
 
-    /** Returns `true` when [entity] carries any component type excluded by this family. */
-    internal fun isExcluded(world: World, entity: Entity): Boolean {
-        if (!hasExcludes) return false
-        val id = entity.id
-        return if (excludeWide) {
-            world.entities.intersects(id, excludeMask)
-        } else {
-            (world.entities.signatureWord(id, 0) and excludeLow) != 0L
-        }
-    }
+    /** Returns `true` when [entity] satisfies this family's optional [FamilySpec] filter. */
+    internal fun matchesFilter(world: World, entity: Entity): Boolean = filter?.matches(world, entity) ?: true
 
     /** Number of live dense entries. */
     val size: Int get() = count
@@ -125,12 +108,12 @@ internal class Family1Cache<A : Any>(
 
     override fun addComponent(world: World, entity: Entity, typeId: ComponentTypeId, component: Any) {
         if (this.typeId == typeId) {
-            if (!isExcluded(world, entity) && indexOf(entity) < 0) {
+            if (matchesFilter(world, entity) && indexOf(entity) < 0) {
                 @Suppress("UNCHECKED_CAST")
                 append(entity, component as A)
             }
-        } else if (hasExcludes) {
-            remove(entity)
+        } else if (filter != null) {
+            syncFiltered(world, entity)
         }
     }
 
@@ -147,8 +130,18 @@ internal class Family1Cache<A : Any>(
     override fun removeComponent(world: World, entity: Entity, typeId: ComponentTypeId) {
         if (this.typeId == typeId) {
             remove(entity)
-        } else if (hasExcludes && !isExcluded(world, entity) && indexOf(entity) < 0) {
+        } else if (filter != null) {
+            syncFiltered(world, entity)
+        }
+    }
+
+    private fun syncFiltered(world: World, entity: Entity) {
+        val currentIndex = indexOf(entity)
+        val shouldMatch = matchesFilter(world, entity)
+        if (shouldMatch && currentIndex < 0) {
             store.get(entity)?.let { append(entity, it) }
+        } else if (!shouldMatch && currentIndex >= 0) {
+            removeAt(currentIndex)
         }
     }
 

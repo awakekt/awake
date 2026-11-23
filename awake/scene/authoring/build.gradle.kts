@@ -31,6 +31,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(project(":awake:core:math"))
+            implementation(project(":awake:core:state"))
             implementation(project(":awake:core:text"))
             implementation(project(":awake:compose:foundation"))
             implementation(kotlin("test"))

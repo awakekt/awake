@@ -6,7 +6,8 @@
 package com.awakekt.awake.scene.navigation
 
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.grid.NavGroundHeight
 import com.awakekt.awake.navigation.walkable.NavPathQuery
@@ -39,23 +40,24 @@ class NavigationAgentSystem(
     surface: NavSurface,
     ground: NavGroundHeight = NavGroundHeight.FLAT,
     maxExpandedNodes: Int = NavPathQuery.DEFAULT_MAX_EXPANDED_NODES,
-) : System {
+) : Family2System<NavigationAgent, Transform>(NavigationAgent::class, Transform::class) {
     private val query = NavPathQuery(surface, ground, maxExpandedNodes)
     private val direction = Vec3f(0f, 0f, 0f)
 
-    override fun update(world: World, delta: Float) {
-        // The reified overload: a `Type::class` argument would allocate a class reference every frame.
-        world.queryEach<NavigationAgent, Transform> { entity, agent, transform ->
-            val walking = agent.follower.update(query, transform.position, delta, direction)
-            val control = world.get<MovementControl>(entity)
-            if (control != null && control.driver == MovementDriver.Agent) {
-                steer(control, walking, agent.speed)
-            } else if (walking) {
-                transform.position.x += direction.x * agent.speed * delta
-                transform.position.z += direction.z * agent.speed * delta
-                transform.rotation.y = atan2(direction.x, direction.z)
-            }
+    override fun process(world: World, delta: Float, entity: Entity, first: NavigationAgent, second: Transform) {
+        val walking = first.follower.update(query, second.position, delta, direction)
+        val control = world.get<MovementControl>(entity)
+        if (control != null && control.driver == MovementDriver.Agent) {
+            steer(control, walking, first.speed)
+        } else if (walking) {
+            second.position.x += direction.x * first.speed * delta
+            second.position.z += direction.z * first.speed * delta
+            second.rotation.y = atan2(direction.x, direction.z)
         }
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
     }
 
     private fun steer(control: MovementControl, walking: Boolean, speed: Float) {

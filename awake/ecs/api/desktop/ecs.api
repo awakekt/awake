@@ -1,3 +1,8 @@
+public final class com/awakekt/awake/ecs/CompiledFamilySpecKt {
+	public static final fun family (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/ComponentType;Lcom/awakekt/awake/ecs/ComponentType;Lcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/Family2;
+	public static final fun family (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/ComponentType;Lcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/Family1;
+}
+
 public final class com/awakekt/awake/ecs/ComponentDelegate {
 	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;JLkotlin/reflect/KClass;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getEntity-LaMO_uA ()J
@@ -298,14 +303,22 @@ public final class com/awakekt/awake/ecs/Family1Cache : com/awakekt/awake/ecs/Fa
 }
 
 public abstract class com/awakekt/awake/ecs/Family1System : com/awakekt/awake/ecs/System {
-	public fun <init> (Lkotlin/reflect/KClass;Ljava/util/Set;)V
+	public fun <init> (Lkotlin/reflect/KClass;)V
+	public fun <init> (Lkotlin/reflect/KClass;Lcom/awakekt/awake/ecs/FamilySpec;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;Ljava/util/Set;)V
 	public synthetic fun <init> (Lkotlin/reflect/KClass;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)V
 	protected fun begin (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun checkShouldProcess (Lcom/awakekt/awake/ecs/World;F)Z
 	protected fun end (Lcom/awakekt/awake/ecs/World;F)V
 	protected final fun family (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/ecs/Family1;
+	public final fun invokeBegin (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun invokeEnd (Lcom/awakekt/awake/ecs/World;F)V
 	protected abstract fun process-0iDFBS0 (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;)V
-	public final fun update (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun resolveFamily (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/ecs/Family1;
+	protected final fun runTick (Lcom/awakekt/awake/ecs/World;FLkotlin/jvm/functions/Function2;)V
+	protected fun shouldProcess (Lcom/awakekt/awake/ecs/World;F)Z
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public final class com/awakekt/awake/ecs/Family2 {
@@ -347,14 +360,22 @@ public final class com/awakekt/awake/ecs/Family2Cache : com/awakekt/awake/ecs/Fa
 }
 
 public abstract class com/awakekt/awake/ecs/Family2System : com/awakekt/awake/ecs/System {
-	public fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Ljava/util/Set;)V
+	public fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)V
+	public fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lcom/awakekt/awake/ecs/FamilySpec;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Ljava/util/Set;)V
 	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)V
 	protected fun begin (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun checkShouldProcess (Lcom/awakekt/awake/ecs/World;F)Z
 	protected fun end (Lcom/awakekt/awake/ecs/World;F)V
 	protected final fun family (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/ecs/Family2;
+	public final fun invokeBegin (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun invokeEnd (Lcom/awakekt/awake/ecs/World;F)V
 	protected abstract fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
-	public final fun update (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun resolveFamily (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/ecs/Family2;
+	protected final fun runTick (Lcom/awakekt/awake/ecs/World;FLkotlin/jvm/functions/Function3;)V
+	protected fun shouldProcess (Lcom/awakekt/awake/ecs/World;F)Z
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public abstract class com/awakekt/awake/ecs/FamilyCache {
@@ -366,6 +387,7 @@ public abstract class com/awakekt/awake/ecs/FamilyCache {
 }
 
 public final class com/awakekt/awake/ecs/FamilySpec {
+	public static final field Companion Lcom/awakekt/awake/ecs/FamilySpec$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
 	public synthetic fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -379,7 +401,16 @@ public final class com/awakekt/awake/ecs/FamilySpec {
 	public final fun getExclude ()Ljava/util/Set;
 	public final fun getOne ()Ljava/util/Set;
 	public fun hashCode ()I
+	public final fun isEmpty ()Z
+	public final fun plus (Lcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/FamilySpec;
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ecs/FamilySpec$Companion {
+	public final fun all ([Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/FamilySpec;
+	public final fun exclude ([Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/FamilySpec;
+	public final fun getNone ()Lcom/awakekt/awake/ecs/FamilySpec;
+	public final fun one ([Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/FamilySpec;
 }
 
 public final class com/awakekt/awake/ecs/FamilySpecBuilder {
@@ -409,6 +440,10 @@ public final class com/awakekt/awake/ecs/FamilySpecCache : com/awakekt/awake/ecs
 	public fun types ()Ljava/util/Set;
 }
 
+public final class com/awakekt/awake/ecs/FamilySpecKt {
+	public static final fun familySpec (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/ecs/FamilySpec;
+}
+
 public final class com/awakekt/awake/ecs/FamilyValueColumn {
 	public fun <init> (Lkotlin/reflect/KClass;)V
 	public final fun payloadForIteration ()[Ljava/lang/Object;
@@ -435,10 +470,16 @@ public abstract class com/awakekt/awake/ecs/IteratingSystem : com/awakekt/awake/
 	public fun <init> (Lcom/awakekt/awake/ecs/FamilySpec;)V
 	public fun <init> (Lkotlin/jvm/functions/Function1;)V
 	protected fun begin (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun checkShouldProcess (Lcom/awakekt/awake/ecs/World;F)Z
 	protected fun end (Lcom/awakekt/awake/ecs/World;F)V
 	protected final fun family (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/ecs/Family;
+	public final fun invokeBegin (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun invokeEnd (Lcom/awakekt/awake/ecs/World;F)V
 	protected abstract fun process-B7Vkg1U (Lcom/awakekt/awake/ecs/World;FJ)V
-	public final fun update (Lcom/awakekt/awake/ecs/World;F)V
+	public final fun resolveFamily (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/ecs/Family;
+	protected final fun runTick (Lcom/awakekt/awake/ecs/World;FLkotlin/jvm/functions/Function1;)V
+	protected fun shouldProcess (Lcom/awakekt/awake/ecs/World;F)Z
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public abstract interface class com/awakekt/awake/ecs/Poolable {
@@ -474,7 +515,9 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun add-smMvhPQ (JLkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun add-t50VA2I (JLkotlin/reflect/KClass;Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun addInternal-Nxd7DYM (JILcom/awakekt/awake/ecs/ComponentStore;Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun cachedFamily-0BJ-OTI (IILcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/Family2;
 	public final fun cachedFamily-1VG1NCY (I)Lcom/awakekt/awake/ecs/Family1;
+	public final fun cachedFamily-2JZkb7c (ILcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/Family1;
 	public final fun cachedFamily-O297E-o (II)Lcom/awakekt/awake/ecs/Family2;
 	public final fun clear ()V
 	public final fun componentCount (Lkotlin/reflect/KClass;)I
@@ -487,7 +530,9 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun family (Lcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/Family;
 	public final fun family (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/ecs/Family;
 	public final fun family (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/Family1;
+	public final fun family (Lkotlin/reflect/KClass;Lcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/Family1;
 	public final fun family (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/Family2;
+	public final fun family (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lcom/awakekt/awake/ecs/FamilySpec;)Lcom/awakekt/awake/ecs/Family2;
 	public final fun familyExcluding (Lkotlin/reflect/KClass;Ljava/util/Set;)Lcom/awakekt/awake/ecs/Family1;
 	public final fun familyExcluding (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/Family1;
 	public final fun familyExcluding (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Ljava/util/Set;)Lcom/awakekt/awake/ecs/Family2;

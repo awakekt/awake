@@ -25,9 +25,10 @@ public final class com/awakekt/awake/scene/navigation/NavigationAgentBinding : c
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/navigation/NavigationAgentSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/navigation/NavigationAgentSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> (Lcom/awakekt/awake/navigation/walkable/NavSurface;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;I)V
 	public synthetic fun <init> (Lcom/awakekt/awake/navigation/walkable/NavSurface;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

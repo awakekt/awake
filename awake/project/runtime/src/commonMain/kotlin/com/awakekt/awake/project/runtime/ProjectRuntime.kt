@@ -117,7 +117,7 @@ class LoadedProject internal constructor(
     internal val physics: PhysicsWorld? get() = playing.physics
 
     /** What Core's and [features]' loads read for the playing scene. */
-    internal val content: SceneContent get() = playing.content
+    val content: SceneContent get() = playing.content
 
     /** The models the playing scene's spawned nodes draw that it didn't load, loaded as they are spawned. */
     internal val spawnedModels: SpawnedModels get() = playing.spawnedModels

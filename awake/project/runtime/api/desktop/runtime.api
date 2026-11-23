@@ -122,6 +122,7 @@ public final class com/awakekt/awake/project/runtime/EntryGateKt {
 
 public final class com/awakekt/awake/project/runtime/LoadedProject : java/lang/AutoCloseable {
 	public fun close ()V
+	public final fun getContent ()Lcom/awakekt/awake/project/runtime/SceneContent;
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public final fun getPendingEntryScene ()Ljava/lang/String;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;

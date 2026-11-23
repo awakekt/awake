@@ -510,10 +510,11 @@ public final class com/awakekt/awake/scene/scene2d/SpriteBinding : com/awakekt/a
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/scene2d/SpriteClipSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/scene2d/SpriteClipSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> ()V
 	public fun <init> (Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
