@@ -21,6 +21,7 @@ class StylizedWaterAndCloudShaderTest {
         assertTrue(wgsl.contains("struct Uniforms"), "WGSL contains uniform struct")
         assertTrue(wgsl.contains("perturbedNormal"), "WGSL includes Standard analytic normal path")
         assertTrue(wgsl.contains("flowX"), "WGSL includes directional flow advection")
+        assertTrue(wgsl.contains("foamPattern"), "WGSL includes procedural cellular foam breakup")
         val group = BindingLayout.Standard.slot(BindingSemantic.Material)
         val sampled = StylizedWaterShader.bindingsForGroup(group)
             ?.entries
@@ -36,6 +37,7 @@ class StylizedWaterAndCloudShaderTest {
             val wgsl = shader.emitWgsl()
             assertTrue(wgsl.contains("texture_depth_2d"), "$clipSpace depth water declares texture_depth_2d")
             assertTrue(wgsl.contains("contactFoam"), "$clipSpace depth water computes shore/rock contact foam")
+            assertTrue(wgsl.contains("causticsRgb"), "$clipSpace depth water computes shallow underwater caustics")
             val depthGroup = BindingLayout.Standard.slot(BindingSemantic.SceneDepth)
             val depthBindings = shader.bindingsForGroup(depthGroup)?.entries.orEmpty()
             assertEquals(2, depthBindings.size, "$clipSpace depth water binds SceneDepth texture + sampler")
