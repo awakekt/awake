@@ -10,7 +10,7 @@ import com.awakekt.awake.core.animation.Skin
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ecs.componentType
 import com.awakekt.awake.ecs.get
@@ -41,7 +41,7 @@ import kotlin.math.sqrt
  * poses the target, such as [AnimationSystem]. An attached entity with a parent is given the local
  * transform that puts it there, read in world axes when it does not inherit its parent's rotation.
  */
-class SocketAttachmentSystem : System {
+class SocketAttachmentSystem : Family2System<Transform, SocketAttachmentComponent>(Transform::class, SocketAttachmentComponent::class) {
     private val targetWorld = Mat4()
     private val parentWorld = Mat4()
     private val joint = Mat4()
@@ -53,33 +53,35 @@ class SocketAttachmentSystem : System {
     private val product = Mat4()
     private val chain = ArrayList<Transform>()
 
-    /**
-     * Updates all active socket attachments in [world] by [delta] seconds.
-     *
-     * @param world The active ECS world.
-     * @param delta Frame elapsed time in seconds.
-     */
-    override fun update(world: World, delta: Float) {
-        world.family<Transform, SocketAttachmentComponent>().forEach { _, transform, attachment ->
-            if (!attachment.enabled) return@forEach
-            val target = attachment.targetEntity
-            val pose = world.get(target, SKINNED_POSE_TYPE) ?: return@forEach
-            val animator = world.get(target, ANIMATOR_TYPE)
-            val modular = world.get(target, MODULAR_CHARACTER_COMPONENT_TYPE)
-            // The skin the palette was written for: ModularSkeletalSystem writes a modular character's with its own.
-            val skin = modular?.skin ?: animator?.skin
-            val jointIndex = resolveJoint(attachment, skin, animator?.player?.skeleton ?: modular?.skeleton)
-            if (jointIndex < 0 || !readJoint(pose, skin, jointIndex) || !world.composeWorld(target, targetWorld)) return@forEach
+    override fun process(
+        world: World,
+        delta: Float,
+        entity: Entity,
+        first: Transform,
+        second: SocketAttachmentComponent,
+    ) {
+        val pose = if (second.enabled) world.get(second.targetEntity, SKINNED_POSE_TYPE) else null
+        if (pose == null) return
+        val target = second.targetEntity
+        val animator = world.get(target, ANIMATOR_TYPE)
+        val modular = world.get(target, MODULAR_CHARACTER_COMPONENT_TYPE)
+        // The skin the palette was written for: ModularSkeletalSystem writes a modular character's with its own.
+        val skin = modular?.skin ?: animator?.skin
+        val jointIndex = resolveJoint(second, skin, animator?.player?.skeleton ?: modular?.skeleton)
+        if (jointIndex < 0 || !readJoint(pose, skin, jointIndex) || !world.composeWorld(target, targetWorld)) return
 
-            offset.setEulerTRS(
-                attachment.offsetPosition.x, attachment.offsetPosition.y, attachment.offsetPosition.z,
-                attachment.offsetRotation.x, attachment.offsetRotation.y, attachment.offsetRotation.z,
-                1f, 1f, 1f,
-            )
-            Mat4.multiplyColumnMajor(targetWorld, joint, onJoint)
-            Mat4.multiplyColumnMajor(onJoint, offset, attached)
-            transform.setFrom(localFor(world, transform) ?: return@forEach)
-        }
+        offset.setEulerTRS(
+            second.offsetPosition.x, second.offsetPosition.y, second.offsetPosition.z,
+            second.offsetRotation.x, second.offsetRotation.y, second.offsetRotation.z,
+            1f, 1f, 1f,
+        )
+        Mat4.multiplyColumnMajor(targetWorld, joint, onJoint)
+        Mat4.multiplyColumnMajor(onJoint, offset, attached)
+        localFor(world, first)?.let { first.setFrom(it) }
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
     }
 
     /** [SocketAttachmentComponent.jointIndex], resolved from its name into the skin's joint order the first time; -1 when it names no joint. */

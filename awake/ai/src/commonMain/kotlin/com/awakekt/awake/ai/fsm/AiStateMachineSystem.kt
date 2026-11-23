@@ -9,7 +9,7 @@ import com.awakekt.awake.ai.AiContext
 import com.awakekt.awake.ai.AiEventSink
 import com.awakekt.awake.ai.btree.Blackboard
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family1System
 import com.awakekt.awake.ecs.World
 
 /**
@@ -17,7 +17,7 @@ import com.awakekt.awake.ecs.World
  *
  * @param events Where the machines' emitted events go; dropped by default.
  */
-class AiStateMachineSystem(private val events: AiEventSink = AiEventSink.None) : System {
+class AiStateMachineSystem(private val events: AiEventSink = AiEventSink.None) : Family1System<AiStateMachineComponent>(AiStateMachineComponent::class) {
     private val reusableContext = AiContext(
         world = World(),
         entity = Entity(0L),
@@ -25,16 +25,15 @@ class AiStateMachineSystem(private val events: AiEventSink = AiEventSink.None) :
         blackboard = Blackboard(),
     )
 
-    /**
-     * Updates all enabled [AiStateMachineComponent] entities in [world] by [delta] seconds.
-     */
-    override fun update(world: World, delta: Float) {
-        world.family<AiStateMachineComponent>().forEach { entity, fsmComp ->
-            if (!fsmComp.enabled) return@forEach
+    override fun process(world: World, delta: Float, entity: Entity, component: AiStateMachineComponent) {
+        if (!component.enabled) return
 
-            reusableContext.update(world, entity, delta, fsmComp.blackboard)
-            reusableContext.events = events
-            fsmComp.stateMachine.update(reusableContext)
-        }
+        reusableContext.update(world, entity, delta, component.blackboard)
+        reusableContext.events = events
+        component.stateMachine.update(reusableContext)
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, component ->
+        process(world, delta, entity, component)
     }
 }

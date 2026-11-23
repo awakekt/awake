@@ -29,9 +29,41 @@ data class FamilySpec(
     val one: Set<KClass<out Any>> = emptySet(),
     /** Every entity must have **none** of these component types. */
     val exclude: Set<KClass<out Any>> = emptySet(),
-)
+) {
+    /** Whether this spec imposes no component constraints. */
+    val isEmpty: Boolean get() = all.isEmpty() && one.isEmpty() && exclude.isEmpty()
 
-/** Builds a [FamilySpec] via `world.family { all(A::class); exclude(B::class) }`. */
+    /** Combines this spec's `all`, `one`, and `exclude` sets with [other]'s into a single spec. */
+    operator fun plus(other: FamilySpec): FamilySpec = when {
+        isEmpty -> other
+        other.isEmpty -> this
+        else -> FamilySpec(
+            all = all + other.all,
+            one = one + other.one,
+            exclude = exclude + other.exclude,
+        )
+    }
+
+    /** Factory helpers and the [None] sentinel for constructing [FamilySpec] values. */
+    companion object {
+        /** Empty predicate sentinel imposing no constraints. */
+        val None: FamilySpec = FamilySpec()
+
+        /** Matches only entities carrying every one of [types]. */
+        fun all(vararg types: KClass<out Any>): FamilySpec =
+            if (types.isEmpty()) None else FamilySpec(all = types.toSet())
+
+        /** Matches only entities carrying at least one of [types]. */
+        fun one(vararg types: KClass<out Any>): FamilySpec =
+            if (types.isEmpty()) None else FamilySpec(one = types.toSet())
+
+        /** Excludes entities carrying any of [types]. */
+        fun exclude(vararg types: KClass<out Any>): FamilySpec =
+            if (types.isEmpty()) None else FamilySpec(exclude = types.toSet())
+    }
+}
+
+/** Builds a [FamilySpec] via `world.family { all(A::class); exclude(B::class) }` or [familySpec]. */
 class FamilySpecBuilder @PublishedApi internal constructor() {
     private val all = mutableSetOf<KClass<out Any>>()
     private val one = mutableSetOf<KClass<out Any>>()
@@ -47,8 +79,16 @@ class FamilySpecBuilder @PublishedApi internal constructor() {
     fun exclude(vararg types: KClass<out Any>): FamilySpecBuilder = apply { exclude += types }
 
     @PublishedApi
-    internal fun build(): FamilySpec = FamilySpec(all.toSet(), one.toSet(), exclude.toSet())
+    internal fun build(): FamilySpec = if (all.isEmpty() && one.isEmpty() && exclude.isEmpty()) {
+        FamilySpec.None
+    } else {
+        FamilySpec(all.toSet(), one.toSet(), exclude.toSet())
+    }
 }
+
+/** Builds an immutable [FamilySpec] via DSL (`familySpec { all(...); exclude(...) }`). */
+inline fun familySpec(configure: FamilySpecBuilder.() -> Unit): FamilySpec =
+    FamilySpecBuilder().apply(configure).build()
 
 /**
  * The public, read-only view of a maintained arbitrary-arity family. Unlike [Family1]/
@@ -90,18 +130,9 @@ internal class FamilySpecCache(
     @PublishedApi
     internal var count: Int = 0
     private val sparse = EntityIndexMap()
+    private val compiled = CompiledFamilySpec(world, spec)
 
-    private val allMask = buildSignatureMask(world, spec.all)
-    private val oneMask = buildSignatureMask(world, spec.one)
-    private val excludeMask = buildSignatureMask(world, spec.exclude)
-
-    // Word 0 of each mask is the whole mask unless one of them names a type ID of 64 or above.
-    private val wide = maxOf(allMask.size, oneMask.size, excludeMask.size) > 1
-    private val allLow = allMask.firstOrNull() ?: 0L
-    private val oneLow = oneMask.firstOrNull() ?: 0L
-    private val excludeLow = excludeMask.firstOrNull() ?: 0L
-
-    override fun types(): Set<KClass<out Any>> = spec.all + spec.one + spec.exclude
+    override fun types(): Set<KClass<out Any>> = compiled.allTypes()
 
     val size: Int get() = count
 
@@ -118,19 +149,7 @@ internal class FamilySpecCache(
      * read fresh from [world] (not from this cache's own membership) -- used both to decide
      * initial membership when the cache is first built and to re-check membership after a
      * structural change. */
-    fun matches(world: World, entity: Entity): Boolean {
-        val signatures = world.entities
-        val id = entity.id
-        if (wide) {
-            return signatures.containsAll(id, allMask) &&
-                (oneMask.isEmpty() || signatures.intersects(id, oneMask)) &&
-                !signatures.intersects(id, excludeMask)
-        }
-        val signature = signatures.signatureWord(id, 0)
-        return (signature and allLow) == allLow &&
-            (oneLow == 0L || (signature and oneLow) != 0L) &&
-            (signature and excludeLow) == 0L
-    }
+    fun matches(world: World, entity: Entity): Boolean = compiled.matches(world, entity)
 
     fun add(entity: Entity) {
         if (indexOf(entity) >= 0) {

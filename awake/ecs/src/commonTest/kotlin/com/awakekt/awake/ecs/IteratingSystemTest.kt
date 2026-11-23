@@ -61,7 +61,7 @@ class IteratingSystemTest {
         world.add(asleep, Position(0f))
         world.add(asleep, Sleeping)
 
-        val system = object : Family1System<Position>(Position::class, Sleeping::class) {
+        val system = object : Family1System<Position>(Position::class, FamilySpec.exclude(Sleeping::class)) {
             override fun process(world: World, delta: Float, entity: Entity, component: Position) {
                 component.x += delta
             }
@@ -91,7 +91,7 @@ class IteratingSystemTest {
         val system = object : Family2System<Position, Velocity>(
             Position::class,
             Velocity::class,
-            Sleeping::class,
+            FamilySpec.exclude(Sleeping::class),
         ) {
             override fun process(world: World, delta: Float, entity: Entity, first: Position, second: Velocity) {
                 first.x += second.vx * delta
@@ -165,5 +165,41 @@ class IteratingSystemTest {
         assertEquals(3, specSystem.count)
         assertEquals(31f, oneSystem.sum)
         assertEquals(45f, twoSystem.sum)
+    }
+
+    @Test
+    fun shouldProcessFalseSkipsBeginProcessAndEnd() {
+        val world = World()
+        val entity = world.create()
+        world.add(entity, Position(1f))
+        world.add(entity, Velocity(2f))
+
+        var enabled = false
+        val events = mutableListOf<String>()
+        val system = object : Family2System<Position, Velocity>(Position::class, Velocity::class) {
+            override fun shouldProcess(world: World, delta: Float): Boolean = enabled
+
+            override fun begin(world: World, delta: Float) {
+                events += "begin"
+            }
+
+            override fun process(world: World, delta: Float, entity: Entity, first: Position, second: Velocity) {
+                events += "process"
+                first.x += second.vx
+            }
+
+            override fun end(world: World, delta: Float) {
+                events += "end"
+            }
+        }
+
+        system.update(world, 0.016f)
+        assertEquals(emptyList(), events)
+        assertEquals(1f, world.get<Position>(entity)?.x)
+
+        enabled = true
+        system.update(world, 0.016f)
+        assertEquals(listOf("begin", "process", "end"), events)
+        assertEquals(3f, world.get<Position>(entity)?.x)
     }
 }

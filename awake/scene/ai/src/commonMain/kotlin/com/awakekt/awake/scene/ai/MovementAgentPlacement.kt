@@ -11,7 +11,7 @@ import com.awakekt.awake.ai.behavior.FleeBehavior
 import com.awakekt.awake.ai.behavior.PatrolBehavior
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family1System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.controls.movement.MovementControl
 import com.awakekt.awake.scene.controls.movement.MovementDriver
@@ -69,14 +69,16 @@ object MovementAgentPlacement : AgentPlacement {
  * arrived or lost its target, then stops the agent, instead of leaving the last intent to walk it on.
  * An agent another driver moves, such as a network or a script, keeps its intent.
  */
-class AgentIntentResetSystem : System {
-    override fun update(world: World, delta: Float) {
-        world.queryEach(MovementControl::class) { entity, control ->
-            if (control.driver != MovementDriver.Agent || !world.hasBehaviour(entity)) return@queryEach
-            control.moveX = 0f
-            control.moveZ = 0f
-            control.moveSpeed = null
-        }
+class AgentIntentResetSystem : Family1System<MovementControl>(MovementControl::class) {
+    override fun process(world: World, delta: Float, entity: Entity, component: MovementControl) {
+        if (component.driver != MovementDriver.Agent || !world.hasBehaviour(entity)) return
+        component.moveX = 0f
+        component.moveZ = 0f
+        component.moveSpeed = null
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, component ->
+        process(world, delta, entity, component)
     }
 
     private fun World.hasBehaviour(entity: Entity): Boolean =

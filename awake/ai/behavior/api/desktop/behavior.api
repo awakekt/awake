@@ -47,8 +47,9 @@ public final class com/awakekt/awake/ai/behavior/AreaParams$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ai/behavior/ChaseAiSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/ai/behavior/ChaseAiSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> (Lcom/awakekt/awake/ai/behavior/AgentPlacement;)V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -139,9 +140,10 @@ public final class com/awakekt/awake/ai/behavior/FaceParams$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ai/behavior/FleeAiSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/ai/behavior/FleeAiSystem : com/awakekt/awake/ecs/Family2System {
 	public static final field MIN_SEPARATION F
 	public fun <init> (Lcom/awakekt/awake/ai/behavior/AgentPlacement;)V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -304,8 +306,9 @@ public final class com/awakekt/awake/ai/behavior/NavFieldLineOfSight : com/awake
 	public fun isClear-Wr-Sc-8 (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;JLcom/awakekt/awake/ecs/Entity;)Z
 }
 
-public final class com/awakekt/awake/ai/behavior/PatrolAiSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/ai/behavior/PatrolAiSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> (Lcom/awakekt/awake/ai/behavior/AgentPlacement;)V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

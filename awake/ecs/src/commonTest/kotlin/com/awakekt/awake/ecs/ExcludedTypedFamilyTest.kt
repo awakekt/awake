@@ -17,9 +17,11 @@ class ExcludedTypedFamilyTest {
     private data object Sleeping : EcsTag
     private data object Frozen : EcsTag
     private data object ActiveTag : EcsTag
+    private data object TeamA : EcsTag
+    private data object TeamB : EcsTag
 
     @Test
-    fun familyExcluding1TracksInitialAddExcludeReincludeAndDestroy() {
+    fun family1WithExcludeFilterTracksInitialAddExcludeReincludeAndDestroy() {
         val world = World()
         val awake = world.create()
         val asleep = world.create()
@@ -27,7 +29,7 @@ class ExcludedTypedFamilyTest {
         world.add(asleep, Position(2f))
         world.add(asleep, Sleeping)
 
-        val family = world.familyExcluding<Position>(Sleeping::class)
+        val family = world.family<Position>(FamilySpec.exclude(Sleeping::class))
         assertEquals(1, family.size)
         assertEquals(1f, family.componentAt(0).x)
 
@@ -52,11 +54,11 @@ class ExcludedTypedFamilyTest {
     }
 
     @Test
-    fun familyExcluding1PicksUpComponentReplacedWhileExcluded() {
+    fun family1WithExcludeFilterPicksUpComponentReplacedWhileExcluded() {
         val world = World()
         val entity = world.create()
         world.add(entity, Position(1f))
-        val family = world.familyExcluding<Position>(Sleeping::class)
+        val family = world.family<Position>(FamilySpec.exclude(Sleeping::class))
         assertEquals(1f, family.componentAt(0).x)
 
         world.add(entity, Sleeping)
@@ -72,14 +74,14 @@ class ExcludedTypedFamilyTest {
     }
 
     @Test
-    fun familyExcluding1WithMultipleExcludesRequiresAllRemoved() {
+    fun family1WithMultipleExcludesRequiresAllRemoved() {
         val world = World()
         val entity = world.create()
         world.add(entity, Position(5f))
         world.add(entity, Sleeping)
         world.add(entity, Frozen)
 
-        val family = world.familyExcluding(Position::class, setOf(Sleeping::class, Frozen::class))
+        val family = world.family(Position::class, FamilySpec.exclude(Sleeping::class, Frozen::class))
         assertEquals(0, family.size)
 
         world.remove<Sleeping>(entity)
@@ -91,7 +93,7 @@ class ExcludedTypedFamilyTest {
     }
 
     @Test
-    fun familyExcluding2MaintainsBothPackedColumnsThroughTransitions() {
+    fun family2WithExcludeFilterMaintainsBothPackedColumnsThroughTransitions() {
         val world = World()
         val a = world.create()
         val b = world.create()
@@ -105,7 +107,7 @@ class ExcludedTypedFamilyTest {
         world.add(b, velB)
         world.add(b, Sleeping)
 
-        val family = world.familyExcluding<Position, Velocity>(Sleeping::class)
+        val family = world.family<Position, Velocity>(FamilySpec.exclude(Sleeping::class))
         assertEquals(1, family.size)
         assertSame(posA, family.componentA(0))
         assertSame(velA, family.componentB(0))
@@ -129,7 +131,82 @@ class ExcludedTypedFamilyTest {
     }
 
     @Test
-    fun familyExcludingHandlesWideSignaturesPast64ComponentTypes() {
+    fun familySpecSupportsAllOneExcludeAndCompositionIncrementally() {
+        val world = World()
+        val filter = familySpec {
+            all(ActiveTag::class)
+            one(TeamA::class, TeamB::class)
+            exclude(Sleeping::class)
+        }
+        assertEquals(
+            FamilySpec.all(ActiveTag::class) +
+                FamilySpec.one(TeamA::class, TeamB::class) +
+                FamilySpec.exclude(Sleeping::class),
+            filter,
+        )
+
+        val entity = world.create()
+        world.add(entity, Position(4f))
+        val family = world.family<Position>(filter)
+        assertEquals(0, family.size)
+
+        world.add(entity, ActiveTag)
+        assertEquals(0, family.size)
+
+        world.add(entity, TeamA)
+        assertEquals(1, family.size)
+        assertEquals(4f, family.componentAt(0).x)
+
+        world.add(entity, TeamB)
+        assertEquals(1, family.size)
+
+        world.remove<TeamA>(entity)
+        assertEquals(1, family.size)
+
+        world.add(entity, Sleeping)
+        assertEquals(0, family.size)
+
+        world.remove<Sleeping>(entity)
+        assertEquals(1, family.size)
+
+        world.remove<ActiveTag>(entity)
+        assertEquals(0, family.size)
+    }
+
+    @Test
+    fun family2FilterWithAllOneExcludeTracksTransitionsAndComponentTypeOverloads() {
+        val world = World()
+        val filter = familySpec {
+            all(ActiveTag::class)
+            exclude(Sleeping::class)
+        }
+        val posType = componentType<Position>()
+        val velType = componentType<Velocity>()
+        val family = world.family(posType, velType, filter)
+        assertSame(family, world.family<Position, Velocity>(filter))
+
+        val entity = world.create()
+        world.add(entity, Position(1f))
+        world.add(entity, Velocity(2f))
+        assertEquals(0, family.size)
+
+        world.add(entity, ActiveTag)
+        assertEquals(1, family.size)
+        assertEquals(1f, family.componentA(0).x)
+        assertEquals(2f, family.componentB(0).vx)
+
+        world.add(entity, Sleeping)
+        assertEquals(0, family.size)
+
+        world.remove<Sleeping>(entity)
+        assertEquals(1, family.size)
+
+        world.remove<ActiveTag>(entity)
+        assertEquals(0, family.size)
+    }
+
+    @Test
+    fun familySpecHandlesWideSignaturesPast64ComponentTypes() {
         val world = World()
         val fillers = listOf(
             Byte::class, Short::class, Int::class, Long::class, Float::class, Double::class, Boolean::class, Char::class,
@@ -151,7 +228,7 @@ class ExcludedTypedFamilyTest {
         world.add(entity, Position(7f))
         world.add(entity, Velocity(3f))
 
-        val family = world.familyExcluding<Position, Velocity>(Sleeping::class)
+        val family = world.family<Position, Velocity>(FamilySpec.exclude(Sleeping::class))
         assertEquals(1, family.size)
 
         world.add(entity, Sleeping)
@@ -164,27 +241,28 @@ class ExcludedTypedFamilyTest {
     }
 
     @Test
-    fun familyExcludingReusesWrapperWithinGenerationAndResetsAfterClear() {
+    fun filteredFamilyReusesWrapperWithinGenerationAndResetsAfterClear() {
         val world = World()
-        val first1 = world.familyExcluding<Position>(Sleeping::class)
-        val second1 = world.familyExcluding(Position::class, setOf(Sleeping::class))
+        val filter = FamilySpec.exclude(Sleeping::class)
+        val first1 = world.family<Position>(filter)
+        val second1 = world.family(Position::class, FamilySpec(exclude = setOf(Sleeping::class)))
         assertSame(first1, second1)
-        assertSame(world.family<Position>(), world.familyExcluding(Position::class, emptySet()))
+        assertSame(world.family<Position>(), world.family(Position::class, FamilySpec.None))
 
-        val first2 = world.familyExcluding<Position, Velocity>(Sleeping::class)
-        val second2 = world.familyExcluding(Position::class, Velocity::class, setOf(Sleeping::class))
+        val first2 = world.family<Position, Velocity>(filter)
+        val second2 = world.family(Position::class, Velocity::class, FamilySpec(exclude = setOf(Sleeping::class)))
         assertSame(first2, second2)
-        assertSame(world.family<Position, Velocity>(), world.familyExcluding(Position::class, Velocity::class, emptySet()))
+        assertSame(world.family<Position, Velocity>(), world.family(Position::class, Velocity::class, FamilySpec.None))
 
         world.clear()
-        val afterClear1 = world.familyExcluding<Position>(Sleeping::class)
-        val afterClear2 = world.familyExcluding<Position, Velocity>(Sleeping::class)
+        val afterClear1 = world.family<Position>(filter)
+        val afterClear2 = world.family<Position, Velocity>(filter)
         assertNotSame(first1, afterClear1)
         assertNotSame(first2, afterClear2)
     }
 
     @Test
-    fun familyExcludingWithTagColumnKeepsTagPayloadFree() {
+    fun filteredFamilyWithTagColumnKeepsTagPayloadFree() {
         val world = World()
         val active = world.create()
         val asleep = world.create()
@@ -192,7 +270,7 @@ class ExcludedTypedFamilyTest {
         world.add(asleep, ActiveTag)
         world.add(asleep, Sleeping)
 
-        val family = world.familyExcluding<ActiveTag>(Sleeping::class)
+        val family = world.family<ActiveTag>(FamilySpec.exclude(Sleeping::class))
         var visited = 0
         family.forEach { entity, tag ->
             assertEquals(active, entity)

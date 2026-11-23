@@ -7,7 +7,7 @@ package com.awakekt.awake.navigation
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family1System
 import com.awakekt.awake.ecs.World
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 class PathRequestSystem(
     private val navMesh: NavMesh,
     private val searchScope: CoroutineScope? = null,
-) : System {
+) : Family1System<PathRequest>(PathRequest::class) {
 
     /** In-flight searches, so a cancelled or re-issued request can drop the one it replaced. */
     private val inFlight = HashMap<Entity, Search>()
@@ -53,22 +53,24 @@ class PathRequestSystem(
 
     private var nextSearchId = 0L
 
-    /**
-     * Polls completed path search answers and processes pending path requests.
-     *
-     * @param world The ECS world containing active entities and components.
-     * @param delta Frame delta time in seconds.
-     */
-    override fun update(world: World, delta: Float) {
+    override fun begin(world: World, delta: Float) {
         applyAnswers(world)
-        world.family<PathRequest>().forEach { entity, request ->
-            when {
-                request.status != PathStatus.Pending -> abandon(entity)
-                searchScope == null -> answer(request, navMesh.findPath(request.start, request.goal))
-                entity !in inFlight -> issue(entity, request)
-            }
+    }
+
+    override fun process(world: World, delta: Float, entity: Entity, component: PathRequest) {
+        when {
+            component.status != PathStatus.Pending -> abandon(entity)
+            searchScope == null -> answer(component, navMesh.findPath(component.start, component.goal))
+            entity !in inFlight -> issue(entity, component)
         }
+    }
+
+    override fun end(world: World, delta: Float) {
         abandonRequestsThatAreGone(world)
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, component ->
+        process(world, delta, entity, component)
     }
 
     /**

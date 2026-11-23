@@ -8,7 +8,7 @@ package com.awakekt.awake.ai.btree
 import com.awakekt.awake.ai.AiContext
 import com.awakekt.awake.ai.AiEventSink
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Family1System
 import com.awakekt.awake.ecs.World
 
 /**
@@ -16,7 +16,7 @@ import com.awakekt.awake.ecs.World
  *
  * @param events Where the trees' emitted events go; dropped by default.
  */
-class BehaviorTreeSystem(private val events: AiEventSink = AiEventSink.None) : System {
+class BehaviorTreeSystem(private val events: AiEventSink = AiEventSink.None) : Family1System<BehaviorTreeComponent>(BehaviorTreeComponent::class) {
     // Reused tick context to ensure zero allocation per frame loop
     private val reusableContext = AiContext(
         world = World(),
@@ -25,16 +25,15 @@ class BehaviorTreeSystem(private val events: AiEventSink = AiEventSink.None) : S
         blackboard = Blackboard(),
     )
 
-    /**
-     * Ticks all enabled [BehaviorTreeComponent] entities in [world] by [delta] seconds.
-     */
-    override fun update(world: World, delta: Float) {
-        world.family<BehaviorTreeComponent>().forEach { entity, btc ->
-            if (!btc.enabled) return@forEach
+    override fun process(world: World, delta: Float, entity: Entity, component: BehaviorTreeComponent) {
+        if (!component.enabled) return
 
-            reusableContext.update(world, entity, delta, btc.blackboard)
-            reusableContext.events = events
-            btc.activeStatus = btc.tree.tick(reusableContext)
-        }
+        reusableContext.update(world, entity, delta, component.blackboard)
+        reusableContext.events = events
+        component.activeStatus = component.tree.tick(reusableContext)
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, component ->
+        process(world, delta, entity, component)
     }
 }

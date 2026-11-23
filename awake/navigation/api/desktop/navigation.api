@@ -35,9 +35,10 @@ public final class com/awakekt/awake/navigation/PathRequest : com/awakekt/awake/
 	public final fun setWaypoints (Ljava/util/List;)V
 }
 
-public final class com/awakekt/awake/navigation/PathRequestSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/navigation/PathRequestSystem : com/awakekt/awake/ecs/Family1System {
 	public fun <init> (Lcom/awakekt/awake/navigation/NavMesh;Lkotlinx/coroutines/CoroutineScope;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/navigation/NavMesh;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun process-0iDFBS0 (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

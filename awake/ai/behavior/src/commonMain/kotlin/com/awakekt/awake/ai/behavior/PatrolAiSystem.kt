@@ -6,7 +6,8 @@
 package com.awakekt.awake.ai.behavior
 
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathStatus
@@ -21,21 +22,21 @@ import kotlin.math.sqrt
 class PatrolAiSystem(
     /** Where patrollers are, and how they move. */
     private val placement: AgentPlacement,
-) : System {
+) : Family2System<PatrolBehavior, PathRequest>(PatrolBehavior::class, PathRequest::class) {
     private val position = Vec3f(0f, 0f, 0f)
 
-    override fun update(world: World, delta: Float) {
-        world.family<PatrolBehavior>().forEach { entity, patrol ->
-            val request = world.get<PathRequest>(entity) ?: return@forEach
-            if (patrol.stops.isEmpty() || patrol.finished) return@forEach
-            if (!placement.position(world, entity, position)) return@forEach
-            skipUnreachableStop(patrol, request)
-            patrol.adoptArrivedRoute(request)
-            if (dwelling(patrol, delta)) return@forEach
-            patrol.requestRouteWhenDue(position, patrol.currentStop, request, delta)
-            patrol.steer(placement, world, entity, position, delta)
-            if (reachedCurrentStop(patrol, position)) arriveAtStop(patrol)
-        }
+    override fun process(world: World, delta: Float, entity: Entity, first: PatrolBehavior, second: PathRequest) {
+        if (first.stops.isEmpty() || first.finished || !placement.position(world, entity, position)) return
+        skipUnreachableStop(first, second)
+        first.adoptArrivedRoute(second)
+        if (dwelling(first, delta)) return
+        first.requestRouteWhenDue(position, first.currentStop, second, delta)
+        first.steer(placement, world, entity, position, delta)
+        if (reachedCurrentStop(first, position)) arriveAtStop(first)
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
     }
 
     /**

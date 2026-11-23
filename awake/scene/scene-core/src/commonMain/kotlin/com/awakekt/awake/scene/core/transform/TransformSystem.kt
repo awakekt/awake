@@ -8,8 +8,9 @@ package com.awakekt.awake.scene.core.transform
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.Family
+import com.awakekt.awake.ecs.Family1
 import com.awakekt.awake.ecs.Family2
+import com.awakekt.awake.ecs.FamilySpec
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 
@@ -50,11 +51,11 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
     private var builtParentVersion = IntArray(0)
     private var builtInheritRotation = BooleanArray(0)
 
-    // The statics family and what it was when this system last walked it, and the family of the rest.
+    // The statics family and what it was when this system last walked it, and the packed family of the rest.
     private var statics: Family2<Transform, StaticTransform>? = null
     private var staticChanges = 0
     private var staticResets = 0
-    private var moving: Family? = null
+    private var moving: Family1<Transform>? = null
 
     // The tag's raw id, -1 when statics are not skipped: a nullable id would be boxed each frame.
     private var staticType = -1
@@ -77,8 +78,8 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
                 if (!isBuilt(entity.id, transform)) propagate(world, transformType, entity, transform)
             }
         }
-        movingFamily(world, statics).forEach { entity ->
-            world.get<Transform>(entity, transformType)?.let { propagate(world, transformType, entity, it) }
+        movingFamily(world, statics).forEach { entity, transform ->
+            propagate(world, transformType, entity, transform)
         }
         onMovedStatic?.let { report -> checkStaticSlice(statics, report) }
     }
@@ -127,12 +128,12 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         return changed
     }
 
-    /** The entities with a [Transform] and no [StaticTransform], kept while the world's families are. */
-    private fun movingFamily(world: World, family: Family2<Transform, StaticTransform>): Family {
+    /** The entities with a [Transform] and no [StaticTransform], kept packed while the world's families are. */
+    private fun movingFamily(world: World, family: Family2<Transform, StaticTransform>): Family1<Transform> {
         val kept = moving
         if (kept != null && family === statics) return kept
         statics = family
-        return world.family { all(Transform::class).exclude(StaticTransform::class) }.also { moving = it }
+        return world.family(TRANSFORM, MOVING_FILTER).also { moving = it }
     }
 
     /** Frames that walked the statics, for the gate that a still world does not. */
@@ -239,5 +240,6 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         // Held, not written per frame: a `Transform::class` builds a new class reference each time.
         val TRANSFORM = Transform::class
         val STATIC = StaticTransform::class
+        val MOVING_FILTER = FamilySpec.exclude(STATIC)
     }
 }

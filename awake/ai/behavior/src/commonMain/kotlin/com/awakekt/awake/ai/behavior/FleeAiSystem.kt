@@ -6,7 +6,8 @@
 package com.awakekt.awake.ai.behavior
 
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family2System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathStatus
@@ -27,23 +28,24 @@ import kotlin.math.sqrt
 class FleeAiSystem(
     /** Where fleers and their threats are, and how a fleer moves. */
     private val placement: AgentPlacement,
-) : System {
+) : Family2System<FleeBehavior, PathRequest>(FleeBehavior::class, PathRequest::class) {
     private val position = Vec3f(0f, 0f, 0f)
     private val threatScratch = Vec3f(0f, 0f, 0f)
 
-    override fun update(world: World, delta: Float) {
-        world.family<FleeBehavior>().forEach { entity, flee ->
-            val request = world.get<PathRequest>(entity) ?: return@forEach
-            if (!placement.position(world, entity, position)) return@forEach
-            val threatPosition = threatPositionOf(world, flee)
-            updatePanic(flee, position, threatPosition)
-            noteEscapeOutcome(flee, request)
-            flee.adoptArrivedRoute(request)
-            if (flee.fleeing) {
-                flee.requestRouteWhenDue(position, escapeGoal(flee, position, threatPosition), request, delta)
-                flee.steer(placement, world, entity, position, delta)
-            }
+    override fun process(world: World, delta: Float, entity: Entity, first: FleeBehavior, second: PathRequest) {
+        if (!placement.position(world, entity, position)) return
+        val threatPosition = threatPositionOf(world, first)
+        updatePanic(first, position, threatPosition)
+        noteEscapeOutcome(first, second)
+        first.adoptArrivedRoute(second)
+        if (first.fleeing) {
+            first.requestRouteWhenDue(position, escapeGoal(first, position, threatPosition), second, delta)
+            first.steer(placement, world, entity, position, delta)
         }
+    }
+
+    override fun update(world: World, delta: Float) = runTick(world, delta) { entity, first, second ->
+        process(world, delta, entity, first, second)
     }
 
     /** The threat's position read through the world, so a destroyed threat counts as gone. */

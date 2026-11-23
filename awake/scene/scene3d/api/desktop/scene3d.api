@@ -145,9 +145,10 @@ public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimation
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimationSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimationSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> ()V
 	public fun <init> (Z)V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -172,8 +173,9 @@ public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimati
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimationSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimationSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> ()V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -207,9 +209,10 @@ public final class com/awakekt/awake/scene/rendering/animation/ModularCharacterC
 	public final fun unequip (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/animation/CharacterSlot;
 }
 
-public final class com/awakekt/awake/scene/rendering/animation/ModularSkeletalSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/rendering/animation/ModularSkeletalSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> ()V
 	public fun <init> (Z)V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -475,8 +478,9 @@ public final class com/awakekt/awake/scene/rendering/animation/SocketAttachmentC
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/awakekt/awake/scene/rendering/animation/SocketAttachmentSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/rendering/animation/SocketAttachmentSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> ()V
+	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -1846,8 +1850,9 @@ public final class com/awakekt/awake/scene/rendering/mesh/TextureAnimationBindin
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/rendering/mesh/TextureClipSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/rendering/mesh/TextureClipSystem : com/awakekt/awake/ecs/Family1System {
 	public fun <init> ()V
+	public synthetic fun process-0iDFBS0 (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

@@ -30,31 +30,47 @@ class IteratingSystemAllocationTest {
     }
 
     @Test
-    fun family1SystemWithExcludeAllocatesNothing() {
-        val system = object : Family1System<Position>(Position::class, Sleeping::class) {
+    fun family1SystemWithFilterAllocatesNothing() {
+        val system = object : Family1System<Position>(Position::class, FamilySpec.exclude(Sleeping::class)) {
             override fun process(world: World, delta: Float, entity: Entity, component: Position) {
                 component.x++
             }
         }
-        measure("Family1System(exclude)") { world -> system.update(world, 0.016f) }
+        measure("Family1System(filter)") { world -> system.update(world, 0.016f) }
     }
 
     @Test
-    fun family2SystemWithExcludeAllocatesNothing() {
-        val system = object : Family2System<Position, Velocity>(Position::class, Velocity::class, Sleeping::class) {
+    fun family2SystemWithFilterAllocatesNothing() {
+        val system = object : Family2System<Position, Velocity>(
+            Position::class,
+            Velocity::class,
+            FamilySpec.exclude(Sleeping::class),
+        ) {
             override fun process(world: World, delta: Float, entity: Entity, first: Position, second: Velocity) {
                 first.x += second.vx
             }
         }
-        measure("Family2System(exclude)") { world -> system.update(world, 0.016f) }
+        measure("Family2System(filter)") { world -> system.update(world, 0.016f) }
     }
 
     @Test
-    fun cachedExcludedFamily2ForEachAllocatesNothing() {
+    fun cachedFilteredFamily2ForEachAllocatesNothing() {
         val world = populatedWorld()
-        val family = world.familyExcluding<Position, Velocity>(Sleeping::class)
-        measureOnWorld("Family2Excluding.forEach", world) {
+        val family = world.family<Position, Velocity>(AWAKE_FILTER)
+        measureOnWorld("Family2Filtered.forEach", world) {
             family.forEach { _, pos, vel -> pos.x += vel.vx }
+        }
+    }
+
+    @Test
+    fun repeatedFilteredFamilyLookupAllocatesNothing() {
+        val world = populatedWorld()
+        val positionType = componentType<Position>()
+        val velocityType = componentType<Velocity>()
+        measureOnWorld("World.family(ComponentType, FamilySpec)", world) {
+            it.family(positionType, AWAKE_FILTER).forEach { _, pos -> pos.x++ }
+            it.family(positionType, velocityType, AWAKE_FILTER).forEach { _, pos, vel -> pos.x += vel.vx }
+            it.family<Position, Velocity>(AWAKE_FILTER).forEach { _, pos, vel -> pos.x += vel.vx }
         }
     }
 
@@ -90,6 +106,7 @@ class IteratingSystemAllocationTest {
     }
 
     private companion object {
+        val AWAKE_FILTER = FamilySpec.exclude(Sleeping::class)
         const val ACTIVE_COUNT = 16
         const val SLEEPING_COUNT = 64
         const val WARMUP_FRAMES = 50_000
