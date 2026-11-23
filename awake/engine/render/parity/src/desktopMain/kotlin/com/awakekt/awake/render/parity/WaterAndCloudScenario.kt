@@ -13,8 +13,8 @@ import com.awakekt.awake.asset.shaderpack.StylizedWaterLook
 import com.awakekt.awake.asset.shaderpack.StylizedWaterQuality
 import com.awakekt.awake.asset.shaderpack.cloudLayerContentFeature
 import com.awakekt.awake.asset.shaderpack.stylizedWaterContentFeature
-import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
+import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
 import com.awakekt.awake.core.color.Color
@@ -190,9 +190,12 @@ private fun rockAndRiverbedGeometry(): MeshGeometry {
     }
     // Gently sloping sandy shore: y=+1.6 at z=-14 down to y=-3.2 at z=+14.
     addQuad(
-        Vec3f(-24f, 1.6f, -14f), Vec3f(24f, 1.6f, -14f),
-        Vec3f(24f, -3.2f, 14f), Vec3f(-24f, -3.2f, 14f),
-        Vec3f(0f, 0.985f, 0.17f), Color(0.72f, 0.64f, 0.48f, 1f),
+        Vec3f(-24f, 1.6f, -14f),
+        Vec3f(24f, 1.6f, -14f),
+        Vec3f(24f, -3.2f, 14f),
+        Vec3f(-24f, -3.2f, 14f),
+        Vec3f(0f, 0.985f, 0.17f),
+        Color(0.72f, 0.64f, 0.48f, 1f),
     )
     // Tapered river boulder sitting through the water surface at (0, -1.8..+1.35, 1.5).
     val bY = -1.8f; val tY = 1.35f; val cz = 1.5f; val bw = 2.4f; val tw = 1.3f

@@ -147,9 +147,11 @@ class WaterAndCloudParityTest {
         val count = a.size / 4
         for (i in 0 until count) {
             val o = i * 4
-            sum += (abs((a[o].toInt() and 0xFF) - (b[o].toInt() and 0xFF)) +
-                abs((a[o + 1].toInt() and 0xFF) - (b[o + 1].toInt() and 0xFF)) +
-                abs((a[o + 2].toInt() and 0xFF) - (b[o + 2].toInt() and 0xFF))) / 3.0
+            sum += (
+                abs((a[o].toInt() and 0xFF) - (b[o].toInt() and 0xFF)) +
+                    abs((a[o + 1].toInt() and 0xFF) - (b[o + 1].toInt() and 0xFF)) +
+                    abs((a[o + 2].toInt() and 0xFF) - (b[o + 2].toInt() and 0xFF))
+                ) / 3.0
         }
         return (sum / count).toFloat()
     }
@@ -201,9 +203,11 @@ class WaterAndCloudParityTest {
         for (y in yStart until yEnd) {
             for (x in 0 until size) {
                 val o = (y * size + x) * 4
-                sum += (abs((a[o].toInt() and 0xFF) - (ref[o].toInt() and 0xFF)) +
-                    abs((a[o + 1].toInt() and 0xFF) - (ref[o + 1].toInt() and 0xFF)) +
-                    abs((a[o + 2].toInt() and 0xFF) - (ref[o + 2].toInt() and 0xFF))) / 3.0
+                sum += (
+                    abs((a[o].toInt() and 0xFF) - (ref[o].toInt() and 0xFF)) +
+                        abs((a[o + 1].toInt() and 0xFF) - (ref[o + 1].toInt() and 0xFF)) +
+                        abs((a[o + 2].toInt() and 0xFF) - (ref[o + 2].toInt() and 0xFF))
+                    ) / 3.0
                 count++
             }
         }
