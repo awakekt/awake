@@ -383,7 +383,10 @@ open class VulkanEngine(
      * capability features (opaque geometry + debug lines, UI) are always present -- see
      * docs/reference/render-extensibility.md.
      */
-    private suspend fun buildRenderFeatures(depthPrePass: DepthPrePassFeature?): List<RenderFeature<VulkanRenderFrameContext>> {
+    private suspend fun buildRenderFeatures(
+        depthPrePass: DepthPrePassFeature?,
+        sceneDepthPass: DepthPrePassFeature?,
+    ): List<RenderFeature<VulkanRenderFrameContext>> {
         val lineRenderPipeline = LineRenderPipeline(
             graphicsDevice,
             swapchainManager,
@@ -400,6 +403,8 @@ open class VulkanEngine(
             depthPrePass,
             MAX_FRAMES_IN_FLIGHT,
             ::loadShaderPair,
+            supportsSceneDepth = sceneDepthTarget != null,
+            sceneDepthPass = sceneDepthPass,
         )
         contentAttacher = ContentFeatureAttacher(gpu)
         return buildList {
@@ -500,10 +505,14 @@ open class VulkanEngine(
     private fun depthPlaceholderWithoutPrePass(): DepthTarget? =
         if (depthTarget == null) DepthTarget.placeholder(graphicsDevice, transferContext::runOneTimeCommands) else null
 
-    /** The shadow-map layout, real or placeholder, for pipelines the start-up maps do not list. */
-    private fun declaredEngineSetLayouts(): Map<BindingSemantic, DescriptorSetLayoutHandle> {
-        val target = depthTarget ?: depthPrePassPlaceholder ?: return emptyMap()
-        return mapOf(BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(target.descriptorSetLayout))
+    /** Engine-owned depth layouts for pipelines the start-up maps do not list (dynamically attached features). */
+    private fun declaredEngineSetLayouts(): Map<BindingSemantic, DescriptorSetLayoutHandle> = buildMap {
+        (depthTarget ?: depthPrePassPlaceholder)?.let {
+            put(BindingSemantic.ShadowDepth, DescriptorSetLayoutHandle(it.descriptorSetLayout))
+        }
+        sceneDepthTarget?.let {
+            put(BindingSemantic.SceneDepth, DescriptorSetLayoutHandle(it.descriptorSetLayout))
+        }
     }
 
     /** Binds [depthPrePassPlaceholder] wherever a pipeline reads the shadow map; the real target binds itself. */
@@ -652,7 +661,7 @@ open class VulkanEngine(
             depthPrePass = buildDepthPrePassFeature(depthTarget)
             sceneDepthPass = buildSceneDepthFeature()
             maskPass = buildMaskFeature()
-            renderFeatures = buildRenderFeatures(depthPrePass)
+            renderFeatures = buildRenderFeatures(depthPrePass, sceneDepthPass)
             val renderer = Renderer(
                 antiAliasing = antiAliasing.mode,
                 supportedAntiAliasing = antiAliasing.supported,

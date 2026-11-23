@@ -75,13 +75,37 @@ class WaterAndCloudParityTest {
 
     private fun verifyWaterDepthFoam(backend: HeadlessUiBackend) {
         val withFoam = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Standard, samplesDepth = true)
+        val attachedFoam = renderStylizedWaterWithRockScene(
+            backend,
+            StylizedWaterQuality.Standard,
+            samplesDepth = true,
+            attachDynamically = true,
+        )
+        val withTransparentOverlay = renderStylizedWaterWithRockScene(
+            backend,
+            StylizedWaterQuality.Standard,
+            samplesDepth = true,
+            includeTransparentOverlay = true,
+        )
         val noFoam = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Standard, samplesDepth = false)
         val fastWithDepthPlan = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Fast, samplesDepth = true)
         val fastWithoutDepthPlan = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Fast, samplesDepth = false)
         val foamDelta = meanRgbDiff(withFoam, noFoam)
+        val dynamicAttachDelta = meanRgbDiff(withFoam, attachedFoam)
+        val waterLuma = bandMeanLuma(withFoam, SCENE_SIZE, yStart = SCENE_SIZE / 2, yEnd = SCENE_SIZE - 4)
+        val overlayWaterLuma = bandMeanLuma(withTransparentOverlay, SCENE_SIZE, yStart = SCENE_SIZE / 2, yEnd = SCENE_SIZE - 4)
         val fastDepthDelta = meanRgbDiff(fastWithDepthPlan, fastWithoutDepthPlan)
-        println("WATER_DEPTH[$backend] foamDelta=$foamDelta fastDepthDelta=$fastDepthDelta")
+        println(
+            "WATER_DEPTH[$backend] foamDelta=$foamDelta dynamicAttachDelta=$dynamicAttachDelta " +
+                "waterLuma=$waterLuma overlayWaterLuma=$overlayWaterLuma fastDepthDelta=$fastDepthDelta",
+        )
         assertTrue(foamDelta > 3.0f, "$backend: SceneDepth contact foam should visibly brighten shore and rock edges (delta=$foamDelta)")
+        assertTrue(dynamicAttachDelta < 0.5f, "$backend: Dynamically attached depth water must match RenderPlan-declared water (delta=$dynamicAttachDelta)")
+        assertTrue(
+            overlayWaterLuma <= waterLuma + 3.0f,
+            "$backend: Coplanar transparent draw must not write into SceneDepth and blanket water in white foam " +
+                "(waterLuma=$waterLuma overlayWaterLuma=$overlayWaterLuma)",
+        )
         assertTrue(fastDepthDelta < 0.5f, "$backend: Fast mobile tier must skip depth foam sampling (fastDelta=$fastDepthDelta)")
     }
 

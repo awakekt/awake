@@ -80,7 +80,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
         graphicsDevice.frameUniforms.write(commandBuffers.size, input)
         // The offscreen frame's own slots, past the last frame in flight, as its materials use.
         recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment)
-        recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))
+        recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection), input.environment)
         recordMaskPass(commandBuffer, commandBuffers.size, input.maskPasses, input.environment)
         offscreen.prepareForColorAttachment(commandBuffer)
         Vulkan.vkCmdBeginRenderPass(
@@ -132,7 +132,9 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
 
 private fun Renderer.prepareDepthDraws(input: GpuPassInput): List<PreparedDraw> {
     if (input.prePasses.isEmpty() && sceneDepthTarget == null) return emptyList()
-    return input.resolvedDraws
+    // SceneDepth holds opaque (and alpha-tested masked) geometry only; alpha-blended transparent
+    // draws do not write scene depth and must not occlude water contact foam or depth fog reads.
+    return input.resolvedOpaqueDraws
 }
 
 /**

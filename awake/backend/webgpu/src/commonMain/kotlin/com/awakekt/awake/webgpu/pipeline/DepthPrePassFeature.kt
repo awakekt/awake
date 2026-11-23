@@ -125,13 +125,15 @@ class DepthPrePassFeature(
         encoder: GPUCommandEncoder,
         draws: List<PreparedDraw>,
         cascades: GpuShadowCascadeData,
-    ) = recordCommands(encoder, draws, cascades.viewProjections)
+        environment: GpuEnvironmentState? = null,
+    ) = recordCommands(encoder, draws, cascades.viewProjections, environment)
 
     /** Records the generic packet's arbitrary layered depth resource. */
     fun recordCommands(
         encoder: GPUCommandEncoder,
         draws: List<PreparedDraw>,
         viewProjections: List<Mat4>,
+        environment: GpuEnvironmentState? = null,
     ) {
         require(viewProjections.isNotEmpty()) { "A layered depth pass needs at least one matrix." }
         val allPipelines = cascadePipelines
@@ -140,7 +142,7 @@ class DepthPrePassFeature(
             val source = viewProjections[cascade]
             allPipelines.forEach { it.writeCascade(cascade, source) }
             if (countsShadowPasses) stats?.beginShadowPass()
-            recordCascade(encoder, draws, cascade)
+            recordCascade(encoder, draws, cascade, environment)
             stats?.countAs(RenderPassKind.Other)
         }
         for (layer in activeCount until minOf(4, depthTarget.layers)) {

@@ -99,6 +99,17 @@ class ContentFeatureAttacherTest {
         assertTrue(gpu.registry.specs.isEmpty())
     }
 
+    @Test
+    fun aFeatureSamplingSceneDepthAttachesWhenHostSupportsSceneDepth() = runTest {
+        val depthGpu = RecordingGpu(events, supportsSceneDepth = true)
+        val depthAttacher = ContentFeatureAttacher(depthGpu)
+        assertTrue(depthAttacher.supportsSceneDepth)
+        val attached = depthAttacher.attachContentFeature(source("water", ContentPaint.AfterGeometry, samplesSceneDepth = true))
+        assertNotNull(depthGpu.registry[spec("water")])
+        attached.detach()
+        assertNull(depthGpu.registry[spec("water")])
+    }
+
     /** Without a group of its own a second feature would overwrite the first one's textures. */
     @Test
     fun aSecondFeatureWithTheSameSpecIsRejectedWhereTheBackendHasNoGroups() = runTest {
@@ -196,7 +207,10 @@ class ContentFeatureAttacherTest {
         }
     }
 
-    internal class RecordingGpu(val events: MutableList<String>) : ContentFeatureGpu<FakePipeline> {
+    internal class RecordingGpu(
+        val events: MutableList<String>,
+        override val supportsSceneDepth: Boolean = false,
+    ) : ContentFeatureGpu<FakePipeline> {
         override val backend = RenderBackend.Vulkan
         override val registry = PipelineRegistry(PipelineFactory { _, _ -> FakePipeline() })
         val depthSources = mutableListOf<ContentDepthSource>()

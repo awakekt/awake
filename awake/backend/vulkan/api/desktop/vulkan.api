@@ -451,6 +451,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
 	public fun getSupportedAntiAliasing ()Ljava/util/Set;
+	public fun getSupportsSceneDepth ()Z
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I

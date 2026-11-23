@@ -250,7 +250,7 @@ private fun rockAndRiverbedGeometry(): MeshGeometry {
 
 private suspend fun openDepthWaterSession(
     backend: HeadlessUiBackend,
-    waterFeature: ContentFeatureSource,
+    waterFeature: ContentFeatureSource?,
     size: Int,
 ): HeadlessRenderSession {
     val plan = RenderPlan(
@@ -259,8 +259,9 @@ private suspend fun openDepthWaterSession(
             PackShaderSets.LitShadow,
             VertexFormat.PositionNormalColor,
             materialBindings = GroupBindings.UniformOnlyMaterial,
+            buildTransparent = true,
         ),
-        contentFeatures = listOf(waterFeature),
+        contentFeatures = listOfNotNull(waterFeature),
         depthPrePassShaderSet = PackShaderSets.ShadowDepth,
         sceneDepthShaderSet = PackShaderSets.SceneDepth,
     )
@@ -279,12 +280,15 @@ private suspend fun openDepthWaterSession(
 /**
  * Renders flowing stylized water around a boulder and sloped sandy shoreline using `SceneDepth` contact foam.
  */
+@Suppress("LongParameterList")
 fun renderStylizedWaterWithRockScene(
     backend: HeadlessUiBackend,
     quality: StylizedWaterQuality = StylizedWaterQuality.Standard,
     samplesDepth: Boolean = true,
     timeSeconds: Float = 1.2f,
     size: Int = SCENE_SIZE,
+    attachDynamically: Boolean = false,
+    includeTransparentOverlay: Boolean = false,
 ): ByteArray {
     val look = StylizedWaterLook(
         enabled = true,
@@ -303,43 +307,87 @@ fun renderStylizedWaterWithRockScene(
         name = "stylized_water_rock_test",
         samplesDepth = samplesDepth,
     )
-    return runBlocking { openDepthWaterSession(backend, feature, size) }.use { session ->
+    return runBlocking {
+        openDepthWaterSession(backend, if (attachDynamically) null else feature, size)
+    }.use { session ->
         val r = session.renderer
-        val target = r.createRenderTarget(size, size)
-        val rockMesh = r.createMesh(rockAndRiverbedGeometry())
-        val rockMaterial = r.createMaterial(LitShadowUniformLayout)
+        val attached = if (attachDynamically) {
+            val host = checkNotNull(r as? ContentFeatureHost) { "Backend renderer must implement ContentFeatureHost." }
+            check(host.supportsSceneDepth) { "$backend: ContentFeatureHost.supportsSceneDepth must be true when sceneDepthShaderSet is configured." }
+            runBlocking { host.attachContentFeature(feature) }
+        } else {
+            null
+        }
         try {
-            val lens = Lens(eye = Vec3f(0f, 6.2f, 12.5f), center = Vec3f(0f, 0f, -1.5f), fovYRadians = 0.85f, near = 0.2f, far = 150f)
-            val draw = RenderDrawCommand(mesh = rockMesh, material = rockMaterial, model = Mat4())
-            r.renderToTexture(
-                target,
-                ScenePassCompiler.compile(
-                    lens = lens,
-                    drawCalls = listOf(draw),
-                    light = SceneLight(direction = DAY_SUN, color = Vec3f(1f, 0.96f, 0.88f), ambient = 0.35f),
-                    environment = EnvironmentUniforms(
-                        showSky = true,
-                        horizonColor = DAY_SKY_HORIZON,
-                        zenithColor = DAY_SKY_ZENITH,
-                        fogColor = DAY_SKY_HORIZON,
-                        fogStart = 28f,
-                        fogEnd = 110f,
-                        shadowsEnabled = false,
-                        clearColor = DAY_SKY_HORIZON,
-                    ),
-                    clipSpace = r.clipSpace,
-                    aspect = 1f,
-                    drawPreparer = (r as GpuDrawPreparationSource).gpuDrawPreparer,
-                ),
-            )
-            runBlocking { r.readPixels(target) }.data
+            renderDepthWaterFrame(r, size, includeTransparentOverlay)
         } finally {
             r.waitIdle()
-            rockMesh.destroy()
-            rockMaterial.destroy()
-            target.destroy()
+            attached?.detach()
         }
     }
+}
+
+private fun renderDepthWaterFrame(r: Renderer, size: Int, includeTransparentOverlay: Boolean): ByteArray {
+    val target = r.createRenderTarget(size, size)
+    val rockMesh = r.createMesh(rockAndRiverbedGeometry())
+    val rockMaterial = r.createMaterial(LitShadowUniformLayout)
+    val overlayMesh = if (includeTransparentOverlay) r.createMesh(transparentOverlayGeometry()) else null
+    try {
+        val lens = Lens(eye = Vec3f(0f, 6.2f, 12.5f), center = Vec3f(0f, 0f, -1.5f), fovYRadians = 0.85f, near = 0.2f, far = 150f)
+        val draws = buildList {
+            add(RenderDrawCommand(mesh = rockMesh, material = rockMaterial, model = Mat4()))
+            if (overlayMesh != null) {
+                add(RenderDrawCommand(mesh = overlayMesh, material = rockMaterial, model = Mat4(), transparent = true))
+            }
+        }
+        r.renderToTexture(
+            target,
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = draws,
+                light = SceneLight(direction = DAY_SUN, color = Vec3f(1f, 0.96f, 0.88f), ambient = 0.35f),
+                environment = EnvironmentUniforms(
+                    showSky = true,
+                    horizonColor = DAY_SKY_HORIZON,
+                    zenithColor = DAY_SKY_ZENITH,
+                    fogColor = DAY_SKY_HORIZON,
+                    fogStart = 28f,
+                    fogEnd = 110f,
+                    shadowsEnabled = false,
+                    clearColor = DAY_SKY_HORIZON,
+                ),
+                clipSpace = r.clipSpace,
+                aspect = 1f,
+                drawPreparer = (r as GpuDrawPreparationSource).gpuDrawPreparer,
+            ),
+        )
+        return runBlocking { r.readPixels(target) }.data
+    } finally {
+        r.waitIdle()
+        overlayMesh?.destroy()
+        rockMesh.destroy()
+        rockMaterial.destroy()
+        target.destroy()
+    }
+}
+
+/** Alpha-zero transparent sheet coplanar with the water surface (`y = 0`) to prove `SceneDepth` ignores transparent draws. */
+private fun transparentOverlayGeometry(): MeshGeometry {
+    val verts = InterleavedVertices(VertexFormat.PositionNormalColor, 4)
+    val half = 24f
+    val corners = arrayOf(
+        floatArrayOf(-half, 0f, -half),
+        floatArrayOf(half, 0f, -half),
+        floatArrayOf(half, 0f, half),
+        floatArrayOf(-half, 0f, half),
+    )
+    for (i in corners.indices) {
+        val c = corners[i]
+        verts.put(i, VertexSemantic.Position, c[0], c[1], c[2])
+        verts.put(i, VertexSemantic.Normal, 0f, 1f, 0f)
+        verts.put(i, VertexSemantic.Color, 0f, 0f, 0f)
+    }
+    return verts.build(intArrayOf(0, 2, 1, 0, 3, 2))
 }
 
 /** Appends stylized water and cloud-layer frames to the PR render evidence gallery. */

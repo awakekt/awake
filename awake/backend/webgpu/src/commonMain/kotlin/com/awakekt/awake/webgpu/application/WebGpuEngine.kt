@@ -309,7 +309,13 @@ open class WebGpuEngine(
         // Paint order within a slot: a backdrop feature, then geometry, then a feature that
         // covers it, then the always-present UI capability -- see
         // docs/reference/render-extensibility.md. Mirrors VulkanEngine's identical list.
-        val gpu = WebGpuContentFeatureGpu(graphicsDevice, registry, depthPrePass).also { contentGpu = it }
+        val gpu = WebGpuContentFeatureGpu(
+            graphicsDevice,
+            registry,
+            depthPrePass,
+            supportsSceneDepth = sceneDepthPass != null,
+            sceneDepthPass = sceneDepthPass,
+        ).also { contentGpu = it }
         val attacher = ContentFeatureAttacher(gpu).also { contentAttacher = it }
         val content = plan.contentFeaturesFor(RenderBackend.WebGpu).groupBy { it.paint }
         val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = buildList {
@@ -337,6 +343,7 @@ open class WebGpuEngine(
             renderFeatures = renderFeatures,
             backgroundScope = coroutineScope,
         ).also { renderer ->
+            gpu.onDestroyPipeline = { oldPipeline -> renderer.bufferPools.invalidatePipeline(oldPipeline.handle.pipeline) }
             renderer.contentFeatureHost = attacher
             renderer.shaderReplacement = WebGpuShaderReplacement(
                 registry = registry,

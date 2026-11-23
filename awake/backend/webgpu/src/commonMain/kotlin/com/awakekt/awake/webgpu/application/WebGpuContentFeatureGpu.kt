@@ -40,8 +40,12 @@ internal class WebGpuContentFeatureGpu(
     private val graphicsDevice: GraphicsDevice,
     override val registry: PipelineRegistry<RenderPipeline>,
     private val depthPass: DepthPrePassFeature? = null,
+    override val supportsSceneDepth: Boolean = false,
+    private val sceneDepthPass: DepthPrePassFeature? = null,
 ) : ContentFeatureGpu<RenderPipeline> {
     override val backend = RenderBackend.WebGpu
+
+    internal var onDestroyPipeline: (RenderPipeline) -> Unit = {}
 
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline.handle
 
@@ -137,38 +141,49 @@ internal class WebGpuContentFeatureGpu(
     }
 
     override suspend fun createDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec): ContentDepthCaster? {
-        val pass = depthPass ?: return null
+        val passes = listOfNotNull(depthPass, sceneDepthPass)
+        if (passes.isEmpty()) return null
         val shaderCode = depth.vertexShader.resolveBytes()
         // The content pipeline's own group-0 layout, so the bind group of every feature drawing
         // through it binds unchanged. The depth pipeline's layout keeps it; this reference ends
         // once that is built.
-        val depthPipeline = pipeline.groupZeroLayout.use { groupZero ->
-            DepthOnlyPipeline(
-                graphicsDevice = graphicsDevice,
-                shaderCode = shaderCode,
-                vertexFormat = depth.vertexFormat,
-                vertexEntryPoint = depth.vertexEntryPoint,
-                fragmentEntryPoint = depth.fragmentEntryPoint,
-                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
-                frontFace = depth.frontFace,
-                bindingsByGroup = depth.bindingsByGroup,
-                bindingsMetadataAvailable = depth.bindingsMetadataAvailable,
-                groupZeroLayout = groupZero,
-                depthFormat = pass.depthTarget.textureFormat,
-            )
+        val built = pipeline.groupZeroLayout.use { groupZero ->
+            passes.map { pass ->
+                pass to DepthOnlyPipeline(
+                    graphicsDevice = graphicsDevice,
+                    shaderCode = shaderCode,
+                    vertexFormat = depth.vertexFormat,
+                    vertexEntryPoint = depth.vertexEntryPoint,
+                    fragmentEntryPoint = depth.fragmentEntryPoint,
+                    cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                    frontFace = depth.frontFace,
+                    bindingsByGroup = depth.bindingsByGroup,
+                    bindingsMetadataAvailable = depth.bindingsMetadataAvailable,
+                    groupZeroLayout = groupZero,
+                    depthFormat = pass.depthTarget.textureFormat,
+                )
+            }
         }
         return object : ContentDepthCaster {
             override suspend fun cast(source: ContentDepthSource): ContentUpload {
-                val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
-                pass.contentCasters += caster
-                return ContentUpload(null) { pass.contentCasters -= caster }
+                val casters = built.map { (pass, depthPipeline) ->
+                    val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
+                    pass.contentCasters += caster
+                    pass to caster
+                }
+                return ContentUpload(null) {
+                    casters.forEach { (pass, caster) -> pass.contentCasters -= caster }
+                }
             }
 
-            override fun destroy() = depthPipeline.destroy()
+            override fun destroy() = built.forEach { (_, depthPipeline) -> depthPipeline.destroy() }
         }
     }
 
-    override fun destroyPipeline(pipeline: RenderPipeline) = pipeline.destroy()
+    override fun destroyPipeline(pipeline: RenderPipeline) {
+        onDestroyPipeline(pipeline)
+        pipeline.destroy()
+    }
 
     /** Nothing to wait for: WebGPU frees a destroyed resource only after the work already
      * submitted against it completes. */

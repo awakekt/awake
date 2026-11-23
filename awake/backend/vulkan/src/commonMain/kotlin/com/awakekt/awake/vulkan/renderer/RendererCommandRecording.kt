@@ -54,8 +54,9 @@ internal fun Renderer.recordCommandBuffer(
     // to be a separate submit the CPU blocked on.
     prepareResources(frameIndex, commandBuffer)
     recordDepthPrePass(commandBuffer, frameIndex, drawCalls, cascades, true)
-    // The camera's own depth, expressed as the one "cascade" this frame renders from the eye.
-    recordSceneDepthPass(commandBuffer, frameIndex, drawCalls, cameraDepthPass(viewProjection))
+    // The camera's own depth, expressed as the one "cascade" this frame renders from the eye
+    // (opaque and masked draws only; transparent draws do not write scene depth).
+    recordSceneDepthPass(commandBuffer, frameIndex, drawCalls.filterNot { it.transparent }, cameraDepthPass(viewProjection))
     val outputWidth = swapchainManager.extent.width
     val outputHeight = swapchainManager.extent.height
     val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
@@ -160,7 +161,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     prepareResources(frameIndex, commandBuffer)
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.ShadowDepth)
-    recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
+    recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection), environment)
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.SceneDepth)
     recordMaskPass(commandBuffer, frameIndex, passInput?.maskPasses.orEmpty(), environment)
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.Mask)
