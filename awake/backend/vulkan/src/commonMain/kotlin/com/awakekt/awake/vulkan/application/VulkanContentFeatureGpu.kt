@@ -43,6 +43,8 @@ internal class VulkanContentFeatureGpu(
     private val depthPass: DepthPrePassFeature? = null,
     private val framesInFlight: Int = 1,
     private val loadShaders: suspend (PipelineSpec) -> ShaderPair = { error("No shader loader for a depth pipeline.") },
+    override val supportsSceneDepth: Boolean = false,
+    private val sceneDepthPass: DepthPrePassFeature? = null,
 ) : ContentFeatureGpu<RenderPipeline> {
     override val backend = RenderBackend.Vulkan
 
@@ -137,33 +139,43 @@ internal class VulkanContentFeatureGpu(
     }
 
     override suspend fun createDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec): ContentDepthCaster? {
-        val pass = depthPass ?: return null
-        val target = pass.depthTarget
+        val passes = listOfNotNull(depthPass, sceneDepthPass)
+        if (passes.isEmpty()) return null
         // Set 0 is the content pipeline's own layout, so the descriptor sets of every group made
         // from it (newContentGroup) bind here unchanged.
         val setLayout = checkNotNull(pipeline.uniformSetLayout) { "A content pipeline owns its uniform group." }
-        val depthPipeline = DepthOnlyPipeline(
-            graphicsDevice,
-            target.renderPass,
-            setLayout,
-            loadShaders(depth),
-            depth.vertexFormat,
-            target.size,
-            depth.vertexEntryPoint,
-            depth.fragmentEntryPoint,
-            // Every layer the array can grow to, not the layers it holds now (#1688).
-            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
-            framesInFlight = framesInFlight,
-            frontFace = depth.frontFace,
-        )
+        val shaders = loadShaders(depth)
+        val built = passes.map { pass ->
+            val target = pass.depthTarget
+            pass to DepthOnlyPipeline(
+                graphicsDevice,
+                target.renderPass,
+                setLayout,
+                shaders,
+                depth.vertexFormat,
+                target.size,
+                depth.vertexEntryPoint,
+                depth.fragmentEntryPoint,
+                // Every layer the array can grow to, not the layers it holds now (#1688).
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                framesInFlight = framesInFlight,
+                frontFace = depth.frontFace,
+                shadowBias = pass === depthPass,
+            )
+        }
         return object : ContentDepthCaster {
             override suspend fun cast(source: ContentDepthSource): ContentUpload {
-                val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
-                pass.contentCasters += caster
-                return ContentUpload(null) { pass.contentCasters -= caster }
+                val casters = built.map { (pass, depthPipeline) ->
+                    val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
+                    pass.contentCasters += caster
+                    pass to caster
+                }
+                return ContentUpload(null) {
+                    casters.forEach { (pass, caster) -> pass.contentCasters -= caster }
+                }
             }
 
-            override fun destroy() = depthPipeline.destroy()
+            override fun destroy() = built.forEach { (_, depthPipeline) -> depthPipeline.destroy() }
         }
     }
 

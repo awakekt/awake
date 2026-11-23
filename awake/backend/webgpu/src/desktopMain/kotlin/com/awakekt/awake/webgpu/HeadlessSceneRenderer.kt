@@ -382,7 +382,7 @@ fun webGpuHeadlessScene(shadowDepthFormat: ShadowDepthFormat): HeadlessRenderSes
         renderFeatures = listOf(
             attacher.beforeGeometry,
             attacher.opaqueGeometry,
-            OpaqueRenderFeature(WebGpuLinePass(linePipeline)),
+            OpaqueRenderFeature(WebGpuLinePass(linePipeline), listOf(attacher.beforeTransparent)),
             attacher.afterGeometry,
             UiRenderFeature(WebGpuUiPass()),
         ),

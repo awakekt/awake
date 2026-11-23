@@ -30,11 +30,14 @@ import com.awakekt.awake.render.texture.TextureUploadRecorder
  * ```
  *
  * Features with the same pipeline spec, several terrains with one shader set say, share one
- * pipeline; each keeps its own uniforms, textures, geometry and draw. One limit is rejected at
- * attach: a feature that samples scene depth or the mask, whose set layouts are fixed when the
- * engine starts.
+ * pipeline; each keeps its own uniforms, textures, geometry and draw. A feature that samples scene
+ * depth can attach when [supportsSceneDepth] is true (the [RenderPlan] declared `sceneDepthShaderSet`);
+ * mask-sampling features still require declaration in the [RenderPlan].
  */
 interface ContentFeatureHost {
+    /** Whether the running engine renders a camera-space scene-depth pass for attached features. */
+    val supportsSceneDepth: Boolean get() = false
+
     /** Builds [source] against the running engine; it draws from the next frame. */
     suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature
 }
@@ -71,6 +74,9 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
 
     /** Registry mapping pipeline specifications to instantiated pipeline objects. */
     val registry: PipelineRegistry<P>
+
+    /** Whether the engine provides a camera-space scene-depth pass for dynamically attached features. */
+    val supportsSceneDepth: Boolean get() = false
 
     /**
      * Resolves the low-level pipeline handle for the specified pipeline object.

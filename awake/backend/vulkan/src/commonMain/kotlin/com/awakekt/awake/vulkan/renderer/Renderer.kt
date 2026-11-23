@@ -196,6 +196,9 @@ class Renderer internal constructor(
     /** Where [attachContentFeature] goes, set by the engine that built this renderer. */
     internal var contentFeatureHost: ContentFeatureHost? = null
 
+    override val supportsSceneDepth: Boolean
+        get() = contentFeatureHost?.supportsSceneDepth == true
+
     override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature =
         checkNotNull(contentFeatureHost) {
             "This renderer was built without an engine, so it cannot attach content features."
@@ -740,11 +743,12 @@ class Renderer internal constructor(
         frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         camera: GpuShadowCascadeData,
+        environment: GpuEnvironmentState? = null,
     ) {
         val feature = sceneDepthPass ?: return
         // One "cascade": the camera's own view-projection. The pass machinery is the same, and
         // saying so here is smaller than a second recording path that differs only in count.
-        feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, camera)
+        feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, camera, environment)
     }
 
     /**

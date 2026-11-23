@@ -129,7 +129,8 @@ internal class DepthPrePassFeature(
         drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
         cascades: GpuShadowCascadeData,
-    ) = recordCommands(commandBuffer, frameIndex, drawCalls, castFormat, cascades.viewProjections)
+        environment: GpuEnvironmentState? = null,
+    ) = recordCommands(commandBuffer, frameIndex, drawCalls, castFormat, cascades.viewProjections, environment)
 
     private var initializedLayers = BooleanArray(depthTarget.layers)
 
@@ -156,6 +157,7 @@ internal class DepthPrePassFeature(
         drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
         viewProjections: List<Mat4>,
+        environment: GpuEnvironmentState? = null,
     ) {
         require(viewProjections.isNotEmpty()) { "A layered depth pass needs at least one matrix." }
         // Each rendered cascade writes and transitions its layer to SHADER_READ_ONLY_OPTIMAL.
@@ -167,7 +169,7 @@ internal class DepthPrePassFeature(
             val source = viewProjections[cascade]
             allPipelines.forEach { it.writeCascade(frameIndex, cascade, source) }
             if (countsShadowPasses) stats?.beginShadowPass()
-            recordCascade(commandBuffer, frameIndex, drawCalls, castFormat, cascade)
+            recordCascade(commandBuffer, frameIndex, drawCalls, castFormat, cascade, environment)
             stats?.countAs(RenderPassKind.Other)
             initializedLayers[cascade] = true
         }

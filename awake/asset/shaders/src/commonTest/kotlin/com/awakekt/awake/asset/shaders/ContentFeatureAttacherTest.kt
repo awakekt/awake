@@ -47,14 +47,19 @@ class ContentFeatureAttacherTest {
     fun anAttachedFeatureRecordsInItsPaintSlot() = runTest {
         attacher.attachContentFeature(source("terrain", ContentPaint.OpaqueGeometry))
         attacher.attachContentFeature(source("sky", ContentPaint.BeforeGeometry))
+        attacher.attachContentFeature(source("water", ContentPaint.BeforeTransparent))
         attacher.attachContentFeature(source("fog", ContentPaint.AfterGeometry))
 
         attacher.beforeGeometry.recordCommands(FRAME)
         attacher.opaqueGeometry.recordCommands(FRAME)
+        attacher.beforeTransparent.recordCommands(FRAME)
         attacher.afterGeometry.recordCommands(FRAME)
 
-        assertEquals(listOf("upload terrain", "upload sky", "upload fog", "record sky", "record terrain", "record fog"), events)
-        assertEquals(3, gpu.registry.specs.size)
+        assertEquals(
+            listOf("upload terrain", "upload sky", "upload water", "upload fog", "record sky", "record terrain", "record water", "record fog"),
+            events,
+        )
+        assertEquals(4, gpu.registry.specs.size)
     }
 
     /** Earlier frames may still read what detach frees, so the wait comes first. */
@@ -97,6 +102,17 @@ class ContentFeatureAttacherTest {
             attacher.attachContentFeature(source("fog", samplesSceneDepth = true))
         }
         assertTrue(gpu.registry.specs.isEmpty())
+    }
+
+    @Test
+    fun aFeatureSamplingSceneDepthAttachesWhenHostSupportsSceneDepth() = runTest {
+        val depthGpu = RecordingGpu(events, supportsSceneDepth = true)
+        val depthAttacher = ContentFeatureAttacher(depthGpu)
+        assertTrue(depthAttacher.supportsSceneDepth)
+        val attached = depthAttacher.attachContentFeature(source("water", ContentPaint.AfterGeometry, samplesSceneDepth = true))
+        assertNotNull(depthGpu.registry[spec("water")])
+        attached.detach()
+        assertNull(depthGpu.registry[spec("water")])
     }
 
     /** Without a group of its own a second feature would overwrite the first one's textures. */
@@ -196,7 +212,10 @@ class ContentFeatureAttacherTest {
         }
     }
 
-    internal class RecordingGpu(val events: MutableList<String>) : ContentFeatureGpu<FakePipeline> {
+    internal class RecordingGpu(
+        val events: MutableList<String>,
+        override val supportsSceneDepth: Boolean = false,
+    ) : ContentFeatureGpu<FakePipeline> {
         override val backend = RenderBackend.Vulkan
         override val registry = PipelineRegistry(PipelineFactory { _, _ -> FakePipeline() })
         val depthSources = mutableListOf<ContentDepthSource>()

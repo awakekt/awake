@@ -37,10 +37,10 @@ class CloudLayerLook(
     var quality: CloudLayerQuality = CloudLayerQuality.Standard,
     /** Elapsed animation clock in seconds driving cloud drift. */
     var timeSeconds: Float = 0f,
-    /** Bright sunlit cloud crest colour. */
+    /** Bright sunlit cloud crest colour (linear space). */
     var cloudColor: Color = Color(0.97f, 0.98f, 1.0f, 1f),
-    /** Cool shadowed cloud underside colour. */
-    var shadowColor: Color = Color(0.56f, 0.67f, 0.84f, 1f),
+    /** Cool shadowed cloud underside colour (linear space). */
+    var shadowColor: Color = Color(0.22f, 0.31f, 0.50f, 1f),
     /** World-space cloud noise spatial frequency (inverse cloud feature size in metres). */
     var scale: Float = 0.008f,
     /** Horizontal drift speed along world X (noise units per second). */

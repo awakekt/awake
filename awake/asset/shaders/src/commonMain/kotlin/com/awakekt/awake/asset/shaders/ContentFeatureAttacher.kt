@@ -31,6 +31,9 @@ import kotlinx.coroutines.sync.withLock
 class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeatureGpu<P>) : ContentFeatureHost {
     val beforeGeometry = AttachedContentSlot()
     val opaqueGeometry = AttachedContentSlot()
+
+    /** Attached features painted after opaque geometry and before transparent scene draws. */
+    val beforeTransparent = AttachedContentSlot()
     val afterGeometry = AttachedContentSlot()
     private val attached = mutableListOf<Attachment>()
     private val shared = HashMap<PipelineSpec, SharedPipeline>()
@@ -38,11 +41,17 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     /** Attaches register and build across suspensions; one at a time, so two of one spec share. */
     private val attaching = Mutex()
 
+    override val supportsSceneDepth: Boolean get() = gpu.supportsSceneDepth
+
     override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature = attaching.withLock {
         val feature = source.resolve(gpu.backend)
-        require(!feature.samplesSceneDepth && !feature.samplesMask) {
-            "Content feature '${feature.name}' samples scene depth or the mask, whose set layouts are " +
+        require(!feature.samplesMask) {
+            "Content feature '${feature.name}' samples the mask, whose set layouts are " +
                 "fixed when the engine starts. Declare it in the RenderPlan instead."
+        }
+        require(!feature.samplesSceneDepth || gpu.supportsSceneDepth) {
+            "Content feature '${feature.name}' samples scene depth, which requires " +
+                "RenderPlan.sceneDepthShaderSet to be configured when the engine starts."
         }
         val pipeline = acquire(feature)
         val uploads = mutableListOf<ContentUpload>()
@@ -66,6 +75,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         val slot = when (feature.paint) {
             ContentPaint.BeforeGeometry -> beforeGeometry
             ContentPaint.OpaqueGeometry -> opaqueGeometry
+            ContentPaint.BeforeTransparent -> beforeTransparent
             ContentPaint.AfterGeometry -> afterGeometry
         }
         slot.add(built)

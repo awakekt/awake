@@ -160,7 +160,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     prepareResources(frameIndex, commandBuffer)
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.ShadowDepth)
-    recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
+    recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection), environment)
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.SceneDepth)
     recordMaskPass(commandBuffer, frameIndex, passInput?.maskPasses.orEmpty(), environment)
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.Mask)

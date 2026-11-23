@@ -150,6 +150,7 @@ internal class RendererGpuPassExecutor(
                 viewProjections = listOf(input.viewProjection),
                 splitDistances = floatArrayOf(Float.MAX_VALUE),
             ),
+            input.environment,
         )
         renderer.recordMaskPass(encoder, input)
     }

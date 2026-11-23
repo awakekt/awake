@@ -168,6 +168,9 @@ class Renderer internal constructor(
     /** Where [attachContentFeature] goes, set by the engine that built this renderer. */
     internal var contentFeatureHost: ContentFeatureHost? = null
 
+    override val supportsSceneDepth: Boolean
+        get() = contentFeatureHost?.supportsSceneDepth == true
+
     /** A 1x1 shadow map bound for a pipeline that declares the group when [depthPrePass] is null;
      * set by the engine, destroyed here. */
     internal var depthPrePassPlaceholder: DepthTarget? = null

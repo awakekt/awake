@@ -134,44 +134,60 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
     }
 
     // Exact integer-safe mod289 polynomial hash (Gustavson permute): zero trig/SFU ops and immune to
-    // GPU FMA reassociation seams across lattice corners. Emitted only when SceneDepth foam/caustics are enabled.
-    val cellularNoise: Pair<(AslExpr) -> AslExpr, (AslExpr) -> AslExpr>? = if (samplesDepth) {
-        val mod289 = fn("mod289") {
-            val xVal by param(GpuDataShape.Float)
-            returnValue(xVal - floor((xVal + 0.25f.lit) / 289f.lit) * 289f.lit)
-        }
-        val permute = fn("permute") {
-            val xVal by param(GpuDataShape.Float)
-            returnValue(mod289((xVal * 34f.lit + 1f.lit) * xVal))
-        }
-        val hash2d = fn("hash2d") {
-            val p by param(GpuDataShape.Vec2)
-            val px = let("px", mod289(p.x))
-            val py = let("py", mod289(p.y))
-            returnValue(permute(permute(px) + py) / 289f.lit)
-        }
-        val valueNoiseFn = fn("valueNoise") {
-            val p by param(GpuDataShape.Vec2)
-            val i = let("i", floor(p))
-            val f = let("f", p - i)
-            val uSmooth = let(
-                "uSmooth",
-                f * f * f * (f * (f * 6f.lit - vec2(15f.lit)) + vec2(10f.lit)),
-            )
-            val a = let("a", hash2d(i))
-            val b = let("b", hash2d(i + vec2(1f.lit, 0f.lit)))
-            val c = let("c", hash2d(i + vec2(0f.lit, 1f.lit)))
-            val d = let("d", hash2d(i + vec2(1f.lit, 1f.lit)))
-            returnValue(mix(mix(a, b, uSmooth.x), mix(c, d, uSmooth.x), uSmooth.y))
-        }
-        val rotateOctaveFn = fn("rotateOctave", returns = AslType.Data(GpuDataShape.Vec2)) {
-            val p by param(GpuDataShape.Vec2)
-            // 2x scale rotated by atan(3/4) (~36.9 deg) breaks grid alignment between foam/caustic octaves.
-            returnValue(vec2(p.x * 1.6f.lit - p.y * 1.2f.lit, p.x * 1.2f.lit + p.y * 1.6f.lit))
-        }
-        Pair({ p -> valueNoiseFn(p) }, { p -> rotateOctaveFn(p) })
-    } else {
-        null
+    // GPU FMA reassociation seams across lattice corners. Used in Standard tier for organic warped
+    // ripples and (when samplesDepth is true) lacy shoreline foam & caustics; Fast tier skips it.
+    val mod289 = fn("mod289") {
+        val xVal by param(GpuDataShape.Float)
+        returnValue(xVal - floor((xVal + 0.25f.lit) / 289f.lit) * 289f.lit)
+    }
+    val permute = fn("permute") {
+        val xVal by param(GpuDataShape.Float)
+        returnValue(mod289((xVal * 34f.lit + 1f.lit) * xVal))
+    }
+    val hash2d = fn("hash2d") {
+        val p by param(GpuDataShape.Vec2)
+        val px = let("px", mod289(p.x))
+        val py = let("py", mod289(p.y))
+        returnValue(permute(permute(px) + py) / 289f.lit)
+    }
+    val valueNoise = fn("valueNoise") {
+        val p by param(GpuDataShape.Vec2)
+        val i = let("i", floor(p))
+        val f = let("f", p - i)
+        val uSmooth = let(
+            "uSmooth",
+            f * f * f * (f * (f * 6f.lit - vec2(15f.lit)) + vec2(10f.lit)),
+        )
+        val a = let("a", hash2d(i))
+        val b = let("b", hash2d(i + vec2(1f.lit, 0f.lit)))
+        val c = let("c", hash2d(i + vec2(0f.lit, 1f.lit)))
+        val d = let("d", hash2d(i + vec2(1f.lit, 1f.lit)))
+        returnValue(mix(mix(a, b, uSmooth.x), mix(c, d, uSmooth.x), uSmooth.y))
+    }
+    // Quintic C2 value noise + exact analytic (dN/dx, dN/dy) from the same 4 corner hashes (0 extra lookups).
+    val valueNoiseGrad = fn("valueNoiseGrad", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val p by param(GpuDataShape.Vec2)
+        val i = let("i", floor(p))
+        val f = let("f", p - i)
+        val uSmooth = let(
+            "uSmooth",
+            f * f * f * (f * (f * 6f.lit - vec2(15f.lit)) + vec2(10f.lit)),
+        )
+        val fMinus1 = let("fMinus1", f - vec2(1f.lit))
+        val du = let("du", f * f * fMinus1 * fMinus1 * 30f.lit)
+        val a = let("a", hash2d(i))
+        val b = let("b", hash2d(i + vec2(1f.lit, 0f.lit)))
+        val c = let("c", hash2d(i + vec2(0f.lit, 1f.lit)))
+        val d = let("d", hash2d(i + vec2(1f.lit, 1f.lit)))
+        val valN = let("valN", mix(mix(a, b, uSmooth.x), mix(c, d, uSmooth.x), uSmooth.y))
+        val dNdx = let("dNdx", du.x * mix(b - a, d - c, uSmooth.y))
+        val dNdy = let("dNdy", du.y * mix(c - a, d - b, uSmooth.x))
+        returnValue(vec3(valN, dNdx, dNdy))
+    }
+    val rotateOctave = fn("rotateOctave", returns = AslType.Data(GpuDataShape.Vec2)) {
+        val p by param(GpuDataShape.Vec2)
+        // 2x scale rotated by atan(3/4) (~36.9 deg) breaks grid alignment between ripple/foam octaves.
+        returnValue(vec2(p.x * 1.6f.lit - p.y * 1.2f.lit, p.x * 1.2f.lit + p.y * 1.6f.lit))
     }
 
     val displayTransform = sceneDisplayTransform()
@@ -200,11 +216,9 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
         val flowX = let("flowX", worldPos.x - flowAndFoam.x * rawTime)
         val flowZ = let("flowZ", worldPos.z - flowAndFoam.y * rawTime)
 
-        // Two primary cross-directional wave phases shared conceptually across tiers.
-        val p1 = let("p1", flowX * scale + flowZ * (scale * 0.42f.lit) + time * 1.35f.lit)
-        val p2 = let("p2", flowZ * (scale * 1.18f.lit) - flowX * (scale * 0.36f.lit) - time * 1.10f.lit)
-
         iff(isFast) {
+            val p1 = let("p1", flowX * scale + flowZ * (scale * 0.42f.lit) + time * 1.35f.lit)
+            val p2 = let("p2", flowZ * (scale * 1.18f.lit) - flowX * (scale * 0.36f.lit) - time * 1.10f.lit)
             val w1 = let("w1", sin(p1))
             val w2 = let("w2", cos(p2))
             val wave = let("wave", clamp(0.5f.lit + 0.25f.lit * (w1 + w2), 0f.lit, 1f.lit))
@@ -217,24 +231,57 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
         }
 
         iff(isStandard) {
-            val p3 = let("p3", (flowX * 1.75f.lit - flowZ * 1.45f.lit) * scale + time * 1.95f.lit)
-            val p4 = let("p4", (flowX * 0.95f.lit + flowZ * 2.15f.lit) * scale - time * 1.65f.lit)
-
-            val h1 = let("h1", sin(p1))
-            val h2 = let("h2", cos(p2))
-            val h3 = let("h3", sin(p3))
-            val h4 = let("h4", cos(p4))
-            val waveHeight = let("waveHeight", clamp(0.5f.lit + 0.20f.lit * h1 + 0.16f.lit * h2 + 0.10f.lit * h3 + 0.08f.lit * h4, 0f.lit, 1f.lit))
-
-            // Analytic spatial derivatives of the four wave octaves for crisp ripple normals.
-            val dHdx = let(
-                "dHdx",
-                cos(p1) * 0.45f.lit + sin(p2) * 0.18f.lit + cos(p3) * 0.35f.lit - sin(p4) * 0.16f.lit,
+            // Organic domain-warped 3-octave noise ripples with exact analytic normals (zero repeating sine grids).
+            val rippleUv = let("rippleUv", vec2(flowX, flowZ) * (scale * 0.45f.lit))
+            val warp1 = let(
+                "warp1",
+                valueNoise(rippleUv * 0.42f.lit + vec2(time * 0.06f.lit, -time * 0.05f.lit)),
             )
-            val dHdz = let(
-                "dHdz",
-                cos(p1) * 0.19f.lit - sin(p2) * 0.42f.lit - cos(p3) * 0.29f.lit - sin(p4) * 0.34f.lit,
+            val warp2 = let(
+                "warp2",
+                valueNoise(
+                    rotateOctave(rippleUv * 0.36f.lit) +
+                        vec2(-time * 0.05f.lit + 5.3f.lit, time * 0.07f.lit + 8.1f.lit),
+                ),
             )
+            val warpVec = let(
+                "warpVec",
+                vec2((warp1 - 0.5f.lit) * 1.35f.lit, (warp2 - 0.5f.lit) * 1.35f.lit),
+            )
+
+            val uv1 = let("uv1", rippleUv + warpVec + vec2(time * 0.16f.lit, time * 0.10f.lit))
+            val g1 = let("g1", valueNoiseGrad(uv1))
+
+            val uv2 = let(
+                "uv2",
+                rotateOctave(rippleUv - warpVec * 0.65f.lit) +
+                    vec2(-time * 0.22f.lit + 13.7f.lit, time * 0.18f.lit + 4.9f.lit),
+            )
+            val g2 = let("g2", valueNoiseGrad(uv2))
+            val g2dx = let("g2dx", g2.y * 0.8f.lit + g2.z * 0.6f.lit)
+            val g2dz = let("g2dz", -g2.y * 0.6f.lit + g2.z * 0.8f.lit)
+
+            val uv3 = let(
+                "uv3",
+                rotateOctave(rotateOctave(rippleUv)) +
+                    vec2(time * 0.28f.lit - 7.4f.lit, -time * 0.24f.lit + 19.2f.lit),
+            )
+            val g3 = let("g3", valueNoiseGrad(uv3))
+            val g3dx = let("g3dx", g3.y * 0.28f.lit + g3.z * 0.96f.lit)
+            val g3dz = let("g3dz", -g3.y * 0.96f.lit + g3.z * 0.28f.lit)
+
+            val waveHeight = let(
+                "waveHeight",
+                clamp(
+                    0.5f.lit + (g1.x - 0.5f.lit) * 0.52f.lit +
+                        (g2.x - 0.5f.lit) * 0.32f.lit +
+                        (g3.x - 0.5f.lit) * 0.16f.lit,
+                    0f.lit,
+                    1f.lit,
+                ),
+            )
+            val dHdx = let("dHdx", g1.y * 0.52f.lit + g2dx * 0.44f.lit + g3dx * 0.32f.lit)
+            val dHdz = let("dHdz", g1.z * 0.52f.lit + g2dz * 0.44f.lit + g3dz * 0.32f.lit)
             val strength = let("strength", foamColor.w)
             val n = let("perturbedNormal", normalize(vec3(-dHdx * strength, 1f.lit, -dHdz * strength)))
             val nDotV = let("nDotVStd", clamp(abs(dot(n, viewDir)), 0.01f.lit, 1f.lit))
@@ -246,8 +293,11 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
             val skyRefl = let("skyRefl", mix(horizonColor.rgb, zenithColor.rgb, skyMix))
 
             // Clean translucent subsurface glow on wave crests (no speckled noise blotches in open water).
-            val bodyColor = let("bodyColor", mix(deepColor.rgb, shallowColor.rgb, waveHeight) * dayTint)
-            val crestMask = let("crestMask", smoothstep(0.64f.lit, 0.94f.lit, waveHeight) * highlightParams.y)
+            val bodyColor = let(
+                "bodyColor",
+                mix(deepColor.rgb, shallowColor.rgb, smoothstep(0.18f.lit, 0.82f.lit, waveHeight)) * dayTint,
+            )
+            val crestMask = let("crestMask", smoothstep(0.68f.lit, 0.96f.lit, waveHeight) * highlightParams.y)
             val crestTint = let(
                 "crestTint",
                 mix(
@@ -262,16 +312,19 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
             val sunGlint = let("sunGlint", pow(sunAlign, 96f.lit) * lightColor.rgb * (highlightParams.x * sunVis))
             val baseAlpha = let("baseAlpha", clamp(zenithColor.w * 0.85f.lit + fresnel * 0.28f.lit, 0f.lit, 1f.lit))
 
-            if (depthSample != null && clipPos != null && cellularNoise != null) {
-                val (valueNoise, rotateOctave) = cellularNoise
+            if (depthSample != null && clipPos != null) {
                 // Multi-octave rotated cellular noise (zero trig, FMA-safe) for lacy shore/rock foam and caustics.
                 val foamUv1 = let(
                     "foamUv1",
-                    vec2(flowX, flowZ) * (scale * 2.8f.lit) + vec2(h1 * 0.28f.lit, h2 * 0.28f.lit) +
+                    vec2(flowX, flowZ) * (scale * 2.8f.lit) +
+                        vec2((g1.x - 0.5f.lit) * 0.65f.lit, (g2.x - 0.5f.lit) * 0.65f.lit) +
                         vec2(time * 0.18f.lit, -time * 0.14f.lit),
                 )
                 val nCoarse = let("nCoarse", valueNoise(foamUv1))
-                val domainWarp = let("domainWarp", vec2((nCoarse - 0.5f.lit) * 0.95f.lit, (h3 - h4) * 0.22f.lit))
+                val domainWarp = let(
+                    "domainWarp",
+                    vec2((nCoarse - 0.5f.lit) * 0.95f.lit, (g2.x - g3.x) * 0.45f.lit),
+                )
                 val foamUv2 = let(
                     "foamUv2",
                     rotateOctave(foamUv1 + domainWarp) + vec2(7.3f.lit - time * 0.24f.lit, 11.1f.lit + time * 0.19f.lit),
@@ -330,7 +383,7 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
                 val withCrest = let("withCrest", mix(absorbedBody + causticsRgb, crestTint, crestMask))
                 val reflWeight = let(
                     "reflWeight",
-                    clamp(fresnel * mix(0.42f.lit, 0.85f.lit, depthFactor), 0f.lit, 0.9f.lit),
+                    clamp(fresnel * mix(0.28f.lit, 0.62f.lit, depthFactor), 0f.lit, 0.68f.lit),
                 )
                 val blended = let("blended", mix(withCrest, skyRefl, reflWeight) + sunGlint)
 
@@ -389,7 +442,7 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
                 val withCrest = let("withCrest", mix(bodyColor, crestTint, crestMask))
                 val blended = let(
                     "blended",
-                    mix(withCrest, skyRefl, clamp(fresnel * 0.85f.lit, 0f.lit, 0.9f.lit)) + sunGlint,
+                    mix(withCrest, skyRefl, clamp(fresnel * 0.58f.lit, 0f.lit, 0.68f.lit)) + sunGlint,
                 )
                 assign(surfaceRgb, blended)
                 assign(surfaceAlpha, baseAlpha)

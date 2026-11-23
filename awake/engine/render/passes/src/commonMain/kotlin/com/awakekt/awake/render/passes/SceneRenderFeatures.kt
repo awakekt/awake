@@ -100,10 +100,14 @@ class SkyboxRenderFeature(
  *
  * @param C The backend's frame-context type.
  * @param lines The backend's debug-line pipeline and staged geometry.
+ * @param beforeTransparent Content features recorded after opaque geometry and before transparent scene draws.
  */
 class OpaqueRenderFeature<C : RenderFrameContext>(
     private val lines: LinePass<C>,
+    private val beforeTransparent: List<RenderFeature<C>>,
 ) : RenderFeature<C> {
+    constructor(lines: LinePass<C>) : this(lines, emptyList())
+
     override val pass = RenderPassSlot.Scene
 
     private val shared = SharedOpaqueRenderFeature()
@@ -121,6 +125,9 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
         )
         // Over the opaque draws, against the depth they wrote, and before anything blends over them.
         shared.recordEdges(recorder, edgeDrawCalls)
+        // World-space blended surfaces (such as water and cloud sheets) paint after opaque geometry
+        // and before transparent scene draws so particles and splashes blend cleanly on top of them.
+        for (i in beforeTransparent.indices) beforeTransparent[i].recordCommands(this)
         // After the opaque draws, in the same scene pass: a transparent surface must depth-test
         // against opaque geometry already written, and blend over the colour it left behind.
         // A separate RenderPassSlot would put it after the UI, which paints over the scene.
@@ -132,5 +139,8 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
         shared.recordLines(recorder, lines.lineDraw(context))
     }
 
-    override fun destroy() = lines.destroy()
+    override fun destroy() {
+        lines.destroy()
+        for (i in beforeTransparent.indices) beforeTransparent[i].destroy()
+    }
 }

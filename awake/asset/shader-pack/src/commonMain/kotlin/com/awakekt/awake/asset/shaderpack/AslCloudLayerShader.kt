@@ -72,12 +72,14 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
 
     val out = varyings("VertexOutput")
     val worldPos by out.varying(GpuDataShape.Vec3, location = 0)
+    val vertexEdge by out.varying(GpuDataShape.Float, location = 1)
 
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
         val pos = let("worldPosition", ins.input(VertexSemantic.Position) + origin.xyz)
         out.position set (viewProjection * vec4(pos, 1f.lit))
         worldPos set pos
+        vertexEdge set ins.input(VertexSemantic.Color).x
     }
 
     // Exact integer-safe mod289 polynomial hash (Gustavson permute): zero trig/SFU ops and immune to
@@ -121,6 +123,15 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
         returnValue(vec2(p.x * 1.6f.lit - p.y * 1.2f.lit, p.x * 1.2f.lit + p.y * 1.6f.lit))
     }
 
+    // Two-octave billowing cumulus heightfield: macro bank + smooth S-curved puff lobes (avoids flat plateaus).
+    val cumulusMacro = fn("cumulusMacro") {
+        val p by param(GpuDataShape.Vec2)
+        val n1 = let("n1", valueNoise(p))
+        val n2 = let("n2", valueNoise(rotateOctave(p) + vec2(17.3f.lit, 9.2f.lit)))
+        val puff2 = let("puff2", n2 * n2 * (3f.lit - 2f.lit * n2))
+        returnValue(n1 * 0.60f.lit + puff2 * 0.40f.lit)
+    }
+
     val displayTransform = sceneDisplayTransform()
 
     fragment {
@@ -144,6 +155,7 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
 
         val density = variable("density", 0f.lit)
         val litFactor = variable("litFactor", 0.65f.lit)
+        val edgeNoise = variable("edgeNoise", 0.5f.lit)
 
         iff(isFast) {
             val n1 = let("n1", valueNoise(uvBase))
@@ -151,32 +163,82 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
             val fbm = let("fbmFast", n1 * 0.65f.lit + n2 * 0.35f.lit)
             assign(density, smoothstep(threshold, threshold + softness, fbm))
             assign(litFactor, clamp(0.45f.lit + fbm * 0.55f.lit, 0f.lit, 1f.lit))
+            assign(edgeNoise, fbm)
         }
 
         iff(isStandard) {
-            // Lower wispy cloud deck drifting at 1.0x speed.
-            val l1a = let("l1a", valueNoise(uvBase))
-            val l1b = let("l1b", valueNoise(rotateOctave(uvBase) + vec2(11.3f.lit, 5.9f.lit)))
-            val lowerNoise = let("lowerNoise", l1a * 0.62f.lit + l1b * 0.38f.lit)
-            val lowerDensity = let("lowerDensity", smoothstep(threshold, threshold + softness, lowerNoise))
+            // Single-pass 3-shell parallax volume: base underside -> mid flank -> sunlit cumulus crown.
+            // Smooth ray-plane offset clamps near the horizon and reverses automatically when viewed from below.
+            val viewRay = let("viewRay", normalize(worldPos - cameraEye.xyz))
+            val parallaxFactor = let("parallaxFactor", viewRay.y / (viewRay.y * viewRay.y + 0.18f.lit))
+            val parallaxVec = let("parallaxVec", vec2(viewRay.x, viewRay.z) * parallaxFactor)
+            val lookingDown = let("lookingDown", 1f.lit - smoothstep((-0.15f).lit, 0.15f.lit, viewRay.y))
 
-            // Upper billowing cloud deck drifting faster at 1.55x parallax speed in the same pass.
-            val uvUpper = let("uvUpper", vec2(worldPos.x * scale, worldPos.z * scale) * 1.35f.lit + drift * 1.55f.lit + vec2(4.2f.lit, 9.6f.lit))
-            val uvUpper2 = let("uvUpper2", rotateOctave(uvUpper) + vec2(19.4f.lit, 3.7f.lit))
-            val uvUpper3 = let("uvUpper3", rotateOctave(uvUpper2) - vec2(6.8f.lit, 14.2f.lit))
-            val u1 = let("u1", valueNoise(uvUpper))
-            val u2 = let("u2", valueNoise(uvUpper2))
-            val u3 = let("u3", valueNoise(uvUpper3))
-            val upperNoise = let("upperNoise", u1 * 0.55f.lit + u2 * 0.30f.lit + u3 * 0.15f.lit)
-            val upperDensity = let("upperDensity", smoothstep(threshold + 0.04f.lit, threshold + 0.04f.lit + softness, upperNoise))
+            val baseH = let("baseH", cumulusMacro(uvBase))
+            val baseAlpha = let("baseAlpha", smoothstep(threshold, threshold + softness * 0.90f.lit, baseH))
 
-            val combined = let("combined", clamp(lowerDensity * 0.70f.lit + upperDensity * (1f.lit - lowerDensity * 0.45f.lit), 0f.lit, 1f.lit))
-            assign(density, combined)
-            assign(litFactor, clamp(0.32f.lit + upperDensity * 0.52f.lit + upperNoise * 0.22f.lit, 0f.lit, 1f.lit))
+            val uvMid = let("uvMid", uvBase + parallaxVec * 0.18f.lit + drift * 0.08f.lit)
+            val midH = let("midH", cumulusMacro(uvMid))
+            val midAlpha = let(
+                "midAlpha",
+                smoothstep(threshold + 0.05f.lit, threshold + 0.05f.lit + softness * 0.78f.lit, midH),
+            )
+
+            val uvUpper = let("uvUpper", uvBase + parallaxVec * 0.36f.lit + drift * 0.16f.lit)
+            val crownMacro = let("crownMacro", cumulusMacro(uvUpper))
+            val crownDetail = let(
+                "crownDetail",
+                valueNoise(rotateOctave(rotateOctave(uvUpper)) - vec2(6.8f.lit, 14.2f.lit)),
+            )
+            val crownH = let("crownH", crownMacro * 0.82f.lit + crownDetail * 0.18f.lit)
+            val crownAlpha = let(
+                "crownAlpha",
+                smoothstep(threshold + 0.11f.lit, threshold + 0.11f.lit + softness * 0.65f.lit, crownH),
+            )
+
+            // Directional sun-offset self-shadowing gives each puff a sunlit crown and cool leeward shadow.
+            val sunStep = let("sunStep", vec2(sunDir.x, sunDir.z) * 0.24f.lit)
+            val sunSample = let("sunSample", cumulusMacro(uvUpper + sunStep))
+            val sunSlope = let("sunSlope", clamp((crownMacro - sunSample) * 4.2f.lit, (-0.50f).lit, 0.55f.lit))
+
+            val baseLit = let("baseLit", clamp(0.10f.lit + baseH * 0.18f.lit + sunSlope * 0.16f.lit, 0.02f.lit, 0.42f.lit))
+            val midLit = let("midLit", clamp(0.36f.lit + midH * 0.24f.lit + sunSlope * 0.42f.lit, 0.08f.lit, 0.86f.lit))
+            val crownLit = let(
+                "crownLit",
+                clamp(0.68f.lit + smoothstep(0.42f.lit, 0.85f.lit, crownH) * 0.28f.lit + sunSlope * 0.55f.lit, 0.26f.lit, 1f.lit),
+            )
+
+            // Composite shells front-to-back (crown over mid over base when looking down; reversed looking up).
+            val downA1 = let("downA1", midAlpha + baseAlpha * (1f.lit - midAlpha))
+            val downLit1 = let(
+                "downLit1",
+                (midLit * midAlpha + baseLit * baseAlpha * (1f.lit - midAlpha)) / max(downA1, 0.001f.lit),
+            )
+            val downA2 = let("downA2", crownAlpha + downA1 * (1f.lit - crownAlpha))
+            val downLit2 = let(
+                "downLit2",
+                (crownLit * crownAlpha + downLit1 * downA1 * (1f.lit - crownAlpha)) / max(downA2, 0.001f.lit),
+            )
+
+            val upA1 = let("upA1", midAlpha + crownAlpha * (1f.lit - midAlpha))
+            val upLit1 = let(
+                "upLit1",
+                (midLit * midAlpha + crownLit * crownAlpha * (1f.lit - midAlpha)) / max(upA1, 0.001f.lit),
+            )
+            val upA2 = let("upA2", baseAlpha + upA1 * (1f.lit - baseAlpha))
+            val upLit2 = let(
+                "upLit2",
+                (baseLit * baseAlpha + upLit1 * upA1 * (1f.lit - baseAlpha)) / max(upA2, 0.001f.lit),
+            )
+
+            assign(density, clamp(mix(upA2, downA2, lookingDown), 0f.lit, 1f.lit))
+            assign(litFactor, clamp(mix(upLit2, downLit2, lookingDown), 0.02f.lit, 1f.lit))
+            assign(edgeNoise, baseH)
         }
 
-        val shaded = let("shaded", mix(shadowColor.rgb, cloudColor.rgb, litFactor) * dayLight)
-        val horizonBlend = let("horizonBlend", mix(shaded, horizonColor.rgb, 0.15f.lit))
+        val sunlitLift = let("sunlitLift", 1f.lit + smoothstep(0.65f.lit, 1f.lit, litFactor) * sunElev * 0.24f.lit)
+        val shaded = let("shaded", mix(shadowColor.rgb, cloudColor.rgb, litFactor) * dayLight * sunlitLift)
+        val horizonBlend = let("horizonBlend", mix(shaded, horizonColor.rgb, 0.05f.lit))
         val exposed = let("exposed", displayTransform.display(horizonBlend, horizonColor.w))
         val fogRange = let("fogRange", vec4(fogAndFade.x, fogAndFade.y, 0f.lit, 0f.lit))
         val fog = let("fog", fogAmount(dist, fogColor, fogRange))
@@ -187,7 +249,12 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
             "edgeFade",
             select(1f.lit, 1f.lit - smoothstep(fogAndFade.z, fogAndFade.w, dist), fadeActive),
         )
-        val finalAlpha = let("finalAlpha", clamp(density * shadowColor.w * edgeFade, 0f.lit, 1f.lit))
+        // Per-vertex boundary fade (vertexColor.r, default 1.0) broken up organically by cloud noise
+        // so region cloud tiles dissolve into wispy puffs instead of straight rectangular cutoffs.
+        val vEdge = let("vEdge", saturate(vertexEdge))
+        val edgeWarp = let("edgeWarp", (edgeNoise - 0.5f.lit) * 0.65f.lit * vEdge * (1f.lit - vEdge) * 4f.lit)
+        val meshEdgeFade = let("meshEdgeFade", saturate(vEdge + edgeWarp))
+        val finalAlpha = let("finalAlpha", clamp(density * shadowColor.w * edgeFade * meshEdgeFade, 0f.lit, 1f.lit))
         colorOutput(vec4(finalRgb, finalAlpha))
     }
 }
