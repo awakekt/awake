@@ -269,8 +269,14 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
             iff(skipLit) {
                 val fastRgb = variable("fastRgb", vec3(0f.lit))
                 iff(materialUnlit) {
-                    val stored = baseColorFactor.rgb * baseColorSample.rgb * color
-                    assign(fastRgb, displayTransform.unlit(stored))
+                    val stored = let("unlitStored", baseColorFactor.rgb * baseColorSample.rgb * color)
+                    val unlitRgb = variable("unlitRgb", stored)
+                    iff(emissiveFactor.w gt 0.001f.lit) {
+                        val unlitN = let("unlitN", normalize(normal))
+                        val unlitV = let("unlitV", normalize(cameraPosition.xyz - worldPos))
+                        assign(unlitRgb, unlitSignedChrome(stored, unlitN, unlitV, emissiveFactor.w))
+                    }
+                    assign(fastRgb, displayTransform.unlit(unlitRgb))
                 }
                 iff(addsUnlit) {
                     val unlitAlbedo = let("unlitAlbedo", srgbToLinear(baseColorSample.rgb) * color * baseColorFactor.rgb)
@@ -349,9 +355,10 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
                 val emitted = select(litColor, albedo + emissive, addsUnlit)
                 val fogTarget = select(fogColor.rgb, vec3(0f.lit), additive)
                 val litShaded = applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget)
-                val stored = baseColorFactor.rgb * baseColorSample.rgb * color
+                val stored = let("debugUnlitStored", baseColorFactor.rgb * baseColorSample.rgb * color)
+                val unlitReflected = unlitSignedChrome(stored, n, v, emissiveFactor.w)
                 val shaded = vec4(
-                    select(litShaded, displayTransform.unlit(stored), materialUnlit),
+                    select(litShaded, displayTransform.unlit(unlitReflected), materialUnlit),
                     sourceAlpha,
                 )
                 // Clay lights the geometric normal: the normal map is a texture too.

@@ -7,8 +7,12 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
+import com.awakekt.awake.asset.shaderdsl.abs
 import com.awakekt.awake.asset.shaderdsl.clamp
+import com.awakekt.awake.asset.shaderdsl.cos
+import com.awakekt.awake.asset.shaderdsl.cross
 import com.awakekt.awake.asset.shaderdsl.dot
+import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.minus
@@ -17,6 +21,7 @@ import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.saturate
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.vec3
@@ -29,6 +34,9 @@ private const val METALLIC_ENV_SCALE = 0.65f
 private const val SKY_GLINT_STRENGTH = 0.55f
 private const val CHROME_BAND_STRENGTH = 1.65f
 private const val CHROME_RIM_STRENGTH = 0.75f
+private const val UNLIT_CHROME_DARK_LOBE = 0.12f
+private const val UNLIT_CHROME_BRIGHT_RIDGE = 0.72f
+private const val UNLIT_CHROME_RIM_BOOST = 0.16f
 
 /**
  * Analytic environment reflection for PBR static and skinned surfaces: reflects view vector
@@ -87,4 +95,41 @@ internal fun AslBlockBuilder.environmentReflection(
         sheenTint * lightColor.xyz * (chromePeak * CHROME_BAND_STRENGTH.lit + rimGleam) * reflStrength * smoothness * occlusion,
     )
     return baseRefl + chromeGlow
+}
+
+/**
+ * Stylized signed-2x liquid-chrome sphere-map reflection for unlit materials (`unlit = true` with
+ * `reflectance > 0`): projects the camera-space normal onto a high-contrast procedural chrome lobe
+ * field (`~0.12` dark lobes to `~0.72` bright silver ridges) and blends with [stored] in sRGB via
+ * `clamp(2 * (stored + chromeMap - 0.5), 0, 1)`. Deepens color saturation in troughs while making
+ * bright trim and highlights flash gleaming white-chrome without ACES tone-mapping desaturation.
+ *
+ * Returns [stored] unchanged when [reflectance] is zero.
+ */
+internal fun AslBlockBuilder.unlitSignedChrome(
+    stored: AslExpr,
+    normal: AslExpr,
+    viewDir: AslExpr,
+    reflectance: AslExpr,
+): AslExpr {
+    val strength = let("unlitReflStrength", saturate(reflectance))
+    val upRef = select(vec3(0f.lit, 1f.lit, 0f.lit), vec3(1f.lit, 0f.lit, 0f.lit), abs(viewDir.y) gt 0.99f.lit)
+    val viewRight = let("unlitViewRight", normalize(cross(upRef, viewDir)))
+    val viewUp = let("unlitViewUp", cross(viewDir, viewRight))
+    val vnx = let("unlitVnx", dot(normal, viewRight))
+    val vny = let("unlitVny", dot(normal, viewUp))
+    val w1 = let("unlitWave1", sin(vnx * 4.4f.lit + vny * 2.9f.lit))
+    val w2 = let("unlitWave2", sin(vnx * (-3.2f).lit + vny * 4.8f.lit + 1.15f.lit))
+    val w3 = let("unlitWave3", cos(vnx * 2.3f.lit - vny * 3.6f.lit + 0.65f.lit))
+    val rawField = let("unlitRawField", saturate((w1 * 0.45f.lit + w2 * 0.35f.lit + w3 * 0.20f.lit) * 0.5f.lit + 0.5f.lit))
+    // Bias median toward ~0.30 (matching classic dark-lobe / bright-ridge chrome matcaps).
+    val shaped = let("unlitChromeShaped", pow(rawField, 1.85f.lit))
+    val nDotV = let("unlitNDotV", saturate(dot(normal, viewDir)))
+    val rim = let("unlitChromeRim", pow(1f.lit - nDotV, 2.4f.lit) * UNLIT_CHROME_RIM_BOOST.lit)
+    val chromeMap = let(
+        "unlitChromeMap",
+        clamp(mix(UNLIT_CHROME_DARK_LOBE.lit, UNLIT_CHROME_BRIGHT_RIDGE.lit, shaped) + rim, 0f.lit, 1f.lit),
+    )
+    val signed2x = let("unlitSigned2x", clamp((stored + vec3(chromeMap) - vec3(0.5f.lit)) * 2f.lit, vec3(0f.lit), vec3(1f.lit)))
+    return mix(stored, signed2x, strength)
 }
