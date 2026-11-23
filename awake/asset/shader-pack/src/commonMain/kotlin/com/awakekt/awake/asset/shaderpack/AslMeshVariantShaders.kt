@@ -400,8 +400,9 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
             frame.value("fogColor"),
             frame.value("fogRange"),
         )
+        val unlitReflected = unlitSignedChrome(stored, n, v, glow.w)
         val shaded = vec4(
-            select(litShaded, displayTransform.unlit(stored), pbrFactors.w gt UNLIT_THRESHOLD.lit),
+            select(litShaded, displayTransform.unlit(unlitReflected), pbrFactors.w gt UNLIT_THRESHOLD.lit),
             alpha,
         )
         val debugColor = let("debugColor", skinnedDebugColor(debug, debugVaryings, n, stored, displayTransform, exposure, shaded))
