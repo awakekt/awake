@@ -125,18 +125,6 @@ class SceneAppLifecycleRuntime internal constructor(
     val fixedStep: FixedStepReport
         get() = session.schedule.fixedTimestepLoop
 
-    /**
-     * Simulation time scale multiplier (`1f` = real time, `< 1f` = slow motion, `0f` = hitstop).
-     * Systems implementing [com.awakekt.awake.ecs.UnscaledSystem] continue receiving raw unscaled
-     * frame delta regardless of this scale.
-     */
-    var timeScale: Float
-        get() = session.schedule.timeScale
-        set(value) {
-            require(value.isFinite() && value >= 0f) { "timeScale must be finite and >= 0, got $value" }
-            session.schedule.timeScale = value
-        }
-
     /** The active [Renderer] instance initialized at backend readiness. */
     lateinit var renderer: Renderer
         private set
@@ -1223,6 +1211,18 @@ fun pointerCursorImageOf(game: AwakeAppLifecycle): () -> CursorImage? =
  */
 fun <T : SceneBridge> SceneAppLifecycleRuntime.bridge(handle: SceneBridgeHandle<T>): T =
     session.bridges.get(handle)
+
+/**
+ * Simulation time scale multiplier (`1f` = real time, `< 1f` = slow motion, `0f` = hitstop).
+ * Systems implementing [com.awakekt.awake.ecs.UnscaledSystem] continue receiving raw unscaled
+ * frame delta regardless of this scale.
+ */
+var SceneAppLifecycleRuntime.timeScale: Float
+    get() = session.schedule.timeScale
+    set(value) {
+        require(value.isFinite() && value >= 0f) { "timeScale must be finite and >= 0, got $value" }
+        session.schedule.timeScale = value
+    }
 
 /** The subjects of the frame work the app supplies, as an `AppError` names them. */
 private const val UPDATE_BLOCK = "updateBlock"

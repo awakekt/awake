@@ -48,6 +48,7 @@ import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.scene.runtime.prewarm
 import com.awakekt.awake.scene.runtime.schedule.guardedFor
+import com.awakekt.awake.scene.runtime.timeScale
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import kotlinx.coroutines.CancellationException
