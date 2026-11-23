@@ -42,6 +42,10 @@ import com.awakekt.awake.webgpu.webGpuHeadlessPlan
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 private val DAY_SUN = Vec3f(0.25f, 0.42f, -0.87f)
 private val DAY_SKY_HORIZON = Color(0.68f, 0.84f, 0.98f, 1f)
@@ -174,19 +178,60 @@ fun Renderer.renderCloudLayerScene(
 
 private const val DEPTH_BOOT_TIMEOUT_MS = 30_000L
 
-/** Builds a sloped riverbed + emerging stone mesh in [VertexFormat.PositionNormalColor] for depth-foam verification. */
+/** Builds a sloped sandy riverbed + faceted river boulders in [VertexFormat.PositionNormalColor] for depth-foam verification. */
 private fun rockAndRiverbedGeometry(): MeshGeometry {
     val verts = mutableListOf<Float>()
     val indices = mutableListOf<Int>()
-    fun addQuad(p0: Vec3f, p1: Vec3f, p2: Vec3f, p3: Vec3f, n: Vec3f, color: Color) {
+    fun addTri(p0: Vec3f, p1: Vec3f, p2: Vec3f, n: Vec3f, color: Color) {
         val base = verts.size / 9
-        for (p in arrayOf(p0, p1, p2, p3)) {
+        for (p in arrayOf(p0, p1, p2)) {
             verts += p.x; verts += p.y; verts += p.z
             verts += n.x; verts += n.y; verts += n.z
             verts += color.r; verts += color.g; verts += color.b
         }
         indices += base; indices += base + 1; indices += base + 2
-        indices += base; indices += base + 2; indices += base + 3
+    }
+    fun addFacet(p0: Vec3f, p1: Vec3f, p2: Vec3f, color: Color) {
+        val e1x = p1.x - p0.x; val e1y = p1.y - p0.y; val e1z = p1.z - p0.z
+        val e2x = p2.x - p0.x; val e2y = p2.y - p0.y; val e2z = p2.z - p0.z
+        val nx = e1y * e2z - e1z * e2y
+        val ny = e1z * e2x - e1x * e2z
+        val nz = e1x * e2y - e1y * e2x
+        val invLen = 1f / sqrt(nx * nx + ny * ny + nz * nz).coerceAtLeast(1e-5f)
+        addTri(p0, p1, p2, Vec3f(nx * invLen, ny * invLen, nz * invLen), color)
+    }
+    fun addQuad(p0: Vec3f, p1: Vec3f, p2: Vec3f, p3: Vec3f, n: Vec3f, color: Color) {
+        addTri(p0, p1, p2, n, color)
+        addTri(p0, p2, p3, n, color)
+    }
+    fun addBoulder(cx: Float, cz: Float, baseY: Float, peakY: Float, baseR: Float, topR: Float, phase: Float) {
+        val sides = 10
+        fun ring(y: Float, rScale: Float, jitterAmp: Float, phaseShift: Float): Array<Vec3f> = Array(sides) { i ->
+            val a = (i.toFloat() / sides) * (2f * PI.toFloat()) + phase
+            val wobble = 1f + jitterAmp * sin(a * 3f + phaseShift) + (jitterAmp * 0.55f) * cos(a * 5f - phaseShift)
+            val r = rScale * wobble
+            Vec3f(cx + cos(a) * r, y + 0.08f * sin(a * 2f + phaseShift), cz + sin(a) * r)
+        }
+        val low = ring(baseY, baseR, 0.16f, 0.4f)
+        val mid = ring(0.18f, baseR * 0.76f, 0.15f, 1.3f)
+        val top = ring(peakY * 0.74f, topR, 0.14f, 2.2f)
+        val apex = Vec3f(cx + 0.14f * baseR, peakY, cz - 0.08f * baseR)
+        val wetRock = Color(0.32f, 0.31f, 0.29f, 1f)
+        val midRock = Color(0.45f, 0.43f, 0.40f, 1f)
+        val dryRock = Color(0.55f, 0.52f, 0.48f, 1f)
+        for (i in 0 until sides) {
+            val next = (i + 1) % sides
+            val shade = 0.92f + 0.14f * sin(i * 1.7f + phase)
+            val cLow = Color(wetRock.r * shade, wetRock.g * shade, wetRock.b * shade, 1f)
+            val cMid = Color(midRock.r * shade, midRock.g * shade, midRock.b * shade, 1f)
+            val cTop = Color(dryRock.r * shade, dryRock.g * shade, dryRock.b * shade, 1f)
+            // Counter-clockwise winding when viewed from outside (+radial outward normal).
+            addFacet(low[next], low[i], mid[i], cLow)
+            addFacet(low[next], mid[i], mid[next], cLow)
+            addFacet(mid[next], mid[i], top[i], cMid)
+            addFacet(mid[next], top[i], top[next], cMid)
+            addFacet(top[next], top[i], apex, cTop)
+        }
     }
     // Gently sloping sandy shore: y=+1.6 at z=-14 down to y=-3.2 at z=+14.
     addQuad(
@@ -195,20 +240,11 @@ private fun rockAndRiverbedGeometry(): MeshGeometry {
         Vec3f(24f, -3.2f, 14f),
         Vec3f(-24f, -3.2f, 14f),
         Vec3f(0f, 0.985f, 0.17f),
-        Color(0.72f, 0.64f, 0.48f, 1f),
+        Color(0.74f, 0.65f, 0.49f, 1f),
     )
-    // Tapered river boulder sitting through the water surface at (0, -1.8..+1.35, 1.5).
-    val bY = -1.8f; val tY = 1.35f; val cz = 1.5f; val bw = 2.4f; val tw = 1.3f
-    val b0 = Vec3f(-bw, bY, cz - bw); val b1 = Vec3f(bw, bY, cz - bw)
-    val b2 = Vec3f(bw, bY, cz + bw); val b3 = Vec3f(-bw, bY, cz + bw)
-    val t0 = Vec3f(-tw, tY, cz - tw); val t1 = Vec3f(tw, tY, cz - tw)
-    val t2 = Vec3f(tw, tY, cz + tw); val t3 = Vec3f(-tw, tY, cz + tw)
-    val rockMid = Color(0.42f, 0.41f, 0.40f, 1f)
-    addQuad(t0, t1, t2, t3, Vec3f(0f, 1f, 0f), Color(0.50f, 0.49f, 0.48f, 1f))
-    addQuad(b3, b2, t2, t3, Vec3f(0f, 0.3f, 0.95f), rockMid)
-    addQuad(b1, b0, t0, t1, Vec3f(0f, 0.3f, -0.95f), rockMid)
-    addQuad(b0, b3, t3, t0, Vec3f(-0.95f, 0.3f, 0f), Color(0.37f, 0.36f, 0.35f, 1f))
-    addQuad(b2, b1, t1, t2, Vec3f(0.95f, 0.3f, 0f), Color(0.46f, 0.45f, 0.44f, 1f))
+    // Primary river boulder + smaller companion stone emerging through the water surface.
+    addBoulder(cx = -0.35f, cz = 1.4f, baseY = -2.1f, peakY = 1.45f, baseR = 2.65f, topR = 1.15f, phase = 0.25f)
+    addBoulder(cx = 3.35f, cz = 0.15f, baseY = -1.7f, peakY = 0.78f, baseR = 1.45f, topR = 0.60f, phase = 1.65f)
     return MeshGeometry(verts.toFloatArray(), indices.toIntArray(), VertexFormat.PositionNormalColor)
 }
 
@@ -289,6 +325,7 @@ fun renderStylizedWaterWithRockScene(
                         fogStart = 28f,
                         fogEnd = 110f,
                         shadowsEnabled = false,
+                        clearColor = DAY_SKY_HORIZON,
                     ),
                     clipSpace = r.clipSpace,
                     aspect = 1f,
@@ -325,7 +362,7 @@ internal fun writeWaterAndCloudEvidence(
     )
     write(
         "scene-stylized-water-rock-foam",
-        "Stylized water with SceneDepth contact foam: flowing ripples and animated foam rings around rock and shore",
+        "Stylized water with SceneDepth foam: lacy cellular contact foam, shallow absorption, and underwater caustics",
         size,
         renderStylizedWaterWithRockScene(HeadlessUiBackend.Vulkan, StylizedWaterQuality.Standard, samplesDepth = true, size = size),
     )
