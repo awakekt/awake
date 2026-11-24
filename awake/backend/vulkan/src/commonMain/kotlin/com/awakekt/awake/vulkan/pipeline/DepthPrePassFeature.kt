@@ -350,8 +350,9 @@ internal class DepthPrePassFeature(
                 drawIndex += 1
                 continue
             }
+            var drawPipeline = 0L
             if (boundPipeline !== pipeline) {
-                pipeline.bind(commandBuffer)
+                drawPipeline = pipeline.pipelineHandle
                 if (pipeline.hasCascadeBlock) {
                     VulkanDescriptors.vkCmdBindDescriptorSet(
                         commandBuffer,
@@ -363,9 +364,11 @@ internal class DepthPrePassFeature(
                 boundPipeline = pipeline
                 boundMaterialSet = NO_SET
             }
-            if (vertexBuffer.handle != boundVertex0) {
-                VulkanBuffers.vkCmdBindVertexBuffer(commandBuffer, 0, vertexBuffer.handle, 0L)
+            val drawVertex0 = if (vertexBuffer.handle != boundVertex0) {
                 boundVertex0 = vertexBuffer.handle
+                vertexBuffer.handle
+            } else {
+                0L
             }
             if (kind != DepthCasterKind.Ordinary && instanceBuffer != null) {
                 if (instanceBuffer.handle != boundVertex1) {
@@ -387,14 +390,11 @@ internal class DepthPrePassFeature(
             }
             // Alike instanced casters share one set (#1555): bound once until the pipeline changes.
             val materialSet = (depthMaterial as VulkanMaterialBinding).descriptorSetHandle
-            if (materialSet != boundMaterialSet) {
-                VulkanDescriptors.vkCmdBindDescriptorSet(
-                    commandBuffer,
-                    pipeline.pipelineLayout,
-                    BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
-                    materialSet,
-                )
+            val drawSet0 = if (materialSet != boundMaterialSet) {
                 boundMaterialSet = materialSet
+                materialSet
+            } else {
+                0L
             }
             if (kind == DepthCasterKind.SkinnedInstanced && paletteBinding != null) {
                 VulkanDescriptors.vkCmdBindDescriptorSet(
@@ -405,18 +405,33 @@ internal class DepthPrePassFeature(
                 )
             }
             if (indexBuffer != null) {
-                if (indexBuffer.handle != boundIndex) {
-                    VulkanBuffers.vkCmdBindIndexBuffer(
-                        commandBuffer,
-                        indexBuffer.handle,
-                        0,
-                        com.awakekt.awake.vulkan.models.info.VkIndexType.VK_INDEX_TYPE_UINT32,
-                    )
+                val drawIndexBuffer = if (indexBuffer.handle != boundIndex) {
                     boundIndex = indexBuffer.handle
+                    indexBuffer.handle
+                } else {
+                    0L
                 }
-                VulkanBuffers.vkCmdDrawIndexed(commandBuffer, prepared.elementCount, prepared.instances, 0, 0, 0)
+                VulkanCommands.vkCmdDrawIndexedWithState(
+                    commandBuffer = commandBuffer,
+                    pipeline = drawPipeline,
+                    pipelineLayout = pipeline.pipelineLayout,
+                    descriptorSet0 = drawSet0,
+                    vertexBuffer0 = drawVertex0,
+                    indexBuffer = drawIndexBuffer,
+                    indexCount = prepared.elementCount,
+                    instanceCount = prepared.instances,
+                    firstIndex = 0,
+                )
             } else {
-                Vulkan.vkCmdDraw(commandBuffer, prepared.elementCount, prepared.instances, 0, 0)
+                VulkanCommands.vkCmdDrawWithState(
+                    commandBuffer = commandBuffer,
+                    pipeline = drawPipeline,
+                    pipelineLayout = pipeline.pipelineLayout,
+                    descriptorSet0 = drawSet0,
+                    vertexBuffer0 = drawVertex0,
+                    vertexCount = prepared.elementCount,
+                    instanceCount = prepared.instances,
+                )
             }
             stats?.recordDraw(prepared.elementCount, prepared.instances)
             drawIndex += 1

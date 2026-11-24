@@ -324,7 +324,7 @@ internal fun RenderViewport.toVkScissor(): VkRect2D = VkRect2D(
  * loop through `SharedOpaqueRenderFeature.recordCommands` instead. */
 
 internal fun VulkanRenderer.recordDrawCalls(commandBuffer: Long, drawCalls: List<PreparedDrawCall>) {
-    commandRecorder.commandBuffer = commandBuffer
+    commandRecorder.beginPass(commandBuffer)
     sharedOpaqueFeature.recordDraws(commandRecorder, drawCalls)
 }
 

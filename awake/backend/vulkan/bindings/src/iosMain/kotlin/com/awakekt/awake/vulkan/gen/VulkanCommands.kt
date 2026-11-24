@@ -15,8 +15,11 @@ import cnames.structs.VkSemaphore_T
 import cnames.structs.VkSwapchainKHR_T
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkResult
+import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
+import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkDeviceCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDeviceQueueCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkIndexType
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceFeatures
 import com.awakekt.awake.vulkan.utils.VkResultException
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -33,6 +36,7 @@ import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import platform.MoltenVK.VK_PIPELINE_BIND_POINT_GRAPHICS
 import platform.MoltenVK.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
+import platform.MoltenVK.VK_STRUCTURE_TYPE_MEMORY_BARRIER
 import platform.MoltenVK.VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO
 import platform.MoltenVK.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
 import platform.MoltenVK.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO
@@ -46,6 +50,7 @@ import platform.MoltenVK.VkSemaphoreVar
 import platform.MoltenVK.VkSwapchainKHRVar
 import platform.MoltenVK.VkClearValue as NativeVkClearValue
 import platform.MoltenVK.VkCommandBufferBeginInfo as NativeVkCommandBufferBeginInfo
+import platform.MoltenVK.VkMemoryBarrier as NativeVkMemoryBarrier
 import platform.MoltenVK.VkPipelineCacheCreateInfo as NativeVkPipelineCacheCreateInfo
 import platform.MoltenVK.VkPresentInfoKHR as NativeVkPresentInfoKHR
 import platform.MoltenVK.VkRect2D as NativeVkRect2D
@@ -55,6 +60,7 @@ import platform.MoltenVK.VkViewport as NativeVkViewport
 import platform.MoltenVK.vkBeginCommandBuffer as nativeVkBeginCommandBuffer
 import platform.MoltenVK.vkCmdBeginRenderPass as nativeVkCmdBeginRenderPass
 import platform.MoltenVK.vkCmdBindPipeline as nativeVkCmdBindPipeline
+import platform.MoltenVK.vkCmdPipelineBarrier as nativeVkCmdPipelineBarrier
 import platform.MoltenVK.vkCmdSetScissor as nativeVkCmdSetScissor
 import platform.MoltenVK.vkCmdSetViewport as nativeVkCmdSetViewport
 import platform.MoltenVK.vkCreatePipelineCache as nativeVkCreatePipelineCache
@@ -429,6 +435,81 @@ actual object VulkanCommands {
                 pEnabledFeatures = arrayOf(features),
                 ppEnabledExtensionNames = enabledExtensions,
             ),
+        )
+    }
+
+    /** Single-call fast path combining non-zero state binds with `vkCmdDrawIndexed`. */
+    @Suppress("LongParameterList")
+    actual fun vkCmdDrawIndexedWithState(
+        commandBuffer: Long,
+        pipeline: Long,
+        pipelineLayout: Long,
+        descriptorSet0: Long,
+        vertexBuffer0: Long,
+        indexBuffer: Long,
+        indexCount: Int,
+        instanceCount: Int,
+        firstIndex: Int,
+    ) {
+        if (pipeline != 0L) vkCmdBindGraphicsPipeline(commandBuffer, pipeline)
+        if (descriptorSet0 != 0L) {
+            VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, descriptorSet0)
+        }
+        if (vertexBuffer0 != 0L) VulkanBuffers.vkCmdBindVertexBuffer(commandBuffer, 0, vertexBuffer0, 0L)
+        if (indexBuffer != 0L) {
+            VulkanBuffers.vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0L, VkIndexType.VK_INDEX_TYPE_UINT32)
+        }
+        VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, 0, 0)
+    }
+
+    /** Single-call fast path combining non-zero state binds with non-indexed `vkCmdDraw`. */
+    @Suppress("LongParameterList")
+    actual fun vkCmdDrawWithState(
+        commandBuffer: Long,
+        pipeline: Long,
+        pipelineLayout: Long,
+        descriptorSet0: Long,
+        vertexBuffer0: Long,
+        vertexCount: Int,
+        instanceCount: Int,
+    ) {
+        if (pipeline != 0L) vkCmdBindGraphicsPipeline(commandBuffer, pipeline)
+        if (descriptorSet0 != 0L) {
+            VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, descriptorSet0)
+        }
+        if (vertexBuffer0 != 0L) VulkanBuffers.vkCmdBindVertexBuffer(commandBuffer, 0, vertexBuffer0, 0L)
+        Vulkan.vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0)
+    }
+
+    /** Records a `TRANSFER_WRITE -> VERTEX_INPUT | VERTEX_SHADER | FRAGMENT_SHADER` global memory barrier. */
+    actual fun vkCmdTransferToGraphicsBarrier(commandBuffer: Long) = memScoped {
+        val barrier = alloc<NativeVkMemoryBarrier>().apply {
+            sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER
+            pNext = null
+            srcAccessMask = VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT.value.toUInt()
+            dstAccessMask = (
+                VkAccessFlagBits.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT.value or
+                    VkAccessFlagBits.VK_ACCESS_INDEX_READ_BIT.value or
+                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT.value or
+                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT.value
+                ).toUInt()
+        }
+        val dstStage = (
+            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT.value or
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_SHADER_BIT.value or
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.value
+            ).toUInt()
+        nativeVkCmdPipelineBarrier(
+            commandBuffer.toCPointer(),
+            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT.value.toUInt(),
+            dstStage,
+            0u,
+            1u,
+            barrier.ptr,
+            0u,
+            null,
+            0u,
+            null,
         )
     }
 }

@@ -48,10 +48,12 @@ public final class com/awakekt/awake/vulkan/application/VulkanHeadlessPlayKt {
 public final class com/awakekt/awake/vulkan/commands/TransferContext {
 	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;)V
 	public final fun destroy ()V
+	public final fun flushUploads ()V
 	public final fun getCommandPool-FpNL8Jc ()J
 	public final fun runOneTimeCommands (Lkotlin/jvm/functions/Function1;)V
 	public final fun runUpload (Lcom/awakekt/awake/render/command/GpuUploadLease;Lkotlin/jvm/functions/Function2;)V
 	public final fun setCommandPool-c0vBV8c (J)V
+	public final fun withUploadBatch (Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/vulkan/debug/LineMesh {

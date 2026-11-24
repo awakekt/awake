@@ -32,19 +32,24 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
     private val touched = mutableListOf<Texture>()
     private var frameIndex = 0
     private var commandBuffer = 0L
+    private var flushPendingUploads: (Long) -> Unit = {}
     private val device get() = graphicsDevice.device
 
-    fun beginFrame(frameIndex: Int, commandBuffer: Long) {
+    fun beginFrame(frameIndex: Int, commandBuffer: Long, flushPendingUploads: (Long) -> Unit = {}) {
         inUse.remove(frameIndex)?.let(free::addAll)
         touched.clear()
         this.frameIndex = frameIndex
         this.commandBuffer = commandBuffer
+        this.flushPendingUploads = flushPendingUploads
     }
 
     override fun write(texture: WritableTexture, region: TextureRegion) {
         region.validate(texture)
         val image = texture as Texture
         require(!image.blockCompressed) { "A block-compressed texture takes no RGBA8 region writes." }
+        if (graphicsDevice.activeUploadBatcher?.hasPending == true) {
+            flushPendingUploads(commandBuffer)
+        }
         val staging = acquire(region.data.size.toLong())
         inUse.getOrPut(frameIndex) { mutableListOf() } += staging
         VulkanBuffers.writeMappedMemoryBytes(staging.mappedPtr, 0L, region.data, 0, region.data.size)

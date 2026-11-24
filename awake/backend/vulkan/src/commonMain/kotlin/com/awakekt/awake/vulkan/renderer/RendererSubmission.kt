@@ -39,6 +39,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         bufferPools.frameSubmitted(currentFrame)
         retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
         deferredResourceReaper.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
+        transferContext.uploadBatcher.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
         swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
         return
     }
@@ -58,6 +59,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     bufferPools.frameSubmitted(currentFrame)
     retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
     deferredResourceReaper.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
+    transferContext.uploadBatcher.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
 
     // Suboptimal and out of date come back as results, not exceptions: a phone panel whose
     // swapchain is not pre-rotated presents suboptimally every frame. The surface is asked once per

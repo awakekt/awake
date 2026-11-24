@@ -474,6 +474,8 @@ class Renderer internal constructor(
     internal var submittedOffscreenCommandBuffer: Long = 0
     internal var submittedOffscreenFence: Long = 0
     internal var submittedOffscreenFrame: Int = NO_SUBMITTED_OFFSCREEN_FRAME
+    internal var submittedOffscreenUploadChunks: List<com.awakekt.awake.vulkan.commands.UploadBatcher.StagingChunk> = emptyList()
+    internal var activeOffscreenUploadChunks: MutableList<com.awakekt.awake.vulkan.commands.UploadBatcher.StagingChunk>? = null
 
     /** How many times a presented frame had to block on outstanding offscreen work sharing its slot: for tests (#1709). */
     internal var offscreenWaitsForFrame: Long = 0L
@@ -621,6 +623,7 @@ class Renderer internal constructor(
         if (swapchainManager.imageViews.isNotEmpty()) {
             ensureSceneToPresentRenderPass()
             graphicsDevice.registerReaper(deferredResourceReaper)
+            transferContext.uploadBatcher.enableFrameDeferred()
         }
         createCommandBuffers(transferContext.commandPool.handle, maxFramesInFlight)
     }
@@ -729,11 +732,13 @@ class Renderer internal constructor(
     }
 
     internal fun prepareResources(frameIndex: Int, commandBuffer: Long) {
+        flushPendingUploadsInto(commandBuffer)
         flushStagedUniformBlocks()
         imagePassExecutor.beginFrame(frameIndex)
-        textureUploads.beginFrame(frameIndex, commandBuffer)
+        textureUploads.beginFrame(frameIndex, commandBuffer, ::flushPendingUploadsInto)
         com.awakekt.awake.render.passes.prepareFrameResources(renderFeatures, frameIndex, textureUploads)
         textureUploads.endFrame()
+        flushPendingUploadsInto(commandBuffer)
     }
 
     /**
@@ -862,6 +867,7 @@ class Renderer internal constructor(
         // submitted offscreen work leaves those frame slots in flight during direct teardown.
         waitIdle()
         awaitSubmittedOffscreenCommands()
+        transferContext.uploadBatcher.disableFrameDeferred()
         graphicsDevice.unregisterReaper(deferredResourceReaper)
         deferredResourceReaper.destroyAll()
         dirtyUniformBlocks.clear()

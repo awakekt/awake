@@ -132,4 +132,33 @@ actual object VulkanCommands {
         apiVersion: Int,
         modernFeaturesMask: Int,
     ): Long
+
+    /** Single-JNI fast path combining non-zero state binds with `vkCmdDrawIndexed`. */
+    @Suppress("LongParameterList")
+    actual external fun vkCmdDrawIndexedWithState(
+        commandBuffer: Long,
+        pipeline: Long,
+        pipelineLayout: Long,
+        descriptorSet0: Long,
+        vertexBuffer0: Long,
+        indexBuffer: Long,
+        indexCount: Int,
+        instanceCount: Int,
+        firstIndex: Int,
+    )
+
+    /** Single-JNI fast path combining non-zero state binds with non-indexed `vkCmdDraw`. */
+    @Suppress("LongParameterList")
+    actual external fun vkCmdDrawWithState(
+        commandBuffer: Long,
+        pipeline: Long,
+        pipelineLayout: Long,
+        descriptorSet0: Long,
+        vertexBuffer0: Long,
+        vertexCount: Int,
+        instanceCount: Int,
+    )
+
+    /** Records a `TRANSFER_WRITE -> VERTEX_INPUT | VERTEX_SHADER | FRAGMENT_SHADER` global memory barrier. */
+    actual external fun vkCmdTransferToGraphicsBarrier(commandBuffer: Long)
 }

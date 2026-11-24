@@ -72,6 +72,8 @@ class Texture internal constructor(
 
     /** The device memory backing [image]. */
     var imageMemory: DeviceMemoryHandle = DeviceMemoryHandle(uploaded.memory)
+    private val memoryAllocation = uploaded.memoryAllocation
+    private val pendingUpload = uploaded.pendingUpload
     var imageView: ImageViewHandle = ImageViewHandle(uploaded.view)
     var sampler: SamplerHandle = SamplerHandle(uploaded.sampler)
 
@@ -127,11 +129,17 @@ class Texture internal constructor(
      * with the texture.
      */
     fun destroy() {
+        pendingUpload?.cancel()
         graphicsDevice.sampledTextures -= this
         VulkanImages.vkDestroySampler(device, sampler.handle)
         Vulkan.vkDestroyImageView(device, imageView.handle)
         VulkanImages.vkDestroyImage(device, image.handle)
-        VulkanBuffers.vkFreeMemory(device, imageMemory.handle)
+        val allocation = memoryAllocation
+        if (allocation != null) {
+            graphicsDevice.deviceMemoryAllocator.free(allocation)
+        } else {
+            VulkanBuffers.vkFreeMemory(device, imageMemory.handle)
+        }
     }
 
     internal companion object {
