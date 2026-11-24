@@ -1,1 +1,0 @@
-- Added `GpuResourceStats` and `GpuDevice.gpuResourceStats` across the Vulkan and WebGPU backends (tracking live meshes, materials, textures, render targets, pooled buffers, mesh bytes, and estimated texture bytes), made `Mesh.destroy()` and dynamic-mesh `destroy()` idempotent, added `GpuResourcePool.clear()`, and added cross-backend GPU resource leak parity tests.
