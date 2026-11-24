@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.73.1] - 2026-11-24
+
+### Fixed
+
+- Evict unused Compose `ImageBitmap` GPU textures from `GraphicsLayerCompositor` / `ImageTextures` after an idle frame/byte budget instead of pinning every drawn bitmap for the lifetime of the host, and release material-owned uploaded textures in Vulkan and WebGPU `Material.destroy()` so evicted UI and scene materials reclaim both managed heap and GPU memory.
+
 ## [0.73.0] - 2026-11-24
 
 ### Changed
