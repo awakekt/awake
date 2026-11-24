@@ -2364,8 +2364,11 @@ public final class com/awakekt/awake/vulkan/gen/VulkanCommands {
 	public final fun vkCmdBeginRenderPassDepth (JJJIIF)V
 	public final fun vkCmdBeginRenderPassEmpty (JJJII)V
 	public final fun vkCmdBindGraphicsPipeline (JJ)V
+	public final fun vkCmdDrawIndexedWithState (JJJJJJIII)V
+	public final fun vkCmdDrawWithState (JJJJJII)V
 	public final fun vkCmdSetScissorRect (JIIII)V
 	public final fun vkCmdSetViewportRect (JFFFFFF)V
+	public final fun vkCmdTransferToGraphicsBarrier (J)V
 	public final fun vkCreateLogicalDeviceWithFeatures (J[I[Ljava/lang/String;III)J
 	public final fun vkCreatePipelineCacheFromBytes (J[B)J
 	public final fun vkGetPipelineCacheData (JJ)[B

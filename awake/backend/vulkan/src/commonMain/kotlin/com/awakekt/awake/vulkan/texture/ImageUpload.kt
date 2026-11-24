@@ -8,16 +8,16 @@ package com.awakekt.awake.vulkan.texture
 import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.vulkan.Vulkan
+import com.awakekt.awake.vulkan.commands.UploadBatcher
+import com.awakekt.awake.vulkan.device.DeviceMemoryAllocation
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.SlabKind
 import com.awakekt.awake.vulkan.enums.VkFormat
 import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
 import com.awakekt.awake.vulkan.enums.VkImageViewType
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanImages
-import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferImageCopy
-import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkFilter
 import com.awakekt.awake.vulkan.models.info.VkImageCreateFlagBits
 import com.awakekt.awake.vulkan.models.info.VkImageCreateInfo
@@ -27,7 +27,6 @@ import com.awakekt.awake.vulkan.models.info.VkImageTiling
 import com.awakekt.awake.vulkan.models.info.VkImageType
 import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSamplerMipmapMode
 import com.awakekt.awake.vulkan.models.info.VkSharingMode2
@@ -47,6 +46,10 @@ internal class UploadedImage(
     val height: Int = 0,
     /** Exact uploaded payload size in bytes across all uploaded mip levels and layers. */
     val byteSize: Long = 0L,
+    /** Slab or standalone memory allocation backing [image], freed by `Texture.destroy()`. */
+    val memoryAllocation: DeviceMemoryAllocation? = null,
+    /** Cancellation handle when the initial copy is queued in [UploadBatcher]. */
+    val pendingUpload: UploadBatcher.PendingUpload? = null,
 )
 
 /**
@@ -88,21 +91,40 @@ internal object ImageUpload {
         // memory: the reusable staging buffer is returned to the pool, and the image, its memory
         // and its view are freed unless returned.
         var image = 0L
-        var memory = 0L
+        var allocation: DeviceMemoryAllocation? = null
+        var pendingUpload: UploadBatcher.PendingUpload? = null
         var view = 0L
         var uploaded: UploadedImage? = null
         try {
             image = VulkanImages.vkCreateImage(device, imageInfo(format, width, height, mipLevels, layerCount, isCubemap))
-            memory = deviceLocalMemory(graphicsDevice, image)
-            VulkanImages.vkBindImageMemory(device, image, memory, 0)
-            graphicsDevice.stagingBufferPool.withStaging(data.size.toLong()) { staging ->
-                VulkanBuffers.writeMappedMemoryBytes(staging.mappedPtr, 0L, data, 0, data.size)
-                runOneTimeCommands { commandBuffer -> copy(commandBuffer, staging.buffer, image, regions) }
+            val requirements = VulkanImages.vkGetImageMemoryRequirements(device, image)
+            val allocated = graphicsDevice.deviceMemoryAllocator.allocate(requirements, SlabKind.Image, image)
+            allocation = allocated
+            VulkanImages.vkBindImageMemory(device, image, allocated.memory, allocated.offset)
+            val batcher = graphicsDevice.activeUploadBatcher?.takeIf { it.isBatching }
+            if (batcher != null) {
+                val targetImage = image
+                pendingUpload = batcher.enqueue(
+                    byteSize = data.size.toLong(),
+                    alignment = IMAGE_STAGING_ALIGNMENT,
+                    flushSync = runOneTimeCommands,
+                    writeStaging = { mappedPtr, stagingOffset ->
+                        VulkanBuffers.writeMappedMemoryBytes(mappedPtr, stagingOffset, data, 0, data.size)
+                    },
+                    recordCopy = { commandBuffer, stagingBuffer, stagingOffset ->
+                        copy(commandBuffer, stagingBuffer, stagingOffset, targetImage, regions)
+                    },
+                )
+            } else {
+                graphicsDevice.stagingBufferPool.withStaging(data.size.toLong()) { staging ->
+                    VulkanBuffers.writeMappedMemoryBytes(staging.mappedPtr, 0L, data, 0, data.size)
+                    runOneTimeCommands { commandBuffer -> copy(commandBuffer, staging.buffer, 0L, image, regions) }
+                }
             }
             view = view(graphicsDevice, image, format, mipLevels, layerCount, isCubemap)
             uploaded = UploadedImage(
                 image,
-                memory,
+                allocated.memory,
                 view,
                 sampler(graphicsDevice, samplerCreateInfo, filtering, mipLevels),
                 samplerCreateInfo,
@@ -110,14 +132,17 @@ internal object ImageUpload {
                 mipLevels,
                 width,
                 height,
-                data.size.toLong(),
+                byteSize = data.size.toLong(),
+                memoryAllocation = allocated,
+                pendingUpload = pendingUpload,
             )
             return uploaded
         } finally {
             if (uploaded == null) {
+                pendingUpload?.cancel()
                 if (view != 0L) Vulkan.vkDestroyImageView(device, view)
                 if (image != 0L) VulkanImages.vkDestroyImage(device, image)
-                if (memory != 0L) VulkanBuffers.vkFreeMemory(device, memory)
+                if (allocation != null) graphicsDevice.deviceMemoryAllocator.free(allocation)
             }
         }
     }
@@ -137,25 +162,9 @@ internal object ImageUpload {
         flags = if (isCubemap) VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT else 0,
     )
 
-    /** DEVICE_LOCAL memory the size [image] needs, not yet bound. */
-    private fun deviceLocalMemory(graphicsDevice: GraphicsDevice, image: Long): Long {
-        val requirements = VulkanImages.vkGetImageMemoryRequirements(graphicsDevice.device, image)
-        return VulkanBuffers.vkAllocateMemory(
-            graphicsDevice.device,
-            VkMemoryAllocateInfo(
-                allocationSize = requirements.size,
-                memoryTypeIndex = VulkanBuffers.findMemoryType(
-                    graphicsDevice.physicalDevice,
-                    requirements.memoryTypeBits,
-                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                ),
-            ),
-        )
-    }
-
     // The image is moved to TRANSFER_DST across every level and layer the regions fill, then to
     // SHADER_READ_ONLY once they're copied.
-    private fun copy(commandBuffer: Long, buffer: Long, image: Long, regions: List<Region>) {
+    private fun copy(commandBuffer: Long, buffer: Long, stagingOffset: Long, image: Long, regions: List<Region>) {
         val mipLevels = regions.maxOf { it.mipLevel } + 1
         val layerCount = regions.maxOf { it.layer } + 1
         VulkanImages.vkTransitionImageLayout(
@@ -174,7 +183,7 @@ internal object ImageUpload {
                 VkBufferImageCopy(
                     imageWidth = region.width,
                     imageHeight = region.height,
-                    bufferOffset = region.bufferOffset,
+                    bufferOffset = stagingOffset + region.bufferOffset,
                     mipLevel = region.mipLevel,
                     baseArrayLayer = region.layer,
                     layerCount = 1,
@@ -243,4 +252,7 @@ internal object ImageUpload {
             ),
         )
     }
+
+    /** 16-byte alignment satisfies every RGBA8 / BCn / ETC2 / ASTC texel-block offset requirement. */
+    private const val IMAGE_STAGING_ALIGNMENT: Long = 16L
 }

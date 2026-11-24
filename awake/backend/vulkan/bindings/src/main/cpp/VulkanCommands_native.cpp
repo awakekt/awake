@@ -680,3 +680,132 @@ Java_com_awakekt_awake_vulkan_gen_VulkanCommands_vkCreateLogicalDeviceWithFeatur
     }
     return reinterpret_cast<jlong>(vkDevice);
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanCommands_vkCmdDrawIndexedWithState(
+        JNIEnv* env,
+        jclass,
+        jlong commandBuffer,
+        jlong pipeline,
+        jlong pipelineLayout,
+        jlong descriptorSet0,
+        jlong vertexBuffer0,
+        jlong indexBuffer,
+        jint indexCount,
+        jint instanceCount,
+        jint firstIndex) {
+    if (!commandBuffer) {
+        throw_illegal_state(env, "vkCmdDrawIndexedWithState: commandBuffer not initialized");
+        return;
+    }
+    VkCommandBuffer cmd = reinterpret_cast<VkCommandBuffer>(commandBuffer);
+    if (pipeline) {
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, reinterpret_cast<VkPipeline>(pipeline));
+    }
+    if (descriptorSet0) {
+        if (!pipelineLayout) {
+            throw_illegal_state(env, "vkCmdDrawIndexedWithState: pipelineLayout not initialized");
+            return;
+        }
+        VkDescriptorSet set = reinterpret_cast<VkDescriptorSet>(descriptorSet0);
+        vkCmdBindDescriptorSets(
+            cmd,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            reinterpret_cast<VkPipelineLayout>(pipelineLayout),
+            0,
+            1,
+            &set,
+            0,
+            nullptr);
+    }
+    if (vertexBuffer0) {
+        VkBuffer buf = reinterpret_cast<VkBuffer>(vertexBuffer0);
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(cmd, 0, 1, &buf, &offset);
+    }
+    if (indexBuffer) {
+        vkCmdBindIndexBuffer(cmd, reinterpret_cast<VkBuffer>(indexBuffer), 0, VK_INDEX_TYPE_UINT32);
+    }
+    vkCmdDrawIndexed(
+        cmd,
+        static_cast<uint32_t>(indexCount),
+        static_cast<uint32_t>(instanceCount),
+        static_cast<uint32_t>(firstIndex),
+        0,
+        0);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanCommands_vkCmdDrawWithState(
+        JNIEnv* env,
+        jclass,
+        jlong commandBuffer,
+        jlong pipeline,
+        jlong pipelineLayout,
+        jlong descriptorSet0,
+        jlong vertexBuffer0,
+        jint vertexCount,
+        jint instanceCount) {
+    if (!commandBuffer) {
+        throw_illegal_state(env, "vkCmdDrawWithState: commandBuffer not initialized");
+        return;
+    }
+    VkCommandBuffer cmd = reinterpret_cast<VkCommandBuffer>(commandBuffer);
+    if (pipeline) {
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, reinterpret_cast<VkPipeline>(pipeline));
+    }
+    if (descriptorSet0) {
+        if (!pipelineLayout) {
+            throw_illegal_state(env, "vkCmdDrawWithState: pipelineLayout not initialized");
+            return;
+        }
+        VkDescriptorSet set = reinterpret_cast<VkDescriptorSet>(descriptorSet0);
+        vkCmdBindDescriptorSets(
+            cmd,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            reinterpret_cast<VkPipelineLayout>(pipelineLayout),
+            0,
+            1,
+            &set,
+            0,
+            nullptr);
+    }
+    if (vertexBuffer0) {
+        VkBuffer buf = reinterpret_cast<VkBuffer>(vertexBuffer0);
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(cmd, 0, 1, &buf, &offset);
+    }
+    vkCmdDraw(cmd, static_cast<uint32_t>(vertexCount), static_cast<uint32_t>(instanceCount), 0, 0);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanCommands_vkCmdTransferToGraphicsBarrier(
+        JNIEnv* env,
+        jclass,
+        jlong commandBuffer) {
+    if (!commandBuffer) {
+        throw_illegal_state(env, "vkCmdTransferToGraphicsBarrier: commandBuffer not initialized");
+        return;
+    }
+    VkMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask =
+        VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+        VK_ACCESS_INDEX_READ_BIT |
+        VK_ACCESS_UNIFORM_READ_BIT |
+        VK_ACCESS_SHADER_READ_BIT;
+    vkCmdPipelineBarrier(
+        reinterpret_cast<VkCommandBuffer>(commandBuffer),
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT |
+            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0,
+        1,
+        &barrier,
+        0,
+        nullptr,
+        0,
+        nullptr);
+}

@@ -157,6 +157,49 @@ expect object VulkanCommands {
         apiVersion: Int,
         modernFeaturesMask: Int,
     ): Long
+
+    /**
+     * Single-JNI fast path combining optional state binds with `vkCmdDrawIndexed`.
+     *
+     * Any handle passed as `0L` is skipped, eliminating both redundant JNI crossings and redundant
+     * Vulkan state-bind calls for consecutive draws that share pipelines, descriptor sets, vertex
+     * buffers, or index buffers.
+     */
+    @Suppress("LongParameterList")
+    fun vkCmdDrawIndexedWithState(
+        commandBuffer: Long,
+        pipeline: Long,
+        pipelineLayout: Long,
+        descriptorSet0: Long,
+        vertexBuffer0: Long,
+        indexBuffer: Long,
+        indexCount: Int,
+        instanceCount: Int,
+        firstIndex: Int,
+    )
+
+    /**
+     * Single-JNI fast path combining optional state binds with non-indexed `vkCmdDraw`.
+     *
+     * Any handle passed as `0L` is skipped.
+     */
+    @Suppress("LongParameterList")
+    fun vkCmdDrawWithState(
+        commandBuffer: Long,
+        pipeline: Long,
+        pipelineLayout: Long,
+        descriptorSet0: Long,
+        vertexBuffer0: Long,
+        vertexCount: Int,
+        instanceCount: Int,
+    )
+
+    /**
+     * Records a global `TRANSFER_WRITE -> VERTEX_INPUT | VERTEX_SHADER | FRAGMENT_SHADER` memory
+     * barrier so batched buffer/image uploads recorded at the start of [commandBuffer] are visible
+     * to subsequent geometry and shading passes in the same submission.
+     */
+    fun vkCmdTransferToGraphicsBarrier(commandBuffer: Long)
 }
 
 /**

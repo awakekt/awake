@@ -20,9 +20,13 @@ internal fun Renderer.runOffscreenCommands(measureGpuTime: Boolean = true, block
         offscreenCommandBuffer = allocateOffscreenCommandBuffer()
         offscreenFence = Vulkan.vkCreateFence(device, VkFenceCreateInfo())
     }
-    val timing = recordAndSubmit(offscreenCommandBuffer, offscreenFence, measureGpuTime, block)
-    VulkanCommands.vkWaitForFence(device, offscreenFence, Long.MAX_VALUE)
-    timing?.let { gpuFrameTimer?.completeOffscreen(it) }
+    val (timing, uploadChunks) = recordAndSubmit(offscreenCommandBuffer, offscreenFence, measureGpuTime, block)
+    try {
+        VulkanCommands.vkWaitForFence(device, offscreenFence, Long.MAX_VALUE)
+        timing?.let { gpuFrameTimer?.completeOffscreen(it) }
+    } finally {
+        transferContext.uploadBatcher.recycleChunks(uploadChunks)
+    }
 }
 
 /**
@@ -41,7 +45,9 @@ internal fun Renderer.submitOffscreenCommands(
         submittedOffscreenCommandBuffer = allocateOffscreenCommandBuffer()
         submittedOffscreenFence = Vulkan.vkCreateFence(device, VkFenceCreateInfo())
     }
-    submittedOffscreenTiming = recordAndSubmit(submittedOffscreenCommandBuffer, submittedOffscreenFence, true, block)
+    val (timing, uploadChunks) = recordAndSubmit(submittedOffscreenCommandBuffer, submittedOffscreenFence, true, block)
+    submittedOffscreenTiming = timing
+    submittedOffscreenUploadChunks = uploadChunks
     submittedOffscreenFrame = frameSlot
 }
 
@@ -51,6 +57,8 @@ internal fun Renderer.awaitSubmittedOffscreenCommands() {
     VulkanCommands.vkWaitForFence(device, submittedOffscreenFence, Long.MAX_VALUE)
     submittedOffscreenTiming?.let { gpuFrameTimer?.completeOffscreen(it) }
     submittedOffscreenTiming = null
+    transferContext.uploadBatcher.recycleChunks(submittedOffscreenUploadChunks)
+    submittedOffscreenUploadChunks = emptyList()
     submittedOffscreenFrame = NO_SUBMITTED_OFFSCREEN_FRAME
 }
 
@@ -77,14 +85,35 @@ private fun Renderer.allocateOffscreenCommandBuffer(): Long = Vulkan.vkAllocateC
     ),
 )
 
-private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, measureGpuTime: Boolean, block: (Long) -> Unit): Long? {
+/** Records any queued mesh/texture uploads into [commandBuffer], binding staging lifetime to the active pass. */
+internal fun Renderer.flushPendingUploadsInto(commandBuffer: Long) {
+    val offscreenCollector = activeOffscreenUploadChunks
+    if (offscreenCollector != null) {
+        offscreenCollector.addAll(transferContext.uploadBatcher.recordPendingInto(commandBuffer))
+    } else {
+        transferContext.uploadBatcher.recordPendingForFrame(commandBuffer)
+    }
+}
+
+private fun Renderer.recordAndSubmit(
+    commandBuffer: Long,
+    fence: Long,
+    measureGpuTime: Boolean,
+    block: (Long) -> Unit,
+): Pair<Long?, List<com.awakekt.awake.vulkan.commands.UploadBatcher.StagingChunk>> {
     Vulkan.vkResetCommandBuffer(commandBuffer, 0)
     VulkanCommands.vkBeginCommandBuffer(
         commandBuffer,
         VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
     )
+    val uploadChunks = ArrayList(transferContext.uploadBatcher.recordPendingInto(commandBuffer))
     val timing = if (measureGpuTime) gpuFrameTimer?.beginOffscreen(commandBuffer) else null
-    block(commandBuffer)
+    activeOffscreenUploadChunks = uploadChunks
+    try {
+        block(commandBuffer)
+    } finally {
+        activeOffscreenUploadChunks = null
+    }
     timing?.let { gpuFrameTimer?.endOffscreen(commandBuffer, it) }
     Vulkan.vkEndCommandBuffer(commandBuffer)
 
@@ -99,5 +128,5 @@ private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, measureGp
             fence = fence,
         )
     }
-    return timing
+    return timing to uploadChunks
 }

@@ -7,16 +7,17 @@ package com.awakekt.awake.vulkan.mesh
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
+import com.awakekt.awake.vulkan.commands.UploadBatcher
+import com.awakekt.awake.vulkan.device.DeviceMemoryAllocation
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.SlabKind
 import com.awakekt.awake.vulkan.device.destroyOrRetire
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.handles.BufferHandle
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkIndexType
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 
@@ -90,6 +91,9 @@ private constructor(
 
     /** Counts the meshes drawing [vertexBuffer], so the last one destroyed frees it. */
     private val vertexOwner: SharedVertices
+    private val vertexAllocation: DeviceMemoryAllocation
+    private val indexAllocation: DeviceMemoryAllocation
+    private val indexPendingUpload: UploadBatcher.PendingUpload?
 
     /** The same two buffers above, as the port's opaque handle type -- built once here so the
      * shared per-draw recording path allocates nothing per frame. */
@@ -119,75 +123,135 @@ private constructor(
             vertexOwner = sharedFrom.vertexOwner.also { it.meshes++ }
             vertexBuffer = sharedFrom.vertexBuffer
             vertexBufferMemory = sharedFrom.vertexBufferMemory
-            val (iBuffer, iMemory) = allocateDeviceLocalBuffer(
+            vertexAllocation = sharedFrom.vertexAllocation
+            val (iBuffer, iAlloc) = allocateDeviceLocalBuffer(
                 byteSize = indexBufferSize,
                 usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
             )
+            var indexUpload: UploadBatcher.PendingUpload? = null
             var uploaded = false
             try {
-                graphicsDevice.stagingBufferPool.withStaging(indexBufferSize) { staging ->
-                    VulkanBuffers.writeMappedMemoryInts(staging.mappedPtr, 0L, indices, 0, indices.size)
-                    runOneTimeCommands { commandBuffer ->
-                        VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, staging.buffer, iBuffer, 0L, 0L, indexBufferSize)
+                val batcher = graphicsDevice.activeUploadBatcher?.takeIf { it.isBatching }
+                if (batcher != null) {
+                    indexUpload = batcher.enqueue(
+                        byteSize = indexBufferSize,
+                        alignment = STAGING_ALIGN_BYTES,
+                        flushSync = runOneTimeCommands,
+                        writeStaging = { mappedPtr, stagingOffset ->
+                            VulkanBuffers.writeMappedMemoryInts(mappedPtr, stagingOffset, indices, 0, indices.size)
+                        },
+                        recordCopy = { commandBuffer, stagingBuffer, stagingOffset ->
+                            VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, stagingBuffer, iBuffer, stagingOffset, 0L, indexBufferSize)
+                        },
+                    )
+                } else {
+                    graphicsDevice.stagingBufferPool.withStaging(indexBufferSize) { staging ->
+                        VulkanBuffers.writeMappedMemoryInts(staging.mappedPtr, 0L, indices, 0, indices.size)
+                        runOneTimeCommands { commandBuffer ->
+                            VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, staging.buffer, iBuffer, 0L, 0L, indexBufferSize)
+                        }
                     }
                 }
                 uploaded = true
             } finally {
                 if (!uploaded) {
+                    indexUpload?.cancel()
                     VulkanBuffers.vkDestroyBuffer(device, iBuffer)
-                    VulkanBuffers.vkFreeMemory(device, iMemory)
+                    graphicsDevice.deviceMemoryAllocator.free(iAlloc)
                     vertexOwner.meshes--
                 }
             }
             indexBuffer = BufferHandle(iBuffer)
-            indexBufferMemory = DeviceMemoryHandle(iMemory)
+            indexBufferMemory = DeviceMemoryHandle(iAlloc.memory)
+            indexAllocation = iAlloc
+            indexPendingUpload = indexUpload
         } else {
             vertexOwner = SharedVertices()
-            val (vBuffer, vMemory) = allocateDeviceLocalBuffer(
+            val (vBuffer, vAlloc) = allocateDeviceLocalBuffer(
                 byteSize = vertexBufferSize,
                 usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             )
             var iBuffer = 0L
-            var iMemory = 0L
+            var iAlloc: DeviceMemoryAllocation? = null
+            var indexUpload: UploadBatcher.PendingUpload? = null
             var uploaded = false
             try {
-                val (allocatedIndexBuffer, allocatedIndexMemory) = allocateDeviceLocalBuffer(
+                val (allocatedIndexBuffer, allocatedIndexAlloc) = allocateDeviceLocalBuffer(
                     byteSize = indexBufferSize,
                     usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 )
                 iBuffer = allocatedIndexBuffer
-                iMemory = allocatedIndexMemory
-                // Upload both vertex and index buffers through one reusable persistently-mapped
-                // staging buffer and a single GPU submit instead of two separate staging stalls.
-                graphicsDevice.stagingBufferPool.withStaging(totalStagingBytes) { staging ->
-                    VulkanBuffers.writeMappedMemoryFloats(staging.mappedPtr, 0L, vertices, 0, vertices.size)
-                    VulkanBuffers.writeMappedMemoryInts(staging.mappedPtr, indexOffset, indices, 0, indices.size)
-                    runOneTimeCommands { commandBuffer ->
-                        VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, staging.buffer, vBuffer, 0L, 0L, vertexBufferSize)
-                        VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, staging.buffer, iBuffer, indexOffset, 0L, indexBufferSize)
+                iAlloc = allocatedIndexAlloc
+                // Upload both vertex and index buffers through the active upload batcher (zero
+                // per-asset fence stall when streaming or inside withUploadBatch) or one reusable
+                // persistently-mapped staging buffer and a single GPU submit.
+                val batcher = graphicsDevice.activeUploadBatcher?.takeIf { it.isBatching }
+                if (batcher != null) {
+                    vertexOwner.pendingUpload = batcher.enqueue(
+                        byteSize = vertexBufferSize,
+                        alignment = STAGING_ALIGN_BYTES,
+                        flushSync = runOneTimeCommands,
+                        writeStaging = { mappedPtr, stagingOffset ->
+                            VulkanBuffers.writeMappedMemoryFloats(mappedPtr, stagingOffset, vertices, 0, vertices.size)
+                        },
+                        recordCopy = { commandBuffer, stagingBuffer, stagingOffset ->
+                            VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, stagingBuffer, vBuffer, stagingOffset, 0L, vertexBufferSize)
+                        },
+                    )
+                    indexUpload = batcher.enqueue(
+                        byteSize = indexBufferSize,
+                        alignment = STAGING_ALIGN_BYTES,
+                        flushSync = runOneTimeCommands,
+                        writeStaging = { mappedPtr, stagingOffset ->
+                            VulkanBuffers.writeMappedMemoryInts(mappedPtr, stagingOffset, indices, 0, indices.size)
+                        },
+                        recordCopy = { commandBuffer, stagingBuffer, stagingOffset ->
+                            VulkanBuffers.vkCmdCopyBufferRange(
+                                commandBuffer,
+                                stagingBuffer,
+                                allocatedIndexBuffer,
+                                stagingOffset,
+                                0L,
+                                indexBufferSize,
+                            )
+                        },
+                    )
+                } else {
+                    graphicsDevice.stagingBufferPool.withStaging(totalStagingBytes) { staging ->
+                        VulkanBuffers.writeMappedMemoryFloats(staging.mappedPtr, 0L, vertices, 0, vertices.size)
+                        VulkanBuffers.writeMappedMemoryInts(staging.mappedPtr, indexOffset, indices, 0, indices.size)
+                        runOneTimeCommands { commandBuffer ->
+                            VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, staging.buffer, vBuffer, 0L, 0L, vertexBufferSize)
+                            VulkanBuffers.vkCmdCopyBufferRange(commandBuffer, staging.buffer, allocatedIndexBuffer, indexOffset, 0L, indexBufferSize)
+                        }
                     }
                 }
                 uploaded = true
             } finally {
                 if (!uploaded) {
+                    indexUpload?.cancel()
+                    vertexOwner.pendingUpload?.cancel()
                     if (iBuffer != 0L) VulkanBuffers.vkDestroyBuffer(device, iBuffer)
-                    if (iMemory != 0L) VulkanBuffers.vkFreeMemory(device, iMemory)
+                    if (iAlloc != null) graphicsDevice.deviceMemoryAllocator.free(iAlloc)
                     VulkanBuffers.vkDestroyBuffer(device, vBuffer)
-                    VulkanBuffers.vkFreeMemory(device, vMemory)
+                    graphicsDevice.deviceMemoryAllocator.free(vAlloc)
                 }
             }
             vertexBuffer = BufferHandle(vBuffer)
-            vertexBufferMemory = DeviceMemoryHandle(vMemory)
+            vertexBufferMemory = DeviceMemoryHandle(vAlloc.memory)
+            vertexAllocation = vAlloc
             indexBuffer = BufferHandle(iBuffer)
-            indexBufferMemory = DeviceMemoryHandle(iMemory)
+            indexBufferMemory = DeviceMemoryHandle(iAlloc.memory)
+            indexAllocation = iAlloc
+            indexPendingUpload = indexUpload
         }
 
         vertexBinding = VulkanBufferBinding(vertexBuffer.handle)
         indexBinding = VulkanBufferBinding(indexBuffer.handle)
     }
 
-    /** Allocates a `DEVICE_LOCAL` destination buffer ready to receive a transfer copy. */
-    private fun allocateDeviceLocalBuffer(byteSize: Long, usage: Int): Pair<Long, Long> {
+    /** Allocates a `DEVICE_LOCAL` destination buffer backed by [GraphicsDevice.deviceMemoryAllocator]. */
+    private fun allocateDeviceLocalBuffer(byteSize: Long, usage: Int): Pair<Long, DeviceMemoryAllocation> {
         val destBuffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(
@@ -196,25 +260,14 @@ private constructor(
             ),
         )
         val destRequirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, destBuffer)
-        val destMemoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            destRequirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        )
-        var destMemory = 0L
+        var allocation: DeviceMemoryAllocation? = null
         try {
-            destMemory = VulkanBuffers.vkAllocateMemory(
-                device,
-                VkMemoryAllocateInfo(
-                    allocationSize = destRequirements.size,
-                    memoryTypeIndex = destMemoryTypeIndex,
-                ),
-            )
+            allocation = graphicsDevice.deviceMemoryAllocator.allocate(destRequirements, SlabKind.Buffer)
         } finally {
-            if (destMemory == 0L) VulkanBuffers.vkDestroyBuffer(device, destBuffer)
+            if (allocation == null) VulkanBuffers.vkDestroyBuffer(device, destBuffer)
         }
-        VulkanBuffers.vkBindBufferMemory(device, destBuffer, destMemory, 0)
-        return destBuffer to destMemory
+        VulkanBuffers.vkBindBufferMemory(device, destBuffer, allocation.memory, allocation.offset)
+        return destBuffer to allocation
     }
 
     /** Binds this mesh's vertex + index buffers. Descriptor-set binding (a Material/Shader
@@ -261,27 +314,31 @@ private constructor(
         if (destroyed) return
         destroyed = true
         val freeVertices = --vertexOwner.meshes == 0
+        if (freeVertices) vertexOwner.pendingUpload?.cancel()
+        indexPendingUpload?.cancel()
         val vBuf = vertexBuffer.handle
-        val vMem = vertexBufferMemory.handle
+        val vAlloc = vertexAllocation
         val iBuf = indexBuffer.handle
-        val iMem = indexBufferMemory.handle
+        val iAlloc = indexAllocation
         val vkDevice = device
+        val allocator = graphicsDevice.deviceMemoryAllocator
         val release = onDestroy
         onDestroy = null
         release?.invoke()
         graphicsDevice.destroyOrRetire {
             if (freeVertices) {
                 VulkanBuffers.vkDestroyBuffer(vkDevice, vBuf)
-                VulkanBuffers.vkFreeMemory(vkDevice, vMem)
+                allocator.free(vAlloc)
             }
             VulkanBuffers.vkDestroyBuffer(vkDevice, iBuf)
-            VulkanBuffers.vkFreeMemory(vkDevice, iMem)
+            allocator.free(iAlloc)
         }
     }
 
     /** How many meshes still draw one vertex buffer. */
     private class SharedVertices {
         var meshes = 1
+        var pendingUpload: UploadBatcher.PendingUpload? = null
     }
 
     private companion object {

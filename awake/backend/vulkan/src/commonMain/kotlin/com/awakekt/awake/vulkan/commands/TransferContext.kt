@@ -44,6 +44,11 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
     private val uploadLock = QueueLock()
     private var uploadCommandBuffer: Long = 0
     private var uploadFence: Long = 0
+    internal val uploadBatcher = UploadBatcher(graphicsDevice)
+
+    /** Count of synchronous `runOneTimeCommands` GPU submissions executed so far, for tests. */
+    internal var oneTimeSubmitCount: Long = 0L
+        private set
 
     init {
         val (graphicsFamily, _) = findQueueFamilies(physicalDevice, surface)
@@ -54,6 +59,9 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
         )
 
         commandPool = CommandPoolHandle(Vulkan.vkCreateCommandPool(device, poolInfo))
+        if (graphicsDevice.activeUploadBatcher == null) {
+            graphicsDevice.activeUploadBatcher = uploadBatcher
+        }
     }
 
     /** Runs [block] on one resettable upload command buffer. Uploads are synchronous here, so
@@ -80,7 +88,29 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
                 fence = uploadFence,
             )
         }
+        oneTimeSubmitCount += 1L
         VulkanCommands.vkWaitForFence(device, uploadFence, Long.MAX_VALUE)
+    }
+
+    /**
+     * Groups all mesh and texture uploads created inside [block] into a single GPU transfer
+     * submission instead of stalling on a separate fence per asset. Nested calls coalesce into the
+     * outermost batch.
+     */
+    fun <T> withUploadBatch(block: () -> T): T {
+        uploadBatcher.beginBatch()
+        return try {
+            block()
+        } finally {
+            if (uploadBatcher.endBatch()) {
+                uploadBatcher.flushSynchronously(::runOneTimeCommands)
+            }
+        }
+    }
+
+    /** Synchronously flushes any queued batched or frame-deferred mesh and texture uploads. */
+    fun flushUploads() {
+        uploadBatcher.flushSynchronously(::runOneTimeCommands)
     }
 
     /**
@@ -105,6 +135,10 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
      * per-frame ones. Call once, with the device idle and before the owning device is destroyed.
      */
     fun destroy() {
+        if (graphicsDevice.activeUploadBatcher === uploadBatcher) {
+            graphicsDevice.activeUploadBatcher = null
+        }
+        uploadBatcher.destroy()
         if (uploadFence != 0L) Vulkan.vkDestroyFence(device, uploadFence)
         Vulkan.vkDestroyCommandPool(device, commandPool.handle)
     }

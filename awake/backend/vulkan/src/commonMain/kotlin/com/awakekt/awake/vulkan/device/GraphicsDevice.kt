@@ -53,8 +53,15 @@ class GraphicsDevice {
     internal var stagingBufferPool = ReusableStagingBuffer(this)
         private set
 
+    /** Pooled `DEVICE_LOCAL` memory slab allocator for static meshes and sampled textures. */
+    internal var deviceMemoryAllocator = DeviceMemorySlabAllocator(this)
+        private set
+
     /** Active renderer reaper for frame-safe deferred destruction, or null when no presentable renderer runs. */
     internal var activeReaper: DeferredResourceReaper? = null
+
+    /** Active transfer-context upload batcher for deferred/batched mesh and texture uploads, if registered. */
+    internal var activeUploadBatcher: com.awakekt.awake.vulkan.commands.UploadBatcher? = null
 
     /** Number of resource destructions deferred through [activeReaper] without `vkDeviceWaitIdle`. */
     internal var deferredDestructionCount: Long = 0L
@@ -500,6 +507,8 @@ class GraphicsDevice {
             }
             stagingBufferPool.destroy()
             stagingBufferPool = ReusableStagingBuffer(this)
+            deviceMemoryAllocator.destroy()
+            deviceMemoryAllocator = DeviceMemorySlabAllocator(this)
             frameUniformBuffers?.destroy()
         }
         frameUniformBuffers = null
