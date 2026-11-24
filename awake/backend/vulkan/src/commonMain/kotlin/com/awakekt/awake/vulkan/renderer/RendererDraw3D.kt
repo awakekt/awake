@@ -18,6 +18,7 @@ import com.awakekt.awake.render.passes.uniforms.planDrawBlockFloats
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolveInstanced
+import com.awakekt.awake.render.pipeline.usesSolidOpaquePipeline
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.material.Material
@@ -114,11 +115,12 @@ internal fun VulkanRenderer.prepareGpuDraw(
     val mesh = cmd.mesh as RenderMesh
     val buffers = mesh.sceneBuffers(frameIndex)
     val material = cmd.material as Material
+    val solidOpaque = !isTransparent && cmd.usesSolidOpaquePipeline()
     val instanceModels = cmd.instanceModels
     if (instanceModels != null) {
         if (instanceModels.isEmpty()) return null
         val kind = cmd.instancedDrawKind() ?: return null
-        val instancedPipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode) ?: return null
+        val instancedPipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode, solidOpaque) ?: return null
         val instanceBuffer = instanceBufferForRun(instancedIndex).also {
             it.update(frameIndex, instanceModels)
         }
@@ -163,7 +165,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         )
     }
     // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
-    val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive, cmd.depthWrite) ?: return null
+    val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive, cmd.depthWrite, solidOpaque) ?: return null
     val uniformSlotIndex = materialUsage.slotFor(material, explicitUniformSlotIndex)
     val coverage = pipeline.multisample.alphaToCoverageEnabled
     val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)

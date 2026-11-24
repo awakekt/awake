@@ -113,6 +113,8 @@ private fun newShadowRenderer(
             lineFeature(graphicsDevice, swapchainManager, sceneRenderPass, framesInFlight),
             attacher.beforeGeometry,
             attacher.opaqueGeometry,
+            attacher.afterOpaque,
+            attacher.beforeTransparent,
             attacher.afterGeometry,
             UiRenderFeature(VulkanUiPass()),
         ),

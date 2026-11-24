@@ -32,6 +32,7 @@ suspend fun <P> buildPipelineTable(
     requests.forEach { request ->
         val spec = request.spec
         try {
+            val solidBase = request.resolvedSolidSpec()
             put(
                 request.key,
                 PipelineSet(
@@ -75,11 +76,27 @@ suspend fun <P> buildPipelineTable(
                     } else {
                         emptyMap()
                     },
+                    solidFill = solidBase?.let { factory.create(request.key, it) },
+                    solidBackCulled = if (solidBase != null && request.buildBackCulled) {
+                        factory.create(request.key, solidBase.copy(cullMode = CullMode.Back))
+                    } else {
+                        null
+                    },
                 ),
             )
         } catch (e: Exception) {
             throw IllegalStateException("Failed to build pipeline '${request.key}': ${e.message}", e)
         }
+    }
+}
+
+internal fun PipelineRequest.resolvedSolidSpec(): PipelineSpec? = solidSpec?.let { solid ->
+    if (key is PipelineKey.Content) {
+        solid
+    } else {
+        // Solid opaque draws never use alpha-to-coverage; turning it off keeps Mali
+        // Early-Z / FPK active even when scene MSAA is enabled.
+        solid.copy(multisample = spec.multisample.copy(alphaToCoverageEnabled = false))
     }
 }
 

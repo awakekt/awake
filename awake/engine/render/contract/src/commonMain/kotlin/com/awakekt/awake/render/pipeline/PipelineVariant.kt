@@ -49,6 +49,11 @@ sealed interface PipelineVariant {
      * leaves this on: [depthWriteEnabled] alone is the weaker "still tested, just not recorded". */
     val depthTestEnabled: Boolean
 
+    /** `true` uses `LESS_EQUAL` depth comparison so full-screen far-plane passes (`z = 1.0`) pass
+     * only where no opaque geometry has written depth, letting hardware Early-Z reject covered sky
+     * pixels. `false` (default) keeps standard `LESS` depth comparison. */
+    val depthCompareLessEqual: Boolean get() = false
+
     /** Byte-for-byte the pipeline both backends built before any variant existed -- the default
      * for every non-instanced draw (primary/wireframe/textured/skinned/shadow). */
     data object Opaque : PipelineVariant {
@@ -204,6 +209,50 @@ sealed interface PipelineVariant {
         override val additive = true
         override val depthWriteEnabled = false
         override val depthTestEnabled = false
+    }
+
+    /**
+     * Far-plane sky drawn AFTER opaque geometry: depth test ON with `LESS_EQUAL` (`z == 1.0`
+     * passes only on uncovered pixels), depth write OFF, no blend. Hardware Early-Z rejects every
+     * sky pixel hidden behind opaque geometry or terrain.
+     */
+    data object Sky : PipelineVariant {
+        override val instanced = false
+        override val instanceAlpha = false
+        override val instanceFrame = false
+        override val blendEnabled = false
+        override val depthWriteEnabled = false
+        override val depthTestEnabled = true
+        override val depthCompareLessEqual = true
+    }
+
+    /**
+     * [Sky] with straight-alpha blending, for sky decorations (sun, moon) drawn after opaque
+     * geometry and over the sky, still Early-Z-rejected wherever opaque geometry covers the pixel.
+     */
+    data object SkyBlended : PipelineVariant {
+        override val instanced = false
+        override val instanceAlpha = false
+        override val instanceFrame = false
+        override val blendEnabled = true
+        override val depthWriteEnabled = false
+        override val depthTestEnabled = true
+        override val depthCompareLessEqual = true
+    }
+
+    /**
+     * [SkyBlended] with additive blending (`SRC_ALPHA`/`ONE`), Early-Z-rejected behind opaque
+     * geometry and additive over uncovered sky pixels.
+     */
+    data object SkyAdditive : PipelineVariant {
+        override val instanced = false
+        override val instanceAlpha = false
+        override val instanceFrame = false
+        override val blendEnabled = true
+        override val additive = true
+        override val depthWriteEnabled = false
+        override val depthTestEnabled = true
+        override val depthCompareLessEqual = true
     }
 
     /**

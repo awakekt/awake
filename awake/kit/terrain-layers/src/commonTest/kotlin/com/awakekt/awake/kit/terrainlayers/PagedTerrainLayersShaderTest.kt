@@ -37,4 +37,12 @@ class PagedTerrainLayersShaderTest {
         assertTrue("if ((share0 > 0.0))" in shader || "if (share0 > 0.0)" in shader, "guards empty layer slots")
         assertTrue("if ((sharpnessTotal > 0.0))" in shader || "if (sharpnessTotal > 0.0)" in shader, "skips height blend when linear")
     }
+
+    @Test fun coreRingTerrainLayersOmitsDiscardAndPagedEmitsSingleCellFastPaths() {
+        val core = terrainLayersShader(ClipSpace.Vulkan, 4, paged = true, allowDiscard = false).emitWgsl()
+        assertFalse("discard;" in core, "Level-0 core-ring terrain layers shader must omit discard for Early-Z/FPK")
+        assertTrue("lightSingleLayer" in core, "paged lightmap must use single-cell hardware-bilinear fast path")
+        assertTrue("ctrlSingleLayer" in core, "4-slot paged control map must share one page-table lookup inside a single cell")
+        assertTrue("0.998" in core, "4-slot control merge must include uniform single-layer patch fast path")
+    }
 }

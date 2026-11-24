@@ -150,4 +150,53 @@ class PipelineRegistryTest {
         registry.register(listOf(request(removed)))
         assertEquals(3, factory.built.size)
     }
+
+    @Test
+    fun companionSourceTracksBindingCompatibleSolidSpecsAndClearsOnRemove() = runTest {
+        val registry = PipelineRegistry(CountingFactory())
+        val sharedBindings = mapOf(0 to GroupBindings.UniformOnlyMaterial)
+        val primary = spec(vertexPath = "shaders/lit.vert.spv").copy(
+            bindingsByGroup = sharedBindings,
+            bindingsMetadataAvailable = true,
+            multisample = MultisampleState(count = 4, alphaToCoverageEnabled = true),
+        )
+        val solid = spec(vertexPath = "shaders/lit_solid.vert.spv").copy(
+            bindingsByGroup = sharedBindings,
+            bindingsMetadataAvailable = true,
+        )
+        val mismatched = spec(vertexPath = "shaders/fast.vert.spv").copy(
+            bindingsByGroup = emptyMap(),
+            bindingsMetadataAvailable = true,
+        )
+
+        registry.register(
+            listOf(
+                PipelineRequest(
+                    key = PipelineKey.Primary,
+                    spec = primary,
+                    buildBackCulled = true,
+                    solidSpec = solid,
+                ),
+                PipelineRequest(
+                    key = PipelineKey.Content("water"),
+                    spec = primary,
+                    solidSpec = mismatched,
+                ),
+            ),
+        )
+
+        val resolvedSolid = solid.copy(multisample = MultisampleState(count = 4, alphaToCoverageEnabled = false))
+        val resolvedSolidBack = resolvedSolid.copy(cullMode = CullMode.Back)
+        assertEquals(primary, registry.companionSourceOf(resolvedSolid))
+        assertEquals(primary, registry.companionSourceOf(resolvedSolidBack))
+        assertNull(registry.companionSourceOf(primary))
+        assertNull(registry.companionSourceOf(mismatched), "mismatched bindings must not alias for shader replacement")
+
+        registry.remove(resolvedSolid)
+        assertNull(registry.companionSourceOf(resolvedSolid))
+        assertEquals(primary, registry.companionSourceOf(resolvedSolidBack))
+
+        registry.destroyAll { }
+        assertNull(registry.companionSourceOf(resolvedSolidBack))
+    }
 }

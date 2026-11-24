@@ -69,6 +69,10 @@ import com.awakekt.awake.render.texture.TextureAsset
  * the same pixels would be. A browser's WebGPU copies them on the GPU without reading them back
  * (awakekt/awake#1184); every other backend uploads [GpuImageSource.readRgba8]. They take no
  * [textureUpdates]. Every declared binding is in exactly one of [textures] and [images].
+ * @property alternateSpec Optional second pipeline spec sharing [spec]'s group-0 uniform and texture
+ * layout (such as a discard-free terrain core-ring pipeline or a Fast-tier procedural shader).
+ * @property buildWithAlternate Optional builder receiving both [spec]'s pipeline and [alternateSpec]'s
+ * compiled pipeline when present; defaults to delegating to [build].
  * @property build Turns the registry's output into the feature that records with it.
  *
  * Mutable textures opt into [textureUpdates]. Backends prepare regions before any depth or scene
@@ -88,6 +92,17 @@ class ContentFeature(
     val samplerTextures: Map<Int, Int> = emptyMap(),
     val samplesMask: Boolean = false,
     val images: Map<Int, GpuImageSource>,
+    /**
+     * Optional second pipeline spec sharing [spec]'s group-0 uniform and texture layout (for
+     * example, a discard-free terrain core-ring pipeline or a Fast-tier procedural shader). Built
+     * and owned alongside [spec]; passed to [buildWithAlternate] when non-null.
+     */
+    val alternateSpec: PipelineSpec?,
+    /**
+     * Builder receiving both [spec]'s compiled pipeline and [alternateSpec]'s compiled pipeline
+     * (when present). Defaults to delegating to [build] when null.
+     */
+    val buildWithAlternate: ((PipelineHandle, PipelineHandle?, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>)?,
     val build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
 ) {
     /** A feature whose textures are all [TextureAsset]s, as before [images]. */
@@ -103,7 +118,33 @@ class ContentFeature(
         samplerTextures: Map<Int, Int> = emptyMap(),
         samplesMask: Boolean = false,
         build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
-    ) : this(name, spec, textures, geometry, paint, samplesSceneDepth, depth, textureUpdates, samplerTextures, samplesMask, emptyMap(), build)
+    ) : this(name, spec, textures, geometry, paint, samplesSceneDepth, depth, textureUpdates, samplerTextures, samplesMask, emptyMap(), null, null, build)
+
+    /** A feature without an [alternateSpec], preserving trailing-lambda construction with [images]. */
+    constructor(
+        name: String,
+        spec: PipelineSpec,
+        textures: Map<Int, TextureAsset> = emptyMap(),
+        geometry: MeshGeometry? = null,
+        paint: ContentPaint = ContentPaint.BeforeGeometry,
+        samplesSceneDepth: Boolean = false,
+        depth: PipelineSpec? = null,
+        textureUpdates: ContentTextureUpdates? = null,
+        samplerTextures: Map<Int, Int> = emptyMap(),
+        samplesMask: Boolean = false,
+        images: Map<Int, GpuImageSource>,
+        build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
+    ) : this(name, spec, textures, geometry, paint, samplesSceneDepth, depth, textureUpdates, samplerTextures, samplesMask, images, null, null, build)
+
+    /** Builds this feature using [buildWithAlternate] when provided, otherwise [build]. */
+    fun buildFeature(
+        pipeline: PipelineHandle,
+        alternatePipeline: PipelineHandle?,
+        uniforms: UniformBlock,
+        geometry: ContentGeometry?,
+    ): RenderFeature<RenderFrameContext> =
+        buildWithAlternate?.invoke(pipeline, alternatePipeline, uniforms, geometry)
+            ?: build(pipeline, uniforms, geometry)
 
     init {
         require(spec.uniforms != null) {
@@ -186,6 +227,13 @@ enum class ContentPaint {
 
     /** After backdrops and before the scene's opaque and blended draws, for surfaces such as terrain. */
     OpaqueGeometry,
+
+    /**
+     * After opaque scene meshes and [OpaqueGeometry] (depth written) and before transparent draws:
+     * far-plane skyboxes and celestial bodies depth-tested with `LESS_EQUAL` so hardware Early-Z
+     * rejects every sky pixel covered by terrain or opaque geometry.
+     */
+    AfterOpaque,
 
     /**
      * After opaque geometry (and scene depth) and before transparent scene draws such as particles

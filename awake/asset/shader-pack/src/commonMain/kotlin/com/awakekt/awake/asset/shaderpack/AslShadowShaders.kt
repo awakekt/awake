@@ -187,6 +187,7 @@ val InstancedMaskedTexturedDepthShader: AslShaderDefinition = maskedTexturedDept
  * @param skinned Whether this shader applies joint-palette skinning transforms.
  * @param shaderName Emitted shader definition name.
  * @param ambientStrength How much of the surface colour shows with no light on it.
+ * @param allowDiscard Whether to emit alpha-cutout and dither-fade discards; `false` builds the Early-Z solid opaque variant.
  */
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun litShadow(
@@ -195,6 +196,7 @@ private fun litShadow(
     skinned: Boolean = false,
     shaderName: String = "lit_shadow",
     ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH,
+    allowDiscard: Boolean = true,
 ): AslShaderDefinition = shader(shaderName) {
     val u = shadowUniforms(includeLitTail = true)
     val shadowMap by textureDepth2dArray(
@@ -521,7 +523,7 @@ private fun litShadow(
         // Encode before writing -- the swapchain is _UNORM and nothing downstream encodes.
         val shaded = vec4(applyFog(displayTransform.display(ambientColor + direct, u.exposure!!.x), worldPos), 1f.lit)
         val debugColor = debugViewColor(u.debugView!!, u.cameraPosition, surface, shaded)
-        ditherFade(u.exposure!!.y)
+        if (allowDiscard) ditherFade(u.exposure!!.y)
         colorOutput(if (skinned) vec4(debugColor.xyz, color.w) else debugColor)
     }
 }
@@ -535,15 +537,27 @@ private fun litShadow(
 fun litShadowShader(clipSpace: ClipSpace, ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH): AslShaderDefinition =
     litShadow(clipSpace, ambientStrength = ambientStrength)
 
+/** Discard-free opaque companion of [litShadowShader] for hardware Early-Z / Forward Pixel Kill. */
+fun litShadowSolidShader(clipSpace: ClipSpace, ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH): AslShaderDefinition =
+    litShadow(clipSpace, shaderName = "lit_shadow_solid", ambientStrength = ambientStrength, allowDiscard = false)
+
 private const val DEFAULT_AMBIENT_STRENGTH = 0.08f
 
 /** Shadowed scene variant for non-skinned instance transforms. */
 fun instancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
     litShadow(clipSpace, instanced = true, shaderName = "instanced_lit_shadow")
 
+/** Discard-free opaque companion of [instancedLitShadowShader]. */
+fun instancedLitShadowSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
+    litShadow(clipSpace, instanced = true, shaderName = "instanced_lit_shadow_solid", allowDiscard = false)
+
 /** Shadowed scene variant for skinned instance transforms. */
 fun skinnedInstancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
     litShadow(clipSpace, instanced = true, skinned = true, shaderName = "skinned_instanced_lit_shadow")
+
+/** Discard-free opaque companion of [skinnedInstancedLitShadowShader]. */
+fun skinnedInstancedLitShadowSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
+    litShadow(clipSpace, instanced = true, skinned = true, shaderName = "skinned_instanced_lit_shadow_solid", allowDiscard = false)
 
 /** The varying [com.awakekt.awake.render.passes.uniforms.RenderDebugView.JointWeights] reads on a skinned mesh. */
 private class JointColorVarying(out: AslVaryings, location: Int) {

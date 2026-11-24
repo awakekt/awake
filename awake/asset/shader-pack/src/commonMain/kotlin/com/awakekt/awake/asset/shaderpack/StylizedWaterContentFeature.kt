@@ -46,6 +46,11 @@ fun stylizedWaterContentFeature(
     samplesDepth: Boolean = false,
     shaders: ShaderSet = if (samplesDepth) PackShaderSets.StylizedWaterDepth else PackShaderSets.StylizedWater,
 ): ContentFeatureSource = ContentFeatureSource { backend ->
+    val fastSpec = shaders.solidOpaque?.stagesFor(backend)?.spec(
+        vertexFormat = VertexFormat.PositionNormalColorUv,
+        variant = PipelineVariant.AlphaBlended,
+        uniforms = StylizedWaterUniformLayout,
+    )
     ContentFeature(
         name = name,
         spec = shaders.stagesFor(backend).spec(
@@ -56,6 +61,18 @@ fun stylizedWaterContentFeature(
         geometry = geometry,
         paint = ContentPaint.BeforeTransparent,
         samplesSceneDepth = samplesDepth,
+        images = emptyMap(),
+        alternateSpec = fastSpec,
+        buildWithAlternate = { pipeline, fastPipeline, uniforms, uploaded ->
+            StylizedWaterRenderFeature(
+                pipeline = pipeline,
+                uniforms = uniforms,
+                geometry = requireNotNull(uploaded) { "Stylized water declares geometry, so the engine must have uploaded it." },
+                look = look,
+                samplesDepth = samplesDepth,
+                fastPipeline = fastPipeline,
+            )
+        },
     ) { pipeline, uniforms, uploaded ->
         StylizedWaterRenderFeature(
             pipeline = pipeline,
@@ -74,7 +91,17 @@ class StylizedWaterRenderFeature(
     private val geometry: ContentGeometry,
     private val look: StylizedWaterLook,
     private val samplesDepth: Boolean = false,
+    private val fastPipeline: PipelineHandle? = null,
 ) : RenderFeature<RenderFrameContext> {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        pipeline: PipelineHandle,
+        uniforms: UniformBlock,
+        geometry: ContentGeometry,
+        look: StylizedWaterLook,
+        samplesDepth: Boolean = false,
+    ) : this(pipeline, uniforms, geometry, look, samplesDepth, fastPipeline = null)
+
     override val pass = RenderPassSlot.Scene
 
     private val sun = Vec3f()
@@ -82,13 +109,34 @@ class StylizedWaterRenderFeature(
     override fun recordCommands(context: RenderFrameContext): Unit = with(context) {
         if (!look.enabled || environment.debugView != GpuDebugView.Off) return
         writeSunDirection(sun)
+        val useFast = look.quality == StylizedWaterQuality.Fast && fastPipeline != null
+        val activePipeline = if (useFast) fastPipeline else pipeline
+        val needsDepth = samplesDepth && !useFast
+        writeWaterUniforms(context, needsDepth)
+
+        recorder.bindPipeline(activePipeline)
+        recorder.bindMaterial(BindingSemantic.Material, uniforms.binding(frameIndex))
+        if (needsDepth) {
+            sceneDepthBinding(activePipeline)?.let { recorder.bindMaterial(BindingSemantic.SceneDepth, it) }
+        }
+        recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
+        val indices = geometry.indexBuffer
+        if (indices != null) {
+            recorder.bindIndexBuffer(indices)
+            recorder.drawIndexed(geometry.elementCount)
+        } else {
+            recorder.draw(geometry.elementCount, 1)
+        }
+    }
+
+    private fun writeWaterUniforms(context: RenderFrameContext, needsDepth: Boolean) = with(context) {
         val lightOverride = look.lightColorOverride
         val lightR = lightOverride?.r ?: light.color.x
         val lightG = lightOverride?.g ?: light.color.y
         val lightB = lightOverride?.b ?: light.color.z
         val ambient = look.ambientOverride ?: light.ambient ?: DEFAULT_WATER_AMBIENT
         val env = environment
-        val inverseVp = if (samplesDepth) (viewProjection.inverse() ?: IDENTITY_MATRIX) else IDENTITY_MATRIX
+        val inverseVp = if (needsDepth) (viewProjection.inverse() ?: IDENTITY_MATRIX) else IDENTITY_MATRIX
 
         uniforms.write(frameIndex) {
             put(StylizedWaterFields.ViewProjection, viewProjection)
@@ -105,20 +153,6 @@ class StylizedWaterRenderFeature(
             put(StylizedWaterFields.FoamColor, look.foamColor.r, look.foamColor.g, look.foamColor.b, look.waveStrength)
             put(StylizedWaterFields.HighlightParams, look.sunGlintStrength, look.crestHighlightStrength, look.origin.x, look.origin.z)
             put(StylizedWaterFields.FlowAndFoam, look.flowDirectionX, look.flowDirectionZ, look.contactFoamWidth, look.contactFoamStrength)
-        }
-
-        recorder.bindPipeline(pipeline)
-        recorder.bindMaterial(BindingSemantic.Material, uniforms.binding(frameIndex))
-        if (samplesDepth) {
-            sceneDepthBinding(pipeline)?.let { recorder.bindMaterial(BindingSemantic.SceneDepth, it) }
-        }
-        recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
-        val indices = geometry.indexBuffer
-        if (indices != null) {
-            recorder.bindIndexBuffer(indices)
-            recorder.drawIndexed(geometry.elementCount)
-        } else {
-            recorder.draw(geometry.elementCount, 1)
         }
     }
 

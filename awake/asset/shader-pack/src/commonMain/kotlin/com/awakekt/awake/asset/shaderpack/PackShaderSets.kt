@@ -6,6 +6,7 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaders.aslShaderSet
+import com.awakekt.awake.asset.shaders.withSolidOpaque
 
 /**
  * The content shaders this pack ships, each carrying its own WGSL.
@@ -32,7 +33,7 @@ object PackShaderSets {
     val Trail = aslShaderSet(TrailShader)
 
     /** Standard lit mesh shader set with directional light and cascaded shadow maps. */
-    val LitShadow = aslShaderSet(::litShadowShader)
+    val LitShadow = aslShaderSet(::litShadowShader).withSolidOpaque(aslShaderSet(::litShadowSolidShader))
 
     /** Shadow depth pass shader set for rigid static meshes. */
     val ShadowDepth = aslShaderSet(ShadowDepthShader)
@@ -68,25 +69,27 @@ object PackShaderSets {
     val SkinnedMaskedTexturedShadowDepth = aslShaderSet(SkinnedMaskedTexturedDepthShader)
 
     /** Diffuse textured static mesh shader set with lighting and shadows. */
-    val Textured = aslShaderSet(::texturedShader)
+    val Textured = aslShaderSet(::texturedShader).withSolidOpaque(aslShaderSet(::texturedSolidShader))
 
     /** Instanced diffuse textured mesh shader set with lighting and shadows. */
-    val InstancedTextured = aslShaderSet(::instancedTexturedShader)
+    val InstancedTextured = aslShaderSet(::instancedTexturedShader).withSolidOpaque(aslShaderSet(::instancedTexturedSolidShader))
 
     /** [InstancedTextured] with a tint and fade per instance, for `PipelineVariant.InstancedTinted`. */
-    val InstancedTexturedTinted = aslShaderSet(::instancedTexturedTintedShader)
+    val InstancedTexturedTinted =
+        aslShaderSet(::instancedTexturedTintedShader).withSolidOpaque(aslShaderSet(::instancedTexturedTintedSolidShader))
 
     /** Instanced static mesh shader set with lighting and shadows. */
-    val Instanced = aslShaderSet(::instancedLitShadowShader)
+    val Instanced = aslShaderSet(::instancedLitShadowShader).withSolidOpaque(aslShaderSet(::instancedLitShadowSolidShader))
 
     /** Skinned skeletal mesh shader set with lighting and shadows. */
-    val Skinned = aslShaderSet(SkinnedShader)
+    val Skinned = aslShaderSet(SkinnedShader).withSolidOpaque(aslShaderSet(SkinnedSolidShader))
 
     /** Skinned skeletal mesh shader set with diffuse texturing and shadows. */
-    val SkinnedTextured = aslShaderSet(SkinnedTexturedShader)
+    val SkinnedTextured = aslShaderSet(SkinnedTexturedShader).withSolidOpaque(aslShaderSet(SkinnedTexturedSolidShader))
 
     /** Instanced skinned skeletal mesh shader set with lighting and shadows. */
-    val SkinnedInstanced = aslShaderSet(::skinnedInstancedLitShadowShader)
+    val SkinnedInstanced =
+        aslShaderSet(::skinnedInstancedLitShadowShader).withSolidOpaque(aslShaderSet(::skinnedInstancedLitShadowSolidShader))
 
     /** Procedural gradient skybox shader set with celestial bodies. */
     val Skybox = aslShaderSet(SkyboxShader)
@@ -107,7 +110,7 @@ object PackShaderSets {
     val Particle = aslShaderSet(ParticleShader)
 
     /** Clipmap terrain shader set with height sampling and texture splatting. */
-    val Terrain = aslShaderSet(::terrainShader)
+    val Terrain = aslShaderSet(::terrainShader).withSolidOpaque(aslShaderSet(::terrainCoreShader))
 
     /** The clipmap rings' cascade depth, for any surface shader on the clipmap stage. */
     val TerrainShadowDepth = aslShaderSet(TerrainShadowDepthShader)
@@ -116,11 +119,13 @@ object PackShaderSets {
     val InfiniteGrid = aslShaderSet(InfiniteGridShader)
 
     /** Procedural stylized water surface shader set without scene-depth sampling: see [stylizedWaterShader]. */
-    val StylizedWater = aslShaderSet { stylizedWaterShader(it, samplesDepth = false) }
+    val StylizedWater =
+        aslShaderSet { stylizedWaterShader(it, samplesDepth = false) }.withSolidOpaque(aslShaderSet(StylizedWaterFastShader))
 
     /** Procedural stylized water surface shader set with scene-depth shoreline and obstacle foam: see [stylizedWaterShader]. */
-    val StylizedWaterDepth = aslShaderSet { stylizedWaterShader(it, samplesDepth = true) }
+    val StylizedWaterDepth =
+        aslShaderSet { stylizedWaterShader(it, samplesDepth = true) }.withSolidOpaque(aslShaderSet(StylizedWaterFastShader))
 
     /** Single-pass procedural cloud layer shader set with Fast and Standard tiers: see [CloudLayerShader]. */
-    val CloudLayer = aslShaderSet(CloudLayerShader)
+    val CloudLayer = aslShaderSet(CloudLayerShader).withSolidOpaque(aslShaderSet(CloudLayerFastShader))
 }

@@ -32,11 +32,15 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     val beforeGeometry = AttachedContentSlot()
     val opaqueGeometry = AttachedContentSlot()
 
+    /** Attached features painted after opaque geometry and before transparent surfaces (e.g. Early-Z skybox). */
+    val afterOpaque = AttachedContentSlot()
+
     /** Attached features painted after opaque geometry and before transparent scene draws. */
     val beforeTransparent = AttachedContentSlot()
     val afterGeometry = AttachedContentSlot()
     private val attached = mutableListOf<Attachment>()
     private val shared = HashMap<PipelineSpec, SharedPipeline>()
+    private val sharedAlternates = HashMap<PipelineSpec, Int>()
 
     /** Attaches register and build across suspensions; one at a time, so two of one spec share. */
     private val attaching = Mutex()
@@ -75,6 +79,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         val slot = when (feature.paint) {
             ContentPaint.BeforeGeometry -> beforeGeometry
             ContentPaint.OpaqueGeometry -> opaqueGeometry
+            ContentPaint.AfterOpaque -> afterOpaque
             ContentPaint.BeforeTransparent -> beforeTransparent
             ContentPaint.AfterGeometry -> afterGeometry
         }
@@ -89,6 +94,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         attached.clear()
         shared.values.forEach { it.destroyDepth() }
         shared.clear()
+        sharedAlternates.clear()
     }
 
     /** The pipeline [feature]'s spec compiled to, registered by the first feature to use it. */
@@ -101,11 +107,29 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             "Content feature '${feature.name}' has the pipeline spec of one the RenderPlan declared, " +
                 "whose texture group that feature owns."
         }
-        gpu.registry.register(listOf(PipelineRequest(PipelineKey.Content(feature.name), feature.spec)))
+        val altSpec = feature.alternateSpec?.takeIf { it != feature.spec }
+        val altAlreadyInRegistry = altSpec != null && gpu.registry[altSpec] != null
+        val registerAltSpec = altSpec?.takeIf { !altAlreadyInRegistry }
+        gpu.registry.register(listOf(PipelineRequest(PipelineKey.Content(feature.name), feature.spec, solidSpec = registerAltSpec)))
         val pipeline = checkNotNull(gpu.registry[feature.spec]) {
             "Content feature '${feature.name}' was not registered before its feature was built."
         }
-        return SharedPipeline(feature.spec, pipeline).also { shared[feature.spec] = it }
+        val alternatePipeline = altSpec?.let { gpu.registry[it] }
+        val ownsAlternate = when {
+            altSpec == null || alternatePipeline == null -> false
+            altSpec in sharedAlternates -> {
+                sharedAlternates[altSpec] = sharedAlternates.getValue(altSpec) + 1
+                true
+            }
+            !altAlreadyInRegistry -> {
+                sharedAlternates[altSpec] = 1
+                true
+            }
+            else -> false
+        }
+        return SharedPipeline(feature.spec, pipeline, altSpec.takeIf { ownsAlternate }, alternatePipeline).also {
+            shared[feature.spec] = it
+        }
     }
 
     /** One user fewer; the last one frees the depth pipelines and the pipeline. */
@@ -114,6 +138,15 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         shared.remove(entry.spec)
         entry.destroyDepth()
         gpu.registry.remove(entry.spec)?.let(gpu::destroyPipeline)
+        entry.alternateSpec?.let { alt ->
+            val remaining = (sharedAlternates[alt] ?: 0) - 1
+            if (remaining <= 0) {
+                sharedAlternates.remove(alt)
+                gpu.registry.remove(alt)?.let(gpu::destroyPipeline)
+            } else {
+                sharedAlternates[alt] = remaining
+            }
+        }
     }
 
     private suspend fun build(
@@ -139,13 +172,25 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             upload = gpu.upload(entry.pipeline, feature)
         }
         uploads += upload
-        return gateContentFeature(feature, gpu.handle(entry.pipeline), block, upload, uploads) { depth, gate ->
+        return gateContentFeature(
+            feature,
+            gpu.handle(entry.pipeline),
+            entry.alternatePipeline?.let(gpu::handle),
+            block,
+            upload,
+            uploads,
+        ) { depth, gate ->
             entry.depthCaster(depth)?.cast(gate)
         }
     }
 
     /** A registered pipeline and the depth pipelines built over it, with how many features use them. */
-    private inner class SharedPipeline(val spec: PipelineSpec, val pipeline: P) {
+    private inner class SharedPipeline(
+        val spec: PipelineSpec,
+        val pipeline: P,
+        val alternateSpec: PipelineSpec? = null,
+        val alternatePipeline: P? = null,
+    ) {
         var users = 1
         private val depth = HashMap<PipelineSpec, ContentDepthCaster?>()
 

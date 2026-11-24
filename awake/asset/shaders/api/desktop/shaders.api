@@ -42,6 +42,7 @@ public final class com/awakekt/awake/asset/shaders/ContentFeatureAttacher : com/
 	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;)V
 	public fun attachContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getAfterGeometry ()Lcom/awakekt/awake/asset/shaders/AttachedContentSlot;
+	public final fun getAfterOpaque ()Lcom/awakekt/awake/asset/shaders/AttachedContentSlot;
 	public final fun getBeforeGeometry ()Lcom/awakekt/awake/asset/shaders/AttachedContentSlot;
 	public final fun getBeforeTransparent ()Lcom/awakekt/awake/asset/shaders/AttachedContentSlot;
 	public final fun getOpaqueGeometry ()Lcom/awakekt/awake/asset/shaders/AttachedContentSlot;
@@ -258,15 +259,22 @@ public final class com/awakekt/awake/asset/shaders/ShaderProgramResourcesKt {
 	public static final fun resolveBytes (Lcom/awakekt/awake/render/pipeline/ShaderSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun shaderSet (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public static final fun shaderSet (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static final fun withSolidOpaque (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
 
 public final class com/awakekt/awake/asset/shaders/ShaderSet {
-	public fun <init> (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;)V
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderSet;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderSet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/asset/shaders/ShaderStages;
 	public final fun component2 ()Lcom/awakekt/awake/asset/shaders/ShaderStages;
-	public final fun copy (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun component3 ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final synthetic fun copy (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun copy (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSolidOpaque ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getVulkan ()Lcom/awakekt/awake/asset/shaders/ShaderStages;
 	public final fun getWebGpu ()Lcom/awakekt/awake/asset/shaders/ShaderStages;
 	public fun hashCode ()I

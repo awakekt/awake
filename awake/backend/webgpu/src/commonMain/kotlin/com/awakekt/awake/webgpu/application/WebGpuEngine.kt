@@ -300,6 +300,23 @@ open class WebGpuEngine(
                     if (key is PipelineKey.InstancedFormat) built.backCulled?.let { put(key.vertexFormat, it) }
                 }
             },
+            solidByFormat = byFormat(includePrimary = true) { it.solidFill },
+            solidBackCulledByFormat = byFormat(includePrimary = true) { it.solidBackCulled },
+            solidInstancedByFormat = buildMap {
+                builtPipelines[PipelineKey.Instanced]?.solidFill?.let { put(vertexFormat, it) }
+                builtPipelines.forEach { (key, built) ->
+                    if (key is PipelineKey.InstancedFormat) built.solidFill?.let { put(key.vertexFormat, it) }
+                }
+            },
+            solidInstancedBackCulledByFormat = buildMap {
+                builtPipelines[PipelineKey.Instanced]?.solidBackCulled?.let { put(vertexFormat, it) }
+                builtPipelines.forEach { (key, built) ->
+                    if (key is PipelineKey.InstancedFormat) built.solidBackCulled?.let { put(key.vertexFormat, it) }
+                }
+            },
+            solidSkinnedInstancedByFormat = builtPipelines[PipelineKey.SkinnedInstanced]?.solidFill
+                ?.let { mapOf(VertexFormat.PositionNormalColorSkin to it) }
+                .orEmpty(),
         )
         // Which four is uiShaderSet's call, not this backend's -- all that differs here is that
         // WebGPU compiles one WGSL module per shader where Vulkan takes a SPIR-V pair.
@@ -321,13 +338,19 @@ open class WebGpuEngine(
         val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.beforeGeometry)
-            content[ContentPaint.OpaqueGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
-            add(attacher.opaqueGeometry)
+            val opaqueGeometry = buildList<RenderFeature<WebGpuRenderFrameContext>> {
+                content[ContentPaint.OpaqueGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+                add(attacher.opaqueGeometry)
+            }
+            val afterOpaque = buildList<RenderFeature<WebGpuRenderFrameContext>> {
+                content[ContentPaint.AfterOpaque].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+                add(attacher.afterOpaque)
+            }
             val beforeTransparent = buildList<RenderFeature<WebGpuRenderFrameContext>> {
                 content[ContentPaint.BeforeTransparent].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
                 add(attacher.beforeTransparent)
             }
-            add(OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline), beforeTransparent))
+            add(OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline), beforeTransparent, opaqueGeometry, afterOpaque))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.afterGeometry)
             add(UiRenderFeature(WebGpuUiPass()))

@@ -121,7 +121,7 @@ internal fun withContentProbe(
             targetComposite = wgsl(EngineShaderSets.UiTargetComposite),
         ),
         maxFramesInFlight = 1,
-        renderFeatures = listOf(attacher.beforeGeometry, attacher.opaqueGeometry, attacher.afterGeometry),
+        renderFeatures = listOf(attacher.beforeGeometry, attacher.opaqueGeometry, attacher.afterOpaque, attacher.beforeTransparent, attacher.afterGeometry),
     ).also { it.contentFeatureHost = attacher }
     beforeAttach(renderer)
     attacher.attachContentFeature(probe(texture, scale, offset))

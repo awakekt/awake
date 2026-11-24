@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.clamp
@@ -43,15 +44,16 @@ import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
 /**
- * Single-pass procedural cloud layer shader with zero texture fetches and a uniform quality switch
- * ([CloudLayerQuality.Fast] vs [CloudLayerQuality.Standard]).
+ * Builds the single-pass procedural cloud layer shader.
  *
- * Replaces stacked multi-mesh cloud-sea sheets with one alpha-blended pass, halving transparent
- * overdraw while supporting two parallax-drifting layers, warm sunlit tops with cool undersides,
- * smooth distance horizon fading, and automatic day/night colour adaptation.
+ * When [fastOnly] is true, emits a dedicated lean [CloudLayerQuality.Fast] variant that omits the
+ * 3-shell parallax volume math and `cumulusMacro` helper entirely so mobile tile-based GPUs avoid
+ * compiling and allocating registers for the unused Standard branch.
  */
 @Suppress("LongMethod")
-val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
+fun cloudLayerShader(fastOnly: Boolean = false): AslShaderDefinition = shader(
+    if (fastOnly) "cloud_layer_fast" else "cloud_layer",
+) {
     val u = uniformBlock(
         "Uniforms",
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -124,12 +126,16 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
     }
 
     // Two-octave billowing cumulus heightfield: macro bank + smooth S-curved puff lobes (avoids flat plateaus).
-    val cumulusMacro = fn("cumulusMacro") {
-        val p by param(GpuDataShape.Vec2)
-        val n1 = let("n1", valueNoise(p))
-        val n2 = let("n2", valueNoise(rotateOctave(p) + vec2(17.3f.lit, 9.2f.lit)))
-        val puff2 = let("puff2", n2 * n2 * (3f.lit - 2f.lit * n2))
-        returnValue(n1 * 0.60f.lit + puff2 * 0.40f.lit)
+    val cumulusMacro = if (!fastOnly) {
+        fn("cumulusMacro") {
+            val p by param(GpuDataShape.Vec2)
+            val n1 = let("n1", valueNoise(p))
+            val n2 = let("n2", valueNoise(rotateOctave(p) + vec2(17.3f.lit, 9.2f.lit)))
+            val puff2 = let("puff2", n2 * n2 * (3f.lit - 2f.lit * n2))
+            returnValue(n1 * 0.60f.lit + puff2 * 0.40f.lit)
+        }
+    } else {
+        null
     }
 
     val displayTransform = sceneDisplayTransform()
@@ -149,91 +155,109 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
         val threshold = let("threshold", 1f.lit - clamp(cloudParams.z, 0.05f.lit, 0.95f.lit))
         val softness = let("softness", max(cloudParams.w, 0.05f.lit))
 
-        val qualityCode = let("qualityCode", toU32(lightDirection.w + 0.5f.lit))
-        val isStandard = qualityCode eq CloudLayerQuality.Standard.code.toUInt().lit
-        val isFast = select(1u.lit, 0u.lit, isStandard) eq 1u.lit
+        val density: AslExpr
+        val litFactor: AslExpr
+        val edgeNoise: AslExpr
 
-        val density = variable("density", 0f.lit)
-        val litFactor = variable("litFactor", 0.65f.lit)
-        val edgeNoise = variable("edgeNoise", 0.5f.lit)
-
-        iff(isFast) {
+        if (fastOnly) {
             val n1 = let("n1", valueNoise(uvBase))
             val n2 = let("n2", valueNoise(rotateOctave(uvBase) + vec2(13.7f.lit, 7.1f.lit)))
             val fbm = let("fbmFast", n1 * 0.65f.lit + n2 * 0.35f.lit)
-            assign(density, smoothstep(threshold, threshold + softness, fbm))
-            assign(litFactor, clamp(0.45f.lit + fbm * 0.55f.lit, 0f.lit, 1f.lit))
-            assign(edgeNoise, fbm)
-        }
+            density = let("density", smoothstep(threshold, threshold + softness, fbm))
+            litFactor = let("litFactor", clamp(0.45f.lit + fbm * 0.55f.lit, 0f.lit, 1f.lit))
+            edgeNoise = fbm
+        } else {
+            val macro = requireNotNull(cumulusMacro)
+            val qualityCode = let("qualityCode", toU32(lightDirection.w + 0.5f.lit))
+            val isStandard = qualityCode eq CloudLayerQuality.Standard.code.toUInt().lit
+            val isFast = select(1u.lit, 0u.lit, isStandard) eq 1u.lit
 
-        iff(isStandard) {
-            // Single-pass 3-shell parallax volume: base underside -> mid flank -> sunlit cumulus crown.
-            // Smooth ray-plane offset clamps near the horizon and reverses automatically when viewed from below.
-            val viewRay = let("viewRay", normalize(worldPos - cameraEye.xyz))
-            val parallaxFactor = let("parallaxFactor", viewRay.y / (viewRay.y * viewRay.y + 0.18f.lit))
-            val parallaxVec = let("parallaxVec", vec2(viewRay.x, viewRay.z) * parallaxFactor)
-            val lookingDown = let("lookingDown", 1f.lit - smoothstep((-0.15f).lit, 0.15f.lit, viewRay.y))
+            val densityVar = variable("density", 0f.lit)
+            val litFactorVar = variable("litFactor", 0.65f.lit)
+            val edgeNoiseVar = variable("edgeNoise", 0.5f.lit)
 
-            val baseH = let("baseH", cumulusMacro(uvBase))
-            val baseAlpha = let("baseAlpha", smoothstep(threshold, threshold + softness * 0.90f.lit, baseH))
+            iff(isFast) {
+                val n1 = let("n1", valueNoise(uvBase))
+                val n2 = let("n2", valueNoise(rotateOctave(uvBase) + vec2(13.7f.lit, 7.1f.lit)))
+                val fbm = let("fbmFast", n1 * 0.65f.lit + n2 * 0.35f.lit)
+                assign(densityVar, smoothstep(threshold, threshold + softness, fbm))
+                assign(litFactorVar, clamp(0.45f.lit + fbm * 0.55f.lit, 0f.lit, 1f.lit))
+                assign(edgeNoiseVar, fbm)
+            }
 
-            val uvMid = let("uvMid", uvBase + parallaxVec * 0.18f.lit + drift * 0.08f.lit)
-            val midH = let("midH", cumulusMacro(uvMid))
-            val midAlpha = let(
-                "midAlpha",
-                smoothstep(threshold + 0.05f.lit, threshold + 0.05f.lit + softness * 0.78f.lit, midH),
-            )
+            iff(isStandard) {
+                // Single-pass 3-shell parallax volume: base underside -> mid flank -> sunlit cumulus crown.
+                // Smooth ray-plane offset clamps near the horizon and reverses automatically when viewed from below.
+                val viewRay = let("viewRay", normalize(worldPos - cameraEye.xyz))
+                val parallaxFactor = let("parallaxFactor", viewRay.y / (viewRay.y * viewRay.y + 0.18f.lit))
+                val parallaxVec = let("parallaxVec", vec2(viewRay.x, viewRay.z) * parallaxFactor)
+                val lookingDown = let("lookingDown", 1f.lit - smoothstep((-0.15f).lit, 0.15f.lit, viewRay.y))
 
-            val uvUpper = let("uvUpper", uvBase + parallaxVec * 0.36f.lit + drift * 0.16f.lit)
-            val crownMacro = let("crownMacro", cumulusMacro(uvUpper))
-            val crownDetail = let(
-                "crownDetail",
-                valueNoise(rotateOctave(rotateOctave(uvUpper)) - vec2(6.8f.lit, 14.2f.lit)),
-            )
-            val crownH = let("crownH", crownMacro * 0.82f.lit + crownDetail * 0.18f.lit)
-            val crownAlpha = let(
-                "crownAlpha",
-                smoothstep(threshold + 0.11f.lit, threshold + 0.11f.lit + softness * 0.65f.lit, crownH),
-            )
+                val baseH = let("baseH", macro(uvBase))
+                val baseAlpha = let("baseAlpha", smoothstep(threshold, threshold + softness * 0.90f.lit, baseH))
 
-            // Directional sun-offset self-shadowing gives each puff a sunlit crown and cool leeward shadow.
-            val sunStep = let("sunStep", vec2(sunDir.x, sunDir.z) * 0.24f.lit)
-            val sunSample = let("sunSample", cumulusMacro(uvUpper + sunStep))
-            val sunSlope = let("sunSlope", clamp((crownMacro - sunSample) * 4.2f.lit, (-0.50f).lit, 0.55f.lit))
+                val uvMid = let("uvMid", uvBase + parallaxVec * 0.18f.lit + drift * 0.08f.lit)
+                val midH = let("midH", macro(uvMid))
+                val midAlpha = let(
+                    "midAlpha",
+                    smoothstep(threshold + 0.05f.lit, threshold + 0.05f.lit + softness * 0.78f.lit, midH),
+                )
 
-            val baseLit = let("baseLit", clamp(0.10f.lit + baseH * 0.18f.lit + sunSlope * 0.16f.lit, 0.02f.lit, 0.42f.lit))
-            val midLit = let("midLit", clamp(0.36f.lit + midH * 0.24f.lit + sunSlope * 0.42f.lit, 0.08f.lit, 0.86f.lit))
-            val crownLit = let(
-                "crownLit",
-                clamp(0.68f.lit + smoothstep(0.42f.lit, 0.85f.lit, crownH) * 0.28f.lit + sunSlope * 0.55f.lit, 0.26f.lit, 1f.lit),
-            )
+                val uvUpper = let("uvUpper", uvBase + parallaxVec * 0.36f.lit + drift * 0.16f.lit)
+                val crownMacro = let("crownMacro", macro(uvUpper))
+                val crownDetail = let(
+                    "crownDetail",
+                    valueNoise(rotateOctave(rotateOctave(uvUpper)) - vec2(6.8f.lit, 14.2f.lit)),
+                )
+                val crownH = let("crownH", crownMacro * 0.82f.lit + crownDetail * 0.18f.lit)
+                val crownAlpha = let(
+                    "crownAlpha",
+                    smoothstep(threshold + 0.11f.lit, threshold + 0.11f.lit + softness * 0.65f.lit, crownH),
+                )
 
-            // Composite shells front-to-back (crown over mid over base when looking down; reversed looking up).
-            val downA1 = let("downA1", midAlpha + baseAlpha * (1f.lit - midAlpha))
-            val downLit1 = let(
-                "downLit1",
-                (midLit * midAlpha + baseLit * baseAlpha * (1f.lit - midAlpha)) / max(downA1, 0.001f.lit),
-            )
-            val downA2 = let("downA2", crownAlpha + downA1 * (1f.lit - crownAlpha))
-            val downLit2 = let(
-                "downLit2",
-                (crownLit * crownAlpha + downLit1 * downA1 * (1f.lit - crownAlpha)) / max(downA2, 0.001f.lit),
-            )
+                // Directional sun-offset self-shadowing gives each puff a sunlit crown and cool leeward shadow.
+                val sunStep = let("sunStep", vec2(sunDir.x, sunDir.z) * 0.24f.lit)
+                val sunSample = let("sunSample", macro(uvUpper + sunStep))
+                val sunSlope = let("sunSlope", clamp((crownMacro - sunSample) * 4.2f.lit, (-0.50f).lit, 0.55f.lit))
 
-            val upA1 = let("upA1", midAlpha + crownAlpha * (1f.lit - midAlpha))
-            val upLit1 = let(
-                "upLit1",
-                (midLit * midAlpha + crownLit * crownAlpha * (1f.lit - midAlpha)) / max(upA1, 0.001f.lit),
-            )
-            val upA2 = let("upA2", baseAlpha + upA1 * (1f.lit - baseAlpha))
-            val upLit2 = let(
-                "upLit2",
-                (baseLit * baseAlpha + upLit1 * upA1 * (1f.lit - baseAlpha)) / max(upA2, 0.001f.lit),
-            )
+                val baseLit = let("baseLit", clamp(0.10f.lit + baseH * 0.18f.lit + sunSlope * 0.16f.lit, 0.02f.lit, 0.42f.lit))
+                val midLit = let("midLit", clamp(0.36f.lit + midH * 0.24f.lit + sunSlope * 0.42f.lit, 0.08f.lit, 0.86f.lit))
+                val crownLit = let(
+                    "crownLit",
+                    clamp(0.68f.lit + smoothstep(0.42f.lit, 0.85f.lit, crownH) * 0.28f.lit + sunSlope * 0.55f.lit, 0.26f.lit, 1f.lit),
+                )
 
-            assign(density, clamp(mix(upA2, downA2, lookingDown), 0f.lit, 1f.lit))
-            assign(litFactor, clamp(mix(upLit2, downLit2, lookingDown), 0.02f.lit, 1f.lit))
-            assign(edgeNoise, baseH)
+                // Composite shells front-to-back (crown over mid over base when looking down; reversed looking up).
+                val downA1 = let("downA1", midAlpha + baseAlpha * (1f.lit - midAlpha))
+                val downLit1 = let(
+                    "downLit1",
+                    (midLit * midAlpha + baseLit * baseAlpha * (1f.lit - midAlpha)) / max(downA1, 0.001f.lit),
+                )
+                val downA2 = let("downA2", crownAlpha + downA1 * (1f.lit - crownAlpha))
+                val downLit2 = let(
+                    "downLit2",
+                    (crownLit * crownAlpha + downLit1 * downA1 * (1f.lit - crownAlpha)) / max(downA2, 0.001f.lit),
+                )
+
+                val upA1 = let("upA1", midAlpha + crownAlpha * (1f.lit - midAlpha))
+                val upLit1 = let(
+                    "upLit1",
+                    (midLit * midAlpha + crownLit * crownAlpha * (1f.lit - midAlpha)) / max(upA1, 0.001f.lit),
+                )
+                val upA2 = let("upA2", baseAlpha + upA1 * (1f.lit - baseAlpha))
+                val upLit2 = let(
+                    "upLit2",
+                    (baseLit * baseAlpha + upLit1 * upA1 * (1f.lit - baseAlpha)) / max(upA2, 0.001f.lit),
+                )
+
+                assign(densityVar, clamp(mix(upA2, downA2, lookingDown), 0f.lit, 1f.lit))
+                assign(litFactorVar, clamp(mix(upLit2, downLit2, lookingDown), 0.02f.lit, 1f.lit))
+                assign(edgeNoiseVar, baseH)
+            }
+
+            density = densityVar
+            litFactor = litFactorVar
+            edgeNoise = edgeNoiseVar
         }
 
         val sunlitLift = let("sunlitLift", 1f.lit + smoothstep(0.65f.lit, 1f.lit, litFactor) * sunElev * 0.24f.lit)
@@ -258,3 +282,12 @@ val CloudLayerShader: AslShaderDefinition = shader("cloud_layer") {
         colorOutput(vec4(finalRgb, finalAlpha))
     }
 }
+
+/**
+ * Single-pass procedural cloud layer shader with zero texture fetches and a uniform quality switch
+ * ([CloudLayerQuality.Fast] vs [CloudLayerQuality.Standard]).
+ */
+val CloudLayerShader: AslShaderDefinition = cloudLayerShader(fastOnly = false)
+
+/** Lean [CloudLayerQuality.Fast]-only procedural cloud layer shader with reduced register footprint. */
+val CloudLayerFastShader: AslShaderDefinition = cloudLayerShader(fastOnly = true)

@@ -10,16 +10,23 @@ import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslFunctionHandle
 import com.awakekt.awake.asset.shaderdsl.AslLayoutHandles
 import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
+import com.awakekt.awake.asset.shaderdsl.AslType
+import com.awakekt.awake.asset.shaderdsl.F32
+import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
+import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.floor
+import com.awakekt.awake.asset.shaderdsl.ge
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.le
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.min
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
+import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.texture2d
@@ -30,7 +37,9 @@ import com.awakekt.awake.asset.shaderdsl.textureSampleLevel
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
 import com.awakekt.awake.asset.shaderdsl.toU32
+import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
+import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
@@ -221,6 +230,10 @@ class TerrainPageSampling internal constructor(val grid: AslExpr, val dimensions
         }
     }
 
+    /** Resolves [cell] once through the page table inside [block], returning `-1.0` when unmapped. */
+    fun resolveLayerIn(block: AslBlockBuilder, name: String, cell: AslExpr): AslExpr =
+        resolveLayer(block, name, cell)
+
     private fun resolveLayer(block: AslBlockBuilder, name: String, cell: AslExpr): AslExpr {
         val lookup = block.let(
             "${name}Lookup",
@@ -266,24 +279,207 @@ internal fun AslShaderBuilder.pageSampling(handles: AslLayoutHandles, sampler: A
     return TerrainPageSampling(handles.value("pageGrid"), handles.value("pageDimensions"), table, sampler)
 }
 
-internal fun AslShaderBuilder.pagedHeightSampler(pages: TerrainPageSampling, fallback: AslExpr): AslFunctionHandle {
+internal class PagedHeightFunctions(
+    val height: AslFunctionHandle,
+    val heightAndNormal: AslFunctionHandle?,
+)
+
+@Suppress("LongMethod")
+internal fun AslShaderBuilder.pagedHeightSampler(
+    pages: TerrainPageSampling,
+    fallback: AslExpr,
+    includeNormal: Boolean = false,
+): PagedHeightFunctions {
     val heightPages by texture2dArray(group = 0, binding = TERRAIN_HEIGHT_PAGES_BINDING)
     val knot = fn("pageHeightKnot") {
         val index by param(GpuDataShape.Vec2)
         returnValue(decodeHeight(pages.sampleKnotIn(this, heightPages, fallback, index)))
     }
-    return fn("pageHeight") {
+    val heightFn = fn("pageHeight") {
         val position by param(GpuDataShape.Vec2)
-        val relative = let("relative", clamp(position - vec2(pages.grid.x, pages.grid.y), vec2(0f.lit, 0f.lit), vec2(pages.dimensions.x, pages.dimensions.y) * pages.grid.z))
+        val relative = let(
+            "relative",
+            clamp(
+                position - vec2(pages.grid.x, pages.grid.y),
+                vec2(0f.lit, 0f.lit),
+                vec2(pages.dimensions.x, pages.dimensions.y) * pages.grid.z,
+            ),
+        )
         val spacing = let("spacing", pages.grid.z / pages.grid.w)
         val sample = let("sample", relative / spacing)
         val base = let("base", floor(sample))
         val fraction = let("fraction", sample - base)
-        val limit = vec2(pages.dimensions.x, pages.dimensions.y) * pages.grid.w
+        // Unmorphed clipmap vertices sit on integer knots (~70% of vertices): 1 knot instead of 4.
+        iff((fraction.x lt 0.0001f.lit) and (fraction.y lt 0.0001f.lit)) {
+            returnValue(knot(base))
+        }
+        val limit = let("limit", vec2(pages.dimensions.x, pages.dimensions.y) * pages.grid.w)
+        val k11 = let("k11", min(base + vec2(1f.lit, 1f.lit), limit))
+        val maxCell = vec2(pages.dimensions.x - 1f.lit, pages.dimensions.y - 1f.lit)
+        val c0 = let("c0", clamp(floor(base / pages.grid.w), vec2(0f.lit, 0f.lit), maxCell))
+        val c1 = let("c1", clamp(floor(k11 / pages.grid.w), vec2(0f.lit, 0f.lit), maxCell))
+        // Interior morphed vertices share one cell: 1 page-table lookup + 4 heights instead of 8 fetches.
+        iff((c0.x eq c1.x) and (c0.y eq c1.y)) {
+            val layer = pages.resolveLayerIn(this, "single", c0)
+            val k10 = vec2(k11.x, base.y)
+            val k01 = vec2(base.x, k11.y)
+            iff(layer gt (-0.5f).lit) {
+                val pDims = textureDimensions(heightPages)
+                val pSize = let("pSize", vec2(toF32(pDims.x), toF32(pDims.y)))
+                val pLayer = let("pLayer", toU32(layer))
+                val a = let("sa", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, base, c0), pLayer, 0f.lit)))
+                val b = let("sb", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, k10, c0), pLayer, 0f.lit)))
+                val c = let("sc", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, k01, c0), pLayer, 0f.lit)))
+                val d = let("sd", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, k11, c0), pLayer, 0f.lit)))
+                returnValue(mix(mix(a, b, fraction.x), mix(c, d, fraction.x), fraction.y))
+            }
+            val cDims = textureDimensions(fallback)
+            val cSize = let("cSize", vec2(toF32(cDims.x), toF32(cDims.y)))
+            val a = let("fa", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, base), 0f.lit)))
+            val b = let("fb", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, k10), 0f.lit)))
+            val c = let("fc", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, k01), 0f.lit)))
+            val d = let("fd", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, k11), 0f.lit)))
+            returnValue(mix(mix(a, b, fraction.x), mix(c, d, fraction.x), fraction.y))
+        }
         val a = let("a", knot(base))
         val b = let("b", knot(min(base + vec2(1f.lit, 0f.lit), limit)))
         val c = let("c", knot(min(base + vec2(0f.lit, 1f.lit), limit)))
-        val d = let("d", knot(min(base + vec2(1f.lit, 1f.lit), limit)))
+        val d = let("d", knot(k11))
         returnValue(mix(mix(a, b, fraction.x), mix(c, d, fraction.x), fraction.y))
     }
+    val heightAndNormalFn = if (includeNormal) {
+        pagedHeightAndNormalFunction(pages, heightPages, fallback, heightFn)
+    } else {
+        null
+    }
+    return PagedHeightFunctions(heightFn, heightAndNormalFn)
+}
+
+internal fun TerrainPageSampling.residentKnotUv(pageSize: AslExpr, knot: AslExpr, cell: AslExpr): AslExpr {
+    val sample = knot - cell * grid.w
+    return vec2((sample.x + 0.5f.lit) / pageSize.x, (sample.y + 0.5f.lit) / pageSize.y)
+}
+
+internal fun TerrainPageSampling.fallbackKnotUv(coarseSize: AslExpr, knot: AslExpr): AslExpr = vec2(
+    (knot.x / (dimensions.x * grid.w) * (coarseSize.x - 1f.lit) + 0.5f.lit) / coarseSize.x,
+    (knot.y / (dimensions.y * grid.w) * (coarseSize.y - 1f.lit) + 0.5f.lit) / coarseSize.y,
+)
+
+@Suppress("LongMethod")
+private fun AslShaderBuilder.pagedHeightAndNormalFunction(
+    pages: TerrainPageSampling,
+    heightPages: AslExpr,
+    fallback: AslExpr,
+    pageHeight: AslFunctionHandle,
+): AslFunctionHandle = fn("pageHeightAndNormal", returns = AslType.Data(GpuDataShape.Vec4)) {
+    val position by param(GpuDataShape.Vec2)
+    val heightScale by param(F32)
+
+    val extent = let("extent", vec2(pages.dimensions.x, pages.dimensions.y) * pages.grid.z)
+    val relative = let("relative", clamp(position - vec2(pages.grid.x, pages.grid.y), vec2(0f.lit, 0f.lit), extent))
+    val step = let("step", pages.grid.z / pages.grid.w)
+    val sample = let("sample", relative / step)
+    val base = let("base", floor(sample))
+    val fraction = let("fraction", sample - base)
+    val limit = let("limit", vec2(pages.dimensions.x, pages.dimensions.y) * pages.grid.w)
+    val maxCell = vec2(pages.dimensions.x - 1f.lit, pages.dimensions.y - 1f.lit)
+
+    val left = let("leftX", max(position.x - step, pages.grid.x))
+    val right = let("rightX", min(position.x + step, pages.grid.x + extent.x))
+    val down = let("downZ", max(position.y - step, pages.grid.y))
+    val up = let("upZ", min(position.y + step, pages.grid.y + extent.y))
+    val invSpanX = let("invSpanX", heightScale / max(right - left, 0.0001f.lit))
+    val invSpanZ = let("invSpanZ", heightScale / max(up - down, 0.0001f.lit))
+
+    val kMin = let("kMin", max(base - vec2(1f.lit, 1f.lit), vec2(0f.lit, 0f.lit)))
+    val kMax = let("kMax", min(base + vec2(1f.lit, 1f.lit), limit))
+    val cMin = let("cMin", clamp(floor(kMin / pages.grid.w), vec2(0f.lit, 0f.lit), maxCell))
+    val cMax = let("cMax", clamp(floor(kMax / pages.grid.w), vec2(0f.lit, 0f.lit), maxCell))
+
+    // Fast path 1 (~70% of vertices): unmorphed integer knot whose 5-point stencil lies in one cell.
+    // 1 page-table fetch + 5 height fetches = 6 fetches (down from 40).
+    iff((fraction.x lt 0.0001f.lit) and (fraction.y lt 0.0001f.lit) and (cMin.x eq cMax.x) and (cMin.y eq cMax.y)) {
+        val layer = pages.resolveLayerIn(this, "fast", cMin)
+        val kL = vec2(kMin.x, base.y)
+        val kR = vec2(kMax.x, base.y)
+        val kD = vec2(base.x, kMin.y)
+        val kU = vec2(base.x, kMax.y)
+        iff(layer gt (-0.5f).lit) {
+            val pDims = textureDimensions(heightPages)
+            val pSize = let("fpSize", vec2(toF32(pDims.x), toF32(pDims.y)))
+            val pLayer = let("fpLayer", toU32(layer))
+            val hC = let("fhC", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, base, cMin), pLayer, 0f.lit)))
+            val hL = let("fhL", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, kL, cMin), pLayer, 0f.lit)))
+            val hR = let("fhR", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, kR, cMin), pLayer, 0f.lit)))
+            val hD = let("fhD", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, kD, cMin), pLayer, 0f.lit)))
+            val hU = let("fhU", decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, kU, cMin), pLayer, 0f.lit)))
+            val n = let("fnRes", normalize(vec3(-(hR - hL) * invSpanX, 1f.lit, -(hU - hD) * invSpanZ)))
+            returnValue(vec4(hC, n.x, n.y, n.z))
+        }
+        val cDims = textureDimensions(fallback)
+        val cSize = let("fcSize", vec2(toF32(cDims.x), toF32(cDims.y)))
+        val hC = let("fbC", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, base), 0f.lit)))
+        val hL = let("fbL", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, kL), 0f.lit)))
+        val hR = let("fbR", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, kR), 0f.lit)))
+        val hD = let("fbD", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, kD), 0f.lit)))
+        val hU = let("fbU", decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, kU), 0f.lit)))
+        val n = let("fnFb", normalize(vec3(-(hR - hL) * invSpanX, 1f.lit, -(hU - hD) * invSpanZ)))
+        returnValue(vec4(hC, n.x, n.y, n.z))
+    }
+
+    // Fast path 2 (~25% of vertices): morphed interior vertex sharing the 12 unique stencil knots in one cell.
+    // 1 page-table fetch + 12 height fetches = 13 fetches (down from 40), bit-exact to 5x pageHeight.
+    val interior = (base.x ge 1f.lit) and (base.y ge 1f.lit) and (base.x le limit.x - 2f.lit) and (base.y le limit.y - 2f.lit)
+    val kMax2 = min(base + vec2(2f.lit, 2f.lit), limit)
+    val cMax2 = let("cMax2", clamp(floor(kMax2 / pages.grid.w), vec2(0f.lit, 0f.lit), maxCell))
+    iff(interior and (cMin.x eq cMax2.x) and (cMin.y eq cMax2.y)) {
+        val layer = pages.resolveLayerIn(this, "morph", cMin)
+        fun AslBlockBuilder.evalStencil(prefix: String, sampleAt: (AslExpr) -> AslExpr): AslExpr {
+            val h00 = let("${prefix}00", sampleAt(base))
+            val h10 = let("${prefix}10", sampleAt(base + vec2(1f.lit, 0f.lit)))
+            val h01 = let("${prefix}01", sampleAt(base + vec2(0f.lit, 1f.lit)))
+            val h11 = let("${prefix}11", sampleAt(base + vec2(1f.lit, 1f.lit)))
+            val hm10 = let("${prefix}m10", sampleAt(base + vec2((-1f).lit, 0f.lit)))
+            val hm11 = let("${prefix}m11", sampleAt(base + vec2((-1f).lit, 1f.lit)))
+            val h20 = let("${prefix}20", sampleAt(base + vec2(2f.lit, 0f.lit)))
+            val h21 = let("${prefix}21", sampleAt(base + vec2(2f.lit, 1f.lit)))
+            val h0m1 = let("${prefix}0m1", sampleAt(base + vec2(0f.lit, (-1f).lit)))
+            val h1m1 = let("${prefix}1m1", sampleAt(base + vec2(1f.lit, (-1f).lit)))
+            val h02 = let("${prefix}02", sampleAt(base + vec2(0f.lit, 2f.lit)))
+            val h12 = let("${prefix}12", sampleAt(base + vec2(1f.lit, 2f.lit)))
+            val hC = let("${prefix}C", mix(mix(h00, h10, fraction.x), mix(h01, h11, fraction.x), fraction.y))
+            val hL = let("${prefix}L", mix(mix(hm10, h00, fraction.x), mix(hm11, h01, fraction.x), fraction.y))
+            val hR = let("${prefix}R", mix(mix(h10, h20, fraction.x), mix(h11, h21, fraction.x), fraction.y))
+            val hD = let("${prefix}D", mix(mix(h0m1, h1m1, fraction.x), mix(h00, h10, fraction.x), fraction.y))
+            val hU = let("${prefix}U", mix(mix(h01, h11, fraction.x), mix(h02, h12, fraction.x), fraction.y))
+            val n = let("${prefix}N", normalize(vec3(-(hR - hL) * invSpanX, 1f.lit, -(hU - hD) * invSpanZ)))
+            return vec4(hC, n.x, n.y, n.z)
+        }
+        iff(layer gt (-0.5f).lit) {
+            val pDims = textureDimensions(heightPages)
+            val pSize = let("mpSize", vec2(toF32(pDims.x), toF32(pDims.y)))
+            val pLayer = let("mpLayer", toU32(layer))
+            returnValue(
+                evalStencil("mr") { k ->
+                    decodeHeight(textureSampleArrayLevel(heightPages, pages.sampler, pages.residentKnotUv(pSize, k, cMin), pLayer, 0f.lit))
+                },
+            )
+        }
+        val cDims = textureDimensions(fallback)
+        val cSize = let("mcSize", vec2(toF32(cDims.x), toF32(cDims.y)))
+        returnValue(
+            evalStencil("mf") { k ->
+                decodeHeight(textureSampleLevel(fallback, pages.sampler, pages.fallbackKnotUv(cSize, k), 0f.lit))
+            },
+        )
+    }
+
+    // Seam / border fallback: delegates to optimized pageHeight.
+    val hC = let("seamC", pageHeight(position))
+    val hR = let("seamR", pageHeight(vec2(right, position.y)))
+    val hL = let("seamL", pageHeight(vec2(left, position.y)))
+    val hU = let("seamU", pageHeight(vec2(position.x, up)))
+    val hD = let("seamD", pageHeight(vec2(position.x, down)))
+    val n = let("seamN", normalize(vec3(-(hR - hL) * invSpanX, 1f.lit, -(hU - hD) * invSpanZ)))
+    returnValue(vec4(hC, n.x, n.y, n.z))
 }

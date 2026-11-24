@@ -423,7 +423,8 @@ class Renderer internal constructor(
         transparent: Boolean = false,
         additive: Boolean = false,
         depthWrite: Boolean = false,
-    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe, additive, depthWrite)
+        solidOpaque: Boolean = false,
+    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe, additive, depthWrite, solidOpaque)
 
     internal val device get() = graphicsDevice.device
     internal val physicalDevice get() = graphicsDevice.physicalDevice

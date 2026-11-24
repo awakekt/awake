@@ -108,6 +108,15 @@ internal class WebGpuCommandRecorder(
         if (open != null) open.draw(indexed = true, indexCount, instanceCount) else encoder.drawIndexed(indexCount.toUInt(), instanceCount.toUInt())
         stats?.recordDraw(indexCount, instanceCount, currentPipeline?.drawsTriangles ?: true)
     }
+
+    override fun drawIndexed(indexCount: Int, instanceCount: Int, firstIndex: Int) {
+        if (firstIndex == 0) {
+            drawIndexed(indexCount, instanceCount)
+            return
+        }
+        encoder.drawIndexed(indexCount.toUInt(), instanceCount.toUInt(), firstIndex.toUInt())
+        stats?.recordDraw(indexCount, instanceCount, currentPipeline?.drawsTriangles ?: true)
+    }
 }
 
 /** Each wraps the WebGPU object the shared layer passes through without inspecting. Built once

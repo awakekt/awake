@@ -39,6 +39,11 @@ fun cloudLayerContentFeature(
     name: String = "cloud_layer",
     shaders: ShaderSet = PackShaderSets.CloudLayer,
 ): ContentFeatureSource = ContentFeatureSource { backend ->
+    val fastSpec = shaders.solidOpaque?.stagesFor(backend)?.spec(
+        vertexFormat = VertexFormat.PositionNormalColorUv,
+        variant = PipelineVariant.AlphaBlended,
+        uniforms = CloudLayerUniformLayout,
+    )
     ContentFeature(
         name = name,
         spec = shaders.stagesFor(backend).spec(
@@ -48,6 +53,17 @@ fun cloudLayerContentFeature(
         ),
         geometry = geometry,
         paint = ContentPaint.BeforeTransparent,
+        images = emptyMap(),
+        alternateSpec = fastSpec,
+        buildWithAlternate = { pipeline, fastPipeline, uniforms, uploaded ->
+            CloudLayerRenderFeature(
+                pipeline = pipeline,
+                uniforms = uniforms,
+                geometry = requireNotNull(uploaded) { "Cloud layer declares geometry, so the engine must have uploaded it." },
+                look = look,
+                fastPipeline = fastPipeline,
+            )
+        },
     ) { pipeline, uniforms, uploaded ->
         CloudLayerRenderFeature(
             pipeline = pipeline,
@@ -64,7 +80,16 @@ class CloudLayerRenderFeature(
     private val uniforms: UniformBlock,
     private val geometry: ContentGeometry,
     private val look: CloudLayerLook,
+    private val fastPipeline: PipelineHandle? = null,
 ) : RenderFeature<RenderFrameContext> {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        pipeline: PipelineHandle,
+        uniforms: UniformBlock,
+        geometry: ContentGeometry,
+        look: CloudLayerLook,
+    ) : this(pipeline, uniforms, geometry, look, fastPipeline = null)
+
     override val pass = RenderPassSlot.Scene
 
     private val sun = Vec3f()
@@ -93,7 +118,8 @@ class CloudLayerRenderFeature(
             put(CloudLayerFields.Origin, look.origin, 0f)
         }
 
-        recorder.bindPipeline(pipeline)
+        val activePipeline = if (look.quality == CloudLayerQuality.Fast && fastPipeline != null) fastPipeline else pipeline
+        recorder.bindPipeline(activePipeline)
         recorder.bindMaterial(BindingSemantic.Material, uniforms.binding(frameIndex))
         recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
         val indices = geometry.indexBuffer

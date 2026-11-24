@@ -131,7 +131,13 @@ internal class HeadlessContentAttachFixture private constructor(
                 pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionColorUv),
                 uiShaderPairs = runBlocking { defaultUiShaderPairs() },
                 transferContext = transferContext,
-                renderFeatures = listOf(attacher.beforeGeometry, attacher.opaqueGeometry, attacher.afterGeometry),
+                renderFeatures = listOf(
+                    attacher.beforeGeometry,
+                    attacher.opaqueGeometry,
+                    attacher.afterOpaque,
+                    attacher.beforeTransparent,
+                    attacher.afterGeometry,
+                ),
                 maxFramesInFlight = framesInFlight,
             )
             renderer.bindShadowDepth(shadowPlaceholder)

@@ -475,3 +475,79 @@ fun stylizedWaterShader(clipSpace: ClipSpace, samplesDepth: Boolean = false): As
 
 /** Zero-texture procedural stylized water shader (without scene-depth contact foam). */
 val StylizedWaterShader: AslShaderDefinition = stylizedWaterShader(ClipSpace.WebGpu, samplesDepth = false)
+
+/**
+ * Lean [StylizedWaterQuality.Fast]-only procedural stylized water shader.
+ *
+ * Omits all value-noise/gradient helpers, scene-depth sampling, `clipPos` varying, and Standard
+ * shore-foam branches so mobile GPUs compile a tiny register footprint with zero texture fetches.
+ */
+@Suppress("LongMethod")
+val StylizedWaterFastShader: AslShaderDefinition = shader("stylized_water_fast") {
+    val u = uniformBlock(
+        "Uniforms",
+        group = BindingLayout.Standard.slot(BindingSemantic.Material),
+        binding = 0,
+    )
+    val handles = u.fieldsFrom(StylizedWaterUniformLayout)
+    val viewProjection = handles.value("viewProjection")
+    val cameraEye = handles.value("cameraEye")
+    val lightDirection = handles.value("lightDirection")
+    val lightColor = handles.value("lightColor")
+    val horizonColor = handles.value("horizonColor")
+    val zenithColor = handles.value("zenithColor")
+    val fogColor = handles.value("fogColor")
+    val fogRange = handles.value("fogRange")
+    val shallowColor = handles.value("shallowColor")
+    val deepColor = handles.value("deepColor")
+    val highlightParams = handles.value("highlightParams")
+    val flowAndFoam = handles.value("flowAndFoam")
+
+    val out = varyings("VertexOutput")
+    val worldPos by out.varying(GpuDataShape.Vec3, location = 0)
+    val normal by out.varying(GpuDataShape.Vec3, location = 1)
+
+    vertex {
+        val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
+        val origin = let("origin", vec3(highlightParams.z, fogRange.z, highlightParams.w))
+        val pos = let("worldPosition", ins.input(VertexSemantic.Position) + origin)
+        out.position set (viewProjection * vec4(pos, 1f.lit))
+        worldPos set pos
+        normal set ins.input(VertexSemantic.Normal)
+    }
+
+    val displayTransform = sceneDisplayTransform()
+
+    fragment {
+        val rawTime = let("rawTime", cameraEye.w)
+        val time = let("time", rawTime * deepColor.w)
+        val scale = let("waveScale", shallowColor.w)
+        val sunDir = let("sunDir", normalize(lightDirection.xyz))
+        val toEye = let("toEye", cameraEye.xyz - worldPos)
+        val dist = let("dist", length(toEye))
+        val viewDir = let("viewDir", normalize(toEye))
+        val baseNormal = let("baseNormal", normalize(normal))
+        val sunElev = let("sunElev", saturate(sunDir.y))
+        val ambient = let("ambient", max(lightColor.w, 0.15f.lit))
+        val dayTint = let("dayTint", clamp(lightColor.rgb * (sunElev * 0.75f.lit) + vec3(ambient), vec3(0.18f.lit), vec3(1.25f.lit)))
+
+        val flowX = let("flowX", worldPos.x - flowAndFoam.x * rawTime)
+        val flowZ = let("flowZ", worldPos.z - flowAndFoam.y * rawTime)
+
+        val p1 = let("p1", flowX * scale + flowZ * (scale * 0.42f.lit) + time * 1.35f.lit)
+        val p2 = let("p2", flowZ * (scale * 1.18f.lit) - flowX * (scale * 0.36f.lit) - time * 1.10f.lit)
+        val w1 = let("w1", sin(p1))
+        val w2 = let("w2", cos(p2))
+        val wave = let("wave", clamp(0.5f.lit + 0.25f.lit * (w1 + w2), 0f.lit, 1f.lit))
+        val baseWater = let("baseWater", mix(deepColor.rgb, shallowColor.rgb, wave) * dayTint)
+        val nDotV = let("nDotV", clamp(abs(dot(baseNormal, viewDir)), 0.01f.lit, 1f.lit))
+        val fresnel = let("fresnel", 0.04f.lit + 0.96f.lit * pow(1f.lit - nDotV, 5f.lit))
+        val surfaceRgb = let("surfaceRgb", mix(baseWater, horizonColor.rgb, fresnel * 0.65f.lit))
+        val surfaceAlpha = let("surfaceAlpha", clamp(zenithColor.w + fresnel * 0.18f.lit, 0f.lit, 1f.lit))
+
+        val exposed = let("exposed", displayTransform.display(surfaceRgb, horizonColor.w))
+        val fog = let("fog", fogAmount(dist, fogColor, fogRange))
+        val finalRgb = let("finalRgb", mix(exposed, fogColor.rgb, saturate(fog)))
+        colorOutput(vec4(finalRgb, surfaceAlpha))
+    }
+}

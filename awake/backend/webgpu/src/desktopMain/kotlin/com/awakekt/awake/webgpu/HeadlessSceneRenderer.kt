@@ -381,8 +381,12 @@ fun webGpuHeadlessScene(shadowDepthFormat: ShadowDepthFormat): HeadlessRenderSes
         maxFramesInFlight = FRAMES_IN_FLIGHT,
         renderFeatures = listOf(
             attacher.beforeGeometry,
-            attacher.opaqueGeometry,
-            OpaqueRenderFeature(WebGpuLinePass(linePipeline), listOf(attacher.beforeTransparent)),
+            OpaqueRenderFeature(
+                WebGpuLinePass(linePipeline),
+                beforeTransparent = listOf(attacher.beforeTransparent),
+                opaqueGeometry = listOf(attacher.opaqueGeometry),
+                afterOpaque = listOf(attacher.afterOpaque),
+            ),
             attacher.afterGeometry,
             UiRenderFeature(WebGpuUiPass()),
         ),

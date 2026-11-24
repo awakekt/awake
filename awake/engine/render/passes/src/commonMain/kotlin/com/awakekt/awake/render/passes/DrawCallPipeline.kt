@@ -81,13 +81,59 @@ fun <P> PipelineTable<P>.resolveInstanced(
     kind: InstancedDrawKind,
     additive: Boolean = false,
     cullMode: CullMode = CullMode.None,
-): P? =
-    when (kind) {
-        InstancedDrawKind.Skinned -> skinnedInstancedByFormat[format]
-        InstancedDrawKind.Particle -> additiveParticlePipelines[format]?.takeIf { additive } ?: particlePipelines[format]
-        InstancedDrawKind.Plain ->
-            instancedBackCulledByFormat[format]?.takeIf { cullMode == CullMode.Back } ?: instancedByFormat[format]
+): P? = resolveInstanced(format, kind, additive, cullMode, solidOpaque = false)
+
+/**
+ * [resolveInstanced], preferring a discard-free solid opaque companion when [solidOpaque] is true
+ * so mobile tile GPUs keep hardware Early-Z / Forward Pixel Kill enabled on solid instanced draws.
+ */
+fun <P> PipelineTable<P>.resolveInstanced(
+    format: VertexFormat,
+    kind: InstancedDrawKind,
+    additive: Boolean = false,
+    cullMode: CullMode = CullMode.None,
+    solidOpaque: Boolean,
+): P? = when (kind) {
+    InstancedDrawKind.Skinned ->
+        solidSkinnedInstancedByFormat[format].takeIf { solidOpaque } ?: skinnedInstancedByFormat[format]
+    InstancedDrawKind.Particle ->
+        additiveParticlePipelines[format]?.takeIf { additive } ?: particlePipelines[format]
+    InstancedDrawKind.Plain -> resolvePlainInstanced(format, cullMode, solidOpaque)
+}
+
+private fun <P> PipelineTable<P>.resolvePlainInstanced(
+    format: VertexFormat,
+    cullMode: CullMode,
+    solidOpaque: Boolean,
+): P? {
+    val unculled = solidInstancedByFormat[format].takeIf { solidOpaque } ?: instancedByFormat[format]
+    return if (cullMode == CullMode.Back) {
+        solidInstancedBackCulledByFormat[format].takeIf { solidOpaque }
+            ?: instancedBackCulledByFormat[format]
+            ?: unculled
+    } else {
+        unculled
     }
+}
+
+/**
+ * True when this draw cannot discard any pixel in its fragment shader (opaque alpha mode, no draw
+ * dither fade, and no per-instance fade below 1.0), so backends may bind a discard-free pipeline
+ * to preserve hardware Early-Z and Forward Pixel Kill on mobile tile GPUs.
+ */
+fun RenderDrawCommand.usesSolidOpaquePipeline(): Boolean {
+    var solid = !transparent && alphaMode == AlphaMode.Opaque && fadeOpacity >= 1f
+    val colors = instanceColors
+    if (solid && colors != null) {
+        for (index in colors.indices) {
+            if (colors[index].w < 1f) {
+                solid = false
+                break
+            }
+        }
+    }
+    return solid
+}
 
 /** Whether this table can draw instanced copies of a [format] mesh with [cullMode], as [resolveInstanced] would. */
 fun <P> PipelineTable<P>.canInstance(format: VertexFormat, cullMode: CullMode): Boolean = when (cullMode) {

@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.SkyboxRenderFeature
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.SkyboxUniformLayout
@@ -42,8 +43,9 @@ fun skyboxContentFeature(shaders: ShaderSet): ContentFeatureSource = ContentFeat
         name = "skybox",
         spec = stages.spec(
             vertexFormat = VertexFormat.None,
-            variant = PipelineVariant.Background,
+            variant = PipelineVariant.Sky,
             uniforms = SkyboxUniformLayout,
         ),
+        paint = ContentPaint.AfterOpaque,
     ) { pipeline, uniforms, _ -> SkyboxRenderFeature(pipeline, uniforms) }
 }

@@ -53,6 +53,16 @@ interface CommandRecorder {
     fun drawIndexed(indexCount: Int, instanceCount: Int = 1)
 
     /**
+     * Records an indexed draw starting at [firstIndex] within the bound index buffer. Backends
+     * override this to pass [firstIndex] straight to the hardware draw call; recorders that do
+     * not support sub-range draws fall back to [drawIndexed] when [firstIndex] is zero.
+     */
+    fun drawIndexed(indexCount: Int, instanceCount: Int, firstIndex: Int) {
+        require(firstIndex == 0) { "This CommandRecorder does not support non-zero firstIndex ($firstIndex)." }
+        drawIndexed(indexCount, instanceCount)
+    }
+
+    /**
      * Opens a retained region: what is recorded until [endRetained] is the same draws in the same
      * order frame after frame, give or take instance counts, so a backend may record it once and
      * replay it (WebGPU keeps it as render bundles). [key] tells a pass's regions apart. Pipeline

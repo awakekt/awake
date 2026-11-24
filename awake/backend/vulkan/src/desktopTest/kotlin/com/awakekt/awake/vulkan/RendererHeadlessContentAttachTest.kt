@@ -119,21 +119,31 @@ class RendererHeadlessContentAttachTest {
     fun terrainsOfOneShaderSetShareOnePipelineUntilTheLastDetaches() {
         val fixture = shared()
         val low = runBlocking { fixture.attacher.attachContentFeature(terrainSource()) }
-        val alone = render().covered
-        val high = runBlocking { fixture.attacher.attachContentFeature(terrainContentFeature(PackShaderSets.Terrain, dome(2f), CONFIG)) }
-        val both = render().covered
-        val spec = fixture.registry.specs.single()
+        var high: com.awakekt.awake.asset.shaders.AttachedContentFeature? = null
+        try {
+            val alone = render().covered
+            val specsAfterFirst = fixture.registry.specs.toSet()
+            high = runBlocking { fixture.attacher.attachContentFeature(terrainContentFeature(PackShaderSets.Terrain, dome(2f), CONFIG)) }
+            val both = render().covered
+            val specs = fixture.registry.specs.toSet()
+            assertEquals(specsAfterFirst, specs, "Second terrain of the same shader set must reuse the registered pipelines.")
+            assertEquals(2, specs.size, "Terrain registers its outer-ring pipeline and discard-free Level-0 core companion.")
 
-        low.detach()
-        val afterFirst = fixture.registry[spec]
-        val highAlone = render().covered
-        high.detach()
+            low.detach()
+            val afterFirst = specs.map { fixture.registry[it] }
+            val highAlone = render().covered
+            high.detach()
+            high = null
 
-        assertTrue(both > alone, "The taller second terrain added nothing: $both pixels against $alone.")
-        assertNotNull(afterFirst, "The pipeline went while a terrain still drew through it.")
-        assertTrue(highAlone > MIN_COVERED, "The remaining terrain covered only $highAlone pixels.")
-        assertNull(fixture.registry[spec], "The pipeline outlived the last terrain drawing through it.")
-        assertEquals(0, render().covered)
+            assertTrue(both > alone, "The taller second terrain added nothing: $both pixels against $alone.")
+            assertTrue(afterFirst.all { it != null }, "A pipeline went while a terrain still drew through it.")
+            assertTrue(highAlone > MIN_COVERED, "The remaining terrain covered only $highAlone pixels.")
+            assertTrue(specs.all { fixture.registry[it] == null }, "A pipeline outlived the last terrain drawing through it.")
+            assertEquals(0, render().covered)
+        } finally {
+            low.detach()
+            high?.detach()
+        }
     }
 
     /**
