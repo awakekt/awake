@@ -55,9 +55,19 @@ package com.awakekt.awake.render.pipeline
 class PipelineRegistry<P>(private val factory: PipelineFactory<P>) {
 
     private val compiled = mutableMapOf<PipelineSpec, P>()
+    private val companionParents = mutableMapOf<PipelineSpec, PipelineSpec>()
 
     /** Every spec compiled so far -- for teardown and for tests asserting what was built. */
     val specs: Set<PipelineSpec> get() = compiled.keys
+
+    /**
+     * The primary [PipelineSpec] that [spec] was registered alongside as a binding-compatible
+     * solid-opaque or alternate companion, or null when [spec] was not registered as one.
+     *
+     * [ShaderReplacement] queries this so replacing a primary shader (such as a scene mesh shader)
+     * also swaps its discard-free solid opaque companion pipelines in place.
+     */
+    fun companionSourceOf(spec: PipelineSpec): PipelineSpec? = companionParents[spec]
 
     /**
      * Compiles the pipelines [requests] describe, skipping any already built.
@@ -70,8 +80,24 @@ class PipelineRegistry<P>(private val factory: PipelineFactory<P>) {
      * @return The pipelines built, keyed the same way [buildPipelineTable] keys them, so a
      * caller can still assemble a [PipelineTable] from one registration batch.
      */
-    suspend fun register(requests: List<PipelineRequest>): Map<PipelineKey, PipelineSet<P>> =
-        buildPipelineTable(requests) { key, spec -> compiled.getOrPut(spec) { factory.create(key, spec) } }
+    suspend fun register(requests: List<PipelineRequest>): Map<PipelineKey, PipelineSet<P>> {
+        val sets = buildPipelineTable(requests) { key, spec -> compiled.getOrPut(spec) { factory.create(key, spec) } }
+        requests.forEach { request -> recordCompanionSources(request) }
+        return sets
+    }
+
+    private fun recordCompanionSources(request: PipelineRequest) {
+        val solidBase = request.resolvedSolidSpec() ?: return
+        val sameBindings = request.spec.bindingsMetadataAvailable &&
+            solidBase.bindingsMetadataAvailable &&
+            solidBase.bindingsByGroup == request.spec.bindingsByGroup
+        if (!sameBindings) return
+        if (solidBase != request.spec) companionParents[solidBase] = request.spec
+        if (request.buildBackCulled) {
+            val solidBack = solidBase.copy(cullMode = CullMode.Back)
+            if (solidBack != request.spec) companionParents[solidBack] = request.spec
+        }
+    }
 
     /**
      * The pipeline already compiled for [spec], or null.
@@ -82,11 +108,15 @@ class PipelineRegistry<P>(private val factory: PipelineFactory<P>) {
     operator fun get(spec: PipelineSpec): P? = compiled[spec]
 
     /** Forgets [spec]'s pipeline and hands it back for the caller to destroy, or null if none. */
-    fun remove(spec: PipelineSpec): P? = compiled.remove(spec)
+    fun remove(spec: PipelineSpec): P? {
+        companionParents.remove(spec)
+        return compiled.remove(spec)
+    }
 
     /** Hands every compiled pipeline to [destroy] and empties the registry. */
     fun destroyAll(destroy: (P) -> Unit) {
         compiled.values.forEach(destroy)
         compiled.clear()
+        companionParents.clear()
     }
 }

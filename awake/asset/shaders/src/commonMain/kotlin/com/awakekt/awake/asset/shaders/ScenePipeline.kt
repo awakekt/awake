@@ -130,6 +130,7 @@ fun ScenePipeline.skinnedDepthShaders(): ShaderSet? =
 fun List<ScenePipeline>.toRequests(stages: (ShaderSet) -> ShaderStages): List<PipelineRequest> =
     map { declared ->
         val selectedStages = stages(declared.shaders)
+        val solidStages = declared.shaders.solidOpaque?.let(stages)
         PipelineRequest(
             key = declared.key,
             spec = selectedStages.spec(
@@ -153,6 +154,15 @@ fun List<ScenePipeline>.toRequests(stages: (ShaderSet) -> ShaderStages): List<Pi
             // can draw is not a per-app choice. Opaque single draws only, which the overlay covers.
             buildEdges = declared.variant == PipelineVariant.Opaque &&
                 (declared.key == PipelineKey.Primary || declared.key is PipelineKey.Format),
+            solidSpec = solidStages?.spec(
+                vertexFormat = declared.vertexFormat,
+                variant = declared.variant,
+                bindingLayout = declared.bindingLayout,
+                materialBindings = declared.materialBindings,
+                usesMaterialGroup = declared.usesMaterialGroup,
+                bindingsByGroup = solidStages.bindingsByGroup,
+                bindingsMetadataAvailable = solidStages.bindingsMetadataAvailable,
+            ),
         )
     }
 

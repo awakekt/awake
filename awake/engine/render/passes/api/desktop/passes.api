@@ -41,11 +41,16 @@ public abstract interface class com/awakekt/awake/render/passes/ContentDepthSour
 }
 
 public final class com/awakekt/awake/render/passes/ContentFeature {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;ZLjava/util/Map;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;ZLjava/util/Map;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;ZLjava/util/Map;Lkotlin/jvm/functions/Function3;)V
 	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;ZLjava/util/Map;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;ZLkotlin/jvm/functions/Function3;)V
 	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;ZLkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun buildFeature (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;)Lcom/awakekt/awake/render/passes/RenderFeature;
+	public final fun getAlternateSpec ()Lcom/awakekt/awake/render/pipeline/PipelineSpec;
 	public final fun getBuild ()Lkotlin/jvm/functions/Function3;
+	public final fun getBuildWithAlternate ()Lkotlin/jvm/functions/Function4;
 	public final fun getDepth ()Lcom/awakekt/awake/render/pipeline/PipelineSpec;
 	public final fun getGeometry ()Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public final fun getImages ()Ljava/util/Map;
@@ -68,6 +73,7 @@ public final class com/awakekt/awake/render/passes/ContentGeometry {
 
 public final class com/awakekt/awake/render/passes/ContentPaint : java/lang/Enum {
 	public static final field AfterGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
+	public static final field AfterOpaque Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static final field BeforeGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static final field BeforeTransparent Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static final field OpaqueGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
@@ -220,7 +226,9 @@ public final class com/awakekt/awake/render/passes/MaskTargetSizingKt {
 
 public final class com/awakekt/awake/render/passes/OpaqueRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
 	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;)V
-	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;Ljava/util/List;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/passes/LinePass;Ljava/util/List;)V
+	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/passes/LinePass;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
@@ -990,8 +998,11 @@ public final class com/awakekt/awake/render/pipeline/DrawCallPipelineKt {
 	public static final fun depthSortKey (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Vec3f;)F
 	public static final fun instancedDrawKind (Lcom/awakekt/awake/render/command/GpuDrawRequest;)Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;
 	public static final fun resolveInstanced (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZLcom/awakekt/awake/render/pipeline/CullMode;)Ljava/lang/Object;
+	public static final fun resolveInstanced (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZLcom/awakekt/awake/render/pipeline/CullMode;Z)Ljava/lang/Object;
 	public static synthetic fun resolveInstanced$default (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZLcom/awakekt/awake/render/pipeline/CullMode;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun resolveInstanced$default (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZLcom/awakekt/awake/render/pipeline/CullMode;ZILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun resolveInstancedDrawKind (Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;
+	public static final fun usesSolidOpaquePipeline (Lcom/awakekt/awake/render/command/GpuDrawRequest;)Z
 }
 
 public final class com/awakekt/awake/render/pipeline/InstancedDrawKind : java/lang/Enum {

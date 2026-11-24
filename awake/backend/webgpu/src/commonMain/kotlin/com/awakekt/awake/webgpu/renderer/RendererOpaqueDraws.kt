@@ -27,6 +27,7 @@ import com.awakekt.awake.render.pipeline.depthSortKey
 import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.pipeline.resolveInstanced
+import com.awakekt.awake.render.pipeline.usesSolidOpaquePipeline
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.mesh.sceneElementCount
@@ -40,6 +41,21 @@ import com.awakekt.awake.webgpu.pipeline.texturedMaterialBindings
 import com.awakekt.awake.webgpu.pipeline.uniformByteSize
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
+
+private fun Renderer.resolveSingleDrawPipeline(
+    format: VertexFormat,
+    cmd: GpuDrawRequest,
+    isTransparent: Boolean,
+    wireframe: Boolean,
+): RenderPipeline? = pipelines.resolve(
+    format = format,
+    cullMode = cmd.cullMode,
+    transparent = isTransparent,
+    wireframe = wireframe,
+    additive = cmd.additive,
+    depthWrite = cmd.depthWrite,
+    solidOpaque = !isTransparent && cmd.usesSolidOpaquePipeline(),
+)
 
 internal fun Renderer.prepareGpuDraw(
     cmd: GpuDrawRequest,
@@ -83,14 +99,7 @@ internal fun Renderer.prepareGpuDraw(
             frameVersion = frameVersion,
         )
     }
-    val resolved = edgePipeline ?: pipelines.resolve(
-        format = mesh.format,
-        cullMode = cmd.cullMode,
-        transparent = isTransparent,
-        wireframe = primary.wireframe,
-        additive = cmd.additive,
-        depthWrite = cmd.depthWrite,
-    )
+    val resolved = edgePipeline ?: resolveSingleDrawPipeline(mesh.format, cmd, isTransparent, primary.wireframe)
     val pipeline = resolved?.handle ?: primary.pipeline
     // A line-list pipeline, the wireframe view's or an edge overlay's, takes its indices in pairs:
     // it draws the mesh's line indices, since its triangle indices would join the wrong corners.
@@ -233,7 +242,8 @@ private fun Renderer.prepareInstancedGpuDraw(
 ): WebGpuPreparedDraw? {
     if (instanceModels.isEmpty()) return null
     val kind = cmd.instancedDrawKind() ?: return null
-    val resolved = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode) ?: return null
+    val solidOpaque = !isTransparent && cmd.usesSolidOpaquePipeline()
+    val resolved = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode, solidOpaque) ?: return null
     val pipeline = resolved.handle
     val instanceBuffer = instanceBufferForRun(instanceIndex).also { it.update(instanceModels) }
     val materialBinding: MaterialBinding

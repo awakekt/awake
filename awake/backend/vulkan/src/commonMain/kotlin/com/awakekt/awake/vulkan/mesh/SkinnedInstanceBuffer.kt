@@ -92,6 +92,7 @@ class SkinnedInstanceBuffer(
     private data class FrameResources(
         val buffer: BufferHandle,
         val memory: DeviceMemoryHandle,
+        val mappedPtr: Long,
         val descriptorPool: DescriptorPoolHandle,
         val descriptorSet: DescriptorSetHandle,
     ) : VulkanMaterialBinding {
@@ -109,7 +110,7 @@ class SkinnedInstanceBuffer(
     private val tintPacker = InstanceTintPacker()
 
     private val frameResources: Array<FrameResources> = Array(framesInFlight) {
-        val (buffer, memory) = allocateHostVisibleBuffer(byteSize + tintByteSize)
+        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer(byteSize + tintByteSize)
         val pool = createDescriptorPool()
         val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout.handle)
         VulkanDescriptors.vkUpdateDescriptorSetBuffer(
@@ -129,6 +130,7 @@ class SkinnedInstanceBuffer(
         FrameResources(
             BufferHandle(buffer),
             DeviceMemoryHandle(memory),
+            mappedPtr,
             DescriptorPoolHandle(pool),
             DescriptorSetHandle(set),
         )
@@ -170,19 +172,19 @@ class SkinnedInstanceBuffer(
         val paletteCount = packer.packSlice(palettes, maxInstances)
         if (tintCount == 0 || paletteCount == 0) return
         val resources = resourcesFor(frameIndex)
-        uploadSliceIfChanged(resources.memory.handle, 0, packer.buffer, paletteCount, resources.residentPalettes)
-        uploadSliceIfChanged(resources.memory.handle, byteSize, tintPacker.buffer, tintCount, resources.residentTints)
+        uploadSliceIfChanged(resources.mappedPtr, 0, packer.buffer, paletteCount, resources.residentPalettes)
+        uploadSliceIfChanged(resources.mappedPtr, byteSize, tintPacker.buffer, tintCount, resources.residentTints)
     }
 
     private fun uploadSliceIfChanged(
-        memory: Long,
+        mappedPtr: Long,
         offset: Long,
         floats: FloatArray,
         count: Int,
         resident: ResidentFloatSlice,
     ) {
         if (resident.matches(floats, count)) return
-        VulkanBuffers.writeBufferMemoryFloats(device, memory, offset, floats, 0, count)
+        VulkanBuffers.writeMappedMemoryFloats(mappedPtr, offset, floats, 0, count)
         uploads += 1
         resident.record(floats, count)
     }
@@ -214,6 +216,7 @@ class SkinnedInstanceBuffer(
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
+            if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.memory.handle)
             VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
             VulkanDescriptors.vkDestroyDescriptorPool(device, frame.descriptorPool.handle)
         }
@@ -240,7 +243,7 @@ class SkinnedInstanceBuffer(
         ),
     )
 
-    private fun allocateHostVisibleBuffer(byteSize: Long): Pair<Long, Long> {
+    private fun allocateHostVisibleBuffer(byteSize: Long): Triple<Long, Long, Long> {
         val buffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(
@@ -260,7 +263,8 @@ class SkinnedInstanceBuffer(
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return buffer to memory
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        return Triple(buffer, memory, mappedPtr)
     }
 
     /** Capacity, layout and descriptor-set constants for the joint-palette storage buffer. */

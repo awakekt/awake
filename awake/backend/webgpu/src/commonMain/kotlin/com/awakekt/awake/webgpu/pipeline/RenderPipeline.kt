@@ -446,10 +446,10 @@ class RenderPipeline(
                         // Always is this backend's "test off": WebGPU has no depthTestEnable flag, and
                         // the depthStencil block itself stays mandatory because the pass has a real
                         // Depth32Float attachment. Vulkan spells the same thing depthTestEnable=false.
-                        depthCompare = if (variant.depthTestEnabled) {
-                            GPUCompareFunction.Less
-                        } else {
-                            GPUCompareFunction.Always
+                        depthCompare = when {
+                            !variant.depthTestEnabled -> GPUCompareFunction.Always
+                            variant.depthCompareLessEqual -> GPUCompareFunction.LessEqual
+                            else -> GPUCompareFunction.Less
                         },
                         stencilFront = StencilFaceState(),
                         stencilBack = StencilFaceState(),

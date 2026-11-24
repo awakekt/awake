@@ -123,6 +123,11 @@ internal class VulkanCommandRecorder(
         VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0)
         stats.recordDraw(indexCount, instanceCount, drawsTriangles)
     }
+
+    override fun drawIndexed(indexCount: Int, instanceCount: Int, firstIndex: Int) {
+        VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, 0, 0)
+        stats.recordDraw(indexCount, instanceCount, drawsTriangles)
+    }
 }
 
 /**

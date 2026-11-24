@@ -7,6 +7,7 @@ package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.inverse
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
@@ -14,6 +15,7 @@ import com.awakekt.awake.render.renderer.MOON_DISC_COLOR
 import com.awakekt.awake.render.renderer.RenderPassKind
 import com.awakekt.awake.render.renderer.SUN_DISC_COLOR
 import com.awakekt.awake.render.renderer.SkyboxFields
+import com.awakekt.awake.render.texture.TextureUploadRecorder
 
 /**
  * The three shared-pass features, written once for every backend.
@@ -101,32 +103,66 @@ class SkyboxRenderFeature(
  * @param C The backend's frame-context type.
  * @param lines The backend's debug-line pipeline and staged geometry.
  * @param beforeTransparent Content features recorded after opaque geometry and before transparent scene draws.
+ * @param opaqueGeometry Content features recorded after opaque scene meshes (e.g. terrain) so meshes reject occluded terrain via Early-Z.
+ * @param afterOpaque Content features recorded after opaque geometry and terrain (e.g. skybox and celestial bodies with `LESS_EQUAL` depth test).
  */
 class OpaqueRenderFeature<C : RenderFrameContext>(
     private val lines: LinePass<C>,
     private val beforeTransparent: List<RenderFeature<C>>,
+    private val opaqueGeometry: List<RenderFeature<C>> = emptyList(),
+    private val afterOpaque: List<RenderFeature<C>> = emptyList(),
 ) : RenderFeature<C> {
-    constructor(lines: LinePass<C>) : this(lines, emptyList())
+    constructor(lines: LinePass<C>) : this(lines, emptyList(), emptyList(), emptyList())
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        lines: LinePass<C>,
+        beforeTransparent: List<RenderFeature<C>>,
+    ) : this(lines, beforeTransparent, emptyList(), emptyList())
 
     override val pass = RenderPassSlot.Scene
 
     private val shared = SharedOpaqueRenderFeature()
     private val transparent = SharedTransparentRenderFeature(shared)
 
+    override fun prepareFrame(frameIndex: Int, uploads: TextureUploadRecorder) {
+        for (i in opaqueGeometry.indices) opaqueGeometry[i].prepareFrame(frameIndex, uploads)
+        for (i in afterOpaque.indices) afterOpaque[i].prepareFrame(frameIndex, uploads)
+        for (i in beforeTransparent.indices) beforeTransparent[i].prepareFrame(frameIndex, uploads)
+    }
+
+    override fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean =
+        anyNeedsCoveringExemptMask(opaqueGeometry, environment) ||
+            anyNeedsCoveringExemptMask(afterOpaque, environment) ||
+            anyNeedsCoveringExemptMask(beforeTransparent, environment)
+
+    private fun anyNeedsCoveringExemptMask(features: List<RenderFeature<C>>, environment: GpuEnvironmentState): Boolean {
+        for (i in features.indices) {
+            if (features[i].needsCoveringExemptMask(environment)) return true
+        }
+        return false
+    }
+
     override fun recordCommands(context: C): Unit = with(context) {
         // Debug lines are already in world space (no per-line model matrix), so their MVP is
         // exactly this frame's viewProjection.
         lines.writeMvp(frameIndex, viewProjection.data)
         stats?.countAs(RenderPassKind.SceneOpaque)
+        // Opaque meshes draw first so terrain pixels hidden behind buildings, props, and
+        // characters are hardware-rejected by Early-Z before running terrain fragment fetches.
         shared.recordCommands(
             recorder = recorder,
             primaryPipeline = primaryPipeline,
             grouped = groupedDrawCalls,
         )
+        for (i in opaqueGeometry.indices) opaqueGeometry[i].recordCommands(this)
         // Over the opaque draws, against the depth they wrote, and before anything blends over them.
         shared.recordEdges(recorder, edgeDrawCalls)
+        // Far-plane skyboxes and celestial bodies draw after all opaque geometry with LESS_EQUAL
+        // depth testing so Early-Z rejects every sky pixel covered by terrain or meshes.
+        for (i in afterOpaque.indices) afterOpaque[i].recordCommands(this)
         // World-space blended surfaces (such as water and cloud sheets) paint after opaque geometry
-        // and before transparent scene draws so particles and splashes blend cleanly on top of them.
+        // and sky, and before transparent scene draws so particles and splashes blend over them.
         for (i in beforeTransparent.indices) beforeTransparent[i].recordCommands(this)
         // After the opaque draws, in the same scene pass: a transparent surface must depth-test
         // against opaque geometry already written, and blend over the colour it left behind.
@@ -141,6 +177,8 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
 
     override fun destroy() {
         lines.destroy()
+        for (i in opaqueGeometry.indices) opaqueGeometry[i].destroy()
+        for (i in afterOpaque.indices) afterOpaque[i].destroy()
         for (i in beforeTransparent.indices) beforeTransparent[i].destroy()
     }
 }

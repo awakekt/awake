@@ -47,6 +47,7 @@ class InstanceBuffer(
     private data class FrameResources(
         val buffer: BufferHandle,
         val memory: DeviceMemoryHandle,
+        val mappedPtr: Long,
         val capacity: Int,
     ) {
         /** This slot's buffer as the port's opaque handle -- built once, not per draw. */
@@ -100,7 +101,7 @@ class InstanceBuffer(
         // Copies of a static prop hold still frame after frame: the slot's buffer already has them (#1452).
         val resident = resources.resident
         if (resident != null && resources.residentCount == count && resident.sameBitsAs(floats, count)) return
-        VulkanBuffers.writeBufferMemoryFloats(device, resources.memory.handle, 0, floats, 0, count)
+        VulkanBuffers.writeMappedMemoryFloats(resources.mappedPtr, 0, floats, 0, count)
         uploads += 1
         val target = if (resident != null && resident.size >= count) resident else FloatArray(count).also { resources.resident = it }
         floats.copyInto(target, 0, 0, count)
@@ -133,6 +134,7 @@ class InstanceBuffer(
     fun destroy() {
         (frameResources.filterNotNull() + retired).forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
+            if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.memory.handle)
             VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
         }
     }
@@ -149,11 +151,11 @@ class InstanceBuffer(
         while (capacity < instances) capacity *= 2
         capacity = capacity.coerceAtMost(maxInstances)
         graphicsDevice.instanceBuffersCreated += 1
-        val (buffer, memory) = allocateHostVisibleBuffer((capacity * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
-        return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), capacity).also { frameResources[frameIndex] = it }
+        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer((capacity * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
+        return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), mappedPtr, capacity).also { frameResources[frameIndex] = it }
     }
 
-    private fun allocateHostVisibleBuffer(byteSize: Long): Pair<Long, Long> {
+    private fun allocateHostVisibleBuffer(byteSize: Long): Triple<Long, Long, Long> {
         val buffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(
@@ -173,7 +175,8 @@ class InstanceBuffer(
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return buffer to memory
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        return Triple(buffer, memory, mappedPtr)
     }
 
     /** Stride and capacity constants for the per-instance model-matrix stream. */

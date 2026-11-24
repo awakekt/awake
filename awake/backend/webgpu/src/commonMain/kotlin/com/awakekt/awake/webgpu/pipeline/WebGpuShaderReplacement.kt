@@ -148,9 +148,12 @@ internal class WebGpuShaderReplacement(
         return if (current != null) {
             current.vertex == program.vertex && current.fragment == program.fragment
         } else {
-            spec.vertexShader == program.vertex && spec.fragmentShader == program.fragment
+            spec.matchesProgram(program) || registry.companionSourceOf(spec)?.matchesProgram(program) == true
         }
     }
+
+    private fun PipelineSpec.matchesProgram(program: ShaderProgram): Boolean =
+        vertexShader == program.vertex && fragmentShader == program.fragment
 
     private fun runsUi(target: WebGpuUiPipelineTarget, program: ShaderProgram): Boolean {
         val current = uiRunning[target.identity]

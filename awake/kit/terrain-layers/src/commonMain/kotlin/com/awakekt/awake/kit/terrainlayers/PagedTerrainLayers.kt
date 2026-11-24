@@ -7,6 +7,7 @@ package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.asset.shaderpack.pagedTerrainContentFeature
 import com.awakekt.awake.asset.shaders.aslShaderSet
+import com.awakekt.awake.asset.shaders.withSolidOpaque
 import com.awakekt.awake.asset.terrain.PagedHeightmap
 import com.awakekt.awake.asset.terrain.RawHeightmapCodec
 import com.awakekt.awake.asset.terrain.TerrainPageCoord
@@ -36,7 +37,13 @@ class PagedTerrainLayers private constructor(
 ) {
     private val reader = TerrainPageHeightReader(index, indexPath, assets)
     private val entries = index.pages.associateBy { TerrainPageCoord(it.x, it.z) }
-    val content = pagedTerrainContentFeature(terrain, shaders = aslShaderSet { terrainLayersShader(it, index.controlSlots, true) }, sharedTextures = shared, samplerTextures = mapOf(7 to LAYER_ALBEDO_BINDING))
+    val content = pagedTerrainContentFeature(
+        terrain,
+        shaders = aslShaderSet { terrainLayersShader(it, index.controlSlots, true) }
+            .withSolidOpaque(aslShaderSet { terrainLayersShader(it, index.controlSlots, true, allowDiscard = false) }),
+        sharedTextures = shared,
+        samplerTextures = mapOf(7 to LAYER_ALBEDO_BINDING),
+    )
 
     /** Replaces cell control data and updates the coarse control texels owned by that cell. */
     fun editControl(coord: TerrainPageCoord, control: TerrainControlMap) {

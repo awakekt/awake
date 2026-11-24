@@ -99,6 +99,16 @@ object TerrainClipmapGeometry {
     }
 
     /**
+     * Number of triangle indices in the Level 0 core grid at the start of [buildMergedClipmapMesh].
+     * Core vertices never sit under a finer ring, so callers can draw indices `0 until coreIndexCount`
+     * with a discard-free Early-Z pipeline and the remaining indices with the ring-discard pipeline.
+     */
+    fun coreIndexCount(config: TerrainClipmapConfig): Int =
+        config.ringResolution * config.ringResolution * INDICES_PER_CELL
+
+    private const val INDICES_PER_CELL = 6
+
+    /**
      * Builds the solid $(N \times N)$-cell Level 0 core grid centered at local origin $(0, 0)$.
      */
     fun buildCoreMesh(config: TerrainClipmapConfig): MeshGeometry {

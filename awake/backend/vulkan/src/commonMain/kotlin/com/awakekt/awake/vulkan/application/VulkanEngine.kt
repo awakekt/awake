@@ -171,74 +171,7 @@ open class VulkanEngine(
      */
     private val replacementResolver = VulkanShaderResolver()
 
-    /**
-     * Every pipeline of one companion kind, keyed by vertex format.
-     *
-     * The primary pipeline's companions are keyed under its own [vertexFormat]; the
-     * additional-format requests supply the rest. One helper rather than four near-identical
-     * `buildMap` blocks -- the same collapse `WebGpuEngine.byFormat` already uses.
-     */
-    private fun <P> companionsByFormat(
-        select: (PipelineSet<RenderPipeline>) -> P?,
-    ): Map<VertexFormat, P> = buildMap {
-        requestedPipelines.forEach { (key, requested) ->
-            val format = when {
-                key is PipelineKey.Format -> key.vertexFormat
-                key == PipelineKey.Primary -> vertexFormat
-                else -> return@forEach
-            }
-            select(requested)?.let { put(format, it) }
-        }
-    }
-
-    /**
-     * The per-[VertexFormat] pipeline registry `Renderer` resolves each draw through.
-     *
-     * A pure projection of [requestedPipelines] -- split out of [createBackendResources]
-     * because the mapping is long, entirely mechanical, and has nothing to do with device or
-     * renderer construction.
-     */
-    private fun pipelineTable() = PipelineTable(
-        primary = requestedPipelines.getValue(PipelineKey.Primary).fill,
-        primaryFormat = vertexFormat,
-        // The primary pipeline's FILL is `primary` and must not also appear here -- only the
-        // additional-format requests contribute, unlike the companion maps below.
-        byFormat = requestedPipelines
-            .mapNotNull { (key, requested) ->
-                (key as? PipelineKey.Format)?.let { it.vertexFormat to requested.fill }
-            }
-            .toMap(),
-        wireframeByFormat = companionsByFormat { it.wireframe },
-        edgesByFormat = companionsByFormat { it.edges },
-        transparentByFormat = companionsByFormat { it.transparent },
-        additiveByFormat = companionsByFormat { it.additive },
-        blendedRasterByFormat = companionsByFormat { it.blendedRasterVariants.takeUnless { variants -> variants.isEmpty() } },
-        backCulledByFormat = companionsByFormat { it.backCulled },
-        // Particles belong in particlePipelines, NOT here: `resolveInstanced` reads that map
-        // for them, and folding them in under PositionUv left the field empty on this backend
-        // while WebGPU populated it -- one shared field meaning two different things.
-        instancedByFormat = buildMap {
-            requestedPipelines[PipelineKey.Instanced]?.fill?.let { put(vertexFormat, it) }
-            requestedPipelines.forEach { (key, requested) ->
-                if (key is PipelineKey.InstancedFormat) put(key.vertexFormat, requested.fill)
-            }
-        },
-        particlePipelines = requestedPipelines[PipelineKey.Particle]?.fill
-            ?.let { mapOf(VertexFormat.PositionUv to it) }
-            .orEmpty(),
-        additiveParticlePipelines = requestedPipelines[PipelineKey.Particle]?.additive
-            ?.let { mapOf(VertexFormat.PositionUv to it) }
-            .orEmpty(),
-        skinnedInstancedByFormat = requestedPipelines[PipelineKey.SkinnedInstanced]?.fill
-            ?.let { mapOf(VertexFormat.PositionNormalColorSkin to it) }
-            .orEmpty(),
-        instancedBackCulledByFormat = buildMap {
-            requestedPipelines[PipelineKey.Instanced]?.backCulled?.let { put(vertexFormat, it) }
-            requestedPipelines.forEach { (key, requested) ->
-                if (key is PipelineKey.InstancedFormat) requested.backCulled?.let { put(key.vertexFormat, it) }
-            }
-        },
-    )
+    private fun pipelineTable(): PipelineTable = buildVulkanPipelineTable(vertexFormat, requestedPipelines)
 
     /**
      * The depth-only pre-pass, or null when no shader set was supplied for one.
@@ -410,13 +343,19 @@ open class VulkanEngine(
         return buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.beforeGeometry)
-            content[ContentPaint.OpaqueGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
-            add(contentAttacher.opaqueGeometry)
+            val opaqueGeometry = buildList<RenderFeature<VulkanRenderFrameContext>> {
+                content[ContentPaint.OpaqueGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+                add(contentAttacher.opaqueGeometry)
+            }
+            val afterOpaque = buildList<RenderFeature<VulkanRenderFrameContext>> {
+                content[ContentPaint.AfterOpaque].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+                add(contentAttacher.afterOpaque)
+            }
             val beforeTransparent = buildList<RenderFeature<VulkanRenderFrameContext>> {
                 content[ContentPaint.BeforeTransparent].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
                 add(contentAttacher.beforeTransparent)
             }
-            add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline), beforeTransparent))
+            add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline), beforeTransparent, opaqueGeometry, afterOpaque))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.afterGeometry)
             add(UiRenderFeature(VulkanUiPass()))
@@ -878,4 +817,67 @@ private suspend fun loadShaderPair(
 ): ShaderPair = ShaderPair(
     resolver.resolve(vertex).requireSpirV(),
     resolver.resolve(fragment).requireSpirV(),
+)
+
+private fun <P> Map<PipelineKey, PipelineSet<RenderPipeline>>.companionsByFormat(
+    vertexFormat: VertexFormat,
+    select: (PipelineSet<RenderPipeline>) -> P?,
+): Map<VertexFormat, P> = buildMap {
+    this@companionsByFormat.forEach { (key, requested) ->
+        val format = when {
+            key is PipelineKey.Format -> key.vertexFormat
+            key == PipelineKey.Primary -> vertexFormat
+            else -> return@forEach
+        }
+        select(requested)?.let { put(format, it) }
+    }
+}
+
+private fun Map<PipelineKey, PipelineSet<RenderPipeline>>.instancedMap(
+    vertexFormat: VertexFormat,
+    select: (PipelineSet<RenderPipeline>) -> RenderPipeline?,
+): Map<VertexFormat, RenderPipeline> = buildMap {
+    this@instancedMap[PipelineKey.Instanced]?.let(select)?.let { put(vertexFormat, it) }
+    this@instancedMap.forEach { (key, requested) ->
+        if (key is PipelineKey.InstancedFormat) select(requested)?.let { put(key.vertexFormat, it) }
+    }
+}
+
+private fun buildVulkanPipelineTable(
+    vertexFormat: VertexFormat,
+    requestedPipelines: Map<PipelineKey, PipelineSet<RenderPipeline>>,
+): PipelineTable = PipelineTable(
+    primary = requestedPipelines.getValue(PipelineKey.Primary).fill,
+    primaryFormat = vertexFormat,
+    byFormat = requestedPipelines
+        .mapNotNull { (key, requested) ->
+            (key as? PipelineKey.Format)?.let { it.vertexFormat to requested.fill }
+        }
+        .toMap(),
+    wireframeByFormat = requestedPipelines.companionsByFormat(vertexFormat) { it.wireframe },
+    edgesByFormat = requestedPipelines.companionsByFormat(vertexFormat) { it.edges },
+    transparentByFormat = requestedPipelines.companionsByFormat(vertexFormat) { it.transparent },
+    additiveByFormat = requestedPipelines.companionsByFormat(vertexFormat) { it.additive },
+    blendedRasterByFormat = requestedPipelines.companionsByFormat(vertexFormat) {
+        it.blendedRasterVariants.takeUnless { variants -> variants.isEmpty() }
+    },
+    backCulledByFormat = requestedPipelines.companionsByFormat(vertexFormat) { it.backCulled },
+    instancedByFormat = requestedPipelines.instancedMap(vertexFormat) { it.fill },
+    particlePipelines = requestedPipelines[PipelineKey.Particle]?.fill
+        ?.let { mapOf(VertexFormat.PositionUv to it) }
+        .orEmpty(),
+    additiveParticlePipelines = requestedPipelines[PipelineKey.Particle]?.additive
+        ?.let { mapOf(VertexFormat.PositionUv to it) }
+        .orEmpty(),
+    skinnedInstancedByFormat = requestedPipelines[PipelineKey.SkinnedInstanced]?.fill
+        ?.let { mapOf(VertexFormat.PositionNormalColorSkin to it) }
+        .orEmpty(),
+    instancedBackCulledByFormat = requestedPipelines.instancedMap(vertexFormat) { it.backCulled },
+    solidByFormat = requestedPipelines.companionsByFormat(vertexFormat) { it.solidFill },
+    solidBackCulledByFormat = requestedPipelines.companionsByFormat(vertexFormat) { it.solidBackCulled },
+    solidInstancedByFormat = requestedPipelines.instancedMap(vertexFormat) { it.solidFill },
+    solidInstancedBackCulledByFormat = requestedPipelines.instancedMap(vertexFormat) { it.solidBackCulled },
+    solidSkinnedInstancedByFormat = requestedPipelines[PipelineKey.SkinnedInstanced]?.solidFill
+        ?.let { mapOf(VertexFormat.PositionNormalColorSkin to it) }
+        .orEmpty(),
 )

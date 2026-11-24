@@ -43,14 +43,15 @@ class AlphaInstanceBuffer(
     private data class FrameResources(
         val buffer: BufferHandle,
         val memory: DeviceMemoryHandle,
+        val mappedPtr: Long,
     ) {
         /** This slot's buffer as the port's opaque handle -- built once, not per draw. */
         val binding = VulkanBufferBinding(buffer.handle)
     }
 
     private val frameResources: Array<FrameResources> = Array(framesInFlight) {
-        val (buffer, memory) = allocateHostVisibleBuffer((maxInstances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
-        FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory))
+        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer((maxInstances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
+        FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), mappedPtr)
     }
 
     // Reused across frames so a steady instance count allocates nothing per frame -- same
@@ -79,7 +80,7 @@ class AlphaInstanceBuffer(
     fun update(frameIndex: Int, colors: List<Vec4>) {
         val count = packer.packSlice(colors, maxInstances)
         if (count == 0) return
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, packer.buffer, 0, count)
+        VulkanBuffers.writeMappedMemoryFloats(resourcesFor(frameIndex).mappedPtr, 0, packer.buffer, 0, count)
         holdsWhite[frameIndex] = false
     }
 
@@ -91,7 +92,7 @@ class AlphaInstanceBuffer(
     fun fillWhite(frameIndex: Int) {
         if (holdsWhite[frameIndex]) return
         val white = FloatArray(maxInstances * FLOATS_PER_INSTANCE) { 1f }
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, white)
+        VulkanBuffers.writeMappedMemoryFloats(resourcesFor(frameIndex).mappedPtr, 0, white)
         holdsWhite[frameIndex] = true
     }
 
@@ -123,6 +124,7 @@ class AlphaInstanceBuffer(
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
+            if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.memory.handle)
             VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
         }
     }
@@ -134,7 +136,7 @@ class AlphaInstanceBuffer(
         return frameResources[frameIndex]
     }
 
-    private fun allocateHostVisibleBuffer(byteSize: Long): Pair<Long, Long> {
+    private fun allocateHostVisibleBuffer(byteSize: Long): Triple<Long, Long, Long> {
         val buffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(
@@ -154,7 +156,8 @@ class AlphaInstanceBuffer(
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return buffer to memory
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        return Triple(buffer, memory, mappedPtr)
     }
 
     /** Binding index and stride constants for the per-instance colour stream. */

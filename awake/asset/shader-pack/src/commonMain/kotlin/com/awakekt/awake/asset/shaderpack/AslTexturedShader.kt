@@ -89,15 +89,22 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * upgrade path unchanged: MikkTSpace tangents at load time plus a tangent vertex slot.
  */
 @Suppress("LongMethod")
-private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: Boolean = false): AslShaderDefinition =
+private fun textured(
+    clipSpace: ClipSpace,
+    instanced: Boolean = false,
+    tinted: Boolean = false,
+    allowDiscard: Boolean = true,
+): AslShaderDefinition =
     shader(
-        if (tinted) {
-            "instanced_textured_tinted"
-        } else if (instanced) {
-            "instanced_textured"
-        } else {
-            "textured"
-        },
+        (
+            if (tinted) {
+                "instanced_textured_tinted"
+            } else if (instanced) {
+                "instanced_textured"
+            } else {
+                "textured"
+            }
+            ) + if (allowDiscard) "" else "_solid",
     ) {
         val u = uniformBlock(
             "Uniforms",
@@ -148,7 +155,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
         val normal by out.varying(GpuDataShape.Vec3, location = 1)
         val uv by out.varying(GpuDataShape.Vec2, location = 2)
         val worldPos by out.varying(GpuDataShape.Vec3, location = 3)
-        val instanceFade = if (tinted) out.namedVarying("instanceFade", GpuDataShape.Float, location = 4) else null
+        val instanceFade = if (tinted && allowDiscard) out.namedVarying("instanceFade", GpuDataShape.Float, location = 4) else null
 
         vertex {
             val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
@@ -156,11 +163,11 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
             // Instanced, each copy's model comes from the instance buffer and the block's is identity.
             val drawModel = if (instanced) instanceModelMatrixAfter(VertexFormat.PositionNormalColorUv) else model
             out.position set (viewProjection * (drawModel * vec4(inPosition, 1f.lit)))
-            if (instanceFade != null) {
+            if (tinted) {
                 // One vec4 per copy after its matrix (`PipelineVariant.InstancedTinted`): rgb tints it, a fades it.
                 val tint = let("instanceTint", namedInput("inTint", GpuDataShape.Vec4, INSTANCE_TINT_LOCATION))
                 color set ins.input(VertexSemantic.Color) * tint.xyz
-                instanceFade set tint.w
+                instanceFade?.let { it set tint.w }
             } else {
                 color set ins.input(VertexSemantic.Color)
             }
@@ -374,19 +381,31 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
                 )
                 assign(finalColor, debugViewColor(debugView, cameraPosition, surface, shaded))
             }
-            // Coverage is applied after every derivative, including those used by debug views.
-            val coverage = materialCoverage(sourceAlpha, pbrFactors.z, finalColor.a)
-            // exposure.y is the share of the draw's pixels to discard (1 - its fade); a copy's own fade thins what is left.
-            ditherFade(if (instanceFade != null) 1f.lit - (1f.lit - exposure.y) * instanceFade else exposure.y)
-            colorOutput(vec4(finalColor.rgb, coverage))
+            if (allowDiscard) {
+                // Coverage is applied after every derivative, including those used by debug views.
+                val coverage = materialCoverage(sourceAlpha, pbrFactors.z, finalColor.a)
+                // exposure.y is the share of the draw's pixels to discard (1 - its fade); a copy's own fade thins what is left.
+                ditherFade(if (instanceFade != null) 1f.lit - (1f.lit - exposure.y) * instanceFade else exposure.y)
+                colorOutput(vec4(finalColor.rgb, coverage))
+            } else {
+                // Discard-free opaque path: preserves hardware Early-Z / FPK and skips fwidth + Bayer ALU.
+                colorOutput(finalColor)
+            }
         }
     }
 
 /** `textured` for [clipSpace]: the shadow lookup's V axis follows the backend, as in lit_shadow. */
 fun texturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace)
 
+/** Discard-free opaque companion of [texturedShader] for hardware Early-Z / Forward Pixel Kill. */
+fun texturedSolidShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, allowDiscard = false)
+
 /** `textured` drawing many copies of one mesh, each placed by its own instance matrix. */
 fun instancedTexturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, instanced = true)
+
+/** Discard-free opaque companion of [instancedTexturedShader]. */
+fun instancedTexturedSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
+    textured(clipSpace, instanced = true, allowDiscard = false)
 
 /**
  * [instancedTexturedShader] reading a tint and fade per copy after its matrix, for a pipeline built
@@ -394,6 +413,10 @@ fun instancedTexturedShader(clipSpace: ClipSpace): AslShaderDefinition = texture
  * draw as one, each as it would alone.
  */
 fun instancedTexturedTintedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, instanced = true, tinted = true)
+
+/** Discard-free opaque companion of [instancedTexturedTintedShader] when no instance fades below 1.0. */
+fun instancedTexturedTintedSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
+    textured(clipSpace, instanced = true, tinted = true, allowDiscard = false)
 
 /** The instance tint's location: after PositionNormalColorUv's four attributes and the matrix's four columns. */
 private const val INSTANCE_TINT_LOCATION = 8

@@ -16,6 +16,7 @@ import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
@@ -53,10 +54,11 @@ fun celestialContentFeature(
         name = "celestial",
         spec = shaders.stagesFor(backend).spec(
             vertexFormat = VertexFormat.None,
-            variant = if (additive) PipelineVariant.BackgroundAdditive else PipelineVariant.BackgroundBlended,
+            variant = if (additive) PipelineVariant.SkyAdditive else PipelineVariant.SkyBlended,
             uniforms = CelestialUniformLayout,
         ),
         textures = mapOf(SUN_BINDING to (sunTexture ?: BLANK), MOON_BINDING to (moonTexture ?: BLANK)),
+        paint = ContentPaint.AfterOpaque,
     ) { pipeline, uniforms, _ -> CelestialRenderFeature(pipeline, uniforms, look, sunTexture != null, moonTexture != null) }
 }
 

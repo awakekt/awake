@@ -90,6 +90,29 @@ actual object VulkanBuffers {
      */
     actual external fun readBufferMemoryBytes(device: Long, memory: Long, offset: Long, size: Int): ByteArray
 
+    /** Persistently maps [size] bytes of host-visible [memory] starting at [offset]. */
+    actual external fun vkMapMemory(device: Long, memory: Long, offset: Long, size: Long): Long
+
+    /** Unmaps host-visible [memory] previously mapped with [vkMapMemory]. */
+    actual external fun vkUnmapMemory(device: Long, memory: Long)
+
+    /** Copies [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    actual external fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray)
+
+    /** Copies [count] floats of [data] from [dataOffset] into persistently mapped memory. */
+    actual fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int) {
+        requireFloatRange(data.size, dataOffset, count)
+        writeMappedMemoryFloatRange(mappedPtr, offset, data, dataOffset, count)
+    }
+
+    private external fun writeMappedMemoryFloatRange(mappedPtr: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int)
+
+    /** Copies [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    actual external fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray)
+
+    /** Reads [size] bytes from persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    actual external fun readMappedMemoryBytes(mappedPtr: Long, offset: Long, size: Int): ByteArray
+
     /** `bindingCount` is implicit (`buffers.size`); `offsets` must be the same size. */
     actual external fun vkCmdBindVertexBuffers(
         commandBuffer: Long,

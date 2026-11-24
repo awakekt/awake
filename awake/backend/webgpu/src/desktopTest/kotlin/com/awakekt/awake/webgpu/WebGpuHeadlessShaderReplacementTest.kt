@@ -100,6 +100,30 @@ class WebGpuHeadlessShaderReplacementTest {
     }
 
     @Test
+    fun replacingPrimaryShaderAlsoSwapsBindingCompatibleCompanionPipeline() {
+        val fixture = shared()
+        val replacement = replacement(fixture)
+        val redCompanion = runBlocking {
+            fixture.attacher.attachContentFeature(squareWithCompanion("red-companion", RED_SHADER, RED_SOLID_SHADER))
+        }
+        val blue = runBlocking { fixture.attacher.attachContentFeature(square("blue", BLUE_SHADER)) }
+        try {
+            assertEquals(RED to BLUE, fixture.squares())
+
+            fixture.draw()
+            assertEquals(2, runBlocking { replacement.replace(RED_SHADER.program(), GREEN_SHADER.program()) })
+            assertEquals(GREEN to BLUE, fixture.squares(), "replacing the primary shader must also redraw its companion pipeline")
+
+            fixture.draw()
+            assertEquals(2, runBlocking { replacement.replace(GREEN_SHADER.program(), RED_SHADER.program()) })
+            assertEquals(RED to BLUE, fixture.squares(), "restoring the primary shader must restore its companion pipeline")
+        } finally {
+            redCompanion.detach()
+            blue.detach()
+        }
+    }
+
+    @Test
     fun shadersThatDoNotCompileAreRefusedAndTheOldOnesKeepDrawing() = withRedAndBlue { fixture ->
         val broken = ShaderProgram(
             ShaderSource.InlineText("fn broken( {", "vertexMain"),
@@ -408,8 +432,12 @@ class WebGpuHeadlessShaderReplacementTest {
                 maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
                 renderFeatures = listOf(
                     attacher.beforeGeometry,
-                    attacher.opaqueGeometry,
-                    OpaqueRenderFeature(WebGpuLinePass(linePipeline)),
+                    OpaqueRenderFeature(
+                        WebGpuLinePass(linePipeline),
+                        beforeTransparent = listOf(attacher.beforeTransparent),
+                        opaqueGeometry = listOf(attacher.opaqueGeometry),
+                        afterOpaque = listOf(attacher.afterOpaque),
+                    ),
                     attacher.afterGeometry,
                     UiRenderFeature(WebGpuUiPass()),
                 ),
@@ -464,6 +492,7 @@ class WebGpuHeadlessShaderReplacementTest {
         private fun rgba(r: Float, g: Float, b: Float) = vec4(r.lit, g.lit, b.lit, 1f.lit)
 
         val RED_SHADER = solidShader("red", RED, x = -0.5f)
+        val RED_SOLID_SHADER = solidShader("red_solid", RED, x = -0.5f)
         val BLUE_SHADER = solidShader("blue", BLUE, x = 0.5f)
         val GREEN_SHADER = solidShader("green", GREEN, x = -0.5f)
         val YELLOW_SHADER = solidShader("yellow", YELLOW, x = -0.5f)
@@ -501,6 +530,24 @@ class WebGpuHeadlessShaderReplacementTest {
                 name = name,
                 spec = stages.spec(vertexFormat = VertexFormat.None, variant = variant, uniforms = Layout),
             ) { pipeline, uniforms, _ -> SquareFeature(pipeline, uniforms) }
+        }
+
+        private fun squareWithCompanion(
+            name: String,
+            primary: ShaderStages,
+            companion: ShaderStages,
+            variant: PipelineVariant = PipelineVariant.Overlay,
+        ) = ContentFeatureSource {
+            ContentFeature(
+                name = name,
+                spec = primary.spec(vertexFormat = VertexFormat.None, variant = variant, uniforms = Layout),
+                images = emptyMap(),
+                alternateSpec = companion.spec(vertexFormat = VertexFormat.None, variant = variant, uniforms = Layout),
+                buildWithAlternate = { _, alternatePipeline, uniforms, _ ->
+                    SquareFeature(requireNotNull(alternatePipeline), uniforms)
+                },
+                build = { pipeline, uniforms, _ -> SquareFeature(pipeline, uniforms) },
+            )
         }
 
         private class SquareFeature(

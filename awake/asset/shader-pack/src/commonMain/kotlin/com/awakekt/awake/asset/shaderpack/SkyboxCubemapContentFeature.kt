@@ -14,6 +14,7 @@ import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
@@ -47,10 +48,11 @@ fun skyboxCubemapContentFeature(
             name = "skybox_cubemap",
             spec = shaders.stagesFor(backend).spec(
                 vertexFormat = VertexFormat.None,
-                variant = PipelineVariant.Background,
+                variant = PipelineVariant.Sky,
                 uniforms = SkyboxCubemapUniformLayout,
             ),
             textures = mapOf(CUBEMAP_BINDING to cubemap, BLEND_CUBEMAP_BINDING to blendTo),
+            paint = ContentPaint.AfterOpaque,
         ) { pipeline, uniforms, _ -> SkyboxCubemapRenderFeature(pipeline, uniforms, look) }
     }
 }

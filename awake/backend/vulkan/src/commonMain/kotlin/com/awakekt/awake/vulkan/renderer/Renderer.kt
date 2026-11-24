@@ -239,16 +239,36 @@ class Renderer internal constructor(
      */
     internal var presentedFrameTiming = true
 
+    /**
+     * Whether presented frames emit intermediate per-part `BOTTOM_OF_PIPE` timestamps. Defaults to
+     * `false` on mobile TBDR GPUs (where mid-frame `BOTTOM_OF_PIPE` drains stall tile overlap) and
+     * automatically arms for a window whenever [frameGpuTiming] is read by a diagnostics overlay.
+     */
+    internal var detailedPartTiming: Boolean = graphicsDevice.deviceClass != GpuDeviceClass.Mobile
+    private var detailedPartTimingWindow: Int = 0
+
+    internal fun consumeDetailedPartTiming(): Boolean = when {
+        detailedPartTiming -> true
+        detailedPartTimingWindow > 0 -> {
+            detailedPartTimingWindow -= 1
+            true
+        }
+        else -> false
+    }
+
     /** What the recording thread waited on this frame: the GPU's fences and the swapchain (#1709). */
     internal val frameWaits = FrameWaits()
 
     /** Built when read, from the timer's last parts and the waits: a host that never reads it pays nothing. */
     override val frameGpuTiming: com.awakekt.awake.render.renderer.FrameGpuTiming
-        get() = com.awakekt.awake.render.renderer.FrameGpuTiming(
-            partMs = gpuFrameTimer?.lastPartMs?.copyOf() ?: FloatArray(com.awakekt.awake.render.renderer.GpuFramePart.entries.size) { Float.NaN },
-            frameResourceWaitMs = frameWaits.lastFenceMs,
-            acquireWaitMs = frameWaits.lastAcquireMs,
-        )
+        get() {
+            if (!detailedPartTiming) detailedPartTimingWindow = DETAILED_TIMING_WINDOW_FRAMES
+            return com.awakekt.awake.render.renderer.FrameGpuTiming(
+                partMs = gpuFrameTimer?.lastPartMs?.copyOf() ?: FloatArray(com.awakekt.awake.render.renderer.GpuFramePart.entries.size) { Float.NaN },
+                frameResourceWaitMs = frameWaits.lastFenceMs,
+                acquireWaitMs = frameWaits.lastAcquireMs,
+            )
+        }
 
     override val frameStats: RenderFrameStats?
         get() = statsCounter.latest
@@ -423,7 +443,8 @@ class Renderer internal constructor(
         transparent: Boolean = false,
         additive: Boolean = false,
         depthWrite: Boolean = false,
-    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe, additive, depthWrite)
+        solidOpaque: Boolean = false,
+    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe, additive, depthWrite, solidOpaque)
 
     internal val device get() = graphicsDevice.device
     internal val physicalDevice get() = graphicsDevice.physicalDevice
@@ -724,13 +745,15 @@ class Renderer internal constructor(
         drawCalls: List<PreparedDraw>,
         subPasses: List<com.awakekt.awake.render.command.GpuSubPass>,
         environment: GpuEnvironmentState,
-    ) {
-        val feature = depthPrePass ?: return
-        if (!environment.shadowsEnabled || subPasses.isEmpty()) {
+    ): Boolean {
+        val feature = depthPrePass ?: return false
+        return if (!environment.shadowsEnabled || subPasses.isEmpty()) {
             feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
-            return
+            false
+        } else {
+            feature.recordCommands(commandBuffer, frameIndex, subPasses, renderPipeline.vertexFormat, environment)
+            true
         }
-        feature.recordCommands(commandBuffer, frameIndex, subPasses, renderPipeline.vertexFormat, environment)
     }
 
     /**
@@ -746,11 +769,12 @@ class Renderer internal constructor(
         drawCalls: List<PreparedDraw>,
         camera: GpuShadowCascadeData,
         environment: GpuEnvironmentState? = null,
-    ) {
-        val feature = sceneDepthPass ?: return
+    ): Boolean {
+        val feature = sceneDepthPass ?: return false
         // One "cascade": the camera's own view-projection. The pass machinery is the same, and
         // saying so here is smaller than a second recording path that differs only in count.
         feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, camera, environment)
+        return true
     }
 
     private val filteredMasks = ArrayList<GpuSubPass>(MASK_LAYER_COUNT)
@@ -768,13 +792,15 @@ class Renderer internal constructor(
      * reads it (e.g. when depth fog is absent or hidden), and clears previously-dirty layers once
      * when a frame masks nothing so idle frames pay zero mask passes and zero barriers.
      */
-    internal fun recordMaskPass(commandBuffer: Long, frameIndex: Int, masks: List<GpuSubPass>, environment: GpuEnvironmentState) {
-        val feature = maskPass ?: return
+    internal fun recordMaskPass(commandBuffer: Long, frameIndex: Int, masks: List<GpuSubPass>, environment: GpuEnvironmentState): Boolean {
+        val feature = maskPass ?: return false
         val effective = filterMasksForFrame(masks, environment)
-        if (effective.isNotEmpty()) {
+        return if (effective.isNotEmpty()) {
             feature.recordCommands(commandBuffer, frameIndex, effective, renderPipeline.vertexFormat, environment)
+            true
         } else {
             feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat, clearDirty = true)
+            false
         }
     }
 
@@ -861,6 +887,7 @@ class Renderer internal constructor(
      */
     companion object {
         internal const val DEPTH_FORMAT = 126 // VkFormat.VK_FORMAT_D32_SFLOAT.value
+        internal const val DETAILED_TIMING_WINDOW_FRAMES = 120
 
         /**
          * How many small primitives to batch into one draw run, and the size its buffers start

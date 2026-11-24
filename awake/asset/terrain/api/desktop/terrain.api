@@ -242,6 +242,7 @@ public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometr
 	public final fun buildMergedClipmapMesh (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public static synthetic fun buildMergedClipmapMesh$default (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public final fun buildRingMesh (ILcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
+	public final fun coreIndexCount (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)I
 }
 
 public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker {

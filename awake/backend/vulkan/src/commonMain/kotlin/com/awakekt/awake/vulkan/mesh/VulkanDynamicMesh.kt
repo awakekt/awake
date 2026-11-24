@@ -29,6 +29,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
  * the scratch has its sizes. The vertex buffers are sized to a power of two so every window fits. The
  * index buffer never changes and is written once.
  */
+@Suppress("UnusedPrivateProperty") // scratch retained for constructor compatibility; persistent mapping writes current directly.
 internal class VulkanDynamicMesh(
     private val graphicsDevice: GraphicsDevice,
     override val format: VertexFormat,
@@ -74,7 +75,14 @@ internal class VulkanDynamicMesh(
         val vertexBytes = bufferFloats.toLong() * Float.SIZE_BYTES
         // Every slot starts wholly out of date, so its first prepare writes the zeros its memory lacks.
         slots = Array(framesInFlight) {
-            Slot(HostBuffer.allocate(graphicsDevice, vertexBytes, VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+            Slot(
+                HostBuffer.allocate(
+                    graphicsDevice,
+                    vertexBytes,
+                    VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                    persistentMap = true,
+                ),
+            )
         }
         val indexBytes = indices.toByteArrayLE()
         indexBuffer = HostBuffer.allocate(graphicsDevice, indexBytes.size.toLong(), VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
@@ -101,10 +109,13 @@ internal class VulkanDynamicMesh(
         require(frameIndex in slots.indices) { "Frame index $frameIndex is outside 0..${slots.lastIndex}." }
         val slot = slots[frameIndex]
         if (slot.dirtyEnd > slot.dirtyStart) {
-            val window = scratch.atLeast(slot.dirtyEnd - slot.dirtyStart)
-            val windowStart = minOf(slot.dirtyStart, bufferFloats - window.size)
-            current.copyInto(window, startIndex = windowStart, endIndex = windowStart + window.size)
-            VulkanBuffers.writeBufferMemoryFloats(device, slot.vertices.memory, windowStart.toLong() * Float.SIZE_BYTES, window)
+            VulkanBuffers.writeMappedMemoryFloats(
+                slot.vertices.mappedPtr,
+                slot.dirtyStart.toLong() * Float.SIZE_BYTES,
+                current,
+                dataOffset = slot.dirtyStart,
+                count = slot.dirtyEnd - slot.dirtyStart,
+            )
             slot.dirtyStart = bufferFloats
             slot.dirtyEnd = 0
         }

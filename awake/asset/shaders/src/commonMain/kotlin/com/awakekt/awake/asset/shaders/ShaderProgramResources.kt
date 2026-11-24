@@ -92,11 +92,27 @@ class ShaderStages private constructor(
 /** A shader program described once per backend -- [vulkan]/[webGpu] each resolve independently
  * (Vulkan wants separate `.vert.spv`/`.frag.spv` files, WebGPU wants one `.wgsl` file read for
  * both stages), so a caller building an `AwakeApplication` for either backend just reads its own
- * half; the other is never touched. */
+ * half; the other is never touched.
+ *
+ * [solidOpaque] optionally carries a discard-free companion shader set with the exact same
+ * bindings and vertex layout so opaque draws without alpha masking or dither fade keep hardware
+ * Early-Z and Forward Pixel Kill active on mobile tile GPUs. */
 data class ShaderSet(
     val vulkan: ShaderStages,
     val webGpu: ShaderStages,
-)
+    val solidOpaque: ShaderSet? = null,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(vulkan: ShaderStages, webGpu: ShaderStages) : this(vulkan, webGpu, null)
+
+    /** Binary-compatible copy before [solidOpaque]. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(vulkan: ShaderStages = this.vulkan, webGpu: ShaderStages = this.webGpu): ShaderSet =
+        ShaderSet(vulkan, webGpu, solidOpaque)
+}
+
+/** Attaches a discard-free [solid] companion shader set to this shader set. */
+fun ShaderSet.withSolidOpaque(solid: ShaderSet): ShaderSet = copy(solidOpaque = solid)
 
 /** Escape hatch for a shader whose two backends genuinely need different stage sources (not just
  * different file paths under the same naming convention -- see [shaderSet] below for that common

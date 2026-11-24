@@ -35,7 +35,7 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
  * starts with its whole MVP binds, so the shared camera-depth shader draws it as before.
  */
 internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
-    private class Entry(val buffer: Long, val memory: Long) {
+    private class Entry(val buffer: Long, val memory: Long, val mappedPtr: Long) {
         var lastWritten: FloatArray? = null
 
         fun matchesLastWritten(floats: FloatArray): Boolean {
@@ -89,7 +89,7 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
     private fun writeEntry(target: Entry, floats: FloatArray) {
         if (!target.matchesLastWritten(floats)) {
             target.recordWritten(floats)
-            VulkanBuffers.writeBufferMemoryFloats(graphicsDevice.device, target.memory, 0L, floats)
+            VulkanBuffers.writeMappedMemoryFloats(target.mappedPtr, 0L, floats)
         }
     }
 
@@ -100,7 +100,7 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
             val created = create()
             // The identity block is written here, once, and never again.
             if (KINDS[entries.size % KINDS.size] == FrameBlockKind.Identity) {
-                VulkanBuffers.writeBufferMemoryFloats(graphicsDevice.device, created.memory, 0L, identityFrameBlock())
+                VulkanBuffers.writeMappedMemoryFloats(created.mappedPtr, 0L, identityFrameBlock())
             }
             entries += created
         }
@@ -127,7 +127,8 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
             ),
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0L)
-        return Entry(buffer, memory)
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, BYTES)
+        return Entry(buffer, memory, mappedPtr)
     }
 
     /** Frees every buffer; the device must be idle. */
@@ -135,6 +136,7 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
         val device = graphicsDevice.device
         entries.forEach {
             VulkanBuffers.vkDestroyBuffer(device, it.buffer)
+            if (it.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, it.memory)
             VulkanBuffers.vkFreeMemory(device, it.memory)
         }
         entries.clear()

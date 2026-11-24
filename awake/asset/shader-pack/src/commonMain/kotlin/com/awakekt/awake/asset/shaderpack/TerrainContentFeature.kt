@@ -84,6 +84,21 @@ fun terrainContentFeature(
             "0 until $TERRAIN_SURFACE_FIRST_BINDING."
     }
     val encoded = heightmap.encodeForSampling()
+    val coreIndices = TerrainClipmapGeometry.coreIndexCount(config)
+    fun buildTerrain(pipeline: PipelineHandle, corePipeline: PipelineHandle?, uniforms: UniformBlock, geometry: ContentGeometry?) =
+        TerrainRenderFeature(
+            pipeline = pipeline,
+            uniforms = uniforms,
+            geometry = requireNotNull(geometry) { "The terrain feature declares geometry, so the engine must have uploaded it." },
+            tracker = TerrainClipmapTracker(config, heightmap),
+            heightScale = encoded.scale,
+            heightBias = encoded.bias,
+            sampling = encoded.sampling,
+            isVisible = isVisible,
+            origin = origin,
+            corePipeline = corePipeline,
+            coreIndexCount = if (corePipeline != null) coreIndices else 0,
+        )
     return ContentFeatureSource { backend ->
         ContentFeature(
             name = "terrain",
@@ -100,21 +115,14 @@ fun terrainContentFeature(
             textures = surfaceTextures + (HEIGHTMAP_BINDING to encoded.texture),
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
             paint = ContentPaint.OpaqueGeometry,
-        ) { pipeline, uniforms, geometry ->
-            TerrainRenderFeature(
-                pipeline = pipeline,
-                uniforms = uniforms,
-                geometry = requireNotNull(geometry) {
-                    "The terrain feature declares geometry, so the engine must have uploaded it."
-                },
-                tracker = TerrainClipmapTracker(config, heightmap),
-                heightScale = encoded.scale,
-                heightBias = encoded.bias,
-                sampling = encoded.sampling,
-                isVisible = isVisible,
-                origin = origin,
-            )
-        }
+            images = emptyMap(),
+            alternateSpec = shaders.solidOpaque?.stagesFor(backend)?.spec(
+                vertexFormat = VertexFormat.PositionNormalColorUv,
+                uniforms = TerrainUniformLayout.Draw,
+            ),
+            buildWithAlternate = ::buildTerrain,
+            build = { pipeline, uniforms, geometry -> buildTerrain(pipeline, null, uniforms, geometry) },
+        )
     }
 }
 
@@ -215,6 +223,10 @@ class TerrainRenderFeature(
     /** Consulted per frame; see [terrainContentFeature]. */
     private val isVisible: () -> Boolean = { true },
     private val pagedTerrain: com.awakekt.awake.terrain.PagedTerrain? = null,
+    /** Optional discard-free pipeline for Level 0 core indices `[0, coreIndexCount)` (Early-Z / FPK). */
+    private val corePipeline: PipelineHandle?,
+    /** Number of Level 0 core triangle indices at the start of [geometry]'s index buffer. */
+    private val coreIndexCount: Int,
     /** Where the heightmap's centre lies in the world, read every frame; see [terrainContentFeature]. */
     private val origin: () -> Vec3f = { AT_ORIGIN },
 ) : RenderFeature<RenderFrameContext>,
@@ -231,7 +243,21 @@ class TerrainRenderFeature(
         sampling: FloatArray,
         isVisible: () -> Boolean = { true },
         pagedTerrain: com.awakekt.awake.terrain.PagedTerrain? = null,
-    ) : this(pipeline, uniforms, geometry, tracker, heightScale, heightBias, sampling, isVisible, pagedTerrain, { AT_ORIGIN })
+    ) : this(pipeline, uniforms, geometry, tracker, heightScale, heightBias, sampling, isVisible, pagedTerrain, null, 0, { AT_ORIGIN })
+
+    /** A terrain feature drawn through a single [pipeline], preserving trailing-lambda [origin] construction. */
+    constructor(
+        pipeline: PipelineHandle,
+        uniforms: UniformBlock,
+        geometry: ContentGeometry,
+        tracker: TerrainClipmapTracker,
+        heightScale: Float,
+        heightBias: Float,
+        sampling: FloatArray,
+        isVisible: () -> Boolean = { true },
+        pagedTerrain: com.awakekt.awake.terrain.PagedTerrain? = null,
+        origin: () -> Vec3f = { AT_ORIGIN },
+    ) : this(pipeline, uniforms, geometry, tracker, heightScale, heightBias, sampling, isVisible, pagedTerrain, null, 0, origin)
 
     override val pass = RenderPassSlot.Scene
 
@@ -303,12 +329,26 @@ class TerrainRenderFeature(
             }
         }
         val recorder: CommandRecorder = context.recorder
-        recorder.bindPipeline(pipeline)
-        recorder.bindMaterial(BindingSemantic.Material, uniforms.binding(context.frameIndex))
-        context.engineBinding(pipeline, BindingSemantic.ShadowDepth)?.let { recorder.bindMaterial(BindingSemantic.ShadowDepth, it) }
+        val materialBinding = uniforms.binding(context.frameIndex)
         recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
         geometry.indexBuffer?.let { recorder.bindIndexBuffer(it) }
-        recorder.drawIndexed(geometry.elementCount)
+        val splitCore = corePipeline != null && coreIndexCount in 1 until geometry.elementCount
+        if (splitCore) {
+            val core = requireNotNull(corePipeline)
+            recorder.bindPipeline(core)
+            recorder.bindMaterial(BindingSemantic.Material, materialBinding)
+            context.engineBinding(core, BindingSemantic.ShadowDepth)?.let { recorder.bindMaterial(BindingSemantic.ShadowDepth, it) }
+            recorder.drawIndexed(coreIndexCount, 1, 0)
+            recorder.bindPipeline(pipeline)
+            recorder.bindMaterial(BindingSemantic.Material, materialBinding)
+            context.engineBinding(pipeline, BindingSemantic.ShadowDepth)?.let { recorder.bindMaterial(BindingSemantic.ShadowDepth, it) }
+            recorder.drawIndexed(geometry.elementCount - coreIndexCount, 1, coreIndexCount)
+        } else {
+            recorder.bindPipeline(pipeline)
+            recorder.bindMaterial(BindingSemantic.Material, materialBinding)
+            context.engineBinding(pipeline, BindingSemantic.ShadowDepth)?.let { recorder.bindMaterial(BindingSemantic.ShadowDepth, it) }
+            recorder.drawIndexed(geometry.elementCount)
+        }
     }
 
     override fun destroy() = Unit

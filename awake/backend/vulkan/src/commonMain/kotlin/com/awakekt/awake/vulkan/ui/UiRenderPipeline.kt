@@ -163,10 +163,18 @@ class UiRenderPipeline(
         mutableListOf<TextureDescriptorSlot>()
     }
 
-    private data class TextureDescriptorSlot(
+    private class TextureDescriptorSlot(
         val descriptorPool: Long,
         val descriptorSet: Long,
-    )
+    ) {
+        var boundImageView: Long = 0L
+        var boundSampler: Long = 0L
+        var boundVersion: Long = 0L
+    }
+
+    /** Descriptor set writes performed by [bindMaterial], for tests verifying steady-state caching. */
+    internal var textureDescriptorWrites: Long = 0L
+        private set
 
     /** One font's descriptor set: its atlas, and a uniform block of its own carrying its `fontInfo`. */
     private class FontSlot(
@@ -469,28 +477,54 @@ class UiRenderPipeline(
      * @param sampler The sampler to read the image with.
      * @param imageView The image view to draw.
      */
-    fun bindMaterial(commandBuffer: Long, frameIndex: Int, drawSlotIndex: Int, sampler: Long, imageView: Long) {
+    fun bindMaterial(commandBuffer: Long, frameIndex: Int, drawSlotIndex: Int, sampler: Long, imageView: Long) =
+        bindMaterial(commandBuffer, frameIndex, drawSlotIndex, sampler, imageView, version = 0L)
+
+    /**
+     * Binds [sampler]/[imageView] using a monotonic [version] tag from [GraphicsDevice] so steady-state
+     * UI texture slots skip redundant `vkUpdateDescriptorSetImage` JNI/driver writes while remaining
+     * immune to recycled native Vulkan handles. Passing `version <= 0L` always refreshes the descriptor.
+     */
+    @Suppress("LongParameterList")
+    internal fun bindMaterial(
+        commandBuffer: Long,
+        frameIndex: Int,
+        drawSlotIndex: Int,
+        sampler: Long,
+        imageView: Long,
+        version: Long,
+    ) {
         val slot = descriptorSlot(frameIndex, drawSlotIndex)
-        VulkanDescriptors.vkUpdateDescriptorSetImage(
-            device,
-            slot.descriptorSet,
-            1,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            VkDescriptorImageInfo(
-                sampler = 0,
-                imageView = imageView,
-            ),
-        )
-        VulkanDescriptors.vkUpdateDescriptorSetImage(
-            device,
-            slot.descriptorSet,
-            2,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
-            VkDescriptorImageInfo(
-                sampler = sampler,
-                imageView = 0,
-            ),
-        )
+        val cached = version > 0L &&
+            slot.boundVersion == version &&
+            slot.boundImageView == imageView &&
+            slot.boundSampler == sampler
+        if (!cached) {
+            VulkanDescriptors.vkUpdateDescriptorSetImage(
+                device,
+                slot.descriptorSet,
+                1,
+                VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                VkDescriptorImageInfo(
+                    sampler = 0,
+                    imageView = imageView,
+                ),
+            )
+            VulkanDescriptors.vkUpdateDescriptorSetImage(
+                device,
+                slot.descriptorSet,
+                2,
+                VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
+                VkDescriptorImageInfo(
+                    sampler = sampler,
+                    imageView = 0,
+                ),
+            )
+            slot.boundImageView = imageView
+            slot.boundSampler = sampler
+            slot.boundVersion = version
+            textureDescriptorWrites += 1
+        }
         Vulkan.vkCmdBindPipeline(
             commandBuffer,
             VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -578,6 +612,9 @@ class UiRenderPipeline(
      */
     fun prepareDescriptorSet(texture: Texture, frameIndex: Int = 0): Long {
         val slot = descriptorSlot(frameIndex, 0)
+        slot.boundVersion = 0L
+        slot.boundImageView = 0L
+        slot.boundSampler = 0L
         VulkanDescriptors.vkUpdateDescriptorSetImage(
             device,
             slot.descriptorSet,

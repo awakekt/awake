@@ -148,6 +148,7 @@ internal class VulkanUiRunRecorder(
             slotIndex,
             material.samplerHandle,
             material.imageViewHandle,
+            material.textureDescriptorVersion,
         )
         mesh.update(frameIndex, primitive.vertices, primitive.indices)
         mesh.bind(frameIndex, commandBuffer)

@@ -17,6 +17,7 @@ import com.awakekt.awake.asset.shaderdsl.dpdy
 import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.floor
 import com.awakekt.awake.asset.shaderdsl.gt
+import com.awakekt.awake.asset.shaderdsl.le
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
@@ -33,6 +34,7 @@ import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.texture2dArray
 import com.awakekt.awake.asset.shaderdsl.textureDimensions
 import com.awakekt.awake.asset.shaderdsl.textureSampleArrayGrad
+import com.awakekt.awake.asset.shaderdsl.textureSampleArrayLevel
 import com.awakekt.awake.asset.shaderdsl.textureSampleLevel
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
@@ -54,10 +56,12 @@ import com.awakekt.awake.asset.shaderpack.debugLayerColor
 import com.awakekt.awake.asset.shaderpack.debugViewColor
 import com.awakekt.awake.asset.shaderpack.pagedTerrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.sceneDisplayTransform
+import com.awakekt.awake.asset.shaderpack.terrainClipmapCoreVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShadowSampling
 import com.awakekt.awake.asset.shaders.aslShaderSet
+import com.awakekt.awake.asset.shaders.withSolidOpaque
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
@@ -116,11 +120,22 @@ private const val CONTROL_TAPS = 4
 fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = terrainLayersShader(clipSpace, CONTROL_SLOTS)
 
 /** [terrainLayersShader] merging into [slots] layers, about twice the per-pixel cost at [MAX_CONTROL_SLOTS]. */
-@Suppress("LongMethod") // Ordered resource and fragment construction share the terrain stage.
-internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolean = false): AslShaderDefinition = shader(
-    (if (paged) "paged_" else "") + if (slots == CONTROL_SLOTS) "terrain_layers" else "terrain_layers_$slots",
+@Suppress("LongMethod", "CyclomaticComplexMethod") // Ordered resource and fragment construction share the terrain stage.
+internal fun terrainLayersShader(
+    clipSpace: ClipSpace,
+    slots: Int,
+    paged: Boolean = false,
+    allowDiscard: Boolean = true,
+): AslShaderDefinition = shader(
+    (if (paged) "paged_" else "") +
+        (if (slots == CONTROL_SLOTS) "terrain_layers" else "terrain_layers_$slots") +
+        if (allowDiscard) "" else "_core",
 ) {
-    val terrain = if (paged) pagedTerrainClipmapVertexStage() else terrainClipmapVertexStage()
+    val terrain = when {
+        !allowDiscard -> terrainClipmapCoreVertexStage(paged = paged)
+        paged -> pagedTerrainClipmapVertexStage()
+        else -> terrainClipmapVertexStage()
+    }
     val shadows = terrainShadowSampling(terrain, clipSpace)
     val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
@@ -150,7 +165,7 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
     }
 
     fragment {
-        terrainClipmapDiscardUnderFinerRing(terrain)
+        if (allowDiscard) terrainClipmapDiscardUnderFinerRing(terrain)
         // The control map and the lightmap cover this terrain's own footprint, wherever it lies.
         val local = let("localPosition", terrain.localPosition)
         val merged = mergeControlTaps(slots, local, terrain.terrainSampling, controlIndices, controlWeights, layerSampler, terrain.pages, fallbackIndices, fallbackWeights)
@@ -196,19 +211,47 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
     }
 }
 
-/** Four global cell-centred taps preserve baked-light interpolation across resident boundaries. */
+/**
+ * Samples baked light for a paged terrain: hardware-bilinear single lookup (2 fetches) when all
+ * four corners lie inside one cell (~95%+ of pixels), falling back to four global cell-centred
+ * taps (8 fetches) only along the 1-texel seam between adjacent cells.
+ */
 private fun AslBlockBuilder.samplePagedLight(pages: TerrainPageSampling, image: AslExpr, fallback: AslExpr, relative: AslExpr): AslExpr {
     val size = let("lightPageSize", textureDimensions(image))
-    val pageSize = vec2(toF32(size.x), toF32(size.y))
-    val limit = pageSize * vec2(pages.dimensions.x, pages.dimensions.y)
+    val pageSize = let("lightPageSizeF", vec2(toF32(size.x), toF32(size.y)))
+    val dims = vec2(pages.dimensions.x, pages.dimensions.y)
+    val limit = let("lightLimit", pageSize * dims)
+    val maxTexel = limit - vec2(1f.lit, 1f.lit)
     val texel = let("lightTexel", relative / pages.grid.z * pageSize - vec2(0.5f.lit, 0.5f.lit))
     val base = let("lightBase", floor(texel))
     val fraction = let("lightFraction", texel - base)
-    val taps = List(4) { tap ->
-        val knot = clamp(base + vec2((tap % 2).toFloat().lit, (tap / 2).toFloat().lit), vec2(0f.lit, 0f.lit), limit - vec2(1f.lit, 1f.lit))
-        let("lightTap$tap", pages.sampleIn(this, "lightTap$tap", image, fallback, (knot + vec2(0.5f.lit, 0.5f.lit)) / pageSize * pages.grid.z, endpoints = false, coarseLinear = true))
+    val knot0 = clamp(base, vec2(0f.lit, 0f.lit), maxTexel)
+    val knot3 = clamp(base + vec2(1f.lit, 1f.lit), vec2(0f.lit, 0f.lit), maxTexel)
+    val maxCell = vec2(pages.dimensions.x - 1f.lit, pages.dimensions.y - 1f.lit)
+    val cell0 = let("lightCell0", clamp(floor(knot0 / pageSize), vec2(0f.lit, 0f.lit), maxCell))
+    val cell3 = let("lightCell3", clamp(floor(knot3 / pageSize), vec2(0f.lit, 0f.lit), maxCell))
+    val sameCell = (cell0.x eq cell3.x) and (cell0.y eq cell3.y)
+    val crossCell = select(1u.lit, 0u.lit, sameCell) eq 1u.lit
+    val result = variable("pagedLight", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit))
+    iff(sameCell) {
+        val layer = pages.resolveLayerIn(this, "lightSingle", cell0)
+        iff(layer gt (-0.5f).lit) {
+            val localTexel = clamp(texel, vec2(0f.lit, 0f.lit), maxTexel) - cell0 * pageSize
+            val uv = (localTexel + vec2(0.5f.lit, 0.5f.lit)) / pageSize
+            assign(result, textureSampleArrayLevel(image, pages.sampler, uv, toU32(layer), 0f.lit))
+        }
+        iff(layer le (-0.5f).lit) {
+            assign(result, textureSampleLevel(fallback, pages.sampler, relative / (dims * pages.grid.z), 0f.lit))
+        }
     }
-    return mix(mix(taps[0], taps[1], fraction.x), mix(taps[2], taps[3], fraction.x), fraction.y)
+    iff(crossCell) {
+        val taps = List(4) { tap ->
+            val knot = clamp(base + vec2((tap % 2).toFloat().lit, (tap / 2).toFloat().lit), vec2(0f.lit, 0f.lit), maxTexel)
+            let("lightTap$tap", pages.sampleIn(this, "lightTap$tap", image, fallback, (knot + vec2(0.5f.lit, 0.5f.lit)) / pageSize * pages.grid.z, endpoints = false, coarseLinear = true))
+        }
+        assign(result, mix(mix(taps[0], taps[1], fraction.x), mix(taps[2], taps[3], fraction.x), fraction.y))
+    }
+    return result
 }
 
 /** Each slot's layer colour, mixed by its share. Expressions only, so only a debug view pays for them. */
@@ -230,9 +273,11 @@ private fun dominantLayerColor(slots: List<Slot>): AslExpr {
 
 /** [terrainLayersShader] for both backends, for control maps of [CONTROL_SLOTS]. */
 val TerrainLayersShaders = aslShaderSet { terrainLayersShader(it, CONTROL_SLOTS) }
+    .withSolidOpaque(aslShaderSet { terrainLayersShader(it, CONTROL_SLOTS, allowDiscard = false) })
 
 /** [terrainLayersShader] for both backends, for control maps of [MAX_CONTROL_SLOTS]. */
 internal val WideTerrainLayersShaders = aslShaderSet { terrainLayersShader(it, MAX_CONTROL_SLOTS) }
+    .withSolidOpaque(aslShaderSet { terrainLayersShader(it, MAX_CONTROL_SLOTS, allowDiscard = false) })
 
 /** A merge slot: a palette index (or [NO_LAYER]) and its accumulated weight, both mutable. */
 private class Slot(val layer: AslExpr, val weight: AslExpr)
@@ -241,7 +286,7 @@ private class Slot(val layer: AslExpr, val weight: AslExpr)
  * The four control texels around this pixel, merged into [slots] slots. A control texel is
  * `slots / 4` RGBA texels side by side.
  */
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "LongMethod")
 private fun AslBlockBuilder.mergeControlTaps(
     slots: Int,
     position: AslExpr,
@@ -268,6 +313,13 @@ private fun AslBlockBuilder.mergeControlTaps(
     val fractionX = let("fractionX", texelX - baseX)
     val fractionZ = let("fractionZ", texelZ - baseZ)
     val merged = List(slots) { Slot(variable("slotLayer$it", NO_LAYER.lit), variable("slotWeight$it", 0f.lit)) }
+    if (texelsPerControl == 1) {
+        mergeSinglePartControlTaps(
+            merged, baseX, baseZ, fractionX, fractionZ, sizeX, sizeZ, pageWidth, pageDepth,
+            indices, weights, sampler, pages, fallbackIndices, fallbackWeights,
+        )
+        return merged
+    }
     for (tap in 0 until CONTROL_TAPS) {
         val offsetX = tap % 2
         val offsetZ = tap / 2
@@ -297,6 +349,128 @@ private fun AslBlockBuilder.mergeControlTaps(
         }
     }
     return merged
+}
+
+/**
+ * 4-slot control merge with two fast paths:
+ * 1. Paged single-cell path (~95%+ of pixels): resolves the page table ONCE instead of 4x.
+ * 2. Uniform single-layer patch bypass (~70-85% of outdoor pixels): skips all 16 `mergeIntoSlots`
+ *    cascades when all four corners carry weight 255/255 on the same layer.
+ */
+@Suppress("LongParameterList", "LongMethod")
+private fun AslBlockBuilder.mergeSinglePartControlTaps(
+    merged: List<Slot>,
+    baseX: AslExpr,
+    baseZ: AslExpr,
+    fractionX: AslExpr,
+    fractionZ: AslExpr,
+    sizeX: AslExpr,
+    sizeZ: AslExpr,
+    pageWidth: AslExpr,
+    pageDepth: AslExpr,
+    indices: AslExpr,
+    weights: AslExpr,
+    sampler: AslExpr,
+    pages: TerrainPageSampling?,
+    fallbackIndices: AslExpr?,
+    fallbackWeights: AslExpr?,
+) {
+    val col0 = let("ctrlCol0", clamp(baseX, 0f.lit, sizeX - 1f.lit))
+    val col1 = let("ctrlCol1", clamp(baseX + 1f.lit, 0f.lit, sizeX - 1f.lit))
+    val row0 = let("ctrlRow0", clamp(baseZ, 0f.lit, sizeZ - 1f.lit))
+    val row1 = let("ctrlRow1", clamp(baseZ + 1f.lit, 0f.lit, sizeZ - 1f.lit))
+    val cols = listOf(col0, col1, col0, col1)
+    val rows = listOf(row0, row0, row1, row1)
+
+    val layersVars: List<AslExpr>
+    val sharesVars: List<AslExpr>
+    if (pages != null) {
+        val fbIndices = requireNotNull(fallbackIndices)
+        val fbWeights = requireNotNull(fallbackWeights)
+        val maxCell = vec2(pages.dimensions.x - 1f.lit, pages.dimensions.y - 1f.lit)
+        val cell0 = let("ctrlCell0", clamp(floor(vec2(col0 / pageWidth, row0 / pageDepth)), vec2(0f.lit, 0f.lit), maxCell))
+        val cell3 = let("ctrlCell3", clamp(floor(vec2(col1 / pageWidth, row1 / pageDepth)), vec2(0f.lit, 0f.lit), maxCell))
+        val sameCell = (cell0.x eq cell3.x) and (cell0.y eq cell3.y)
+        val crossCell = select(1u.lit, 0u.lit, sameCell) eq 1u.lit
+        val lVars = List(CONTROL_TAPS) { variable("tap${it}Layers0", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit)) }
+        val sVars = List(CONTROL_TAPS) { variable("tap${it}Shares0", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit)) }
+        iff(sameCell) {
+            val layer = pages.resolveLayerIn(this, "ctrlSingle", cell0)
+            iff(layer gt (-0.5f).lit) {
+                val pageLayer = let("ctrlSingleLayer", toU32(layer))
+                val cellOriginX = cell0.x * pageWidth
+                val cellOriginZ = cell0.y * pageDepth
+                for (tap in 0 until CONTROL_TAPS) {
+                    val uv = vec2((cols[tap] - cellOriginX + 0.5f.lit) / pageWidth, (rows[tap] - cellOriginZ + 0.5f.lit) / pageDepth)
+                    assign(lVars[tap], textureSampleArrayLevel(indices, pages.sampler, uv, pageLayer, 0f.lit))
+                    assign(sVars[tap], textureSampleArrayLevel(weights, pages.sampler, uv, pageLayer, 0f.lit))
+                }
+            }
+            iff(layer le (-0.5f).lit) {
+                val fbSize = textureDimensions(fbIndices)
+                val fbW = let("ctrlFbW", toF32(fbSize.x))
+                val fbH = let("ctrlFbH", toF32(fbSize.y))
+                for (tap in 0 until CONTROL_TAPS) {
+                    val fx = (clamp(floor((cols[tap] + 0.5f.lit) / sizeX * fbW), 0f.lit, fbW - 1f.lit) + 0.5f.lit) / fbW
+                    val fz = (clamp(floor((rows[tap] + 0.5f.lit) / sizeZ * fbH), 0f.lit, fbH - 1f.lit) + 0.5f.lit) / fbH
+                    val fUv = vec2(fx, fz)
+                    assign(lVars[tap], textureSampleLevel(fbIndices, pages.sampler, fUv, 0f.lit))
+                    assign(sVars[tap], textureSampleLevel(fbWeights, pages.sampler, fUv, 0f.lit))
+                }
+            }
+        }
+        iff(crossCell) {
+            for (tap in 0 until CONTROL_TAPS) {
+                val relative = vec2((cols[tap] + 0.5f.lit) / pageWidth * pages.grid.z, (rows[tap] + 0.5f.lit) / pageDepth * pages.grid.z)
+                val (lExpr, sExpr) = pages.samplePairIn(this, "tap${tap}Control0", indices, fbIndices, weights, fbWeights, relative, 1, 0)
+                assign(lVars[tap], lExpr)
+                assign(sVars[tap], sExpr)
+            }
+        }
+        layersVars = lVars
+        sharesVars = sVars
+    } else {
+        layersVars = List(CONTROL_TAPS) { tap ->
+            val uv = vec2((cols[tap] + 0.5f.lit) / sizeX, (rows[tap] + 0.5f.lit) / sizeZ)
+            let("tap${tap}Layers0", textureSampleLevel(indices, sampler, uv, 0f.lit))
+        }
+        sharesVars = List(CONTROL_TAPS) { tap ->
+            val uv = vec2((cols[tap] + 0.5f.lit) / sizeX, (rows[tap] + 0.5f.lit) / sizeZ)
+            let("tap${tap}Shares0", textureSampleLevel(weights, sampler, uv, 0f.lit))
+        }
+    }
+
+    // RGBA8 255/255 > 0.998 (next lower value is 254/255 = 0.9961); guarantees all other weights are 0.
+    val uniformPatch = (sharesVars[0].x gt 0.998f.lit) and
+        (sharesVars[1].x gt 0.998f.lit) and
+        (sharesVars[2].x gt 0.998f.lit) and
+        (sharesVars[3].x gt 0.998f.lit) and
+        (layersVars[0].x eq layersVars[1].x) and
+        (layersVars[0].x eq layersVars[2].x) and
+        (layersVars[0].x eq layersVars[3].x)
+    val mixedPatch = select(1u.lit, 0u.lit, uniformPatch) eq 1u.lit
+    iff(uniformPatch) {
+        assign(merged[0].layer, floor(layersVars[0].x * 255f.lit + 0.5f.lit))
+        assign(merged[0].weight, 1f.lit)
+    }
+    iff(mixedPatch) {
+        for (tap in 0 until CONTROL_TAPS) {
+            val offsetX = tap % 2
+            val offsetZ = tap / 2
+            val tapWeight = let(
+                "tap${tap}Weight",
+                (if (offsetX == 0) 1f.lit - fractionX else fractionX) * (if (offsetZ == 0) 1f.lit - fractionZ else fractionZ),
+            )
+            val layers = layersVars[tap]
+            val shares = sharesVars[tap]
+            listOf(layers.x to shares.x, layers.y to shares.y, layers.z to shares.z, layers.w to shares.w)
+                .forEachIndexed { channel, (layerChannel, shareChannel) ->
+                    val layer = let("tap${tap}Layer$channel", floor(layerChannel * 255f.lit + 0.5f.lit))
+                    val share = let("tap${tap}Share$channel", shareChannel * tapWeight)
+                    mergeChannel(tap, channel, layer, share, merged)
+                }
+        }
+    }
 }
 
 /** Places the first channel straight into slot 0, and merges every later channel into [slots]. */

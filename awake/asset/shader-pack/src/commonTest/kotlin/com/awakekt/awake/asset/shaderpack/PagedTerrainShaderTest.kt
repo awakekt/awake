@@ -15,9 +15,23 @@ class PagedTerrainShaderTest {
         val lit = pagedTerrainShader(ClipSpace.Vulkan).emitWgsl()
         val depth = PagedTerrainShadowDepthShader.emitWgsl()
         val start = "fn pageHeightKnot"
-        fun lookup(text: String) = text.substringAfter(start).substringBefore("fn sampleSingleCascade").substringBefore("@vertex").trim()
+        fun lookup(text: String) = text
+            .substringAfter(start)
+            .substringBefore("fn pageHeightAndNormal")
+            .substringBefore("fn sampleSingleCascade")
+            .substringBefore("@vertex")
+            .trim()
         assertEquals(lookup(lit), lookup(depth))
+        assertTrue("fn pageHeightAndNormal" in lit, "lit vertex shader should use fused height+normal stencil")
+        assertTrue("fn pageHeightAndNormal" !in depth, "depth shader should not emit unused normal helper")
         assertTrue("@binding(32)" in lit && "@binding(33)" in lit)
         assertTrue("discard;" in depth)
+    }
+
+    @Test fun coreShaderOmitsDiscardForEarlyZ() {
+        val core = pagedTerrainCoreShader(ClipSpace.Vulkan).emitWgsl()
+        val regularCore = terrainCoreShader(ClipSpace.Vulkan).emitWgsl()
+        assertTrue("discard;" !in core, "pagedTerrainCoreShader must not emit discard")
+        assertTrue("discard;" !in regularCore, "terrainCoreShader must not emit discard")
     }
 }

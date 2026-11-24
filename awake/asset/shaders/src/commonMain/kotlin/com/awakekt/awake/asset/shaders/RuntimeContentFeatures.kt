@@ -139,12 +139,20 @@ suspend fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
     val pipeline = checkNotNull(registry[feature.spec]) {
         "Content feature '${feature.name}' was not registered before its feature was built."
     }
+    val alternatePipeline = feature.alternateSpec?.let { altSpec -> registry[altSpec] }
     val block = checkNotNull(pipeline.uniformBlock) {
         "Content feature '${feature.name}' declares uniforms, so the factory must have " +
             "allocated a block for its pipeline."
     }
     val upload = upload(pipeline, feature).also { uploads += it }
-    return gateContentFeature(feature, handle(pipeline), block, upload, uploads) { depth, gate ->
+    return gateContentFeature(
+        feature,
+        handle(pipeline),
+        alternatePipeline?.let(::handle),
+        block,
+        upload,
+        uploads,
+    ) { depth, gate ->
         addDepthCaster(pipeline, depth, gate)
     }
 }
@@ -153,15 +161,17 @@ suspend fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
  * [feature] built over [block] and [upload], behind the pass gate, and cast into the depth pass
  * through [cast] when it declares a [ContentFeature.depth] pipeline. The cast's upload joins [uploads].
  */
+@Suppress("LongParameterList")
 internal suspend fun gateContentFeature(
     feature: ContentFeature,
     pipeline: PipelineHandle,
+    alternatePipeline: PipelineHandle?,
     block: UniformBlock,
     upload: ContentUpload,
     uploads: MutableList<ContentUpload>,
     cast: suspend (PipelineSpec, ContentDepthSource) -> ContentUpload?,
 ): RenderFeature<RenderFrameContext> {
-    val gate = ContentFeaturePassGate(feature.build(pipeline, block, upload.geometry), upload)
+    val gate = ContentFeaturePassGate(feature.buildFeature(pipeline, alternatePipeline, block, upload.geometry), upload)
     feature.depth?.let { depth ->
         require(gate.feature is ContentDepthSource) {
             "Content feature '${feature.name}' declares a depth pipeline, but the feature it builds " +

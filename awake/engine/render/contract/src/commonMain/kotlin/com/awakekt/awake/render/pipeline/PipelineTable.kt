@@ -51,6 +51,16 @@ class PipelineTable<P>(
     val edgesByFormat: Map<VertexFormat, P> = emptyMap(),
     /** Optional blended companions indexed by format and raster state. */
     val blendedRasterByFormat: Map<VertexFormat, Map<BlendedRasterVariant, P>> = emptyMap(),
+    /** Discard-free opaque companions (Early-Z / FPK) indexed by format, including [primaryFormat]. */
+    val solidByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Discard-free back-face culled opaque companions indexed by format. */
+    val solidBackCulledByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Discard-free instanced opaque companions indexed by format. */
+    val solidInstancedByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Discard-free back-face culled instanced opaque companions indexed by format. */
+    val solidInstancedBackCulledByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Discard-free skinned instanced opaque companions indexed by format. */
+    val solidSkinnedInstancedByFormat: Map<VertexFormat, P> = emptyMap(),
 ) {
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -71,6 +81,32 @@ class PipelineTable<P>(
         primary, primaryFormat, byFormat, wireframeByFormat, backCulledByFormat,
         transparentByFormat, additiveByFormat, instancedByFormat, skinnedInstancedByFormat, particlePipelines,
         additiveParticlePipelines, instancedBackCulledByFormat, edgesByFormat, blendedRasterByFormat = emptyMap(),
+        solidByFormat = emptyMap(), solidBackCulledByFormat = emptyMap(), solidInstancedByFormat = emptyMap(),
+        solidInstancedBackCulledByFormat = emptyMap(), solidSkinnedInstancedByFormat = emptyMap(),
+    )
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        primary: P,
+        primaryFormat: VertexFormat,
+        byFormat: Map<VertexFormat, P> = emptyMap(),
+        wireframeByFormat: Map<VertexFormat, P> = emptyMap(),
+        backCulledByFormat: Map<VertexFormat, P> = emptyMap(),
+        transparentByFormat: Map<VertexFormat, P> = emptyMap(),
+        additiveByFormat: Map<VertexFormat, P> = emptyMap(),
+        instancedByFormat: Map<VertexFormat, P> = emptyMap(),
+        skinnedInstancedByFormat: Map<VertexFormat, P> = emptyMap(),
+        particlePipelines: Map<VertexFormat, P> = emptyMap(),
+        additiveParticlePipelines: Map<VertexFormat, P> = emptyMap(),
+        instancedBackCulledByFormat: Map<VertexFormat, P> = emptyMap(),
+        edgesByFormat: Map<VertexFormat, P> = emptyMap(),
+        blendedRasterByFormat: Map<VertexFormat, Map<BlendedRasterVariant, P>> = emptyMap(),
+    ) : this(
+        primary, primaryFormat, byFormat, wireframeByFormat, backCulledByFormat,
+        transparentByFormat, additiveByFormat, instancedByFormat, skinnedInstancedByFormat, particlePipelines,
+        additiveParticlePipelines, instancedBackCulledByFormat, edgesByFormat, blendedRasterByFormat,
+        solidByFormat = emptyMap(), solidBackCulledByFormat = emptyMap(), solidInstancedByFormat = emptyMap(),
+        solidInstancedBackCulledByFormat = emptyMap(), solidSkinnedInstancedByFormat = emptyMap(),
     )
 }
 
@@ -153,16 +189,51 @@ fun <P> PipelineTable<P>.resolve(
     wireframe: Boolean = false,
     additive: Boolean = false,
     depthWrite: Boolean,
+): P? = resolve(format, cullMode, transparent, wireframe, additive, depthWrite, solidOpaque = false)
+
+/**
+ * Resolves a draw, selecting a discard-free opaque companion when [solidOpaque] is true so
+ * mobile tile GPUs keep hardware Early-Z / Forward Pixel Kill enabled on solid draws.
+ */
+@Suppress("LongParameterList")
+fun <P> PipelineTable<P>.resolve(
+    format: VertexFormat,
+    cullMode: CullMode = CullMode.None,
+    transparent: Boolean = false,
+    wireframe: Boolean = false,
+    additive: Boolean = false,
+    depthWrite: Boolean,
+    solidOpaque: Boolean,
 ): P? {
     val fill = if (format == primaryFormat) primary else byFormat[format]
     return when {
         wireframe -> wireframeByFormat[format] ?: fill
-        transparent -> {
-            val raster = BlendedRasterVariant.select(additive, cullMode, depthWrite)
-            val companion = raster?.let { blendedRasterByFormat[format]?.get(it) }
-            companion ?: (if (additive) additiveByFormat[format] else null) ?: transparentByFormat[format] ?: fill
-        }
-        cullMode == CullMode.Back -> backCulledByFormat[format] ?: fill
-        else -> fill
+        transparent -> resolveTransparent(format, cullMode, additive, depthWrite, fill)
+        else -> resolveOpaque(format, cullMode, solidOpaque, fill)
     }
+}
+
+private fun <P> PipelineTable<P>.resolveTransparent(
+    format: VertexFormat,
+    cullMode: CullMode,
+    additive: Boolean,
+    depthWrite: Boolean,
+    fill: P?,
+): P? {
+    val raster = BlendedRasterVariant.select(additive, cullMode, depthWrite)
+    val companion = raster?.let { blendedRasterByFormat[format]?.get(it) }
+    val additiveFallback = additiveByFormat[format].takeIf { additive }
+    return companion ?: additiveFallback ?: transparentByFormat[format] ?: fill
+}
+
+private fun <P> PipelineTable<P>.resolveOpaque(
+    format: VertexFormat,
+    cullMode: CullMode,
+    solidOpaque: Boolean,
+    fill: P?,
+): P? = when (cullMode) {
+    CullMode.Back ->
+        solidBackCulledByFormat[format].takeIf { solidOpaque } ?: backCulledByFormat[format] ?: fill
+    else ->
+        solidByFormat[format].takeIf { solidOpaque } ?: fill
 }

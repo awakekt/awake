@@ -49,7 +49,8 @@ internal class SceneAttachments(
                 height,
                 VkFormat.VK_FORMAT_D32_SFLOAT.value,
                 sampleCount,
-                usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT or
+                    VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
                 aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT.value,
             ).also(allocated::add)
             framebuffer = Vulkan.vkCreateFramebuffer(

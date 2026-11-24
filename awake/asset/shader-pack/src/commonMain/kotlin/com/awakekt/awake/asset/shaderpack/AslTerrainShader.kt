@@ -179,7 +179,7 @@ class TerrainClipmapOutputs internal constructor(
     private val exportedCascades: CascadeShadowInputs?,
     private val exportedDebugView: AslExpr?,
     private val exportedExposure: AslExpr?,
-    internal val ringCell: AslExpr,
+    internal val ringCell: AslExpr?,
     internal val ringParams: AslArrayHandle,
     val pages: TerrainPageSampling? = null,
     val terrainOrigin: AslExpr,
@@ -274,12 +274,26 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
     terrainClipmapVertexStage(exportWorldPosition, cascadeDepth = false)
 
 /**
+ * [terrainClipmapVertexStage] for a Level-0 core-ring fragment stage that omits
+ * [terrainClipmapDiscardUnderFinerRing] to preserve hardware Early-Z / Forward Pixel Kill.
+ */
+fun AslShaderBuilder.terrainClipmapCoreVertexStage(
+    exportWorldPosition: Boolean = true,
+    paged: Boolean = false,
+): TerrainClipmapOutputs = terrainClipmapVertexStage(exportWorldPosition, cascadeDepth = false, paged = paged, exportRingCell = false)
+
+/**
  * The stage, or with [cascadeDepth] its depth-pass form: the same displaced point placed by the
  * cascade being rendered (the pass's `Cascade` block at [SHADOW_CASCADE_PASS_GROUP]) instead of
  * the camera, passing on only what [terrainClipmapDiscardUnderFinerRing] reads.
  */
 @Suppress("LongMethod", "CyclomaticComplexMethod") // Keep ordered vertex-stage construction in one shader scope.
-internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean, cascadeDepth: Boolean, paged: Boolean = false): TerrainClipmapOutputs {
+internal fun AslShaderBuilder.terrainClipmapVertexStage(
+    exportWorldPosition: Boolean,
+    cascadeDepth: Boolean,
+    paged: Boolean = false,
+    exportRingCell: Boolean = true,
+): TerrainClipmapOutputs {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val u = uniformBlock("Uniforms", group = group, binding = 0)
     val handles = u.fieldsFrom(if (paged) PagedTerrainUniformLayout.Draw else TerrainUniformLayout.Draw)
@@ -302,7 +316,7 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
     val heightmap by texture2d(group = group, binding = 1)
     val heightmapSampler by sampler(group = group, binding = 2)
     val pages = if (paged) pageSampling(handles, heightmapSampler) else null
-    val pageHeight = pages?.let { pagedHeightSampler(it, heightmap) }
+    val pageHeights = pages?.let { pagedHeightSampler(it, heightmap, includeNormal = !cascadeDepth) }
 
     // The depth form passes on only what its discard reads: ASL rejects a varying nothing reads.
     val out = varyings("VertexOutput")
@@ -318,7 +332,12 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
     } else {
         null
     }
-    val ringCell by out.varying(GpuDataShape.Vec3, location = 2)
+    val ringCell = if (exportRingCell) {
+        val ringCell by out.varying(GpuDataShape.Vec3, location = 2)
+        ringCell
+    } else {
+        null
+    }
 
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
@@ -340,31 +359,33 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
             )
         }
 
-        val height = let("height", pageHeight?.invoke(vec2(ground.x, ground.z)) ?: decodeHeight(textureSampleLevel(heightmap, heightmapSampler, ground.uv, 0f.lit)))
+        val height: AslExpr
+        val pagedNormal: AslExpr?
+        if (pageHeights != null && pageHeights.heightAndNormal != null) {
+            val sampled = let("pagedSample", pageHeights.heightAndNormal.invoke(vec2(ground.x, ground.z), terrainParams.x))
+            height = let("height", sampled.x)
+            pagedNormal = vec3(sampled.y, sampled.z, sampled.w)
+        } else {
+            height = let(
+                "height",
+                pageHeights?.height?.invoke(vec2(ground.x, ground.z))
+                    ?: decodeHeight(textureSampleLevel(heightmap, heightmapSampler, ground.uv, 0f.lit)),
+            )
+            pagedNormal = null
+        }
         // Laid out around the origin, then moved to where this terrain lies.
         val displaced = let("displaced", vec3(ground.x + origin.x, height * terrainParams.x + terrainParams.w + origin.y, ground.z + origin.z))
 
         out.position set placement * vec4(displaced, 1f.lit)
         worldNormal?.let {
-            if (pages == null || pageHeight == null) {
-                it set heightmapNormal(heightmap, heightmapSampler, ground.uv, terrainSampling, terrainParams)
+            if (pagedNormal != null) {
+                it set pagedNormal
             } else {
-                val step = pages.grid.z / pages.grid.w
-                val left = max(ground.x - step, pages.grid.x)
-                val right = min(ground.x + step, pages.grid.x + pages.dimensions.x * pages.grid.z)
-                val down = max(ground.z - step, pages.grid.y)
-                val up = min(ground.z + step, pages.grid.y + pages.dimensions.y * pages.grid.z)
-                it set normalize(
-                    vec3(
-                        -(pageHeight(vec2(right, ground.z)) - pageHeight(vec2(left, ground.z))) * terrainParams.x / max(right - left, 0.0001f.lit),
-                        1f.lit,
-                        -(pageHeight(vec2(ground.x, up)) - pageHeight(vec2(ground.x, down))) * terrainParams.x / max(up - down, 0.0001f.lit),
-                    ),
-                )
+                it set heightmapNormal(heightmap, heightmapSampler, ground.uv, terrainSampling, terrainParams)
             }
         }
         worldPosition?.let { it set displaced }
-        ringCell set vec3(ground.x, ground.z, ringTag.x)
+        ringCell?.let { it set vec3(ground.x, ground.z, ringTag.x) }
     }
 
     return TerrainClipmapOutputs(
@@ -422,6 +443,7 @@ private fun AslBlockBuilder.morphTowardCoarserGrid(localPosition: AslExpr, ring:
  */
 fun AslFragmentBuilder.terrainClipmapDiscardUnderFinerRing(terrain: TerrainClipmapOutputs) {
     val cell = terrain.ringCell
+        ?: throw AslDefinitionException("ringCell is not exported by the discard-free core-ring stage.")
     val level = let("clipmapLevel", cell.z)
     // The core (level 0) has nothing finer; clamping keeps its index in range, and the level test
     // below is what spares it.
@@ -538,41 +560,48 @@ internal fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sam
  * `docs/architecture/decisions/D28-open-world-framework-boundary.md`); a pack supplies its own
  * fragment stage over [terrainClipmapVertexStage].
  */
-fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, false)
+fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, false, allowDiscard = true)
+
+/** Discard-free Level-0 core-ring companion of [terrainShader] for hardware Early-Z / FPK. */
+fun terrainCoreShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, false, allowDiscard = false)
 
 /** The neutral clipmap surface reading resident pages and the mandatory fallback. */
-fun pagedTerrainShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, true)
+fun pagedTerrainShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, true, allowDiscard = true)
 
-private fun terrainShader(clipSpace: ClipSpace, paged: Boolean): AslShaderDefinition = shader(if (paged) "paged_terrain" else "terrain") {
-    val terrain = terrainClipmapVertexStage(true, false, paged)
-    val shadows = terrainShadowSampling(terrain, clipSpace)
-    val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
+/** Discard-free Level-0 core-ring companion of [pagedTerrainShader] for hardware Early-Z / FPK. */
+fun pagedTerrainCoreShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, true, allowDiscard = false)
 
-    fragment {
-        terrainClipmapDiscardUnderFinerRing(terrain)
-        val normal = let("normal", normalize(terrain.worldNormal))
-        // Not negated: SceneLight.direction already points TOWARD the light, which is how every
-        // other lit shader in the pack reads it.
-        val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
-        val ambient = let("ambient", terrain.sunDirection.w)
-        val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))
-        val shadow = let("shadow", shadows.sampleShadow(terrain.worldPosition, normal, nDotL))
-        val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
-        val base = let("base", terrain.terrainParams.z)
-        val surface = DebugSurface(
-            normal = normal,
-            worldPosition = terrain.worldPosition,
-            albedo = vec3(base, base, base),
-            shadow = shadow,
-            shadowCascade = shadows.shadowCascade(terrain.worldPosition),
-            // Terrain's sun has no colour of its own: what the ambient leaves, as it lights.
-            clay = displayTransform.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
-        )
-        val mapped = displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x)
-        val shaded = vec4(applyTerrainFog(mapped, terrain), 1f.lit)
-        colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
+private fun terrainShader(clipSpace: ClipSpace, paged: Boolean, allowDiscard: Boolean = true): AslShaderDefinition =
+    shader((if (paged) "paged_terrain" else "terrain") + if (allowDiscard) "" else "_core") {
+        val terrain = terrainClipmapVertexStage(true, false, paged, exportRingCell = allowDiscard)
+        val shadows = terrainShadowSampling(terrain, clipSpace)
+        val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
+
+        fragment {
+            if (allowDiscard) terrainClipmapDiscardUnderFinerRing(terrain)
+            val normal = let("normal", normalize(terrain.worldNormal))
+            // Not negated: SceneLight.direction already points TOWARD the light, which is how every
+            // other lit shader in the pack reads it.
+            val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
+            val ambient = let("ambient", terrain.sunDirection.w)
+            val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))
+            val shadow = let("shadow", shadows.sampleShadow(terrain.worldPosition, normal, nDotL))
+            val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
+            val base = let("base", terrain.terrainParams.z)
+            val surface = DebugSurface(
+                normal = normal,
+                worldPosition = terrain.worldPosition,
+                albedo = vec3(base, base, base),
+                shadow = shadow,
+                shadowCascade = shadows.shadowCascade(terrain.worldPosition),
+                // Terrain's sun has no colour of its own: what the ambient leaves, as it lights.
+                clay = displayTransform.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
+            )
+            val mapped = displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x)
+            val shaded = vec4(applyTerrainFog(mapped, terrain), 1f.lit)
+            colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
+        }
     }
-}
 
 /**
  * The clipmap rings' cascade depth: [terrainClipmapVertexStage]'s displaced surface, placed by the

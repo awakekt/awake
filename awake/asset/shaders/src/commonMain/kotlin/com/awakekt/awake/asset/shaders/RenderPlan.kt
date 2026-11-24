@@ -125,35 +125,52 @@ data class RenderPlan(
      * every call site set to true and none set to false.
      */
     fun toPipelineRequests(backend: RenderBackend, rasterState: MultisampleState = multisample): List<PipelineRequest> = buildList {
+        val primaryStages = primary.shaders.stagesFor(backend)
+        val primarySolidStages = primary.shaders.solidOpaque?.stagesFor(backend)
         add(
             PipelineRequest(
                 key = PipelineKey.Primary,
-                spec = primary.shaders.stagesFor(backend).spec(
+                spec = primaryStages.spec(
                     vertexFormat = primary.vertexFormat,
                     variant = primary.variant,
                     bindingLayout = primary.bindingLayout,
                     materialBindings = primary.materialBindings,
                     usesMaterialGroup = primary.usesMaterialGroup,
-                    bindingsByGroup = primary.shaders.stagesFor(backend).bindingsByGroup,
+                    bindingsByGroup = primaryStages.bindingsByGroup,
                 ),
                 buildWireframe = true,
                 buildBackCulled = true,
                 buildTransparent = true,
                 buildAdditive = true,
                 buildEdges = primary.variant == PipelineVariant.Opaque,
+                solidSpec = primarySolidStages?.spec(
+                    vertexFormat = primary.vertexFormat,
+                    variant = primary.variant,
+                    bindingLayout = primary.bindingLayout,
+                    materialBindings = primary.materialBindings,
+                    usesMaterialGroup = primary.usesMaterialGroup,
+                    bindingsByGroup = primarySolidStages.bindingsByGroup,
+                ),
             ),
         )
         addAll(scenePipelines.toRequests { it.stagesFor(backend) })
         addAll(
             contentFeaturesFor(backend).map {
-                PipelineRequest(key = PipelineKey.Content(it.name), spec = it.spec)
+                PipelineRequest(key = PipelineKey.Content(it.name), spec = it.spec, solidSpec = it.alternateSpec)
             },
         )
     }.map { request ->
         // Content features look up their authored spec in the registry. The backend factory
         // supplies the scene's sample count without changing that key or opting custom shaders
         // into alpha to coverage.
-        if (request.key is PipelineKey.Content) request else request.copy(spec = request.spec.copy(multisample = rasterState))
+        if (request.key is PipelineKey.Content) {
+            request
+        } else {
+            request.copy(
+                spec = request.spec.copy(multisample = rasterState),
+                solidSpec = request.solidSpec?.copy(multisample = rasterState.copy(alphaToCoverageEnabled = false)),
+            )
+        }
     }
 }
 
