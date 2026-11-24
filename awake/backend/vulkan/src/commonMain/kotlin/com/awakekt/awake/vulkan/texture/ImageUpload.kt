@@ -85,8 +85,8 @@ internal object ImageUpload {
     ): UploadedImage {
         val device = graphicsDevice.device
         // Whatever exists when the upload doesn't finish is released, so a failed upload leaks no GPU
-        // memory: the staging buffer always, and the image, its memory and its view unless returned.
-        val (stagingBuffer, stagingMemory) = staging(graphicsDevice, data)
+        // memory: the reusable staging buffer is returned to the pool, and the image, its memory
+        // and its view are freed unless returned.
         var image = 0L
         var memory = 0L
         var view = 0L
@@ -95,7 +95,10 @@ internal object ImageUpload {
             image = VulkanImages.vkCreateImage(device, imageInfo(format, width, height, mipLevels, layerCount, isCubemap))
             memory = deviceLocalMemory(graphicsDevice, image)
             VulkanImages.vkBindImageMemory(device, image, memory, 0)
-            runOneTimeCommands { commandBuffer -> copy(commandBuffer, stagingBuffer, image, regions) }
+            graphicsDevice.stagingBufferPool.withStaging(data.size.toLong()) { staging ->
+                VulkanBuffers.writeMappedMemoryBytes(staging.mappedPtr, 0L, data, 0, data.size)
+                runOneTimeCommands { commandBuffer -> copy(commandBuffer, staging.buffer, image, regions) }
+            }
             view = view(graphicsDevice, image, format, mipLevels, layerCount, isCubemap)
             uploaded = UploadedImage(
                 image,
@@ -111,8 +114,6 @@ internal object ImageUpload {
             )
             return uploaded
         } finally {
-            VulkanBuffers.vkDestroyBuffer(device, stagingBuffer)
-            VulkanBuffers.vkFreeMemory(device, stagingMemory)
             if (uploaded == null) {
                 if (view != 0L) Vulkan.vkDestroyImageView(device, view)
                 if (image != 0L) VulkanImages.vkDestroyImage(device, image)
@@ -150,31 +151,6 @@ internal object ImageUpload {
                 ),
             ),
         )
-    }
-
-    /** A HOST_VISIBLE staging buffer holding [data], with its memory. */
-    private fun staging(graphicsDevice: GraphicsDevice, data: ByteArray): Pair<Long, Long> {
-        val device = graphicsDevice.device
-        val buffer = VulkanBuffers.vkCreateBuffer(
-            device,
-            VkBufferCreateInfo(size = data.size.toLong(), usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT),
-        )
-        val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(
-                allocationSize = requirements.size,
-                memoryTypeIndex = VulkanBuffers.findMemoryType(
-                    graphicsDevice.physicalDevice,
-                    requirements.memoryTypeBits,
-                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                        VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                ),
-            ),
-        )
-        VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        VulkanBuffers.writeBufferMemoryBytes(device, memory, 0, data)
-        return buffer to memory
     }
 
     // The image is moved to TRANSFER_DST across every level and layer the regions fill, then to

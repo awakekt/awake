@@ -13,12 +13,9 @@ import com.awakekt.awake.render.command.drawsForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.Vulkan
-import com.awakekt.awake.vulkan.enums.VkSubpassContents
-import com.awakekt.awake.vulkan.models.VkExtent2D
-import com.awakekt.awake.vulkan.models.VkRect2D
-import com.awakekt.awake.vulkan.models.VkViewport
-import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
+import kotlin.math.ceil
 
 /**
  * Transitional adapter around the existing lowering functions. Keeping this object behind
@@ -82,26 +79,26 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
         recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection), input.environment)
         recordMaskPass(commandBuffer, commandBuffers.size, input.maskPasses, input.environment)
         offscreen.prepareForColorAttachment(commandBuffer)
-        Vulkan.vkCmdBeginRenderPass(
-            commandBuffer,
-            VkRenderPassBeginInfo(
-                renderPass = renderPipeline.renderPass,
-                framebuffer = offscreen.framebuffer,
-                renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
-                pClearValues = arrayOf(clearColorValue(input.environment), Renderer.clearDepthValue),
-            ),
-            VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
+        val clearRgba = input.environment.clearColorOr(clearColor)
+        VulkanCommands.vkCmdBeginRenderPassColorDepth(
+            commandBuffer = commandBuffer,
+            renderPass = renderPipeline.renderPass,
+            framebuffer = offscreen.framebuffer,
+            width = offscreen.width,
+            height = offscreen.height,
+            r = clearRgba.r,
+            g = clearRgba.g,
+            b = clearRgba.b,
+            a = clearRgba.a,
+            depth = 1f,
         )
-        Vulkan.vkCmdSetViewport(
-            commandBuffer,
-            0,
-            arrayOf(sceneRect?.toVkViewport() ?: VkViewport(width = offscreen.width.toFloat(), height = offscreen.height.toFloat())),
-        )
-        Vulkan.vkCmdSetScissor(
-            commandBuffer,
-            0,
-            arrayOf(sceneRect?.toVkScissor() ?: VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height))),
-        )
+        if (sceneRect != null) {
+            VulkanCommands.vkCmdSetViewportRect(commandBuffer, sceneRect.x, sceneRect.y, sceneRect.width, sceneRect.height, 0f, 1f)
+            VulkanCommands.vkCmdSetScissorRect(commandBuffer, sceneRect.x.toInt(), sceneRect.y.toInt(), ceil(sceneRect.width).toInt(), ceil(sceneRect.height).toInt())
+        } else {
+            VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, offscreen.width.toFloat(), offscreen.height.toFloat(), 0f, 1f)
+            VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, offscreen.width, offscreen.height)
+        }
         // The depth cascade pass uses set 1 for its pass-scoped matrix. Rebind the
         // scene-owned shadow map before any lit pipeline is selected; offscreen
         // recording has no Renderer.recordCommandBuffer helper to do this for it.

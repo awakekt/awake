@@ -87,6 +87,7 @@ namespace awake {
     // Android (#1699). Null, the default, presents through vkQueuePresentKHR.
     using PresentHook = VkResult (*)(VkQueue, const VkPresentInfoKHR *);
     void setPresentHook(PresentHook hook);
+    VkResult presentWithHook(VkQueue queue, const VkPresentInfoKHR *info);
 
     void destroyImageView(jlong arg0, jlong arg1);
 

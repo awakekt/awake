@@ -6,11 +6,11 @@
 package com.awakekt.awake.vulkan.mesh
 
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.core.geometry.toByteArrayLE
 import com.awakekt.awake.render.mesh.DynamicMesh
 import com.awakekt.awake.render.mesh.requireDynamicMeshShape
 import com.awakekt.awake.render.mesh.requireVertexRange
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
@@ -36,7 +36,6 @@ internal class VulkanDynamicMesh(
     override val vertexCapacity: Int,
     indices: IntArray,
     framesInFlight: Int,
-    private val scratch: PowerOfTwoFloats,
 ) : DynamicMesh,
     SceneMeshBuffers {
     private val device get() = graphicsDevice.device
@@ -84,12 +83,12 @@ internal class VulkanDynamicMesh(
                 ),
             )
         }
-        val indexBytes = indices.toByteArrayLE()
-        indexBuffer = HostBuffer.allocate(graphicsDevice, indexBytes.size.toLong(), VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
-        VulkanBuffers.writeBufferMemoryBytes(device, indexBuffer.memory, 0, indexBytes)
+        val indexByteCount = indices.size.toLong() * Int.SIZE_BYTES
+        indexBuffer = HostBuffer.allocate(graphicsDevice, indexByteCount, VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+        VulkanBuffers.writeMappedMemoryInts(indexBuffer.mappedPtr, 0L, indices, 0, indices.size)
         indexBinding = VulkanBufferBinding(indexBuffer.buffer)
         vertexBinding = slots[0].binding
-        sizeBytes = vertexBytes * framesInFlight + indexBytes.size
+        sizeBytes = vertexBytes * framesInFlight + indexByteCount
     }
 
     override fun writeVertices(vertices: FloatArray, firstVertex: Int, vertexCount: Int) {
@@ -128,13 +127,15 @@ internal class VulkanDynamicMesh(
     override fun destroy() {
         if (destroyed) return
         destroyed = true
-        // A submitted frame may still read a slot; device idle covers every queue, as Mesh.destroy does.
-        VulkanBuffers.vkDeviceWaitIdle(device)
-        slots.forEach { it.vertices.free(graphicsDevice) }
-        indexBuffer.free(graphicsDevice)
+        val slotBuffers = slots.map { it.vertices }
+        val idxBuffer = indexBuffer
         val release = onDestroy
         onDestroy = null
         release?.invoke()
+        graphicsDevice.destroyOrRetire {
+            slotBuffers.forEach { it.free(graphicsDevice) }
+            idxBuffer.free(graphicsDevice)
+        }
     }
 
     /** One frame slot's vertex buffer and the float range not yet written to it. */

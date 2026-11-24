@@ -6,12 +6,11 @@
 package com.awakekt.awake.vulkan.mesh
 
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 
-/** A HOST_VISIBLE | HOST_COHERENT buffer and its memory: the CPU writes it and the GPU reads it, no staging copy. */
+/** A persistently mapped HOST_VISIBLE | HOST_COHERENT buffer and its memory: the CPU writes it and the GPU reads it, no staging copy. */
 internal class HostBuffer(val buffer: Long, val memory: Long, val mappedPtr: Long = 0L) {
     /** Destroys the buffer and frees its memory. Call once the GPU is done with it. */
     fun free(graphicsDevice: GraphicsDevice) {
@@ -26,23 +25,14 @@ internal class HostBuffer(val buffer: Long, val memory: Long, val mappedPtr: Lon
             graphicsDevice: GraphicsDevice,
             byteSize: Long,
             usage: Int,
-            persistentMap: Boolean = false,
+            persistentMap: Boolean = true,
         ): HostBuffer {
             val device = graphicsDevice.device
             val buffer = VulkanBuffers.vkCreateBuffer(device, VkBufferCreateInfo(size = byteSize, usage = usage))
             val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-            val memoryTypeIndex = VulkanBuffers.findMemoryType(
-                graphicsDevice.physicalDevice,
-                requirements.memoryTypeBits,
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            )
-            val memory = VulkanBuffers.vkAllocateMemory(
-                device,
-                VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-            )
+            val memory = graphicsDevice.allocateHostVisibleBufferMemory(requirements)
             VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-            val mappedPtr = if (persistentMap) VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize) else 0L
+            val mappedPtr = if (persistentMap) VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size) else 0L
             return HostBuffer(buffer, memory, mappedPtr)
         }
     }

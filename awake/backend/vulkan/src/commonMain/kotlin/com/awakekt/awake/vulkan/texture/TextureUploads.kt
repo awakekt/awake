@@ -26,7 +26,7 @@ private const val MIN_STAGING_BYTES = 64L * 1024
  * [write] moves it to transfer on first use, and [endFrame] returns all of them to shader reads.
  */
 internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : TextureUploadRecorder {
-    private class Staging(val buffer: Long, val memory: Long, val size: Long)
+    private class Staging(val buffer: Long, val memory: Long, val mappedPtr: Long, val size: Long)
     private val inUse = HashMap<Int, MutableList<Staging>>()
     private val free = mutableListOf<Staging>()
     private val touched = mutableListOf<Texture>()
@@ -47,7 +47,7 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
         require(!image.blockCompressed) { "A block-compressed texture takes no RGBA8 region writes." }
         val staging = acquire(region.data.size.toLong())
         inUse.getOrPut(frameIndex) { mutableListOf() } += staging
-        VulkanBuffers.writeBufferMemoryBytes(device, staging.memory, 0, region.data)
+        VulkanBuffers.writeMappedMemoryBytes(staging.mappedPtr, 0L, region.data, 0, region.data.size)
         // Regions written in one frame are disjoint, so copies into one image share a single transition.
         if (touched.none { it === image }) {
             VulkanImages.vkTransitionImageLayout(
@@ -101,7 +101,8 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
             )
             memory = VulkanBuffers.vkAllocateMemory(device, VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = type))
             VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-            return Staging(buffer, memory, size)
+            val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
+            return Staging(buffer, memory, mappedPtr, size)
         } catch (failure: Throwable) {
             VulkanBuffers.vkDestroyBuffer(device, buffer)
             if (memory != 0L) VulkanBuffers.vkFreeMemory(device, memory)
@@ -111,6 +112,7 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
 
     private fun release(staging: Staging) {
         VulkanBuffers.vkDestroyBuffer(device, staging.buffer)
+        VulkanBuffers.vkUnmapMemory(device, staging.memory)
         VulkanBuffers.vkFreeMemory(device, staging.memory)
     }
 

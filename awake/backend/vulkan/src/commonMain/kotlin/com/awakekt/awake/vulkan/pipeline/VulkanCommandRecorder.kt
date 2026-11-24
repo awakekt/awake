@@ -12,8 +12,8 @@ import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.Vulkan
-import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.models.info.VkIndexType
 import com.awakekt.awake.render.command.BufferHandle as RenderBufferHandle
@@ -54,11 +54,7 @@ internal class VulkanCommandRecorder(
 
     override fun bindPipeline(pipeline: PipelineHandle) {
         val vulkanPipeline = pipeline as VulkanPipelineHandle
-        Vulkan.vkCmdBindPipeline(
-            commandBuffer,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            vulkanPipeline.pipelineHandle,
-        )
+        VulkanCommands.vkCmdBindGraphicsPipeline(commandBuffer, vulkanPipeline.pipelineHandle)
         boundPipelineLayout = vulkanPipeline.pipelineLayoutHandle
         bindingLayout = vulkanPipeline.bindingLayout
         drawsTriangles = vulkanPipeline.drawsTriangles
@@ -84,11 +80,11 @@ internal class VulkanCommandRecorder(
     }
 
     override fun bindVertexBuffer(binding: Int, buffer: RenderBufferHandle) {
-        VulkanBuffers.vkCmdBindVertexBuffers(
+        VulkanBuffers.vkCmdBindVertexBuffer(
             commandBuffer,
             binding,
-            (buffer as VulkanBufferBinding).asArray,
-            ZERO_OFFSET,
+            (buffer as VulkanBufferBinding).handle,
+            0L,
         )
     }
 
@@ -102,16 +98,7 @@ internal class VulkanCommandRecorder(
     }
 
     override fun setScissor(x: Int, y: Int, width: Int, height: Int) {
-        Vulkan.vkCmdSetScissor(
-            commandBuffer,
-            0,
-            arrayOf(
-                com.awakekt.awake.vulkan.models.VkRect2D(
-                    offset = com.awakekt.awake.vulkan.models.VkOffset2D(x = x, y = y),
-                    extent = com.awakekt.awake.vulkan.models.VkExtent2D(width = width, height = height),
-                ),
-            ),
-        )
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, x, y, width, height)
     }
 
     override fun draw(vertexCount: Int, instanceCount: Int) {

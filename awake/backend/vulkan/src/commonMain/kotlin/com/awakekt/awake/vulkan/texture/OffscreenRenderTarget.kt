@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.texture
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.allocateDeviceImageMemory
 import com.awakekt.awake.vulkan.enums.VkFormat
 import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
 import com.awakekt.awake.vulkan.enums.VkImageViewType
@@ -128,15 +129,7 @@ class OffscreenRenderTarget(
             ),
         )
         val colorRequirements = VulkanImages.vkGetImageMemoryRequirements(device, colorImage)
-        val colorMemoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            colorRequirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        )
-        colorImageMemory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = colorRequirements.size, memoryTypeIndex = colorMemoryTypeIndex),
-        )
+        colorImageMemory = graphicsDevice.allocateDeviceImageMemory(colorImage, colorRequirements)
         colorBytes = colorRequirements.size
         VulkanImages.vkBindImageMemory(device, colorImage, colorImageMemory, 0)
         colorImageView = Vulkan.vkCreateImageView(

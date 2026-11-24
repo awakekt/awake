@@ -8,10 +8,9 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
 import com.awakekt.awake.vulkan.enums.flags.VkCommandBufferUsageFlagBits
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.models.info.VkCommandBufferAllocateInfo
-import com.awakekt.awake.vulkan.models.info.VkCommandBufferBeginInfo
 import com.awakekt.awake.vulkan.models.info.VkFenceCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkSubmitInfo
 
 /** Reuses one transfer-pool command buffer and fence for synchronous offscreen work. */
 internal fun Renderer.runOffscreenCommands(measureGpuTime: Boolean = true, block: (Long) -> Unit) {
@@ -22,7 +21,7 @@ internal fun Renderer.runOffscreenCommands(measureGpuTime: Boolean = true, block
         offscreenFence = Vulkan.vkCreateFence(device, VkFenceCreateInfo())
     }
     val timing = recordAndSubmit(offscreenCommandBuffer, offscreenFence, measureGpuTime, block)
-    Vulkan.vkWaitForFences(device, longArrayOf(offscreenFence), true, Long.MAX_VALUE)
+    VulkanCommands.vkWaitForFence(device, offscreenFence, Long.MAX_VALUE)
     timing?.let { gpuFrameTimer?.completeOffscreen(it) }
 }
 
@@ -49,7 +48,7 @@ internal fun Renderer.submitOffscreenCommands(
 /** Waits for the outstanding [submitOffscreenCommands] work, if any. */
 internal fun Renderer.awaitSubmittedOffscreenCommands() {
     if (submittedOffscreenFrame < 0) return
-    Vulkan.vkWaitForFences(device, longArrayOf(submittedOffscreenFence), true, Long.MAX_VALUE)
+    VulkanCommands.vkWaitForFence(device, submittedOffscreenFence, Long.MAX_VALUE)
     submittedOffscreenTiming?.let { gpuFrameTimer?.completeOffscreen(it) }
     submittedOffscreenTiming = null
     submittedOffscreenFrame = NO_SUBMITTED_OFFSCREEN_FRAME
@@ -80,23 +79,24 @@ private fun Renderer.allocateOffscreenCommandBuffer(): Long = Vulkan.vkAllocateC
 
 private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, measureGpuTime: Boolean, block: (Long) -> Unit): Long? {
     Vulkan.vkResetCommandBuffer(commandBuffer, 0)
-    Vulkan.vkBeginCommandBuffer(
+    VulkanCommands.vkBeginCommandBuffer(
         commandBuffer,
-        VkCommandBufferBeginInfo(
-            flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
-        ),
+        VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
     )
     val timing = if (measureGpuTime) gpuFrameTimer?.beginOffscreen(commandBuffer) else null
     block(commandBuffer)
     timing?.let { gpuFrameTimer?.endOffscreen(commandBuffer, it) }
     Vulkan.vkEndCommandBuffer(commandBuffer)
 
-    Vulkan.vkResetFences(device, longArrayOf(fence))
+    VulkanCommands.vkResetFence(device, fence)
     graphicsDevice.queueLock.withLock {
-        Vulkan.vkQueueSubmit(
-            graphicsQueue,
-            arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffer))),
-            fence,
+        VulkanCommands.vkQueueSubmitSingle(
+            queue = graphicsQueue,
+            commandBuffer = commandBuffer,
+            waitSemaphore = 0L,
+            waitStageMask = 0,
+            signalSemaphore = 0L,
+            fence = fence,
         )
     }
     return timing

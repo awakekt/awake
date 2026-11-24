@@ -9,6 +9,7 @@ import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.vulkan.VK_SUBPASS_EXTERNAL
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.allocateDeviceImageMemory
 import com.awakekt.awake.vulkan.enums.VkAttachmentStoreOp
 import com.awakekt.awake.vulkan.enums.VkFormat
 import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
@@ -16,18 +17,15 @@ import com.awakekt.awake.vulkan.enums.VkImageLayout
 import com.awakekt.awake.vulkan.enums.VkImageViewType
 import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
-import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.gen.VulkanImages
 import com.awakekt.awake.vulkan.models.VkAttachmentDescription
 import com.awakekt.awake.vulkan.models.VkAttachmentReference
-import com.awakekt.awake.vulkan.models.VkClearDepthStencilValue
-import com.awakekt.awake.vulkan.models.VkExtent2D
-import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkSubpassDependency
 import com.awakekt.awake.vulkan.models.info.VkCompareOp2
 import com.awakekt.awake.vulkan.models.info.VkDescriptorImageInfo
@@ -43,7 +41,6 @@ import com.awakekt.awake.vulkan.models.info.VkImageSubresourceRange
 import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
-import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.models.info.VkRenderPassCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSamplerAddressMode
 import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
@@ -216,15 +213,7 @@ class DepthTarget(
             ),
         )
         val requirements = VulkanImages.vkGetImageMemoryRequirements(device, image)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            graphicsDevice.physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        )
-        imageMemory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-        )
+        imageMemory = graphicsDevice.allocateDeviceImageMemory(image, requirements)
         allocatedBytes = requirements.size
         VulkanImages.vkBindImageMemory(device, image, imageMemory, 0)
         createViews()
@@ -437,15 +426,13 @@ class DepthTarget(
      */
     fun clearToFar(commandBuffer: Long) {
         for (layer in 0 until layers) {
-            Vulkan.vkCmdBeginRenderPass(
+            VulkanCommands.vkCmdBeginRenderPassDepth(
                 commandBuffer,
-                VkRenderPassBeginInfo(
-                    renderPass = renderPass,
-                    framebuffer = framebuffers[layer],
-                    renderArea = VkRect2D(extent = VkExtent2D(width, height)),
-                    pClearValues = arrayOf(VkClearDepthStencilValue(depth = 1f, stencil = 0)),
-                ),
-                VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
+                renderPass,
+                framebuffers[layer],
+                width,
+                height,
+                1f,
             )
             Vulkan.vkCmdEndRenderPass(commandBuffer)
         }

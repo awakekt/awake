@@ -16,6 +16,7 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
  * and a failed Vulkan call throws a [com.awakekt.awake.vulkan.utils.VkResultException]. The library
  * is loaded by [com.awakekt.awake.vulkan.Vulkan], so use that first.
  */
+@Suppress("TooManyFunctions")
 actual object VulkanBuffers {
     /** Creates a buffer. It has no memory until one is bound with [vkBindBufferMemory]. */
     actual external fun vkCreateBuffer(device: Long, createInfo: VkBufferCreateInfo): Long
@@ -102,16 +103,38 @@ actual object VulkanBuffers {
     /** Copies [count] floats of [data] from [dataOffset] into persistently mapped memory. */
     actual fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int) {
         requireFloatRange(data.size, dataOffset, count)
+        if (count == 0) return
         writeMappedMemoryFloatRange(mappedPtr, offset, data, dataOffset, count)
     }
 
     private external fun writeMappedMemoryFloatRange(mappedPtr: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int)
 
+    /** Copies [count] ints of [data] from [dataOffset] into persistently mapped memory. */
+    actual fun writeMappedMemoryInts(mappedPtr: Long, offset: Long, data: IntArray, dataOffset: Int, count: Int) {
+        requireArrayRange(data.size, dataOffset, count, "ints")
+        if (count == 0) return
+        writeMappedMemoryIntRange(mappedPtr, offset, data, dataOffset, count)
+    }
+
+    private external fun writeMappedMemoryIntRange(mappedPtr: Long, offset: Long, data: IntArray, dataOffset: Int, count: Int)
+
     /** Copies [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
     actual external fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray)
 
+    /** Copies [count] bytes of [data] from [dataOffset] into persistently mapped memory. */
+    actual fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray, dataOffset: Int, count: Int) {
+        requireArrayRange(data.size, dataOffset, count, "bytes")
+        if (count == 0) return
+        writeMappedMemoryByteRange(mappedPtr, offset, data, dataOffset, count)
+    }
+
+    private external fun writeMappedMemoryByteRange(mappedPtr: Long, offset: Long, data: ByteArray, dataOffset: Int, count: Int)
+
     /** Reads [size] bytes from persistently mapped memory at [mappedPtr] + [offset] bytes. */
     actual external fun readMappedMemoryBytes(mappedPtr: Long, offset: Long, size: Int): ByteArray
+
+    /** Scalar fast path for binding a single vertex buffer with zero heap allocations. */
+    actual external fun vkCmdBindVertexBuffer(commandBuffer: Long, binding: Int, buffer: Long, offset: Long)
 
     /** `bindingCount` is implicit (`buffers.size`); `offsets` must be the same size. */
     actual external fun vkCmdBindVertexBuffers(
@@ -125,6 +148,41 @@ actual object VulkanBuffers {
      * `indexType` uses the plain-`Int` [com.awakekt.awake.vulkan.models.info.VkIndexType] values.
      */
     actual external fun vkCmdBindIndexBuffer(commandBuffer: Long, buffer: Long, offset: Long, indexType: Int)
+
+    /** Finds a memory type matching [preferredProperties], falling back to [fallbackProperties], or -1. */
+    actual external fun findPreferredMemoryType(
+        physicalDevice: Long,
+        typeFilter: Int,
+        preferredProperties: Int,
+        fallbackProperties: Int,
+    ): Int
+
+    /** Finds a `DEVICE_LOCAL | HOST_VISIBLE | HOST_COHERENT` memory type backed by a heap `>= minHeapBytes`, or -1. */
+    actual external fun findDeviceLocalHostVisibleMemoryType(
+        physicalDevice: Long,
+        typeFilter: Int,
+        minHeapBytes: Long,
+    ): Int
+
+    /** Allocates image memory, using Vulkan 1.1 dedicated allocation when the driver prefers or requires it. */
+    actual external fun vkAllocateDedicatedImageMemory(
+        device: Long,
+        allocationSize: Long,
+        memoryTypeIndex: Int,
+        image: Long,
+        deviceApiVersion: Int,
+    ): Long
+
+    /** Records a single-region buffer copy with explicit [srcOffset] and [dstOffset]. */
+    @Suppress("LongParameterList")
+    actual external fun vkCmdCopyBufferRange(
+        commandBuffer: Long,
+        srcBuffer: Long,
+        dstBuffer: Long,
+        srcOffset: Long,
+        dstOffset: Long,
+        size: Long,
+    )
 
     /**
      * Single-region copy (`srcOffset`/`dstOffset` both 0) -- the staging-buffer upload pattern (a

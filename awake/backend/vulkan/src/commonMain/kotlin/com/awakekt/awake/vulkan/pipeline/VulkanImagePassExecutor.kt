@@ -27,6 +27,9 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.VK_SUBPASS_EXTERNAL
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.SMALL_UBO_REBAR_MIN_HEAP_BYTES
+import com.awakekt.awake.vulkan.device.allocateDeviceImageMemory
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.enums.VkAttachmentLoadOp
 import com.awakekt.awake.vulkan.enums.VkAttachmentStoreOp
 import com.awakekt.awake.vulkan.enums.VkBlendFactor
@@ -45,21 +48,19 @@ import com.awakekt.awake.vulkan.enums.VkPolygonMode
 import com.awakekt.awake.vulkan.enums.VkPrimitiveTopology
 import com.awakekt.awake.vulkan.enums.VkSampleCountFlagBits
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
-import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.enums.VkVertexInputRate
 import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.gen.VulkanImages
 import com.awakekt.awake.vulkan.material.materialLayoutBindings
 import com.awakekt.awake.vulkan.material.materialPoolSizes
 import com.awakekt.awake.vulkan.models.VkAttachmentDescription
 import com.awakekt.awake.vulkan.models.VkAttachmentReference
-import com.awakekt.awake.vulkan.models.VkClearColorValue
 import com.awakekt.awake.vulkan.models.VkExtent2D
-import com.awakekt.awake.vulkan.models.VkOffset2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkSubpassDependency
 import com.awakekt.awake.vulkan.models.VkViewport
@@ -79,7 +80,6 @@ import com.awakekt.awake.vulkan.models.info.VkImageSubresourceRange
 import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
-import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.models.info.VkRenderPassCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSamplerAddressMode
 import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
@@ -260,8 +260,7 @@ internal class VulkanImagePassExecutor(
     ) {
         require(drawsOnlyOnActiveTarget(chain)) { "recordInOpenPass takes a chain that draws only onto its active target." }
         val safeFrame = frameIndex.coerceIn(0, maxFramesInFlight.coerceAtLeast(1) - 1)
-        val fullViewport = VkViewport(width = parentTarget.width.toFloat(), height = parentTarget.height.toFloat())
-        Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(fullViewport))
+        VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, parentTarget.width.toFloat(), parentTarget.height.toFloat(), 0f, 1f)
         for (step in chain.steps) {
             val destination = step.destination as ImagePassDestination.ActiveTarget
             applyScissor(commandBuffer, destination.scissorRect, parentTarget.width, parentTarget.height)
@@ -278,7 +277,7 @@ internal class VulkanImagePassExecutor(
                 stats = stats,
             )
         }
-        Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(VkRect2D(extent = VkExtent2D(parentTarget.width, parentTarget.height))))
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, parentTarget.width, parentTarget.height)
     }
 
     /**
@@ -371,30 +370,29 @@ internal class VulkanImagePassExecutor(
                     }
                     val framebuffer = if (useClear) target.clearFramebuffer else target.loadFramebuffer
                     stats.recordPass()
-                    Vulkan.vkCmdBeginRenderPass(
-                        commandBuffer,
-                        VkRenderPassBeginInfo(
-                            renderPass = renderPass,
-                            framebuffer = framebuffer,
-                            renderArea = VkRect2D(extent = VkExtent2D(target.width, target.height)),
-                            pClearValues = if (useClear) {
-                                arrayOf(VkClearColorValue.rgba(0f, 0f, 0f, 0f))
-                            } else {
-                                emptyArray()
-                            },
-                        ),
-                        VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
-                    )
-                    Vulkan.vkCmdSetViewport(
-                        commandBuffer,
-                        0,
-                        arrayOf(VkViewport(width = target.width.toFloat(), height = target.height.toFloat())),
-                    )
-                    Vulkan.vkCmdSetScissor(
-                        commandBuffer,
-                        0,
-                        arrayOf(VkRect2D(extent = VkExtent2D(target.width, target.height))),
-                    )
+                    if (useClear) {
+                        VulkanCommands.vkCmdBeginRenderPassColor(
+                            commandBuffer,
+                            renderPass,
+                            framebuffer,
+                            target.width,
+                            target.height,
+                            0f,
+                            0f,
+                            0f,
+                            0f,
+                        )
+                    } else {
+                        VulkanCommands.vkCmdBeginRenderPassEmpty(
+                            commandBuffer,
+                            renderPass,
+                            framebuffer,
+                            target.width,
+                            target.height,
+                        )
+                    }
+                    VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, target.width.toFloat(), target.height.toFloat(), 0f, 1f)
+                    VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, target.width, target.height)
                     recordStepDraw(
                         commandBuffer = commandBuffer,
                         frameIndex = safeFrame,
@@ -491,22 +489,36 @@ internal class VulkanImagePassExecutor(
             stats.recordPass()
             beginParentRenderPass(commandBuffer, parentTarget, finalResumeRenderPass)
         } else {
-            Vulkan.vkCmdSetViewport(
-                commandBuffer,
-                0,
-                arrayOf(VkViewport(width = parentTarget.width.toFloat(), height = parentTarget.height.toFloat())),
-            )
-            Vulkan.vkCmdSetScissor(
-                commandBuffer,
-                0,
-                arrayOf(VkRect2D(extent = VkExtent2D(parentTarget.width, parentTarget.height))),
-            )
+            VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, parentTarget.width.toFloat(), parentTarget.height.toFloat(), 0f, 1f)
+            VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, parentTarget.width, parentTarget.height)
+        }
+    }
+
+    /** Clears cached image-view descriptors referencing [imageView] so handle reuse cannot alias a stale descriptor. */
+    fun invalidateImageView(imageView: Long) {
+        if (imageView == 0L) return
+        for (byShader in stepSlotsByFrame) {
+            for (slots in byShader.values) {
+                for (slot in slots) slot.invalidateImageView(imageView)
+            }
+        }
+    }
+
+    /** Clears all cached step image descriptors (e.g. after swapchain image views are rebuilt). */
+    fun invalidateAllStepDescriptors() {
+        for (byShader in stepSlotsByFrame) {
+            for (slots in byShader.values) {
+                for (slot in slots) slot.invalidateAllImages()
+            }
         }
     }
 
     /** Releases all pooled transient targets while keeping compiled shaders and pipelines intact. */
     fun releaseTransientTargets() {
-        transientTargets.values.forEach { it.destroy(device) }
+        transientTargets.values.forEach {
+            invalidateImageView(it.imageView)
+            it.destroy(device)
+        }
         transientTargets.clear()
     }
 
@@ -564,25 +576,15 @@ internal class VulkanImagePassExecutor(
             VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
                 VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
         )
-        Vulkan.vkCmdBeginRenderPass(
+        VulkanCommands.vkCmdBeginRenderPassEmpty(
             commandBuffer,
-            VkRenderPassBeginInfo(
-                renderPass = renderPass,
-                framebuffer = parentTarget.framebuffer,
-                renderArea = VkRect2D(extent = VkExtent2D(parentTarget.width, parentTarget.height)),
-            ),
-            VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
+            renderPass,
+            parentTarget.framebuffer,
+            parentTarget.width,
+            parentTarget.height,
         )
-        Vulkan.vkCmdSetViewport(
-            commandBuffer,
-            0,
-            arrayOf(VkViewport(width = parentTarget.width.toFloat(), height = parentTarget.height.toFloat())),
-        )
-        Vulkan.vkCmdSetScissor(
-            commandBuffer,
-            0,
-            arrayOf(VkRect2D(extent = VkExtent2D(parentTarget.width, parentTarget.height))),
-        )
+        VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, parentTarget.width.toFloat(), parentTarget.height.toFloat(), 0f, 1f)
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, parentTarget.width, parentTarget.height)
     }
 
     private fun applyScissor(
@@ -592,11 +594,7 @@ internal class VulkanImagePassExecutor(
         targetHeight: Int,
     ) {
         if (scissorRect == null) {
-            Vulkan.vkCmdSetScissor(
-                commandBuffer,
-                0,
-                arrayOf(VkRect2D(extent = VkExtent2D(targetWidth, targetHeight))),
-            )
+            VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, targetWidth, targetHeight)
             return
         }
         val clamped = scissorRect.clampTo(targetWidth.toFloat(), targetHeight.toFloat())
@@ -604,11 +602,7 @@ internal class VulkanImagePassExecutor(
         val y = clamped.y.roundToInt().coerceIn(0, targetHeight)
         val w = clamped.width.roundToInt().coerceAtLeast(0).coerceAtMost(targetWidth - x)
         val h = clamped.height.roundToInt().coerceAtLeast(0).coerceAtMost(targetHeight - y)
-        Vulkan.vkCmdSetScissor(
-            commandBuffer,
-            0,
-            arrayOf(VkRect2D(offset = VkOffset2D(x = x, y = y), extent = VkExtent2D(width = w, height = h))),
-        )
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, x, y, w, h)
     }
 
     @Suppress("LongParameterList")
@@ -634,20 +628,16 @@ internal class VulkanImagePassExecutor(
         )
         val slot = acquireStepSlot(frameIndex, compiled)
         if (compiled.uniformByteSize > 0L && step.uniformData.isNotEmpty()) {
-            VulkanBuffers.writeMappedMemoryFloats(slot.uniformMappedPtr, 0, step.uniformData)
+            VulkanBuffers.writeMappedMemoryFloats(slot.uniformMappedPtr, 0L, step.uniformData)
         }
         bindStepInputs(
-            descriptorSet = slot.descriptorSet,
+            slot = slot,
             groupBindings = compiled.spec.groupBindings,
             inputs = step.inputs,
             parentTarget = parentTarget,
             activeTransients = activeTransients,
         )
-        Vulkan.vkCmdBindPipeline(
-            commandBuffer,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipeline,
-        )
+        VulkanCommands.vkCmdBindGraphicsPipeline(commandBuffer, pipeline)
         VulkanDescriptors.vkCmdBindDescriptorSet(
             commandBuffer,
             compiled.pipelineLayout,
@@ -670,13 +660,14 @@ internal class VulkanImagePassExecutor(
     }
 
     private fun bindStepInputs(
-        descriptorSet: Long,
+        slot: StepDescriptorSlot,
         groupBindings: GroupBindings,
         inputs: List<ImagePassTextureBinding>,
         parentTarget: VulkanImagePassParentTarget,
         activeTransients: Map<String, PooledTransientTarget>,
     ) {
         val samplerEntries = groupBindings.entries.filter { it.kind == ResourceKind.Sampler }
+        slot.ensureInputCapacity(inputs.size)
         for (index in inputs.indices) {
             val input = inputs[index]
             val imageView = when (val source = input.source) {
@@ -690,24 +681,32 @@ internal class VulkanImagePassExecutor(
                 is ImagePassSource.Texture ->
                     textureProvider(source.texture).imageView.handle
             }
-            VulkanDescriptors.vkUpdateDescriptorSetImage(
-                device,
-                descriptorSet,
-                input.binding,
-                VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                VkDescriptorImageInfo(sampler = 0, imageView = imageView),
-            )
+            if (slot.boundImageBindings[index] != input.binding || slot.boundImageViews[index] != imageView) {
+                VulkanDescriptors.vkUpdateDescriptorSetImage(
+                    device,
+                    slot.descriptorSet,
+                    input.binding,
+                    VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                    VkDescriptorImageInfo(sampler = 0, imageView = imageView),
+                )
+                slot.boundImageBindings[index] = input.binding
+                slot.boundImageViews[index] = imageView
+            }
             val samplerBinding = samplerEntries.firstOrNull { it.binding == input.binding + 1 }?.binding
                 ?: samplerEntries.getOrNull(index)?.binding
             if (samplerBinding != null) {
                 val sampler = ensureSampler(input.sampler)
-                VulkanDescriptors.vkUpdateDescriptorSetImage(
-                    device,
-                    descriptorSet,
-                    samplerBinding,
-                    VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
-                    VkDescriptorImageInfo(sampler = sampler, imageView = 0),
-                )
+                if (slot.boundSamplerBindings[index] != samplerBinding || slot.boundSamplers[index] != sampler) {
+                    VulkanDescriptors.vkUpdateDescriptorSetImage(
+                        device,
+                        slot.descriptorSet,
+                        samplerBinding,
+                        VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
+                        VkDescriptorImageInfo(sampler = sampler, imageView = 0),
+                    )
+                    slot.boundSamplerBindings[index] = samplerBinding
+                    slot.boundSamplers[index] = sampler
+                }
             }
         }
     }
@@ -731,6 +730,7 @@ internal class VulkanImagePassExecutor(
                 totalTargetReuses += 1
                 return existing
             }
+            invalidateImageView(existing.imageView)
             existing.destroy(device)
         }
         totalTargetAllocations += 1
@@ -757,15 +757,7 @@ internal class VulkanImagePassExecutor(
             ),
         )
         val requirements = VulkanImages.vkGetImageMemoryRequirements(device, image)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-        )
+        val memory = graphicsDevice.allocateDeviceImageMemory(image, requirements)
         VulkanImages.vkBindImageMemory(device, image, memory, 0)
         val imageView = Vulkan.vkCreateImageView(
             device,
@@ -1168,18 +1160,12 @@ internal class VulkanImagePassExecutor(
                 ),
             )
             val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-            val memoryTypeIndex = VulkanBuffers.findMemoryType(
-                physicalDevice,
-                requirements.memoryTypeBits,
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            )
-            val memory = VulkanBuffers.vkAllocateMemory(
-                device,
-                VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
+            val memory = graphicsDevice.allocateHostVisibleBufferMemory(
+                requirements,
+                minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
             )
             VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-            uniformMappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, compiled.uniformByteSize)
+            uniformMappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
             VulkanDescriptors.vkUpdateDescriptorSetBuffer(
                 device,
                 set,
@@ -1256,6 +1242,29 @@ internal class VulkanImagePassExecutor(
         val uniformMemory: Long,
         val uniformMappedPtr: Long,
     ) {
+        var boundImageBindings = IntArray(0)
+        var boundImageViews = LongArray(0)
+        var boundSamplerBindings = IntArray(0)
+        var boundSamplers = LongArray(0)
+
+        fun ensureInputCapacity(size: Int) {
+            if (boundImageViews.size >= size) return
+            boundImageBindings = IntArray(size) { -1 }
+            boundImageViews = LongArray(size)
+            boundSamplerBindings = IntArray(size) { -1 }
+            boundSamplers = LongArray(size)
+        }
+
+        fun invalidateImageView(imageView: Long) {
+            for (i in boundImageViews.indices) {
+                if (boundImageViews[i] == imageView) boundImageViews[i] = 0L
+            }
+        }
+
+        fun invalidateAllImages() {
+            boundImageViews.fill(0L)
+        }
+
         fun destroy(device: Long) {
             if (uniformBuffer != 0L) VulkanBuffers.vkDestroyBuffer(device, uniformBuffer)
             if (uniformMappedPtr != 0L && uniformMemory != 0L) VulkanBuffers.vkUnmapMemory(device, uniformMemory)

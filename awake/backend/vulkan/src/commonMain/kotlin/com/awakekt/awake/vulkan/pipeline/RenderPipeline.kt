@@ -315,11 +315,7 @@ class RenderPipeline(
     /** Binds the (single) graphics pipeline. Render-pass begin/end and descriptor-set
      * binding (a [Material] concern) happen around/after this, not here. */
     fun bind(commandBuffer: Long) {
-        Vulkan.vkCmdBindPipeline(
-            commandBuffer,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            graphicsPipeline[0],
-        )
+        com.awakekt.awake.vulkan.gen.VulkanCommands.vkCmdBindGraphicsPipeline(commandBuffer, graphicsPipeline[0])
     }
 
     /**
@@ -344,108 +340,12 @@ private const val DEFAULT_SHADER_ENTRY_POINT = "main"
  * avoids one near-identical render pass per pipeline. Not owned by any pipeline; caller
  * destroys it exactly once. */
 fun createSceneRenderPass(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, sampleCount: Int = 1): Long =
-    Vulkan.vkCreateRenderPass(
-        graphicsDevice.device,
-        VkRenderPassCreateInfo(
-            pAttachments = sceneAttachments(swapchainManager, sampleCount),
-            pSubpasses = arrayOf(
-                VkSubpassDescription(
-                    pipelineBindPoint = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pColorAttachments = arrayOf(
-                        VkAttachmentReference(
-                            attachment = 0,
-                            layout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                        ),
-                    ),
-                    pDepthStencilAttachment = arrayOf(
-                        VkAttachmentReference(
-                            attachment = 1,
-                            layout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                        ),
-                    ),
-                    pResolveAttachments = if (sampleCount > 1) {
-                        arrayOf(
-                            VkAttachmentReference(attachment = 2, layout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL),
-                        )
-                    } else {
-                        null
-                    },
-                ),
-            ),
-            pDependencies = sceneDependencies(),
-        ),
+    createSceneRenderPassWithFinalLayout(
+        graphicsDevice,
+        swapchainManager,
+        sampleCount,
+        colorFinalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     )
-
-/**
- * The scene pass's external dependencies (#1676). One depth attachment can be drawn by this pass from
- * two command buffers with nothing else ordering them -- an offscreen target two frames in flight
- * both render, say -- so the pass orders itself: in, its layout transition and clear wait for an
- * earlier pass's depth and colour writes at both fragment-test stages; out, its own depth writes are
- * made available to the next pass that tests against or clears the attachment. Before, the way in
- * waited on EARLY_FRAGMENT_TESTS alone with no access, and a depth write at LATE_FRAGMENT_TESTS raced
- * the next pass's layout transition: SYNC-HAZARD-WRITE-AFTER-WRITE under synchronization validation.
- */
-private fun sceneDependencies(): Array<VkSubpassDependency> {
-    val attachmentStages = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
-        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
-        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value
-    val depthStages = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
-        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value
-    val attachmentWrites = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value or
-        VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value
-    val depthAccess = VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT.value or
-        VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value
-    return arrayOf(
-        VkSubpassDependency(
-            srcSubpass = VK_SUBPASS_EXTERNAL,
-            dstSubpass = 0,
-            srcStageMask = attachmentStages,
-            srcAccessMask = attachmentWrites,
-            dstStageMask = attachmentStages,
-            dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or attachmentWrites or depthAccess,
-        ),
-        VkSubpassDependency(
-            srcSubpass = 0,
-            dstSubpass = VK_SUBPASS_EXTERNAL,
-            srcStageMask = depthStages,
-            srcAccessMask = VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
-            dstStageMask = depthStages,
-            dstAccessMask = depthAccess,
-        ),
-    )
-}
-
-private fun sceneAttachments(swapchainManager: SwapchainManager, sampleCount: Int): Array<VkAttachmentDescription> =
-    arrayOf(
-        VkAttachmentDescription(
-            format = swapchainManager.imageFormat,
-            samples = sampleCount.toVkSampleCount(),
-            storeOp = if (sampleCount > 1) VkAttachmentStoreOp.DONT_CARE else VkAttachmentStoreOp.STORE,
-            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            // COLOR_ATTACHMENT_OPTIMAL, not PRESENT_SRC_KHR: the UI overlay pass
-            // (UiRenderPipeline) draws on top of this pass's output before the
-            // final present-layout transition happens, at the end of that pass
-            // instead. See docs/reference/decision-log.md's custom-UI entries.
-            finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        ),
-        VkAttachmentDescription(
-            format = VkFormat.VK_FORMAT_D32_SFLOAT,
-            samples = sampleCount.toVkSampleCount(),
-            storeOp = VkAttachmentStoreOp.DONT_CARE,
-            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-            finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        ),
-    ) + if (sampleCount > 1) {
-        arrayOf(
-            VkAttachmentDescription(
-                format = swapchainManager.imageFormat,
-                loadOp = VkAttachmentLoadOp.DONT_CARE,
-                finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            ),
-        )
-    } else {
-        emptyArray()
-    }
 
 /** See [PipelineVariant.instanced]. Binding 1 (binding 0 is the mesh's own per-vertex buffer);
  * one `mat4` = 4 `vec4` rows = 64 bytes per instance. */

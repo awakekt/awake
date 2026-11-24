@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkResult
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.utils.VkResultException
 
 /** Waits this frame-in-flight slot's fence, acquires the next swapchain image, and waits
@@ -18,12 +19,7 @@ import com.awakekt.awake.vulkan.utils.VkResultException
  * limit. */
 internal fun Renderer.acquireSwapchainImage(currentFrame: Int): Int? {
     frameWaits.fence {
-        Vulkan.vkWaitForFences(
-            device,
-            longArrayOf(swapchainManager.inFlightFences[currentFrame]),
-            true,
-            Long.MAX_VALUE,
-        )
+        VulkanCommands.vkWaitForFence(device, swapchainManager.inFlightFences[currentFrame], Long.MAX_VALUE)
     }
     return if (swapchainManager.isHeadlessPresentable) {
         headlessImageIndex(currentFrame)
@@ -69,10 +65,10 @@ private fun Renderer.acquirePresentedImage(currentFrame: Int): Int? {
     }
     val imageFence = swapchainManager.imagesInFlight[imageIndex]
     if (imageFence != 0L) {
-        frameWaits.fence { Vulkan.vkWaitForFences(device, longArrayOf(imageFence), true, Long.MAX_VALUE) }
+        frameWaits.fence { VulkanCommands.vkWaitForFence(device, imageFence, Long.MAX_VALUE) }
     }
     swapchainManager.imagesInFlight[imageIndex] = swapchainManager.inFlightFences[currentFrame]
-    Vulkan.vkResetFences(device, longArrayOf(swapchainManager.inFlightFences[currentFrame]))
+    VulkanCommands.vkResetFence(device, swapchainManager.inFlightFences[currentFrame])
     return imageIndex
 }
 
@@ -87,8 +83,8 @@ private fun Renderer.headlessImageIndex(currentFrame: Int): Int {
     val index = currentFrame % swapchainManager.imageViews.size
     swapchainManager.lastHeadlessImage = index
     val pending = swapchainManager.imagesInFlight[index]
-    if (pending != 0L) frameWaits.fence { Vulkan.vkWaitForFences(device, longArrayOf(pending), true, Long.MAX_VALUE) }
+    if (pending != 0L) frameWaits.fence { VulkanCommands.vkWaitForFence(device, pending, Long.MAX_VALUE) }
     swapchainManager.imagesInFlight[index] = swapchainManager.inFlightFences[currentFrame]
-    Vulkan.vkResetFences(device, longArrayOf(swapchainManager.inFlightFences[currentFrame]))
+    VulkanCommands.vkResetFence(device, swapchainManager.inFlightFences[currentFrame])
     return index
 }

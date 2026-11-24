@@ -69,8 +69,12 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineMesh
+import com.awakekt.awake.vulkan.device.DeferredResourceReaper
 import com.awakekt.awake.vulkan.device.DeviceCapabilities
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.destroyOrRetire
+import com.awakekt.awake.vulkan.device.registerReaper
+import com.awakekt.awake.vulkan.device.unregisterReaper
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
@@ -456,7 +460,9 @@ class Renderer internal constructor(
     internal var depthImageMemories: List<Long> = emptyList()
     internal var depthImageViews: List<Long> = emptyList()
     internal var multisampleColors: List<com.awakekt.awake.vulkan.texture.ColorAttachment> = emptyList()
-    internal var presentTransitionRenderPass: Long = 0
+    internal var sceneToPresentRenderPass: Long = 0
+    internal var sceneToPresentRenderPassFormat: com.awakekt.awake.vulkan.enums.VkFormat =
+        com.awakekt.awake.vulkan.enums.VkFormat.VK_FORMAT_UNDEFINED
 
     // Reused every call, NOT transferContext.runOneTimeCommands() -- that allocates a fresh
     // command buffer it never frees, fine for one-time startup uploads but not for
@@ -481,7 +487,7 @@ class Renderer internal constructor(
     // game that never calls drawUi never builds either pipeline at all.
     internal var uiRenderPipeline: UiRenderPipeline? = null
     internal var uiFramebuffers: List<Long> = emptyList()
-    internal var presentTransitionFramebuffers: List<Long> = emptyList()
+    internal var swapchainColorFramebuffers: List<Long> = emptyList()
     internal var uiGlyphRenderPipeline: UiRenderPipeline? = null
     internal var offscreenGlyphRenderPipeline: UiRenderPipeline? = null
     internal var uiDecoratedGlyphRenderPipeline: UiRenderPipeline? = null
@@ -514,7 +520,12 @@ class Renderer internal constructor(
     /** Samplers replaced for a new [maxAnisotropy], destroyed once no frame in flight can use them. */
     internal val retiredSamplers = RetiredSamplers(graphicsDevice)
 
-    internal val textureResources = TextureResourceManager<Texture>(Texture::estimatedGpuBytes, Texture::destroy)
+    /** Defers destruction of `Mesh`/`Material`/`VulkanDynamicMesh`/owned `Texture` until in-flight frames drain. */
+    internal val deferredResourceReaper = DeferredResourceReaper()
+
+    internal val textureResources = TextureResourceManager<Texture>(Texture::estimatedGpuBytes) { texture ->
+        graphicsDevice.destroyOrRetire(texture::destroy)
+    }
     internal var liveMeshCount = 0
     internal var liveMeshBytes = 0L
     internal var liveMaterialCount = 0
@@ -608,7 +619,8 @@ class Renderer internal constructor(
         createDepthResources()
         createFramebuffers()
         if (swapchainManager.imageViews.isNotEmpty()) {
-            createPresentTransitionResources()
+            ensureSceneToPresentRenderPass()
+            graphicsDevice.registerReaper(deferredResourceReaper)
         }
         createCommandBuffers(transferContext.commandPool.handle, maxFramesInFlight)
     }
@@ -850,6 +862,8 @@ class Renderer internal constructor(
         // submitted offscreen work leaves those frame slots in flight during direct teardown.
         waitIdle()
         awaitSubmittedOffscreenCommands()
+        graphicsDevice.unregisterReaper(deferredResourceReaper)
+        deferredResourceReaper.destroyAll()
         dirtyUniformBlocks.clear()
         sceneScale.release()
         textureUploads.destroy()
@@ -866,10 +880,11 @@ class Renderer internal constructor(
             Vulkan.vkDestroyFramebuffer(device, framebuffers[index])
             index += 1
         }
-        presentTransitionFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+        swapchainColorFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
         uiFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
-        if (presentTransitionRenderPass != 0L) {
-            Vulkan.vkDestroyRenderPass(device, presentTransitionRenderPass)
+        if (sceneToPresentRenderPass != 0L) {
+            Vulkan.vkDestroyRenderPass(device, sceneToPresentRenderPass)
+            sceneToPresentRenderPass = 0L
         }
         uiRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()

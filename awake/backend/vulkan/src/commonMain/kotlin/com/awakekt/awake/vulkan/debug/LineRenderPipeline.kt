@@ -271,11 +271,7 @@ class LineRenderPipeline(
      */
     fun bind(commandBuffer: Long, frameIndex: Int) {
         val slot = uniformSlots[frameIndex]
-        Vulkan.vkCmdBindPipeline(
-            commandBuffer,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            graphicsPipeline[0],
-        )
+        com.awakekt.awake.vulkan.gen.VulkanCommands.vkCmdBindGraphicsPipeline(commandBuffer, graphicsPipeline[0])
         VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, slot.descriptorSet)
     }
 

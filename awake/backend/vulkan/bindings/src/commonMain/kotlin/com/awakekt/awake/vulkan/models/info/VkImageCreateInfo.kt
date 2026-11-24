@@ -98,6 +98,9 @@ object VkImageLayout2 {
 
     /** Optimal for use as the destination of a transfer command. */
     const val VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL = 7
+
+    /** Ready for presentation to a swapchain (`VK_IMAGE_LAYOUT_PRESENT_SRC_KHR`). */
+    const val VK_IMAGE_LAYOUT_PRESENT_SRC_KHR = 1000001002
 }
 
 /**
@@ -132,7 +135,10 @@ object VkImageUsageFlagBits2 {
     /** The image can be a depth/stencil attachment. */
     const val VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT = 0x00000020
 
-    /** The image is only used transiently within a render pass and may stay in tile memory. */
+    /**
+     * The attachment's backing memory may be lazily allocated and kept in on-chip tile SRAM
+     * (`VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`). Only valid alongside attachment usage bits.
+     */
     const val VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT = 0x00000040
 }
 

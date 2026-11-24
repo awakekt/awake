@@ -5,39 +5,27 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
-import com.awakekt.awake.vulkan.VK_SUBPASS_EXTERNAL
 import com.awakekt.awake.vulkan.Vulkan
-import com.awakekt.awake.vulkan.enums.VkAttachmentLoadOp
+import com.awakekt.awake.vulkan.device.allocateTransientAttachmentMemory
 import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
 import com.awakekt.awake.vulkan.enums.VkFormat
 import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
-import com.awakekt.awake.vulkan.enums.VkImageLayout
 import com.awakekt.awake.vulkan.enums.VkImageViewType
-import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
-import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
-import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanImages
-import com.awakekt.awake.vulkan.models.VkAttachmentDescription
-import com.awakekt.awake.vulkan.models.VkAttachmentReference
-import com.awakekt.awake.vulkan.models.VkSubpassDependency
 import com.awakekt.awake.vulkan.models.info.VkCommandBufferAllocateInfo
 import com.awakekt.awake.vulkan.models.info.VkFramebufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkImageCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkImageSubresourceRange
 import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
-import com.awakekt.awake.vulkan.models.info.VkRenderPassCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkSubpassDescription
+import com.awakekt.awake.vulkan.pipeline.createScenePresentRenderPass
 import com.awakekt.awake.vulkan.texture.ColorAttachment
-import com.awakekt.awake.vulkan.texture.findTransientAttachmentMemoryType
 
-/** Swapchain-sized resource lifecycle -- depth buffer, framebuffers, the present-transition
- * fallback pass, per-frame command buffers, and [recreateSwapChain]'s full teardown/rebuild
- * after `VK_SUBOPTIMAL_KHR`/`VK_ERROR_OUT_OF_DATE_KHR`. See [Renderer]'s class doc comment for
- * why this lives here as `internal` extension functions rather than as members. */
+/** Swapchain-sized resource lifecycle -- depth buffer, framebuffers, direct-present scene pass,
+ * lazy swapchain colour framebuffers, per-frame command buffers, and [recreateSwapChain]'s full
+ * teardown/rebuild after `VK_SUBOPTIMAL_KHR`/`VK_ERROR_OUT_OF_DATE_KHR`. See [Renderer]'s class
+ * doc comment for why this lives here as `internal` extension functions rather than as members. */
 
 internal fun Renderer.createDepthResources() {
     val imageCount = swapchainManager.imageViews.size.coerceAtLeast(1)
@@ -57,14 +45,7 @@ internal fun Renderer.createDepthResources() {
             ),
         )
         val requirements = VulkanImages.vkGetImageMemoryRequirements(device, depthImage)
-        val memoryTypeIndex = findTransientAttachmentMemoryType(physicalDevice, requirements.memoryTypeBits)
-        val depthImageMemory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(
-                allocationSize = requirements.size,
-                memoryTypeIndex = memoryTypeIndex,
-            ),
-        )
+        val depthImageMemory = graphicsDevice.allocateTransientAttachmentMemory(depthImage, requirements)
         VulkanImages.vkBindImageMemory(device, depthImage, depthImageMemory, 0)
         val depthImageView = Vulkan.vkCreateImageView(
             device,
@@ -113,63 +94,57 @@ internal fun Renderer.createFramebuffers() {
     }.toList()
 }
 
-/** Empty render pass used only when no UI overlay pass was recorded for the frame. It
- * preserves the 3D color attachment contents and performs the swapchain image's final
- * COLOR_ATTACHMENT_OPTIMAL -> PRESENT_SRC_KHR transition before present. */
-internal fun Renderer.createPresentTransitionResources() {
-    presentTransitionRenderPass = Vulkan.vkCreateRenderPass(
-        device,
-        VkRenderPassCreateInfo(
-            pAttachments = arrayOf(
-                VkAttachmentDescription(
-                    format = swapchainManager.imageFormat,
-                    loadOp = VkAttachmentLoadOp.LOAD,
-                    initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                    finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                ),
-            ),
-            pSubpasses = arrayOf(
-                VkSubpassDescription(
-                    pipelineBindPoint = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pColorAttachments = arrayOf(
-                        VkAttachmentReference(
-                            attachment = 0,
-                            layout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                        ),
-                    ),
-                ),
-            ),
-            pDependencies = arrayOf(
-                VkSubpassDependency(
-                    srcSubpass = VK_SUBPASS_EXTERNAL,
-                    dstSubpass = 0,
-                    srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
-                    // Fallback transition pass loads the 3D pass output before presenting.
-                    // Synchronize against the previous color attachment write exactly like
-                    // the real UI overlay pass does.
-                    srcAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
-                    dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
-                    dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
-                        VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
-                ),
-            ),
-        ),
-    )
-    presentTransitionFramebuffers = buildPresentTransitionFramebuffers()
+/**
+ * Returns a scene render pass compatible with [Renderer.renderPipeline]'s pass that transitions the
+ * swapchain colour attachment directly to `VK_IMAGE_LAYOUT_PRESENT_SRC_KHR` at pass end, avoiding
+ * an empty present-transition render pass when no post-pass or UI runs.
+ */
+internal fun Renderer.ensureSceneToPresentRenderPass(): Long {
+    val format = swapchainManager.imageFormat
+    if (sceneToPresentRenderPass == 0L || sceneToPresentRenderPassFormat != format) {
+        if (sceneToPresentRenderPass != 0L) {
+            Vulkan.vkDestroyRenderPass(device, sceneToPresentRenderPass)
+            sceneToPresentRenderPass = 0L
+        }
+        if (swapchainManager.imageViews.isNotEmpty()) {
+            sceneToPresentRenderPass = createScenePresentRenderPass(
+                graphicsDevice,
+                swapchainManager,
+                renderPipeline.multisample.count,
+            )
+            sceneToPresentRenderPassFormat = format
+        }
+    }
+    return sceneToPresentRenderPass
 }
 
-internal fun Renderer.buildPresentTransitionFramebuffers(): List<Long> = swapchainManager.imageViews.map { imageView ->
-    Vulkan.vkCreateFramebuffer(
-        device,
-        VkFramebufferCreateInfo(
-            renderPass = presentTransitionRenderPass,
-            pAttachments = arrayOf(imageView),
-            width = swapchainManager.extent.width,
-            height = swapchainManager.extent.height,
-            layers = 1,
-        ),
-    )
-}.toList()
+/**
+ * Lazily builds single-attachment swapchain colour framebuffers for swapchain post-passes /
+ * upscaling when no UI pipeline has built [Renderer.uiFramebuffers] yet.
+ */
+internal fun Renderer.ensureSwapchainColorFramebuffers(): List<Long> {
+    if (swapchainColorFramebuffers.size != swapchainManager.imageViews.size || swapchainColorFramebuffers.isEmpty()) {
+        swapchainColorFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+        swapchainColorFramebuffers = if (swapchainManager.imageViews.isEmpty()) {
+            emptyList()
+        } else {
+            val renderPass = imagePassExecutor.ensureSwapchainContinueRenderPass(swapchainManager.imageFormat)
+            swapchainManager.imageViews.map { imageView ->
+                Vulkan.vkCreateFramebuffer(
+                    device,
+                    VkFramebufferCreateInfo(
+                        renderPass = renderPass,
+                        pAttachments = arrayOf(imageView),
+                        width = swapchainManager.extent.width,
+                        height = swapchainManager.extent.height,
+                        layers = 1,
+                    ),
+                )
+            }
+        }
+    }
+    return swapchainColorFramebuffers
+}
 
 internal fun Renderer.createCommandBuffers(commandPool: Long, maxFramesInFlight: Int) {
     val allocInfo = VkCommandBufferAllocateInfo(
@@ -225,11 +200,12 @@ internal fun Renderer.releaseSwapchainResources() {
 
     sceneScale.release()
     imagePassExecutor.releaseTransientTargets()
+    imagePassExecutor.invalidateAllStepDescriptors()
     framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
-    presentTransitionFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+    swapchainColorFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
     uiFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
     framebuffers = emptyList()
-    presentTransitionFramebuffers = emptyList()
+    swapchainColorFramebuffers = emptyList()
     uiFramebuffers = emptyList()
     destroyDepthResources()
     // Also clears the handle: swapchainManager.create() chains from it, and it must not
@@ -242,7 +218,6 @@ internal fun Renderer.rebuildSwapchainResources() {
     swapchainManager.create()
     createDepthResources()
     createFramebuffers()
-    presentTransitionFramebuffers = buildPresentTransitionFramebuffers()
 
     val uiPipeline = uiRenderPipeline
     if (uiPipeline != null) {

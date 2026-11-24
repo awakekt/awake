@@ -12,12 +12,11 @@ import com.awakekt.awake.vulkan.device.QueueLock
 import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
 import com.awakekt.awake.vulkan.enums.flags.VkCommandBufferUsageFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkCommandPoolCreateFlagBits
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.handles.CommandPoolHandle
 import com.awakekt.awake.vulkan.models.info.VkCommandBufferAllocateInfo
-import com.awakekt.awake.vulkan.models.info.VkCommandBufferBeginInfo
 import com.awakekt.awake.vulkan.models.info.VkCommandPoolCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkFenceCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkSubmitInfo
 import com.awakekt.awake.vulkan.utils.findQueueFamilies
 
 /**
@@ -63,24 +62,25 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
     fun runOneTimeCommands(block: (Long) -> Unit) = uploadLock.withLock {
         ensureUploadResources()
         Vulkan.vkResetCommandBuffer(uploadCommandBuffer, 0)
-        Vulkan.vkBeginCommandBuffer(
+        VulkanCommands.vkBeginCommandBuffer(
             uploadCommandBuffer,
-            VkCommandBufferBeginInfo(
-                flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
-            ),
+            VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
         )
         block(uploadCommandBuffer)
         Vulkan.vkEndCommandBuffer(uploadCommandBuffer)
 
-        Vulkan.vkResetFences(device, longArrayOf(uploadFence))
+        VulkanCommands.vkResetFence(device, uploadFence)
         graphicsDevice.queueLock.withLock {
-            Vulkan.vkQueueSubmit(
-                graphicsQueue,
-                arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(uploadCommandBuffer))),
-                uploadFence,
+            VulkanCommands.vkQueueSubmitSingle(
+                queue = graphicsQueue,
+                commandBuffer = uploadCommandBuffer,
+                waitSemaphore = 0L,
+                waitStageMask = 0,
+                signalSemaphore = 0L,
+                fence = uploadFence,
             )
         }
-        Vulkan.vkWaitForFences(device, longArrayOf(uploadFence), true, Long.MAX_VALUE)
+        VulkanCommands.vkWaitForFence(device, uploadFence, Long.MAX_VALUE)
     }
 
     /**
