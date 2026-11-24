@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.RenderDrawCommand
@@ -107,7 +108,7 @@ fun skinnedMaterialFloats(
     val paletteEnd = layout.offsetOf(UniformFields.BaseColorFactor)
     require(into.size == layout.total) { "A skinned material payload holds ${layout.total} floats, not ${into.size}." }
     require(palette.size <= paletteEnd) { "${palette.size} palette floats exceed the $paletteEnd a skinned draw holds." }
-    palette.copyInto(into)
+    into.putFloats(0, palette)
     into.fill(0f, palette.size, paletteEnd)
     layout.writeVec4(into, UniformFields.BaseColorFactor, baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a)
     layout.writeVec4(into, UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, reflectance)
@@ -278,35 +279,37 @@ internal fun texturedMaterialPayload(
     into: FloatArray? = null,
 ): FloatArray {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
-    val output = when {
-        values.size >= layout.total -> if (into != null) values.copyInto(into, 0, 0, layout.total) else values.copyOf(layout.total)
-        values.size >= FACTOR_FLOATS -> UniformWriter(layout)
-            .put(values, layout.offsetOf(UniformFields.PbrFactors), UniformFields.PbrFactors)
-            .put(values, layout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
-            .put(values, layout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
-            .putTextureAnimation(TextureAnimation.None)
-            .build()
-            .let { if (into != null) it.copyInto(into) else it }
-        else -> UniformWriter(layout)
-            .put(UniformFields.PbrFactors, DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, 0f, 0f)
-            .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
-            .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
-            .putTextureAnimation(TextureAnimation.None)
-            .build()
-            .let { if (into != null) it.copyInto(into) else it }
+    val output = into ?: FloatArray(layout.total)
+    when {
+        values.size >= layout.total -> copyFloatRange(values, output, layout.total)
+        values.size >= FACTOR_FLOATS -> {
+            copyFloatRange(values, output, FACTOR_FLOATS)
+            copyFloatRange(DEFAULT_PBR_TEXTURED_MATERIAL, output, layout.total - FACTOR_FLOATS, FACTOR_FLOATS, FACTOR_FLOATS)
+        }
+        else -> output.putFloats(0, DEFAULT_PBR_TEXTURED_MATERIAL)
     }
-    val factors = layout.readVec4(output, UniformFields.PbrFactors)
-    val flags = (factors.w + FLAG_ROUNDING).toInt()
+    // Read lanes directly from layout offsets rather than layout.readVec4: three Vec4 allocations per textured
+    // draw were ~96 B of per-draw garbage on every frame (#1742).
+    val pbrAt = TEXTURED_PBR_FACTORS_AT
+    val flags = (output[pbrAt + VEC4_W] + FLAG_ROUNDING).toInt()
     val blend = texturedBlend(
         additive = additive,
         litWhenAdditive = (flags and FLAG_LIT_WHEN_ADDITIVE) != 0,
         unlit = (flags and FLAG_UNLIT) != 0,
     )
-    layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, blend.code.toFloat())
-    val scroll = layout.readVec4(output, UniformFields.TextureScroll)
-    val frames = layout.readVec4(output, UniformFields.TextureFrames)
-    val clock = textureAnimationClock(frames.x, frames.y, frames.z, scroll.x, scroll.y, timeSeconds)
-    layout.writeVec4(output, UniformFields.TextureScroll, scroll.x, scroll.y, clock, scroll.w)
+    output[pbrAt + VEC4_Z] = alphaCutoff
+    output[pbrAt + VEC4_W] = blend.code.toFloat()
+    val framesAt = TEXTURED_FRAMES_AT
+    val scrollAt = TEXTURED_SCROLL_AT
+    val clock = textureAnimationClock(
+        output[framesAt],
+        output[framesAt + VEC4_Y],
+        output[framesAt + VEC4_Z],
+        output[scrollAt],
+        output[scrollAt + VEC4_Y],
+        timeSeconds,
+    )
+    output[scrollAt + VEC4_Z] = clock
     return output
 }
 
@@ -333,12 +336,49 @@ private const val SKINNED_UNLIT = 1f
 private val FACTOR_FLOATS =
     UniformFields.PbrFactors.floats + UniformFields.BaseColorFactor.floats + UniformFields.EmissiveFactor.floats
 
+/** Copies [count] floats from [source] at [sourceOffset] into [destination] at [destOffset] without `copyInto` (#1621). */
+private fun copyFloatRange(
+    source: FloatArray,
+    destination: FloatArray,
+    count: Int,
+    sourceOffset: Int = 0,
+    destOffset: Int = 0,
+) {
+    var index = 0
+    while (index < count) {
+        destination[destOffset + index] = source[sourceOffset + index]
+        index += 1
+    }
+}
+
+private const val VEC4_Y = 1
+private const val VEC4_Z = 2
+private const val VEC4_W = 3
+internal val TEXTURED_PBR_FACTORS_AT = MaterialUniformLayouts.PbrTexturedMaterial.offsetOf(UniformFields.PbrFactors)
+internal val TEXTURED_EMISSIVE_AT = MaterialUniformLayouts.PbrTexturedMaterial.offsetOf(UniformFields.EmissiveFactor)
+internal val TEXTURED_FRAMES_AT = MaterialUniformLayouts.PbrTexturedMaterial.offsetOf(UniformFields.TextureFrames)
+internal val TEXTURED_SCROLL_AT = MaterialUniformLayouts.PbrTexturedMaterial.offsetOf(UniformFields.TextureScroll)
+
+/** A textured material that declares no factors: packed once, never rebuilt per draw (#1742). */
+private val DEFAULT_PBR_TEXTURED_MATERIAL = UniformWriter(MaterialUniformLayouts.PbrTexturedMaterial)
+    .put(UniformFields.PbrFactors, DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, 0f, 0f)
+    .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
+    .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
+    .putTextureAnimation(TextureAnimation.None)
+    .build()
+
 private fun pbrMaterialPayload(values: FloatArray, into: FloatArray? = null): FloatArray {
     val layout = MaterialUniformLayouts.PbrMaterial
-    if (values.size >= layout.total) {
-        return if (into != null) values.copyInto(into, 0, 0, layout.total) else values.copyOf(layout.total)
-    }
-    return if (into != null) DEFAULT_PBR_MATERIAL.copyInto(into) else DEFAULT_PBR_MATERIAL.copyOf()
+    val output = into ?: FloatArray(layout.total)
+    copyPbrMaterialPayloadInto(values, output, 0)
+    return output
+}
+
+/** Copies the untextured PBR material factors for [values] directly into [destination] at [offset], allocating nothing. */
+internal fun copyPbrMaterialPayloadInto(values: FloatArray, destination: FloatArray, offset: Int) {
+    val total = MaterialUniformLayouts.PbrMaterial.total
+    val source = if (values.size >= total) values else DEFAULT_PBR_MATERIAL
+    copyFloatRange(source, destination, total, destOffset = offset)
 }
 
 /**
@@ -402,14 +442,7 @@ fun texturedUniforms(
     .putCascades(GpuShadowCascadeData.UNSHADOWED)
     .putStillModel(drawCall.model)
     .put(cameraPositionFloats(frame.cameraEye), UniformFields.CameraPosition)
-    .put(
-        pbrTexturedMaterialFloats(drawCall),
-        UniformFields.PbrFactors,
-        UniformFields.BaseColorFactor,
-        UniformFields.EmissiveFactor,
-        UniformFields.TextureFrames,
-        UniformFields.TextureScroll,
-    )
+    .putTexturedMaterialPayload(pbrTexturedMaterialFloats(drawCall))
     .put(frame.fog, UniformFields.FogColor)
     .putDebugView(GpuDebugView.Off, frame.cameraForward)
     .putCameraForward(frame.cameraForward, GpuShadowCascadeData.UNSHADOWED)
@@ -440,29 +473,28 @@ fun texturedUniforms(
     additive: Boolean = false,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
     .put(mvp.data, UniformFields.Mvp)
+    .put(lightPayload, 0, UniformFields.LightDirection, UniformFields.LightColor)
     .put(
         lightPayload,
-        UniformFields.LightDirection,
-        UniformFields.LightColor,
+        MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.PointLightPositions),
         UniformFields.PointLightPositions,
         UniformFields.PointLightColors,
     )
     .putCascades(shadowCascades)
     .putStillModel(model)
     .put(UniformFields.CameraPosition, cameraEye)
-    .put(
-        texturedMaterialPayload(extraUniformFloats, alphaCutoff, additive, timeSeconds),
-        UniformFields.PbrFactors,
-        UniformFields.BaseColorFactor,
-        UniformFields.EmissiveFactor,
-        UniformFields.TextureFrames,
-        UniformFields.TextureScroll,
-    )
+    .putTexturedMaterialPayload(texturedMaterialPayload(extraUniformFloats, alphaCutoff, additive, timeSeconds))
     .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
     .putDebugView(debugView, cameraForward)
     .putCameraForward(cameraForward, shadowCascades)
     .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
     .build()
+
+/** Writes the five textured material fields without allocating a vararg `UniformField[]` (#1742). */
+internal fun UniformWriter.putTexturedMaterialPayload(payload: FloatArray): UniformWriter = this
+    .put(payload, TEXTURED_PBR_FACTORS_AT, UniformFields.PbrFactors, UniformFields.BaseColorFactor)
+    .put(payload, TEXTURED_EMISSIVE_AT, UniformFields.EmissiveFactor, UniformFields.TextureFrames)
+    .put(payload, TEXTURED_SCROLL_AT, UniformFields.TextureScroll)
 
 /** The sun's cascades. */
 private fun UniformWriter.putCascades(cascades: GpuShadowCascadeData): UniformWriter = this

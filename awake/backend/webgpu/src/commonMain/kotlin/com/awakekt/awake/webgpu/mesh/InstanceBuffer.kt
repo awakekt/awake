@@ -96,7 +96,11 @@ class InstanceBuffer(
         graphicsDevice.wgpuContext.device.queue.writeBufferFloats(buffer, 0uL, floats, count)
         uploads += 1
         val target = if (cached != null && cached.size >= count) cached else FloatArray(count).also { resident = it }
-        floats.copyInto(target, 0, 0, count)
+        var index = 0
+        while (index < count) {
+            target[index] = floats[index]
+            index += 1
+        }
         residentCount = count
     }
 

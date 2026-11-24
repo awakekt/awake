@@ -45,7 +45,9 @@ fun FloatArray.putVec4(
 
 /** Writes [v] at [offset], returning the offset after. */
 fun FloatArray.putVec4(offset: Int, v: Vec4): Int {
-    putVec3(offset, Vec3f(v.x, v.y, v.z))
+    this[offset] = v.x
+    this[offset + 1] = v.y
+    this[offset + 2] = v.z
     this[offset + 3] = v.w
     return offset + 4
 }

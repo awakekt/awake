@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
@@ -143,13 +144,9 @@ class FrameUniformBlock {
  * a split draw's model and such a draw's whole MVP.
  */
 fun identityFrameBlock(): FloatArray = FloatArray(MaterialUniformLayouts.Frame.total).also {
-    Mat4().data.copyInto(it, MaterialUniformLayouts.Frame.offsetOf(UniformFields.ViewProjection))
-    DEFAULT_LIGHT_PAYLOAD.copyInto(
-        destination = it,
-        destinationOffset = MaterialUniformLayouts.Frame.offsetOf(UniformFields.LightDirection),
-        startIndex = 0,
-        endIndex = SUN_FLOATS,
-    )
+    it.putFloats(MaterialUniformLayouts.Frame.offsetOf(UniformFields.ViewProjection), Mat4().data)
+    val lightStart = MaterialUniformLayouts.Frame.offsetOf(UniformFields.LightDirection)
+    for (i in 0 until SUN_FLOATS) it[lightStart + i] = DEFAULT_LIGHT_PAYLOAD[i]
 }
 
 /** The sun, then the point-light slots; a payload without either leaves it dark. */
@@ -212,7 +209,8 @@ private fun RenderDrawCommand.packDrawBlock(
 ): FloatArray {
     if (instancedKind == InstancedDrawKind.Particle && drawBlockFloats in 1..ParticleDrawLayout.total) {
         return (writers?.particle?.reset() ?: UniformWriter(ParticleDrawLayout))
-            .put(extraUniformFloats, *ParticleDrawLayout.fields)
+            .put(extraUniformFloats, 0, ParticleExtraFields.CameraRight, ParticleExtraFields.CameraUp)
+            .put(extraUniformFloats, PARTICLE_FRAME_INFO_AT, ParticleExtraFields.FrameInfo)
             .build()
     }
     val fade = if (fadeOpacity < 1f) 1f - fadeOpacity.coerceIn(0f, 1f) else 0f
@@ -233,7 +231,7 @@ private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
             (writers?.pbrTextured?.reset() ?: UniformWriter(MaterialUniformLayouts.PbrTexturedDraw))
                 .put(transform.data, UniformFields.Model)
                 .put(UniformFields.VertexAnimation, 0f, 0f, 0f, 0f)
-                .put(
+                .putTexturedMaterialPayload(
                     texturedMaterialPayload(
                         extraUniformFloats,
                         sceneCoverageCutoff(alphaToCoverageEnabled),
@@ -241,11 +239,6 @@ private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
                         timeSeconds,
                         into = writers?.texturedPayload,
                     ),
-                    UniformFields.PbrFactors,
-                    UniformFields.BaseColorFactor,
-                    UniformFields.EmissiveFactor,
-                    UniformFields.TextureFrames,
-                    UniformFields.TextureScroll,
                 )
                 .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
                 .build()
@@ -302,15 +295,14 @@ private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: F
     val roughness: Float
     val unlit: Float
     if (extraUniformFloats.size == SkinnedMaterialLayout.total) {
-        val factors = SkinnedMaterialLayout.readVec4(extraUniformFloats, UniformFields.PbrFactors)
         writer
             .put(extraUniformFloats, 0, SkinnedFields.JointPalette)
             .put(model.data, UniformFields.Model)
-            .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
-            .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
-        metallic = factors.x
-        roughness = factors.y
-        unlit = factors.w
+            .put(extraUniformFloats, SKINNED_BASE_COLOR_AT, UniformFields.BaseColorFactor)
+            .put(extraUniformFloats, SKINNED_EMISSIVE_AT, UniformFields.EmissiveFactor)
+        metallic = extraUniformFloats[SKINNED_PBR_FACTORS_AT]
+        roughness = extraUniformFloats[SKINNED_PBR_FACTORS_AT + SKINNED_ROUGHNESS_LANE]
+        unlit = extraUniformFloats[SKINNED_PBR_FACTORS_AT + SKINNED_UNLIT_LANE]
     } else {
         writer
             .putPadded(SkinnedFields.JointPalette, extraUniformFloats)
@@ -366,4 +358,10 @@ private val DEFAULT_FORWARD = Vec3f(0f, 0f, -1f)
 private val DEFAULT_LIGHT_PAYLOAD = sceneLightFloats(DEFAULT_SCENE_LIGHT)
 private val SUN_FLOATS = UniformFields.LightDirection.floats + UniformFields.LightColor.floats
 private val POINTS_AT = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.PointLightPositions)
+private val PARTICLE_FRAME_INFO_AT = ParticleDrawLayout.offsetOf(ParticleExtraFields.FrameInfo)
+private val SKINNED_BASE_COLOR_AT = SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor)
+private val SKINNED_EMISSIVE_AT = SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor)
+private val SKINNED_PBR_FACTORS_AT = SkinnedMaterialLayout.offsetOf(UniformFields.PbrFactors)
+private const val SKINNED_ROUGHNESS_LANE = 1
+private const val SKINNED_UNLIT_LANE = 3
 private val NO_LIGHTS = FloatArray(0)

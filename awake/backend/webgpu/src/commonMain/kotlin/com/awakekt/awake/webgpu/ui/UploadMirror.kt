@@ -46,7 +46,11 @@ internal class UploadMirror {
         var end = if (data.size > held) data.size else held
         if (end == held) while (end > first && floats[end - 1].toRawBits() == data[end - 1].toRawBits()) end--
         if (floats.size < data.size) floats = floats.copyOf(maxOf(data.size, floats.size * 2))
-        data.copyInto(floats, first, first, end)
+        var index = first
+        while (index < end) {
+            floats[index] = data[index]
+            index += 1
+        }
         floatCount = data.size
         return range(first, end)
     }
@@ -59,7 +63,11 @@ internal class UploadMirror {
         var end = if (data.size > held) data.size else held
         if (end == held) while (end > first && ints[end - 1] == data[end - 1]) end--
         if (ints.size < data.size) ints = ints.copyOf(maxOf(data.size, ints.size * 2))
-        data.copyInto(ints, first, first, end)
+        var index = first
+        while (index < end) {
+            ints[index] = data[index]
+            index += 1
+        }
         intCount = data.size
         return range(first, end)
     }

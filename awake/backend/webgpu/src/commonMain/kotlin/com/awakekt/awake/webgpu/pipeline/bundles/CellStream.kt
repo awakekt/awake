@@ -80,19 +80,35 @@ internal class CellStream {
     fun copyFrom(other: CellStream) {
         clear()
         if (ops.size < other.size) grow(other.size)
-        other.ops.copyInto(ops, 0, 0, other.size)
-        other.slots.copyInto(slots, 0, 0, other.size)
-        other.refs.copyInto(refs, 0, 0, other.size)
+        var index = 0
+        while (index < other.size) {
+            ops[index] = other.ops[index]
+            slots[index] = other.slots[index]
+            refs[index] = other.refs[index]
+            index += 1
+        }
         size = other.size
-        if (counts.size < other.drawCount * 2) counts = IntArray(other.counts.size)
-        other.counts.copyInto(counts, 0, 0, other.drawCount * 2)
+        val countLen = other.drawCount * 2
+        if (counts.size < countLen) counts = IntArray(other.counts.size)
+        index = 0
+        while (index < countLen) {
+            counts[index] = other.counts[index]
+            index += 1
+        }
         drawCount = other.drawCount
         headPipeline = other.headPipeline
         headMesh = other.headMesh
     }
 
     /** Takes [other]'s counts, the shape already being the same. */
-    fun copyCountsFrom(other: CellStream) = other.counts.copyInto(counts, 0, 0, other.drawCount * 2)
+    fun copyCountsFrom(other: CellStream) {
+        val countLen = other.drawCount * 2
+        var index = 0
+        while (index < countLen) {
+            counts[index] = other.counts[index]
+            index += 1
+        }
+    }
 
     private fun sameAt(other: CellStream, index: Int) =
         ops[index] == other.ops[index] && slots[index] == other.slots[index] && refs[index] === other.refs[index]
