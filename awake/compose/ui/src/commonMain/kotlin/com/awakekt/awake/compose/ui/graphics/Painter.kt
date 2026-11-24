@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.PaintScope
 import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.node.LayoutNode
+import com.awakekt.awake.compose.ui.node.NodeChildren
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 
 /**
@@ -39,6 +40,11 @@ class Painter {
     // Hoisted: `LayerKind.entries` hands back a fresh list on every read, so iterating it per node
     // allocated once per node per frame for a value that never changes.
     private val paintOrder = LayerKind.entries.toTypedArray()
+
+    // Re-entrant scratch stack for zIndex child ordering so containers with z-ordered children
+    // sort stably in place without allocating a boxed Array<Int> and Comparator every frame.
+    private var zIndexOrderStack = IntArray(INITIAL_Z_ORDER_CAPACITY)
+    private var zIndexStackTop = 0
 
     // Made on the first paint that retains (#1512 stage e); `retained` is it while such a paint runs.
     private var retainedDraw: RetainedDraw? = null
@@ -162,28 +168,40 @@ class Painter {
             if (count == 1 && node.placesChild(children[0])) paintNode(children[0])
             return
         }
-        var hasNonZeroZ = false
-        for (i in 0 until count) {
-            if (children[i].zIndex != 0f) {
-                hasNonZeroZ = true
-                break
-            }
-        }
-        if (!hasNonZeroZ) {
+        if (!hasNonZeroZIndex(children)) {
             for (i in 0 until count) {
                 if (node.placesChild(children[i])) paintNode(children[i])
             }
             return
         }
-        val indices = Array(count) { it }
-        indices.sortWith { a, b ->
-            val zA = children[a].zIndex
-            val zB = children[b].zIndex
-            if (zA != zB) zA.compareTo(zB) else a.compareTo(b)
+        paintChildrenSortedByZ(node, children)
+    }
+
+    private fun paintChildrenSortedByZ(node: LayoutNode, children: NodeChildren) {
+        val count = children.size
+        val base = zIndexStackTop
+        val end = base + count
+        if (end > zIndexOrderStack.size) {
+            zIndexOrderStack = zIndexOrderStack.copyOf(maxOf(end, zIndexOrderStack.size * 2))
         }
+        val order = zIndexOrderStack
         for (i in 0 until count) {
-            val child = children[indices[i]]
-            if (node.placesChild(child)) paintNode(child)
+            val z = children[i].zIndex
+            var j = i
+            while (j > 0 && children[order[base + j - 1]].zIndex > z) {
+                order[base + j] = order[base + j - 1]
+                j--
+            }
+            order[base + j] = i
+        }
+        zIndexStackTop = end
+        try {
+            for (i in 0 until count) {
+                val child = children[zIndexOrderStack[base + i]]
+                if (node.placesChild(child)) paintNode(child)
+            }
+        } finally {
+            zIndexStackTop = base
         }
     }
 
@@ -211,4 +229,13 @@ class Painter {
             paintLayersOfKind(layer, kind)
         }
     }
+}
+
+private const val INITIAL_Z_ORDER_CAPACITY = 32
+
+private fun hasNonZeroZIndex(children: NodeChildren): Boolean {
+    for (i in 0 until children.size) {
+        if (children[i].zIndex != 0f) return true
+    }
+    return false
 }

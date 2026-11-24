@@ -375,7 +375,11 @@ class ComposeHost(
             // Blocked only if EVERY focused input is single-line: one multi-line field among them still
             // needs Up/Down for its own caret.
             isTextInputSingleLine = focusedTextInputs.all { it.isSingleLine },
-            textInputPassThroughKeys = focusedTextInputs.flatMapTo(mutableSetOf()) { it.passThroughKeys },
+            textInputPassThroughKeys = if (focusedTextInputs.isEmpty()) {
+                emptySet()
+            } else {
+                focusedTextInputs.flatMapTo(mutableSetOf()) { it.passThroughKeys }
+            },
             capturedPointerIds = dispatcher.capturedPointerIds,
         )
     }

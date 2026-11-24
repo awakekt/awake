@@ -23,6 +23,7 @@ public final class com/awakekt/awake/worldtext/WorldTextAlign : java/lang/Enum {
 
 public final class com/awakekt/awake/worldtext/WorldTextBatch : java/lang/AutoCloseable {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;I)V
 	public fun close ()V
 	public final fun collect (Lcom/awakekt/awake/worldtext/WorldText;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;)V
 	public final fun keep (Lcom/awakekt/awake/worldtext/WorldText;)V

@@ -40,10 +40,8 @@ internal fun LayoutNode.layoutTree(viewport: Constraints, measure: Boolean, read
         if (reads == null) measure(viewport) else reads.recording { measure(viewport) }
     }
     placeAt(0, 0)
-    resolveAbsolutePositions()
+    resolveAbsolutePositions(0, 0, includeLayers = false)
     layoutLayers(viewport.loosened(), measure, reads)
-    // Layers were placed after positions resolved, so redo the walk to pick them up.
-    resolveAbsolutePositions()
 }
 
 /**
@@ -68,6 +66,7 @@ private fun LayoutNode.layoutLayers(viewport: Constraints, measure: Boolean, rea
             viewportHeight = viewport.maxHeight,
         ) ?: LayerPosition(0, 0)
         layer.placeAt(position.x, position.y)
+        layer.resolveAbsolutePositions(absoluteX, absoluteY, includeLayers = false)
         layer.layoutLayers(viewport, measure, reads)
     }
     for (i in 0 until children.size) {

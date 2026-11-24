@@ -6,14 +6,18 @@
 package com.awakekt.awake.compose.ui
 
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.ui.draw.zIndex
 import com.awakekt.awake.compose.ui.graphics.Painter
 import com.awakekt.awake.compose.ui.layout.composeInto
 import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
+import com.awakekt.awake.compose.ui.platform.ComposeHost
+import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -46,6 +50,29 @@ class TreeWalkAllocationTest {
     fun resolvingPositionsAllocatesNothingPerNode() {
         val tree = laidOutTree()
         assertTrue(bytesPerFrame { tree.resolveAbsolutePositions() } <= CEILING, "resolveAbsolutePositions allocates per node")
+    }
+
+    @Test
+    fun paintingZIndexChildrenAllocatesNothingPerNode() {
+        val zRoot = LayoutNode(com.awakekt.awake.compose.foundation.layout.ColumnMeasurePolicy())
+        composeInto(zRoot) {
+            Box {
+                repeat(NODES) { index ->
+                    Box(Modifier.zIndex(((NODES - index) % 7).toFloat()))
+                }
+            }
+        }
+        zRoot.layoutTree(Constraints.fixed(WIDTH, HEIGHT))
+        assertTrue(bytesPerFrame { painter.paint(zRoot) } <= CEILING, "zIndex paint allocates per node")
+    }
+
+    @Test
+    fun idleComposeHostReusesEmptyPassThroughKeySet() {
+        val host = ComposeHost()
+        val first = host.frame(FrameInput(WIDTH, HEIGHT)) { Box() }
+        val second = host.frame(FrameInput(WIDTH, HEIGHT)) { Box() }
+        assertSame(emptySet(), first.ownership.textInputPassThroughKeys)
+        assertSame(emptySet(), second.ownership.textInputPassThroughKeys)
     }
 
     private inline fun bytesPerFrame(frame: () -> Unit): Long {
