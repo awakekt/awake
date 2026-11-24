@@ -634,7 +634,7 @@ internal class VulkanImagePassExecutor(
         )
         val slot = acquireStepSlot(frameIndex, compiled)
         if (compiled.uniformByteSize > 0L && step.uniformData.isNotEmpty()) {
-            VulkanBuffers.writeBufferMemoryFloats(device, slot.uniformMemory, 0, step.uniformData)
+            VulkanBuffers.writeMappedMemoryFloats(slot.uniformMappedPtr, 0, step.uniformData)
         }
         bindStepInputs(
             descriptorSet = slot.descriptorSet,
@@ -1158,6 +1158,7 @@ internal class VulkanImagePassExecutor(
         val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, compiled.descriptorSetLayout)
         var uniformBuffer = 0L
         var uniformMemory = 0L
+        var uniformMappedPtr = 0L
         if (compiled.uniformByteSize > 0L && compiled.uniformBinding != null) {
             val buffer = VulkanBuffers.vkCreateBuffer(
                 device,
@@ -1178,6 +1179,7 @@ internal class VulkanImagePassExecutor(
                 VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
             )
             VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
+            uniformMappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, compiled.uniformByteSize)
             VulkanDescriptors.vkUpdateDescriptorSetBuffer(
                 device,
                 set,
@@ -1193,6 +1195,7 @@ internal class VulkanImagePassExecutor(
             descriptorSet = set,
             uniformBuffer = uniformBuffer,
             uniformMemory = uniformMemory,
+            uniformMappedPtr = uniformMappedPtr,
         )
     }
 
@@ -1251,9 +1254,11 @@ internal class VulkanImagePassExecutor(
         val descriptorSet: Long,
         val uniformBuffer: Long,
         val uniformMemory: Long,
+        val uniformMappedPtr: Long,
     ) {
         fun destroy(device: Long) {
             if (uniformBuffer != 0L) VulkanBuffers.vkDestroyBuffer(device, uniformBuffer)
+            if (uniformMappedPtr != 0L && uniformMemory != 0L) VulkanBuffers.vkUnmapMemory(device, uniformMemory)
             if (uniformMemory != 0L) VulkanBuffers.vkFreeMemory(device, uniformMemory)
             VulkanDescriptors.vkDestroyDescriptorPool(device, descriptorPool)
         }

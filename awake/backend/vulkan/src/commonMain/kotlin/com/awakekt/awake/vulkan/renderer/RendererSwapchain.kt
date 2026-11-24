@@ -32,6 +32,7 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.models.info.VkRenderPassCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSubpassDescription
 import com.awakekt.awake.vulkan.texture.ColorAttachment
+import com.awakekt.awake.vulkan.texture.findTransientAttachmentMemoryType
 
 /** Swapchain-sized resource lifecycle -- depth buffer, framebuffers, the present-transition
  * fallback pass, per-frame command buffers, and [recreateSwapChain]'s full teardown/rebuild
@@ -50,16 +51,13 @@ internal fun Renderer.createDepthResources() {
                 width = swapchainManager.extent.width,
                 height = swapchainManager.extent.height,
                 format = Renderer.DEPTH_FORMAT,
-                usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT or
+                    VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
                 samples = renderPipeline.multisample.count,
             ),
         )
         val requirements = VulkanImages.vkGetImageMemoryRequirements(device, depthImage)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        )
+        val memoryTypeIndex = findTransientAttachmentMemoryType(physicalDevice, requirements.memoryTypeBits)
         val depthImageMemory = VulkanBuffers.vkAllocateMemory(
             device,
             VkMemoryAllocateInfo(

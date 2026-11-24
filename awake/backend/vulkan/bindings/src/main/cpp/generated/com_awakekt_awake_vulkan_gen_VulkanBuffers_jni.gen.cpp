@@ -566,34 +566,62 @@ Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_vkCmdBindVertexBuffers(
         jint firstBinding,
         jlongArray buffers,
         jlongArray offsets) {
-    // --- Marshalling ---
+    // PERFORMANCE-CRITICAL: stack-allocated fast path avoids 4 std::vector heap allocations per
+    // draw call on mobile and desktop. Almost every call binds 1-4 vertex buffers.
     void* commandBuffer_ptr = reinterpret_cast<void*>(commandBuffer);
-    int32_t firstBinding_val = static_cast<int32_t>(firstBinding);
-    std::vector<int64_t> buffers_val = extract_long_array(env, buffers);
-    if (env->ExceptionCheck()) return;
-    std::vector<int64_t> offsets_val = extract_long_array(env, offsets);
-    if (env->ExceptionCheck()) return;
-
-    // --- Error handling ---
     if (!commandBuffer_ptr) {
         throw_illegal_state(env, "vkCmdBindVertexBuffers: commandBuffer not initialized");
         return;
     }
-    if (buffers_val.size() != offsets_val.size()) {
+    if (!buffers || !offsets) {
+        throw_illegal_argument(env, "vkCmdBindVertexBuffers: buffers and offsets must not be null");
+        return;
+    }
+    const jsize count = env->GetArrayLength(buffers);
+    const jsize offsetCount = env->GetArrayLength(offsets);
+    if (env->ExceptionCheck()) return;
+    if (count != offsetCount) {
         throw_illegal_argument(env, "vkCmdBindVertexBuffers: buffers and offsets must be the same size");
         return;
     }
+    if (count == 0) return;
 
+    constexpr jsize kStackBindings = 8;
+    if (count <= kStackBindings) {
+        jlong rawBuffers[kStackBindings];
+        jlong rawOffsets[kStackBindings];
+        VkBuffer vkBuffers[kStackBindings];
+        VkDeviceSize vkOffsets[kStackBindings];
+        env->GetLongArrayRegion(buffers, 0, count, rawBuffers);
+        if (env->ExceptionCheck()) return;
+        env->GetLongArrayRegion(offsets, 0, count, rawOffsets);
+        if (env->ExceptionCheck()) return;
+        for (jsize i = 0; i < count; ++i) {
+            vkBuffers[i] = reinterpret_cast<VkBuffer>(rawBuffers[i]);
+            vkOffsets[i] = static_cast<VkDeviceSize>(rawOffsets[i]);
+        }
+        vkCmdBindVertexBuffers(
+            reinterpret_cast<VkCommandBuffer>(commandBuffer_ptr),
+            static_cast<uint32_t>(firstBinding),
+            static_cast<uint32_t>(count),
+            vkBuffers,
+            vkOffsets);
+        return;
+    }
+
+    std::vector<int64_t> buffers_val = extract_long_array(env, buffers);
+    if (env->ExceptionCheck()) return;
+    std::vector<int64_t> offsets_val = extract_long_array(env, offsets);
+    if (env->ExceptionCheck()) return;
     std::vector<VkBuffer> vkBuffers(buffers_val.size());
     std::vector<VkDeviceSize> vkOffsets(offsets_val.size());
     for (size_t i = 0; i < buffers_val.size(); ++i) {
         vkBuffers[i] = reinterpret_cast<VkBuffer>(buffers_val[i]);
         vkOffsets[i] = static_cast<VkDeviceSize>(offsets_val[i]);
     }
-
     vkCmdBindVertexBuffers(
         reinterpret_cast<VkCommandBuffer>(commandBuffer_ptr),
-        static_cast<uint32_t>(firstBinding_val),
+        static_cast<uint32_t>(firstBinding),
         static_cast<uint32_t>(vkBuffers.size()),
         vkBuffers.data(),
         vkOffsets.data());
@@ -768,5 +796,163 @@ Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_readBufferMemoryBytes(
     jbyteArray out = env->NewByteArray(size);
     env->SetByteArrayRegion(out, 0, size, reinterpret_cast<const jbyte*>(mapped));
     vkUnmapMemory(reinterpret_cast<VkDevice>(device_ptr), reinterpret_cast<VkDeviceMemory>(memory_ptr));
+    return out;
+}
+
+
+// Hand-written persistent mapping entry points: keep HOST_VISIBLE|HOST_COHERENT per-frame buffers
+// mapped once at allocation time so per-frame uploads become a single Get*ArrayRegion memcpy with
+// zero vkMapMemory/vkUnmapMemory driver lock or ioctl overhead.
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_vkMapMemory(
+        JNIEnv* env,
+        jclass clazz,
+        jlong device,
+        jlong memory,
+        jlong offset,
+        jlong size) {
+    void* device_ptr = reinterpret_cast<void*>(device);
+    void* memory_ptr = reinterpret_cast<void*>(memory);
+    if (!device_ptr) {
+        throw_illegal_state(env, "vkMapMemory: device not initialized");
+        return 0;
+    }
+    if (!memory_ptr) {
+        throw_illegal_state(env, "vkMapMemory: memory not initialized");
+        return 0;
+    }
+    if (offset < 0) {
+        throw_illegal_argument(env, "vkMapMemory: offset must be non-negative");
+        return 0;
+    }
+    if (size == 0 || (size < 0 && size != -1)) {
+        throw_illegal_argument(env, "vkMapMemory: size must be positive or -1 (VK_WHOLE_SIZE)");
+        return 0;
+    }
+    void* mapped = nullptr;
+    VkDeviceSize mapSize = (size == -1) ? VK_WHOLE_SIZE : static_cast<VkDeviceSize>(size);
+    VkResult result = vkMapMemory(
+        reinterpret_cast<VkDevice>(device_ptr),
+        reinterpret_cast<VkDeviceMemory>(memory_ptr),
+        static_cast<VkDeviceSize>(offset),
+        mapSize,
+        0,
+        &mapped);
+    if (result != VK_SUCCESS) {
+        exception_utils::resultException(env, result, "There was a problem executing vkMapMemory");
+        return 0;
+    }
+    return reinterpret_cast<jlong>(mapped);
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_vkUnmapMemory(
+        JNIEnv* env,
+        jclass clazz,
+        jlong device,
+        jlong memory) {
+    void* device_ptr = reinterpret_cast<void*>(device);
+    void* memory_ptr = reinterpret_cast<void*>(memory);
+    if (!device_ptr) {
+        throw_illegal_state(env, "vkUnmapMemory: device not initialized");
+        return;
+    }
+    if (!memory_ptr) {
+        throw_illegal_state(env, "vkUnmapMemory: memory not initialized");
+        return;
+    }
+    vkUnmapMemory(
+        reinterpret_cast<VkDevice>(device_ptr),
+        reinterpret_cast<VkDeviceMemory>(memory_ptr));
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_writeMappedMemoryFloats(
+        JNIEnv* env,
+        jclass clazz,
+        jlong mappedPtr,
+        jlong offset,
+        jfloatArray data) {
+    if (!mappedPtr) {
+        throw_illegal_state(env, "writeMappedMemoryFloats: mapped pointer not initialized");
+        return;
+    }
+    if (offset < 0) {
+        throw_illegal_argument(env, "writeMappedMemoryFloats: offset must be non-negative");
+        return;
+    }
+    const jsize count = env->GetArrayLength(data);
+    if (env->ExceptionCheck() || count == 0) return;
+    uint8_t* dst = reinterpret_cast<uint8_t*>(mappedPtr) + static_cast<size_t>(offset);
+    env->GetFloatArrayRegion(data, 0, count, reinterpret_cast<jfloat*>(dst));
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_writeMappedMemoryFloatRange(
+        JNIEnv* env,
+        jclass clazz,
+        jlong mappedPtr,
+        jlong offset,
+        jfloatArray data,
+        jint dataOffset,
+        jint count) {
+    if (!mappedPtr) {
+        throw_illegal_state(env, "writeMappedMemoryFloatRange: mapped pointer not initialized");
+        return;
+    }
+    if (offset < 0) {
+        throw_illegal_argument(env, "writeMappedMemoryFloatRange: offset must be non-negative");
+        return;
+    }
+    if (count <= 0) return;
+    uint8_t* dst = reinterpret_cast<uint8_t*>(mappedPtr) + static_cast<size_t>(offset);
+    env->GetFloatArrayRegion(data, dataOffset, count, reinterpret_cast<jfloat*>(dst));
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_writeMappedMemoryBytes(
+        JNIEnv* env,
+        jclass clazz,
+        jlong mappedPtr,
+        jlong offset,
+        jbyteArray data) {
+    if (!mappedPtr) {
+        throw_illegal_state(env, "writeMappedMemoryBytes: mapped pointer not initialized");
+        return;
+    }
+    if (offset < 0) {
+        throw_illegal_argument(env, "writeMappedMemoryBytes: offset must be non-negative");
+        return;
+    }
+    const jsize count = env->GetArrayLength(data);
+    if (env->ExceptionCheck() || count == 0) return;
+    uint8_t* dst = reinterpret_cast<uint8_t*>(mappedPtr) + static_cast<size_t>(offset);
+    env->GetByteArrayRegion(data, 0, count, reinterpret_cast<jbyte*>(dst));
+}
+
+
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_readMappedMemoryBytes(
+        JNIEnv* env,
+        jclass clazz,
+        jlong mappedPtr,
+        jlong offset,
+        jint size) {
+    if (!mappedPtr) {
+        throw_illegal_state(env, "readMappedMemoryBytes: mapped pointer not initialized");
+        return nullptr;
+    }
+    if (offset < 0 || size < 0) {
+        throw_illegal_argument(env, "readMappedMemoryBytes: offset and size must be non-negative");
+        return nullptr;
+    }
+    jbyteArray out = env->NewByteArray(size);
+    if (!out || size == 0) return out;
+    const uint8_t* src = reinterpret_cast<const uint8_t*>(mappedPtr) + static_cast<size_t>(offset);
+    env->SetByteArrayRegion(out, 0, size, reinterpret_cast<const jbyte*>(src));
     return out;
 }

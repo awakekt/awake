@@ -61,6 +61,7 @@ internal class PerFrameUniformSlots(
         val descriptorSet: Long,
         val buffer: Long,
         val bufferMemory: Long,
+        internal val mappedPtr: Long,
     ) : VulkanMaterialBinding {
         override val descriptorSetHandle: Long get() = descriptorSet
         internal var lastWritten: FloatArray? = null
@@ -131,7 +132,7 @@ internal class PerFrameUniformSlots(
         }
     }
 
-    private fun createBuffer(): Pair<Long, Long> {
+    private fun createBuffer(): Triple<Long, Long, Long> {
         val buffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(
@@ -151,11 +152,12 @@ internal class PerFrameUniformSlots(
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return buffer to memory
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, uniformBytes.toLong())
+        return Triple(buffer, memory, mappedPtr)
     }
 
     private fun createSlot(slotIndex: Int): Slot {
-        val (buffer, bufferMemory) = createBuffer()
+        val (buffer, bufferMemory, mappedPtr) = createBuffer()
         // Sized from the same declaration the layout came from -- see materialPoolSizes for why
         // the two must not be counted separately.
         val poolSizes = bindings?.let { materialPoolSizes(it) } ?: listOf(
@@ -185,7 +187,7 @@ internal class PerFrameUniformSlots(
                 ),
             )
         }
-        return Slot(descriptorPool, descriptorSet, buffer, bufferMemory)
+        return Slot(descriptorPool, descriptorSet, buffer, bufferMemory, mappedPtr)
     }
 
     operator fun get(frameIndex: Int): Slot {
@@ -243,7 +245,7 @@ internal class PerFrameUniformSlots(
         val slot = this[frameIndex]
         if (slot.matchesLastWritten(floats)) return false
         slot.recordWritten(floats)
-        VulkanBuffers.writeBufferMemoryFloats(device, slot.bufferMemory, 0, floats)
+        VulkanBuffers.writeMappedMemoryFloats(slot.mappedPtr, 0, floats)
         return true
     }
 
@@ -314,6 +316,7 @@ internal class PerFrameUniformSlots(
     fun destroy() {
         slots.forEach { slot ->
             VulkanBuffers.vkDestroyBuffer(device, slot.buffer)
+            if (slot.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, slot.bufferMemory)
             VulkanBuffers.vkFreeMemory(device, slot.bufferMemory)
             VulkanDescriptors.vkDestroyDescriptorPool(device, slot.descriptorPool)
         }

@@ -2327,6 +2327,7 @@ public final class com/awakekt/awake/vulkan/gen/VulkanBuffers {
 	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanBuffers;
 	public final fun findMemoryType (JII)I
 	public final fun readBufferMemoryBytes (JJJI)[B
+	public final fun readMappedMemoryBytes (JJI)[B
 	public final fun vkAllocateMemory (JLcom/awakekt/awake/vulkan/models/info/VkMemoryAllocateInfo;)J
 	public final fun vkBindBufferMemory (JJJJ)V
 	public final fun vkCmdBindIndexBuffer (JJJI)V
@@ -2338,9 +2339,14 @@ public final class com/awakekt/awake/vulkan/gen/VulkanBuffers {
 	public final fun vkDeviceWaitIdle (J)V
 	public final fun vkFreeMemory (JJ)V
 	public final fun vkGetBufferMemoryRequirements (JJ)Lcom/awakekt/awake/vulkan/models/VkMemoryRequirements;
+	public final fun vkMapMemory (JJJJ)J
+	public final fun vkUnmapMemory (JJ)V
 	public final fun writeBufferMemoryBytes (JJJ[B)V
 	public final fun writeBufferMemoryFloats (JJJ[F)V
 	public final fun writeBufferMemoryFloats (JJJ[FII)V
+	public final fun writeMappedMemoryBytes (JJ[B)V
+	public final fun writeMappedMemoryFloats (JJ[F)V
+	public final fun writeMappedMemoryFloats (JJ[FII)V
 }
 
 public final class com/awakekt/awake/vulkan/gen/VulkanDescriptors {
@@ -3322,6 +3328,7 @@ public final class com/awakekt/awake/vulkan/models/info/VkImageUsageFlagBits2 {
 	public static final field VK_IMAGE_USAGE_SAMPLED_BIT I
 	public static final field VK_IMAGE_USAGE_TRANSFER_DST_BIT I
 	public static final field VK_IMAGE_USAGE_TRANSFER_SRC_BIT I
+	public static final field VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT I
 }
 
 public final class com/awakekt/awake/vulkan/models/info/VkImageViewCreateInfo {

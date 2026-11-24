@@ -29,6 +29,8 @@ internal class GpuFrameTimer private constructor(
 ) {
     private val frameTickets = LongArray(slots) { NO_TICKET }
     private val frameOffscreenTickets = Array(slots) { ArrayList<Long>() }
+    private val slotDetailed = BooleanArray(slots)
+    private val slotPartEndQuery = IntArray(slots * PARTS)
     private val counter = GpuFrameTimeCounter()
     private val offscreenPools = HashSet<Long>()
     private val freePools = ArrayDeque<Long>()
@@ -45,15 +47,28 @@ internal class GpuFrameTimer private constructor(
     val lastPartMs = FloatArray(PARTS) { Float.NaN }
     private val partScratch = FloatArray(PARTS)
 
+    /** How many timestamps the most recently ended frame wrote (2 when coarse, <= 8 when detailed). */
+    internal var lastRecordedTimestamps: Int = 0
+        private set
+
     /** The next part the frame being recorded marks; frames are recorded one at a time. */
     private var nextPart = 0
+    private var writtenCount = 0
+    private var currentDetailed = true
 
-    /** Reads the slot's previous frame, then starts timing this one. Outside any render pass. */
-    fun begin(commandBuffer: Long, slot: Int) {
+    /**
+     * Reads the slot's previous frame, then starts timing this one. Outside any render pass.
+     *
+     * When [detailedParts] is false (default on mobile TBDR GPUs while no diagnostics overlay is
+     * reading [Renderer.frameGpuTiming]), intermediate [mark] calls emit no `BOTTOM_OF_PIPE`
+     * timestamps so the GPU never drains tiles mid-frame; only the frame-start `TOP_OF_PIPE` and
+     * frame-end `BOTTOM_OF_PIPE` timestamps are written for [lastMs].
+     */
+    fun begin(commandBuffer: Long, slot: Int, detailedParts: Boolean = true) {
         val first = slot * QUERIES_PER_FRAME
         val previousTicket = frameTickets[slot]
         if (previousTicket != NO_TICKET) {
-            counter.completeSubmission(previousTicket, readParts(first))
+            counter.completeSubmission(previousTicket, readParts(slot, first))
         }
         val slotOffscreen = frameOffscreenTickets[slot]
         for (i in slotOffscreen.indices) {
@@ -61,25 +76,55 @@ internal class GpuFrameTimer private constructor(
         }
         slotOffscreen.clear()
         frameTickets[slot] = counter.beginSubmission()
-        VulkanQueries.vkCmdResetQueryPool(commandBuffer, pool, first, QUERIES_PER_FRAME)
+        slotDetailed[slot] = detailedParts
+        currentDetailed = detailedParts
+        val resetCount = if (detailedParts) QUERIES_PER_FRAME else COARSE_QUERIES
+        VulkanQueries.vkCmdResetQueryPool(commandBuffer, pool, first, resetCount)
         VulkanQueries.vkCmdWriteTimestamp(commandBuffer, TOP_OF_PIPE, pool, first)
+        writtenCount = 1
         nextPart = 0
     }
 
     /**
-     * Marks the end of [part] in the frame [begin] started, in recording order. A part the recording
-     * skipped is marked here too, so it reads 0 and every timestamp of the frame is written.
+     * Marks the end of [part] in the frame [begin] started, in recording order.
+     *
+     * Inactive parts (`active = false`) and all intermediate parts when `detailedParts = false`
+     * skip emitting a `BOTTOM_OF_PIPE` timestamp so mobile TBDR GPUs avoid mid-frame pipeline
+     * drains; inactive parts report `0f` ms when read back.
      */
-    fun mark(commandBuffer: Long, slot: Int, part: GpuFramePart) {
-        while (nextPart <= part.ordinal) {
-            VulkanQueries.vkCmdWriteTimestamp(commandBuffer, BOTTOM_OF_PIPE, pool, slot * QUERIES_PER_FRAME + nextPart + 1)
+    fun mark(commandBuffer: Long, slot: Int, part: GpuFramePart, active: Boolean = true) {
+        val base = slot * PARTS
+        while (nextPart < part.ordinal) {
+            slotPartEndQuery[base + nextPart] = writtenCount - 1
+            nextPart += 1
+        }
+        if (nextPart == part.ordinal) {
+            if (currentDetailed && active) {
+                VulkanQueries.vkCmdWriteTimestamp(commandBuffer, BOTTOM_OF_PIPE, pool, slot * QUERIES_PER_FRAME + writtenCount)
+                slotPartEndQuery[base + nextPart] = writtenCount
+                writtenCount += 1
+            } else {
+                slotPartEndQuery[base + nextPart] = writtenCount - 1
+            }
             nextPart += 1
         }
     }
 
     /** Stops timing the frame [begin] started in [commandBuffer]: the end of its [GpuFramePart.Ui]. */
     fun end(commandBuffer: Long, slot: Int) {
-        mark(commandBuffer, slot, GpuFramePart.Ui)
+        val base = slot * PARTS
+        val uiOrdinal = GpuFramePart.Ui.ordinal
+        while (nextPart < uiOrdinal) {
+            slotPartEndQuery[base + nextPart] = writtenCount - 1
+            nextPart += 1
+        }
+        if (nextPart == uiOrdinal) {
+            VulkanQueries.vkCmdWriteTimestamp(commandBuffer, BOTTOM_OF_PIPE, pool, slot * QUERIES_PER_FRAME + writtenCount)
+            slotPartEndQuery[base + uiOrdinal] = writtenCount
+            writtenCount += 1
+            nextPart += 1
+        }
+        lastRecordedTimestamps = writtenCount
         val slotOffscreen = frameOffscreenTickets[slot]
         slotOffscreen.clear()
         for (i in pendingOffscreen.indices) {
@@ -120,15 +165,33 @@ internal class GpuFrameTimer private constructor(
     }
 
     /** Reads the parts of the frame whose timestamps start at [first] into [lastPartMs]; their sum, or `Double.NaN`. */
-    private fun readParts(first: Int): Double {
+    private fun readParts(slot: Int, first: Int): Double =
+        if (!slotDetailed[slot]) readCoarse(first) else readDetailed(slot, first)
+
+    private fun readCoarse(first: Int): Double {
+        val ticks = VulkanQueries.timestampTicksBetween(device, pool, first, validBits)
+        if (ticks < 0) return Double.NaN
+        lastPartMs.fill(Float.NaN)
+        return ticks.toDouble() * nanosPerTick / NANOS_PER_MS
+    }
+
+    private fun readDetailed(slot: Int, first: Int): Double {
+        val base = slot * PARTS
         var total = 0.0
+        var prevQuery = 0
         for (part in 0 until PARTS) {
-            // As primitives: through [milliseconds]' `Double?` each part boxed, seven a frame.
-            val ticks = VulkanQueries.timestampTicksBetween(device, pool, first + part, validBits)
-            if (ticks < 0) return Double.NaN
-            val ms = ticks.toDouble() * nanosPerTick / NANOS_PER_MS
-            partScratch[part] = ms.toFloat()
-            total += ms
+            val endQuery = slotPartEndQuery[base + part]
+            if (endQuery == prevQuery) {
+                partScratch[part] = 0f
+            } else {
+                // As primitives: through [milliseconds]' `Double?` each part boxed, seven a frame.
+                val ticks = VulkanQueries.timestampTicksBetween(device, pool, first + prevQuery, validBits)
+                if (ticks < 0) return Double.NaN
+                val ms = ticks.toDouble() * nanosPerTick / NANOS_PER_MS
+                partScratch[part] = ms.toFloat()
+                total += ms
+                prevQuery = endQuery
+            }
         }
         partScratch.copyInto(lastPartMs)
         return total
@@ -159,6 +222,7 @@ internal class GpuFrameTimer private constructor(
         private const val NO_TICKET = -1L
         private val PARTS = GpuFramePart.entries.size
         private val QUERIES_PER_FRAME = PARTS + 1
+        private const val COARSE_QUERIES = 2
         private const val OFFSCREEN_QUERIES = 2
         private const val NANOS_PER_MS = 1_000_000f
         private val TOP_OF_PIPE = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT.value

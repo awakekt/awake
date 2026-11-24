@@ -29,7 +29,8 @@ internal class ColorAttachment(
     height: Int,
     val format: Int,
     val samples: Int,
-    usage: Int = VkImageUsageFlagBits2.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    usage: Int = VkImageUsageFlagBits2.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT or
+        VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
     aspectMask: Int = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT.value,
 ) {
     private var image = 0L
@@ -41,6 +42,10 @@ internal class ColorAttachment(
     var bytes = 0L
         private set
 
+    /** Whether this attachment was backed by `VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT` tile memory. */
+    internal var lazilyAllocated = false
+        private set
+
     init {
         try {
             image = VulkanImages.vkCreateImage(
@@ -48,11 +53,26 @@ internal class ColorAttachment(
                 VkImageCreateInfo(width, height, format, usage, samples = samples),
             )
             val requirements = VulkanImages.vkGetImageMemoryRequirements(graphicsDevice.device, image)
-            val type = VulkanBuffers.findMemoryType(
-                graphicsDevice.physicalDevice,
-                requirements.memoryTypeBits,
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            )
+            val isTransient = (usage and VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT) != 0
+            val type = if (isTransient) {
+                val lazyType = findLazyAttachmentMemoryTypeOrNegative(graphicsDevice.physicalDevice, requirements.memoryTypeBits)
+                if (lazyType >= 0) {
+                    lazilyAllocated = true
+                    lazyType
+                } else {
+                    VulkanBuffers.findMemoryType(
+                        graphicsDevice.physicalDevice,
+                        requirements.memoryTypeBits,
+                        VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    )
+                }
+            } else {
+                VulkanBuffers.findMemoryType(
+                    graphicsDevice.physicalDevice,
+                    requirements.memoryTypeBits,
+                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                )
+            }
             memory = VulkanBuffers.vkAllocateMemory(graphicsDevice.device, VkMemoryAllocateInfo(requirements.size, type))
             bytes = requirements.size
             VulkanImages.vkBindImageMemory(graphicsDevice.device, image, memory, 0)
@@ -77,5 +97,39 @@ internal class ColorAttachment(
         view = 0L
         image = 0L
         memory = 0L
+    }
+}
+
+/**
+ * Finds a `DEVICE_LOCAL | LAZILY_ALLOCATED` memory type for transient tile-only render-pass
+ * attachments on mobile TBDR GPUs, returning `-1` when the physical device exposes none (desktop
+ * discrete GPUs and software rasterizers).
+ */
+internal fun findLazyAttachmentMemoryTypeOrNegative(physicalDevice: Long, memoryTypeBits: Int): Int =
+    try {
+        VulkanBuffers.findMemoryType(
+            physicalDevice,
+            memoryTypeBits,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT or
+                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT,
+        )
+    } catch (_: IllegalStateException) {
+        -1
+    }
+
+/**
+ * Picks `DEVICE_LOCAL | LAZILY_ALLOCATED` when available for a transient attachment, otherwise
+ * falls back to plain `DEVICE_LOCAL`.
+ */
+internal fun findTransientAttachmentMemoryType(physicalDevice: Long, memoryTypeBits: Int): Int {
+    val lazy = findLazyAttachmentMemoryTypeOrNegative(physicalDevice, memoryTypeBits)
+    return if (lazy >= 0) {
+        lazy
+    } else {
+        VulkanBuffers.findMemoryType(
+            physicalDevice,
+            memoryTypeBits,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        )
     }
 }

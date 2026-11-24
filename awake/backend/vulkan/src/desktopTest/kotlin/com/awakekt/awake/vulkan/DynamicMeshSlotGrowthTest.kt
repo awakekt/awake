@@ -50,8 +50,8 @@ class DynamicMeshSlotGrowthTest {
                     mesh.update(slot, data.vertices, data.indices, forceUpload = true)
                     val resources = mesh.javaClass.getDeclaredField("frameResources").also { it.isAccessible = true }.get(mesh) as Array<*>
                     val resource = resources[slot]!!
-                    val memory = resource.javaClass.getDeclaredField("vertexBufferMemory").also { it.isAccessible = true }.getLong(resource)
-                    val bytes = VulkanBuffers.readBufferMemoryBytes(device.device, memory, 0, Float.SIZE_BYTES)
+                    val mappedPtr = resource.javaClass.getDeclaredField("vertexMappedPtr").also { it.isAccessible = true }.getLong(resource)
+                    val bytes = VulkanBuffers.readMappedMemoryBytes(mappedPtr, 0, Float.SIZE_BYTES)
                     assertEquals(frame.toFloat(), ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).float, "stale GPU contents in frame slot $slot")
                 }
             } finally {

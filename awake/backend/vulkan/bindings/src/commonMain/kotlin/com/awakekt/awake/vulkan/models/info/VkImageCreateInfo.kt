@@ -131,6 +131,9 @@ object VkImageUsageFlagBits2 {
 
     /** The image can be a depth/stencil attachment. */
     const val VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT = 0x00000020
+
+    /** The image is only used transiently within a render pass and may stay in tile memory. */
+    const val VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT = 0x00000040
 }
 
 /**

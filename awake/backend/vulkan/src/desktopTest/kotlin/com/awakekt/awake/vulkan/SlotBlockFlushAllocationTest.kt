@@ -59,12 +59,12 @@ class SlotBlockFlushAllocationTest {
 
             val last = frames[(WARM_UP + FRAMES) % 2]
             val expected = List(SLOTS) { slot -> if (slot in FIRST_DIRTY..LAST_DIRTY) last[slot] else frames[0][slot] }
-            expected.forEachIndexed { slot, floats -> assertEquals(floats.toList(), readSlot(device, block, slot), "slot $slot") }
+            expected.forEachIndexed { slot, floats -> assertEquals(floats.toList(), readSlot(block, slot), "slot $slot") }
         }
     }
 
-    private fun readSlot(device: GraphicsDevice, block: SlotBlock, slot: Int): List<Float> {
-        val bytes = VulkanBuffers.readBufferMemoryBytes(device.device, block.memory, slot * block.stride, FLOATS * Float.SIZE_BYTES)
+    private fun readSlot(block: SlotBlock, slot: Int): List<Float> {
+        val bytes = VulkanBuffers.readMappedMemoryBytes(block.mappedPtr, slot * block.stride, FLOATS * Float.SIZE_BYTES)
         val floats = ByteBuffer.wrap(bytes).order(ByteOrder.nativeOrder()).asFloatBuffer()
         return List(FLOATS) { floats[it] }
     }
