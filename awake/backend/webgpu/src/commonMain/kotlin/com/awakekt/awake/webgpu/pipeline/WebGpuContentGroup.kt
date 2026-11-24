@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.pipeline
 
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.renderer.UniformLayout
@@ -39,6 +40,7 @@ internal class WebGpuContentGroup(
             usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
         ),
     )
+    private val writer = UniformWriter(layout)
     private var bindGroup: WebGpuBindGroupHandle? = null
     private var lastWritten: FloatArray? = null
 
@@ -80,10 +82,14 @@ internal class WebGpuContentGroup(
     }
 
     override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
-        val floats = UniformWriter(layout).apply(fill).build()
+        val floats = writer.reset().apply(fill).build()
         val prev = lastWritten
         if (prev != null && prev.sameBitsAs(floats)) return
-        lastWritten = if (prev != null && prev.size == floats.size) floats.copyInto(prev) else floats.copyOf()
+        if (prev != null && prev.size == floats.size) {
+            prev.putFloats(0, floats)
+        } else {
+            lastWritten = floats.copyOf()
+        }
         graphicsDevice.contentUniformWrites += 1
         device.queue.writeBufferFloats(buffer, 0uL, floats)
     }

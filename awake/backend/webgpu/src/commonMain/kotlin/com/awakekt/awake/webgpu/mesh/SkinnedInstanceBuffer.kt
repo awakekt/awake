@@ -74,7 +74,11 @@ class SkinnedInstanceBuffer(
             } else {
                 FloatArray(floatCount).also { cached = it }
             }
-            floats.copyInto(target, 0, 0, floatCount)
+            var index = 0
+            while (index < floatCount) {
+                target[index] = floats[index]
+                index += 1
+            }
             count = floatCount
         }
     }

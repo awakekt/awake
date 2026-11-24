@@ -8,6 +8,7 @@ package com.awakekt.awake.render.renderer
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec4
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -81,7 +82,7 @@ data class UniformField(
         require(destination.size >= floats) {
             "Field '$name' buffer has ${destination.size} floats, but this field needs $floats."
         }
-        value.data.copyInto(destination, destinationOffset = index * type.uniformFloats)
+        destination.putFloats(index * type.uniformFloats, value.data)
     }
 }
 

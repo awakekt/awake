@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.core.math.putFloats
 import io.ygdrasil.webgpu.ArrayBuffer
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUQueue
@@ -43,7 +44,7 @@ internal class UniformUploads {
         val end = floatCount + block.size
         if (end > floats.size) floats = floats.copyOf(maxOf(end, floats.size * 2))
         if (buffers.size + 2 > starts.size) starts = starts.copyOf(starts.size * 2)
-        block.copyInto(floats, floatCount)
+        floats.putFloats(floatCount, block)
         buffers += buffer
         floatCount = end
         starts[buffers.size] = end
@@ -61,7 +62,11 @@ internal class UniformUploads {
         val resident = slot.resident
         if (resident != null && resident.sameBitsAs(block)) return false
         stage(slot.buffer, block)
-        slot.resident = if (resident != null && resident.size == block.size) block.copyInto(resident) else block.copyOf()
+        if (resident != null && resident.size == block.size) {
+            resident.putFloats(0, block)
+        } else {
+            slot.resident = block.copyOf()
+        }
         return true
     }
 

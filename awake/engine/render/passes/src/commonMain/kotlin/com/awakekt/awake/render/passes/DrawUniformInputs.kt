@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
@@ -48,24 +49,31 @@ class FrameUniformInputs {
         val cascadeFloats = shadowCascades?.let { it.viewProjections.size * (MAT4_FLOATS + CASCADE_SCALARS) } ?: 0
         val size = MAT4_FLOATS + FRAME_SCALARS + lightPayload.size + cascadeFloats
         if (next.size != size) next = FloatArray(size)
-        viewProjection.data.copyInto(next, 0)
-        var at = MAT4_FLOATS
-        at = next.put(at, cameraEye.x, cameraEye.y, cameraEye.z, cameraForward.x, cameraForward.y, cameraForward.z)
-        at = next.put(at, fogColor.r, fogColor.g, fogColor.b, fogColor.a, fogDensity, exposure)
-        at = next.put(at, debugView.code.toFloat(), debugView.depthRange, debugView.layer.toFloat())
-        at = next.put(at, if (shadowCascades == null) 0f else 1f)
-        lightPayload.copyInto(next, at)
-        at += lightPayload.size
+        var at = next.putFloats(0, viewProjection.data)
+        next[at++] = cameraEye.x
+        next[at++] = cameraEye.y
+        next[at++] = cameraEye.z
+        next[at++] = cameraForward.x
+        next[at++] = cameraForward.y
+        next[at++] = cameraForward.z
+        next[at++] = fogColor.r
+        next[at++] = fogColor.g
+        next[at++] = fogColor.b
+        next[at++] = fogColor.a
+        next[at++] = fogDensity
+        next[at++] = exposure
+        next[at++] = debugView.code.toFloat()
+        next[at++] = debugView.depthRange
+        next[at++] = debugView.layer.toFloat()
+        next[at++] = if (shadowCascades == null) 0f else 1f
+        at = next.putFloats(at, lightPayload)
         shadowCascades?.let { cascades ->
             for (index in cascades.viewProjections.indices) {
-                cascades.viewProjections[index].data.copyInto(next, at)
-                at = next.put(
-                    at + MAT4_FLOATS,
-                    cascades.splitDistances[index],
-                    cascades.depthScales[index],
-                    cascades.worldExtents[index],
-                    cascades.blendStartDistances[index],
-                )
+                at = next.putFloats(at, cascades.viewProjections[index].data)
+                next[at++] = cascades.splitDistances[index]
+                next[at++] = cascades.depthScales[index]
+                next[at++] = cascades.worldExtents[index]
+                next[at++] = cascades.blendStartDistances[index]
             }
         }
         if (!next.sameBitsAs(last)) {
@@ -115,10 +123,10 @@ class DrawUniformInputs {
         frame = frameVersion
         format = draw.mesh.format
         draw.fillScalars(scalars, materialUniformFloatCount, alphaToCoverage, kind)
-        draw.model.data.copyInto(model)
+        model.putFloats(0, draw.model.data)
         val source = draw.extraUniformFloats
         if (extras.size != source.size) extras = FloatArray(source.size)
-        source.copyInto(extras)
+        extras.putFloats(0, source)
     }
 
     /** Forgets what was recorded, so the next draw packs whatever it is. */
@@ -156,12 +164,6 @@ internal fun RenderDrawCommand.textureClock(): Float {
     val frames = layout.offsetOf(UniformFields.TextureFrames)
     val scroll = layout.offsetOf(UniformFields.TextureScroll)
     return textureAnimationClock(values[frames], values[frames + 1], values[frames + 2], values[scroll], values[scroll + 1], timeSeconds)
-}
-
-/** Once a frame only: the vararg array this allocates is not per draw. */
-private fun FloatArray.put(at: Int, vararg values: Float): Int {
-    values.copyInto(this, at)
-    return at + values.size
 }
 
 /**
