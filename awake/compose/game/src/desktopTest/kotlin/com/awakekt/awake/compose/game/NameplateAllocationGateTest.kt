@@ -197,9 +197,9 @@ class NameplateAllocationGateTest {
         const val HEIGHT = 720
         const val WARMUP = 300
         const val FRAMES = 400
-        const val CEILING_BYTES = 435_000
-        const val STILL_SKIP_CEILING_BYTES = 227_500
-        const val MOVING_PLACEMENT_ONLY_CEILING_BYTES = 196_000
+        const val CEILING_BYTES = 250_000
+        const val STILL_SKIP_CEILING_BYTES = 160_000
+        const val MOVING_PLACEMENT_ONLY_CEILING_BYTES = 146_000
         const val MOVING_RETAINED_DRAW_CEILING_BYTES = 6_300
         const val STILL_RETAINED_DRAW_CEILING_BYTES = 1_000
     }

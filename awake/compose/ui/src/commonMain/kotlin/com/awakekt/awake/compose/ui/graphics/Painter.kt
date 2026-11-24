@@ -46,6 +46,11 @@ class Painter {
     private var zIndexOrderStack = IntArray(INITIAL_Z_ORDER_CAPACITY)
     private var zIndexStackTop = 0
 
+    // Re-entrant stack of pre-allocated drawContent closures so painting a DrawModifierNode chain
+    // allocates no capturing lambda per modifier per frame (#1512, #1742).
+    private var chainFrames = arrayOfNulls<ChainFrame>(INITIAL_CHAIN_DEPTH)
+    private var chainDepth = 0
+
     // Made on the first paint that retains (#1512 stage e); `retained` is it while such a paint runs.
     private var retainedDraw: RetainedDraw? = null
     private var retained: RetainedDraw? = null
@@ -147,17 +152,44 @@ class Painter {
 
     private fun paintChainLink(node: LayoutNode, chain: List<DrawModifierNode>, index: Int) {
         val depth = node.drawDepths[index]
-        scope.enter(node, depth)
-        with(chain[index]) {
-            scope.draw {
-                if (index + 1 < chain.size) {
-                    paintChainLink(node, chain, index + 1)
-                } else {
-                    paintChildren(node)
-                }
-                // This link's rect is restored after the nested walk moved the origin.
-                scope.enter(node, depth)
+        val slot = chainDepth
+        if (slot >= chainFrames.size) {
+            chainFrames = chainFrames.copyOf(maxOf(slot + 1, chainFrames.size * 2))
+        }
+        val frame = chainFrames[slot] ?: ChainFrame().also { chainFrames[slot] = it }
+        frame.node = node
+        frame.chain = chain
+        frame.index = index
+        frame.depth = depth
+        chainDepth = slot + 1
+        try {
+            scope.enter(node, depth)
+            with(chain[index]) {
+                scope.draw(frame.drawContent)
             }
+        } finally {
+            chainDepth = slot
+            frame.node = null
+            frame.chain = null
+        }
+    }
+
+    private inner class ChainFrame {
+        var node: LayoutNode? = null
+        var chain: List<DrawModifierNode>? = null
+        var index = 0
+        var depth = 0
+        val drawContent: () -> Unit = {
+            val currentNode = node!!
+            val currentChain = chain!!
+            val nextIndex = index + 1
+            if (nextIndex < currentChain.size) {
+                paintChainLink(currentNode, currentChain, nextIndex)
+            } else {
+                paintChildren(currentNode)
+            }
+            // This link's rect is restored after the nested walk moved the origin.
+            scope.enter(currentNode, depth)
         }
     }
 
@@ -232,6 +264,7 @@ class Painter {
 }
 
 private const val INITIAL_Z_ORDER_CAPACITY = 32
+private const val INITIAL_CHAIN_DEPTH = 16
 
 private fun hasNonZeroZIndex(children: NodeChildren): Boolean {
     for (i in 0 until children.size) {

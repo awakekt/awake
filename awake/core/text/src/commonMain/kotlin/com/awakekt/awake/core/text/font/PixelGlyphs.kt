@@ -137,10 +137,10 @@ internal class OutlinePixelGlyphs(
     private val subpixelSteps: Int = SUBPIXEL_STEPS,
     private val glyphIds: IntArray = IntArray(codePoints.size) { outlines.glyphFor(codePoints[it]) },
 ) : PixelGlyphs {
-    private val slotByCode: Map<Int, Int> = HashMap<Int, Int>(codePoints.size * 2).also { map ->
-        for (slot in codePoints.indices) map.getOrPut(codePoints[slot]) { slot }
+    private val slotByCode: CodePointIntTable = CodePointIntTable(codePoints.size).also { table ->
+        for (slot in codePoints.indices) table.putIfAbsent(codePoints[slot], slot)
     }
-    private val fallbackSlot: Int = slotByCode[fallbackCode] ?: 0
+    private val fallbackSlot: Int = slotByCode.get(fallbackCode).let { if (it >= 0) it else 0 }
     private val outlineCache = arrayOfNulls<List<OutlineSegment>>(codePoints.size)
     private val scalePerUnit = 1.0 / outlines.unitsPerEm
     private val hinting = VerticalHinting.measure(outlines)
@@ -153,7 +153,8 @@ internal class OutlinePixelGlyphs(
 
     override fun glyph(codePoint: Int, weight: FontWeight, pixelSize: Int, subpixel: Int): PixelGlyph? {
         if (pixelSize !in 1..PixelGlyphs.MAX_PIXEL_SIZE || codePoints.isEmpty()) return null
-        val slot = slotByCode[codePoint] ?: fallbackSlot
+        val lookedUp = slotByCode.get(codePoint)
+        val slot = if (lookedUp >= 0) lookedUp else fallbackSlot
         val blocks = sizes[pixelSize] ?: arrayOfNulls<Array<PixelGlyph>?>(blockCount).also { sizes[pixelSize] = it }
         val block = slot / BLOCK_SIZE
         val glyphs = blocks[block] ?: buildBlock(pixelSize, block).also { blocks[block] = it }
