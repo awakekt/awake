@@ -66,6 +66,11 @@ class GraphicsDevice {
     /** Content-feature uniform blocks written to per-frame slots so far. For tests and probes. */
     internal var contentUniformWrites = 0L
 
+    private var nextTextureDescriptorVersion = 1L
+
+    /** Monotonic version tag stamped onto material texture bindings so UI descriptor caching never aliases recycled Vulkan handles. */
+    internal fun allocateTextureDescriptorVersion(): Long = nextTextureDescriptorVersion++
+
     /** The frame block each frame's lit draws bind beside their own; made on first use. */
     internal val frameUniforms: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
         get() = frameUniformBuffers

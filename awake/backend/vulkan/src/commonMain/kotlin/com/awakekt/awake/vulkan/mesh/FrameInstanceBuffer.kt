@@ -38,14 +38,15 @@ class FrameInstanceBuffer(
     private data class FrameResources(
         val buffer: BufferHandle,
         val memory: DeviceMemoryHandle,
+        val mappedPtr: Long,
     ) {
         /** This slot's buffer as the port's opaque handle -- built once, not per draw. */
         val binding = VulkanBufferBinding(buffer.handle)
     }
 
     private val frameResources: Array<FrameResources> = Array(framesInFlight) {
-        val (buffer, memory) = allocateHostVisibleBuffer((maxInstances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
-        FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory))
+        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer((maxInstances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
+        FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), mappedPtr)
     }
 
     private val packer = InstancePacker<Float>(
@@ -69,7 +70,7 @@ class FrameInstanceBuffer(
     fun update(frameIndex: Int, frames: List<Float>) {
         val count = packer.packSlice(frames, maxInstances)
         if (count == 0) return
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, packer.buffer, 0, count)
+        VulkanBuffers.writeMappedMemoryFloats(resourcesFor(frameIndex).mappedPtr, 0, packer.buffer, 0, count)
     }
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 3. */
@@ -98,6 +99,7 @@ class FrameInstanceBuffer(
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
+            if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.memory.handle)
             VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
         }
     }
@@ -109,7 +111,7 @@ class FrameInstanceBuffer(
         return frameResources[frameIndex]
     }
 
-    private fun allocateHostVisibleBuffer(byteSize: Long): Pair<Long, Long> {
+    private fun allocateHostVisibleBuffer(byteSize: Long): Triple<Long, Long, Long> {
         val buffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(
@@ -129,7 +131,8 @@ class FrameInstanceBuffer(
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return buffer to memory
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        return Triple(buffer, memory, mappedPtr)
     }
 
     /** Binding index and stride constants for the per-instance frame-index stream. */

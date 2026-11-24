@@ -73,8 +73,10 @@ class DynamicMesh(
     private data class FrameResources(
         var vertexBuffer: BufferHandle,
         var vertexBufferMemory: DeviceMemoryHandle,
+        var vertexMappedPtr: Long,
         var indexBuffer: BufferHandle,
         var indexBufferMemory: DeviceMemoryHandle,
+        var indexMappedPtr: Long,
         /** Capacity belongs to one frame slot. A slot only grows after its own fence is waited. */
         var maxVertices: Int,
         var maxIndices: Int,
@@ -103,19 +105,21 @@ class DynamicMesh(
         frameResources = Array(framesInFlight) {
             val initialVertices = maxQuads * VERTICES_PER_QUAD
             val initialIndices = maxQuads * INDICES_PER_QUAD
-            val (vBuffer, vMemory) = allocateHostVisibleBuffer(
+            val (vBuffer, vMemory, vMapped) = allocateHostVisibleBuffer(
                 byteSize = (initialVertices * floatsPerVertex * Float.SIZE_BYTES).toLong(),
                 usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             )
-            val (iBuffer, iMemory) = allocateHostVisibleBuffer(
+            val (iBuffer, iMemory, iMapped) = allocateHostVisibleBuffer(
                 byteSize = (initialIndices * Int.SIZE_BYTES).toLong(),
                 usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
             )
             FrameResources(
                 vertexBuffer = BufferHandle(vBuffer),
                 vertexBufferMemory = DeviceMemoryHandle(vMemory),
+                vertexMappedPtr = vMapped,
                 indexBuffer = BufferHandle(iBuffer),
                 indexBufferMemory = DeviceMemoryHandle(iMemory),
+                indexMappedPtr = iMapped,
                 maxVertices = initialVertices,
                 maxIndices = initialIndices,
             )
@@ -166,11 +170,11 @@ class DynamicMesh(
         if (indices.isEmpty()) return
         // A UI that did not change hands back the same staged arrays, already in this slot.
         if (!forceUpload && vertices === frame.writtenVertices && indices === frame.writtenIndices) return
-        VulkanBuffers.writeBufferMemoryFloats(device, frame.vertexBufferMemory.handle, 0, vertices)
-        // writeBufferMemoryBytes copies into mapped memory synchronously, so the reused buffer is
+        VulkanBuffers.writeMappedMemoryFloats(frame.vertexMappedPtr, 0, vertices)
+        // writeMappedMemoryBytes copies into mapped memory synchronously, so the reused buffer is
         // free to be overwritten on the next frame's upload.
         frame.indexBytes = indices.toByteArrayLE(frame.indexBytes)
-        VulkanBuffers.writeBufferMemoryBytes(device, frame.indexBufferMemory.handle, 0, frame.indexBytes)
+        VulkanBuffers.writeMappedMemoryBytes(frame.indexMappedPtr, 0, frame.indexBytes)
         frame.writtenVertices = vertices
         frame.writtenIndices = indices
         uploadCount += 1
@@ -198,21 +202,25 @@ class DynamicMesh(
         growthCount += 1
 
         VulkanBuffers.vkDestroyBuffer(device, frame.vertexBuffer.handle)
+        if (frame.vertexMappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.vertexBufferMemory.handle)
         VulkanBuffers.vkFreeMemory(device, frame.vertexBufferMemory.handle)
         VulkanBuffers.vkDestroyBuffer(device, frame.indexBuffer.handle)
+        if (frame.indexMappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.indexBufferMemory.handle)
         VulkanBuffers.vkFreeMemory(device, frame.indexBufferMemory.handle)
-        val (vBuffer, vMemory) = allocateHostVisibleBuffer(
+        val (vBuffer, vMemory, vMapped) = allocateHostVisibleBuffer(
             byteSize = (grownVertices * floatsPerVertex * Float.SIZE_BYTES).toLong(),
             usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         )
-        val (iBuffer, iMemory) = allocateHostVisibleBuffer(
+        val (iBuffer, iMemory, iMapped) = allocateHostVisibleBuffer(
             byteSize = (grownIndices * Int.SIZE_BYTES).toLong(),
             usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         )
         frame.vertexBuffer = BufferHandle(vBuffer)
         frame.vertexBufferMemory = DeviceMemoryHandle(vMemory)
+        frame.vertexMappedPtr = vMapped
         frame.indexBuffer = BufferHandle(iBuffer)
         frame.indexBufferMemory = DeviceMemoryHandle(iMemory)
+        frame.indexMappedPtr = iMapped
         frame.maxVertices = grownVertices
         frame.maxIndices = grownIndices
         frame.drawIndexCount = 0
@@ -276,8 +284,10 @@ class DynamicMesh(
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.vertexBuffer.handle)
+            if (frame.vertexMappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.vertexBufferMemory.handle)
             VulkanBuffers.vkFreeMemory(device, frame.vertexBufferMemory.handle)
             VulkanBuffers.vkDestroyBuffer(device, frame.indexBuffer.handle)
+            if (frame.indexMappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.indexBufferMemory.handle)
             VulkanBuffers.vkFreeMemory(device, frame.indexBufferMemory.handle)
         }
     }
@@ -289,7 +299,7 @@ class DynamicMesh(
         return frameResources[frameIndex]
     }
 
-    private fun allocateHostVisibleBuffer(byteSize: Long, usage: Int): Pair<Long, Long> {
+    private fun allocateHostVisibleBuffer(byteSize: Long, usage: Int): Triple<Long, Long, Long> {
         val buffer = VulkanBuffers.vkCreateBuffer(device, VkBufferCreateInfo(size = byteSize, usage = usage))
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
         val memoryTypeIndex = VulkanBuffers.findMemoryType(
@@ -303,7 +313,8 @@ class DynamicMesh(
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return buffer to memory
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        return Triple(buffer, memory, mappedPtr)
     }
 
     /** Vertex layout sizes and quad geometry constants shared with the UI render pipelines. */

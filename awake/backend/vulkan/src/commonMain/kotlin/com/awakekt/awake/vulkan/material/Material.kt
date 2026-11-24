@@ -152,10 +152,15 @@ class Material(
         createResources(sampler, imageView, pbr)
     }
 
+    /** Monotonic version for UI texture descriptor caching; bumped whenever this material's texture changes. */
+    internal var textureDescriptorVersion: Long = 0L
+        private set
+
     private fun createResources(sampler: Long, imageView: Long, pbr: PbrImageViews) {
         samplerHandle = sampler
         imageViewHandle = imageView
         pbrImageViews = pbr
+        textureDescriptorVersion = graphicsDevice.allocateTextureDescriptorVersion()
     }
 
     private fun createUniformSlot(frameIndex: Int): UniformSlot {
@@ -287,7 +292,7 @@ class Material(
             slot.inputs.clear()
             slot.recordWritten(values)
             values.copyInto(slot.block.stagedFloats, destinationOffset = slot.indexInBlock * slot.block.strideFloats)
-            VulkanBuffers.writeBufferMemoryFloats(device, slot.uniformBufferMemory.handle, slot.memoryOffset, values)
+            VulkanBuffers.writeMappedMemoryFloats(slot.block.mappedPtr, slot.memoryOffset, values)
             graphicsDevice.drawBlockWrites += 1
         }
         if (slot.frameBlock != frameBlock && readsFrameBlock) {
@@ -335,6 +340,7 @@ class Material(
         }
         slotBlocks.forEach { block ->
             block.destroyed = true
+            VulkanBuffers.vkUnmapMemory(device, block.memory)
             VulkanBuffers.vkFreeMemory(device, block.memory)
             VulkanDescriptors.vkDestroyDescriptorPool(device, block.descriptorPool)
         }
@@ -474,8 +480,8 @@ private fun bindFrameBlock(graphicsDevice: GraphicsDevice, descriptorSet: Long, 
     )
 }
 
-/** One memory allocation and descriptor pool shared by [Material.SLOTS_PER_BLOCK] uniform slots. */
-internal class SlotBlock(val memory: Long, val descriptorPool: Long, val stride: Long) {
+/** One persistently mapped memory allocation and descriptor pool shared by [Material.SLOTS_PER_BLOCK] uniform slots. */
+internal class SlotBlock(val memory: Long, val mappedPtr: Long, val descriptorPool: Long, val stride: Long) {
     val strideFloats: Int = (stride / Float.SIZE_BYTES).toInt()
     val stagedFloats: FloatArray = FloatArray(Material.SLOTS_PER_BLOCK * strideFloats)
 
@@ -501,6 +507,7 @@ internal class SlotBlock(val memory: Long, val descriptorPool: Long, val stride:
         dirtyMask = dirtyMask or bit
     }
 
+    @Suppress("UnusedParameter") // Kept matching flush(device) call sites across Renderer/tests.
     fun flush(device: Long) {
         val mask = dirtyMask
         val single = singleDirtySlot
@@ -510,16 +517,16 @@ internal class SlotBlock(val memory: Long, val descriptorPool: Long, val stride:
         when {
             (mask and (mask - 1)) == 0 && single != null && single.lastWrittenSize == single.lastWritten.size -> {
                 val slotIndex = mask.countTrailingZeroBits()
-                VulkanBuffers.writeBufferMemoryFloats(device, memory, slotIndex * stride, single.lastWritten)
+                VulkanBuffers.writeMappedMemoryFloats(mappedPtr, slotIndex * stride, single.lastWritten)
             }
             mask == -1 -> {
-                VulkanBuffers.writeBufferMemoryFloats(device, memory, 0L, stagedFloats)
+                VulkanBuffers.writeMappedMemoryFloats(mappedPtr, 0L, stagedFloats)
             }
-            else -> flushDirtyRuns(device, mask)
+            else -> flushDirtyRuns(mask)
         }
     }
 
-    private fun flushDirtyRuns(device: Long, initialMask: Int) {
+    private fun flushDirtyRuns(initialMask: Int) {
         var remaining = initialMask
         while (remaining != 0) {
             val runStart = remaining.countTrailingZeroBits()
@@ -528,9 +535,8 @@ internal class SlotBlock(val memory: Long, val descriptorPool: Long, val stride:
                 runEnd++
             }
             val runCount = runEnd - runStart + 1
-            VulkanBuffers.writeBufferMemoryFloats(
-                device,
-                memory,
+            VulkanBuffers.writeMappedMemoryFloats(
+                mappedPtr,
                 runStart * stride,
                 stagedFloats,
                 dataOffset = runStart * strideFloats,
@@ -543,6 +549,7 @@ internal class SlotBlock(val memory: Long, val descriptorPool: Long, val stride:
 }
 
 /** Memory for [Material.SLOTS_PER_BLOCK] buffers shaped like [requirements], each at an aligned stride. */
+@Suppress("TooGenericExceptionCaught")
 private fun allocateSlotBlock(
     graphicsDevice: GraphicsDevice,
     bindings: GroupBindings,
@@ -550,10 +557,11 @@ private fun allocateSlotBlock(
 ): SlotBlock {
     val alignment = maxOf(requirements.alignment, Float.SIZE_BYTES.toLong())
     val stride = (requirements.size + alignment - 1) / alignment * alignment
+    val totalSize = stride * Material.SLOTS_PER_BLOCK
     val memory = VulkanBuffers.vkAllocateMemory(
         graphicsDevice.device,
         VkMemoryAllocateInfo(
-            allocationSize = stride * Material.SLOTS_PER_BLOCK,
+            allocationSize = totalSize,
             memoryTypeIndex = VulkanBuffers.findMemoryType(
                 graphicsDevice.physicalDevice,
                 requirements.memoryTypeBits,
@@ -562,8 +570,16 @@ private fun allocateSlotBlock(
             ),
         ),
     )
-    val pool = createMaterialDescriptorPool(graphicsDevice.device, bindings, maxSets = Material.SLOTS_PER_BLOCK)
-    return SlotBlock(memory, pool, stride)
+    var mappedPtr = 0L
+    try {
+        mappedPtr = VulkanBuffers.vkMapMemory(graphicsDevice.device, memory, 0L, totalSize)
+        val pool = createMaterialDescriptorPool(graphicsDevice.device, bindings, maxSets = Material.SLOTS_PER_BLOCK)
+        return SlotBlock(memory, mappedPtr, pool, stride)
+    } catch (failure: Throwable) {
+        if (mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(graphicsDevice.device, memory)
+        VulkanBuffers.vkFreeMemory(graphicsDevice.device, memory)
+        throw failure
+    }
 }
 
 /** One layout binding per declared entry. Extracted from [Material.createDescriptorSetLayout]

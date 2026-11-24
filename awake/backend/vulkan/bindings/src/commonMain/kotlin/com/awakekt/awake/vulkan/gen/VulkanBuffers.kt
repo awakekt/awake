@@ -141,6 +141,32 @@ expect object VulkanBuffers {
      * a HOST_VISIBLE staging buffer after `vkCmdCopyImageToBuffer` fills it. */
     fun readBufferMemoryBytes(device: Long, memory: Long, offset: Long, size: Int): ByteArray
 
+    /**
+     * Persistently maps [size] bytes (or `VK_WHOLE_SIZE` when [size] is `-1L`) of host-visible
+     * [memory] starting at [offset], returning the opaque native mapped pointer address.
+     *
+     * Callers must pair every successful mapping with [vkUnmapMemory] before calling [vkFreeMemory].
+     */
+    fun vkMapMemory(device: Long, memory: Long, offset: Long, size: Long): Long
+
+    /** Unmaps host-visible [memory] previously mapped with [vkMapMemory]. */
+    fun vkUnmapMemory(device: Long, memory: Long)
+
+    /** Copies all of [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray)
+
+    /**
+     * Copies [count] floats of [data] starting at [dataOffset] into persistently mapped memory at
+     * [mappedPtr] + [offset] bytes without mapping or unmapping per call.
+     */
+    fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int)
+
+    /** Copies all of [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray)
+
+    /** Reads [size] bytes from persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    fun readMappedMemoryBytes(mappedPtr: Long, offset: Long, size: Int): ByteArray
+
     /** `bindingCount` is implicit (`buffers.size`); `offsets` must be the same size. */
     fun vkCmdBindVertexBuffers(
         commandBuffer: Long,

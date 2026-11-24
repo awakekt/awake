@@ -312,4 +312,73 @@ actual object VulkanBuffers {
         nativeVkUnmapMemory(nativeDevice, nativeMemory)
         out
     }
+
+    /** Persistently maps [size] bytes of host-visible [memory] starting at [offset]. */
+    actual fun vkMapMemory(device: Long, memory: Long, offset: Long, size: Long): Long = memScoped {
+        require(size > 0L || size == -1L) { "vkMapMemory size must be positive or -1 (VK_WHOLE_SIZE), not $size." }
+        val dataVar = alloc<kotlinx.cinterop.COpaquePointerVar>()
+        val result = nativeVkMapMemory(
+            device.toCPointer<VkDevice_T>(),
+            memory.toCPointer<VkDeviceMemory_T>(),
+            offset.toULong(),
+            size.toULong(),
+            0u,
+            dataVar.ptr,
+        )
+        check(result == VK_SUCCESS) { "vkMapMemory failed: $result" }
+        dataVar.value!!.rawValue.toLong()
+    }
+
+    /** Unmaps host-visible [memory] previously mapped with [vkMapMemory]. */
+    actual fun vkUnmapMemory(device: Long, memory: Long) {
+        nativeVkUnmapMemory(device.toCPointer<VkDevice_T>(), memory.toCPointer<VkDeviceMemory_T>())
+    }
+
+    /** Copies [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    actual fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray) {
+        if (data.isEmpty()) return
+        check(mappedPtr != 0L) { "writeMappedMemoryFloats: mapped pointer not initialized" }
+        require(offset >= 0L) { "offset must be non-negative: $offset" }
+        val dst = (mappedPtr + offset).toCPointer<kotlinx.cinterop.ByteVar>()!!
+        data.usePinned { pinned ->
+            memcpy(dst, pinned.addressOf(0), (data.size * Float.SIZE_BYTES).toULong())
+        }
+    }
+
+    /** Copies [count] floats of [data] from [dataOffset] into persistently mapped memory. */
+    actual fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int) {
+        requireFloatRange(data.size, dataOffset, count)
+        if (count == 0) return
+        check(mappedPtr != 0L) { "writeMappedMemoryFloats: mapped pointer not initialized" }
+        require(offset >= 0L) { "offset must be non-negative: $offset" }
+        val dst = (mappedPtr + offset).toCPointer<kotlinx.cinterop.ByteVar>()!!
+        data.usePinned { pinned ->
+            memcpy(dst, pinned.addressOf(dataOffset), (count * Float.SIZE_BYTES).toULong())
+        }
+    }
+
+    /** Copies [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    actual fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray) {
+        if (data.isEmpty()) return
+        check(mappedPtr != 0L) { "writeMappedMemoryBytes: mapped pointer not initialized" }
+        require(offset >= 0L) { "offset must be non-negative: $offset" }
+        val dst = (mappedPtr + offset).toCPointer<kotlinx.cinterop.ByteVar>()!!
+        data.usePinned { pinned ->
+            memcpy(dst, pinned.addressOf(0), data.size.toULong())
+        }
+    }
+
+    /** Reads [size] bytes from persistently mapped memory at [mappedPtr] + [offset] bytes. */
+    actual fun readMappedMemoryBytes(mappedPtr: Long, offset: Long, size: Int): ByteArray {
+        require(size >= 0) { "size must be non-negative: $size" }
+        if (size == 0) return ByteArray(0)
+        check(mappedPtr != 0L) { "readMappedMemoryBytes: mapped pointer not initialized" }
+        require(offset >= 0L) { "offset must be non-negative: $offset" }
+        val src = (mappedPtr + offset).toCPointer<kotlinx.cinterop.ByteVar>()!!
+        val out = ByteArray(size)
+        out.usePinned { pinned ->
+            memcpy(pinned.addressOf(0), src, size.toULong())
+        }
+        return out
+    }
 }
