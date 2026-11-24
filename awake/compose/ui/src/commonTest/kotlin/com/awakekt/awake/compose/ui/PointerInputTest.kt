@@ -422,6 +422,89 @@ class PointerInputTest {
     }
 
     @Test
+    fun aPassiveToastLayerDoesNotBlockClicksOrHoverBeneathIt() {
+        // Mirrors ShadcnToaster padded above a status bar: the toast layer's non-interactive box
+        // and bottom padding overlap a clickable control below it and must pass clicks and hover
+        // straight through, while any interactive button inside the toast still wins its own box.
+        var underClicks = 0
+        var toastButtonClicks = 0
+        val log = mutableListOf<String>()
+        val root = tree {
+            hit(Modifier.size(100.dp).record(log, "under").clickable { underClicks++ })
+            Layer(
+                LayerKind.Toast,
+                measurePolicy = stackPolicy,
+            ) {
+                // Interactive 20x20 button in the top-left padded out to 100x100, mirroring a
+                // toast padded above a status bar so the outer 80px padding is passive.
+                hit(Modifier.padding(end = 80.dp, bottom = 80.dp)) {
+                    hit(Modifier.size(20.dp).clickable { toastButtonClicks++ })
+                }
+            }
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        // Over the passive part of the toast: click and hover reach the control underneath.
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 60, 60)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 60, 60)
+        assertEquals(1, underClicks, "passive toast area must not swallow clicks beneath it")
+        assertEquals(0, toastButtonClicks)
+        assertTrue(log.any { it.startsWith("under:Enter") }, "hover must reach the control underneath: $log")
+
+        // Over the toast's own interactive button: the toast button wins.
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 10, 10)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 10, 10)
+        assertEquals(1, toastButtonClicks, "interactive controls inside a toast still receive clicks")
+        assertEquals(1, underClicks, "a click taken by the toast button must not fall through")
+    }
+
+    @Test
+    fun aPassiveDetachedTooltipLayerDoesNotBlockClicksBeneathIt() {
+        var underClicks = 0
+        val root = tree {
+            hit(Modifier.size(100.dp).clickable { underClicks++ })
+            hit(Modifier.size(20.dp)) {
+                Layer(
+                    LayerKind.Tooltip,
+                    modifier = Modifier.size(60.dp),
+                    positionProvider = LayerPositionProvider { _, _, _, _, _, _ -> LayerPosition(30, 30) },
+                    measurePolicy = stackPolicy,
+                )
+            }
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 50, 50)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 50, 50)
+
+        assertEquals(1, underClicks, "passive tooltip layer must let clicks reach controls beneath it")
+    }
+
+    @Test
+    fun aDismissablePopupSurfaceStillOccludesClicksOnItsBlankPadding() {
+        var pageClicks = 0
+        var dismissals = 0
+        val root = tree {
+            hit(Modifier.size(100.dp).clickable { pageClicks++ })
+            Layer(
+                LayerKind.Popup,
+                modifier = Modifier.size(60.dp),
+                dismissOnOutsideClick = true,
+                onDismissRequest = { dismissals++ },
+                measurePolicy = stackPolicy,
+            )
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        // Clicking blank padding inside an open dropdown/popover must not click the page behind it.
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 30, 30)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 30, 30)
+
+        assertEquals(0, pageClicks, "blank padding inside an open dismissable popup must not click through")
+        assertEquals(0, dismissals, "clicking inside the popup must not dismiss it")
+    }
+
+    @Test
     fun aDeepLayerIsHitBeforeALaterBaseSibling() {
         var popupClicks = 0
         var siblingClicks = 0

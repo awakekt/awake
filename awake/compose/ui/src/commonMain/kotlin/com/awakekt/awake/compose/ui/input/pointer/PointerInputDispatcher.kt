@@ -395,20 +395,30 @@ class PointerInputDispatcher(
      * level walked the layer-bearing part of the tree once per level.
      */
     private fun descendInto(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, searchLayers: Boolean): Int {
-        var layer = MISS
+        var kept = MISS
+        var keptFrom = -1
+        var keptTo = -1
         if (searchLayers) {
-            layer = hitOwnLayers(into, node, x, y)
-            // A layer declared under an early sibling (a top bar's popup) is painted above a later
-            // sibling (the workspace). Check every descendant layer before ordinary child content so
-            // input follows that same global overlay ordering.
-            var i = node.children.size - 1
-            while (layer == MISS && i >= 0) {
-                val child = node.children[i]
-                if (node.placesChild(child)) layer = hitDetachedLayer(into, child, x, y)
-                i--
+            val mark = into.size
+            val layer = hitLayers(into, node, x, y)
+            if (layer == TAKEN) return TAKEN
+            if (layer != MISS) {
+                kept = layer
+                keptFrom = mark
+                keptTo = into.size
             }
         }
-        return if (layer != MISS) layer else hitChildren(into, node, x, y, childOrder(node))
+        val childMark = into.size
+        val childHit = hitChildren(into, node, x, y, childOrder(node))
+        when {
+            childHit == MISS -> Unit
+            childHit == TAKEN || childHit > kept -> {
+                cutOut(into, keptFrom, keptTo)
+                kept = childHit
+            }
+            else -> cutOut(into, childMark, into.size)
+        }
+        return kept
     }
 
     /** [node]'s children's indices in hit order when one has a zIndex, or null for reverse declaration order. */
@@ -555,6 +565,51 @@ class PointerInputDispatcher(
     }
 
     /**
+     * Offers the point to [node]'s own layers and then detached layers under its placed children,
+     * stopping at the first that takes it or keeping the strongest passive hit.
+     */
+    private fun hitLayers(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int): Int {
+        var kept = MISS
+        var keptFrom = -1
+        var keptTo = -1
+        val ownMark = into.size
+        val own = hitOwnLayers(into, node, x, y)
+        if (own != MISS) {
+            kept = own
+            keptFrom = ownMark
+            keptTo = into.size
+        }
+        // A layer declared under an early sibling (a top bar's popup) is painted above a later
+        // sibling (the workspace). Check every descendant layer before ordinary child content so
+        // input follows that same global overlay ordering. Passive overlays that handle nothing
+        // at this point (such as a toast's inset or a tooltip) are passed over like plain boxes.
+        var i = node.children.size - 1
+        while (kept != TAKEN && i >= 0) {
+            val child = node.children[i]
+            if (node.placesChild(child)) {
+                val mark = into.size
+                val hit = hitDetachedLayer(into, child, x, y)
+                when {
+                    hit == MISS -> Unit
+                    hit == TAKEN -> {
+                        cutOut(into, keptFrom, keptTo)
+                        kept = TAKEN
+                    }
+                    hit > kept -> {
+                        cutOut(into, keptFrom, keptTo)
+                        kept = hit
+                        keptFrom = mark - (keptTo - keptFrom).coerceAtLeast(0)
+                        keptTo = into.size
+                    }
+                    else -> cutOut(into, mark, into.size)
+                }
+            }
+            i--
+        }
+        return kept
+    }
+
+    /**
      * Layers may be positioned outside their declaring node (an anchored popup under a small
      * trigger), so a miss on that node must not make its layer subtree unreachable to input.
      *
@@ -566,40 +621,59 @@ class PointerInputDispatcher(
         if (node.layerStamp != layerStamp) return MISS
         hitSteps++
         into.add(node)
-        var hit = hitOwnLayers(into, node, x, y)
-        var i = node.children.size - 1
-        while (hit == MISS && i >= 0) {
-            hit = hitDetachedLayer(into, node.children[i], x, y)
-            i--
-        }
-        if (hit == MISS) {
-            into.removeAt(into.lastIndex)
-        } else if (hit != TAKEN && node.takes(x, y)) {
-            hit = TAKEN
-        } else if (hit == HELD && node.watches(x, y)) {
-            hit = WATCHED
-        }
+        val hit = hitLayers(into, node, x, y)
+        if (hit == MISS) into.removeAt(into.lastIndex)
         return hit
     }
 
     /**
      * Offers the point to [node]'s own layers, highest kind first, each kind in reverse declaration
-     * order, and returns the hit test of the first that holds it, or [MISS].
+     * order, stopping at the first that takes it or keeping the strongest passive hit.
      */
     private fun hitOwnLayers(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int): Int {
-        var hit = MISS
+        var kept = MISS
+        var keptFrom = -1
+        var keptTo = -1
         var k = 0
-        while (hit == MISS && k < hitOrder.size && node.layers.size > 0) {
+        while (kept != TAKEN && k < hitOrder.size && node.layers.size > 0) {
             val kind = hitOrder[k]
             var j = node.layers.size - 1
-            while (hit == MISS && j >= 0) {
+            while (kept != TAKEN && j >= 0) {
                 val layer = node.layers[j]
-                if (layer.nodeType == kind) hit = hitTest(into, layer, x, y, searchLayers = true)
+                if (layer.nodeType == kind) {
+                    val mark = into.size
+                    val hit = hitLayer(into, layer, x, y)
+                    when {
+                        hit == MISS -> Unit
+                        hit == TAKEN -> {
+                            cutOut(into, keptFrom, keptTo)
+                            kept = TAKEN
+                        }
+                        hit > kept -> {
+                            cutOut(into, keptFrom, keptTo)
+                            kept = hit
+                            keptFrom = mark - (keptTo - keptFrom).coerceAtLeast(0)
+                            keptTo = into.size
+                        }
+                        else -> cutOut(into, mark, into.size)
+                    }
+                }
                 j--
             }
             k++
         }
-        return hit
+        return kept
+    }
+
+    /**
+     * Hit-tests one overlay [layer]. Modal and dismissable surfaces (dialogs, menus, popovers)
+     * occlude what sits beneath their box even on blank padding; non-modal, non-dismissable
+     * overlays (toasts, tooltips) only claim points where an interactive node inside them handles
+     * the pointer.
+     */
+    private fun hitLayer(into: MutableList<LayoutNode>, layer: LayoutNode, x: Int, y: Int): Int {
+        val hit = hitTest(into, layer, x, y, searchLayers = true)
+        return if (hit != MISS && (layer.isModal || layer.dismissOnOutsideClick)) TAKEN else hit
     }
 
     /** Stamps every node under [root] that has a layer of its own or below it, for this dispatch. */

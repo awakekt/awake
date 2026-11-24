@@ -1,0 +1,1 @@
+- Fixed non-modal, non-dismissable Compose overlay layers (`LayerKind.Toast` and `LayerKind.Tooltip`) swallowing pointer clicks and hover over controls beneath their non-interactive padding or body, while keeping interactive controls inside overlays and dismissable popup/modal surfaces occluding as before.
