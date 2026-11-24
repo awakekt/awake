@@ -149,6 +149,31 @@ class TerrainClipmapGeometryTest {
         assertTrue(coversMap(TerrainClipmapTracker(terrain = map)), "Rings clamped to the map should cover all of it.")
     }
 
+    /**
+     * Two adjoining terrains viewed from near their shared border (`z = 0`, camera 80 m inside the
+     * south map) must keep the same snapped ring centres so the border falls in the same ring level
+     * on both sides instead of meeting at a Ring 0 vs Ring 1 T-junction.
+     */
+    @Test
+    fun adjoiningTerrainsShareRingCentersAcrossTheirBorder() {
+        val map = Heightmap(FloatArray(385 * 385), 385, 385, Vec3f(4f, 1f, 4f))
+        val half = -map.minZ
+        val config = TerrainClipmapConfig(ringCount = 6, ringResolution = 64, baseSpacing = 2f)
+        val south = TerrainClipmapTracker(config, terrain = map)
+        val north = TerrainClipmapTracker(config, terrain = map)
+
+        val worldEye = Vec3f(12.3f, 80f, -80f)
+        val southRings = south.update(Vec3f(worldEye.x, worldEye.y, worldEye.z - (-half)))
+        val northRings = north.update(Vec3f(worldEye.x, worldEye.y, worldEye.z - half))
+
+        southRings.zip(northRings).forEach { (s, n) ->
+            val southWorldZ = s.snappedCenter.z - half
+            val northWorldZ = n.snappedCenter.z + half
+            assertEquals(s.snappedCenter.x, n.snappedCenter.x, 1e-4f, "level ${s.level} X ring centre diverged across border")
+            assertEquals(southWorldZ, northWorldZ, 1e-4f, "level ${s.level} Z ring centre diverged across border")
+        }
+    }
+
     @Test
     fun clipmapTrackerComputesMorphFactorCorrectly() {
         val ring = ClipmapRingState(

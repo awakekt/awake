@@ -42,7 +42,7 @@ class PagedTerrainLayers private constructor(
         shaders = aslShaderSet { terrainLayersShader(it, index.controlSlots, true) }
             .withSolidOpaque(aslShaderSet { terrainLayersShader(it, index.controlSlots, true, allowDiscard = false) }),
         sharedTextures = shared,
-        samplerTextures = mapOf(7 to LAYER_ALBEDO_BINDING),
+        samplerTextures = mapOf(LAYER_SAMPLER_BINDING to LAYER_ALBEDO_BINDING),
     )
 
     /** Replaces cell control data and updates the coarse control texels owned by that cell. */

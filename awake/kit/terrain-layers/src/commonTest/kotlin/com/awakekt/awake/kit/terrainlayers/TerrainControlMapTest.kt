@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.kit.terrainlayers
 
+import com.awakekt.awake.render.texture.TextureFiltering
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -138,5 +139,13 @@ class TerrainControlMapTest {
 
         assertEquals(3, map.highestLayer())
         assertTrue(map.weightAt(0, 0, 1) == 0)
+    }
+
+    @Test
+    fun controlTexturesUseNearestFilteringSoMipSkipLeavesThemUntouched() {
+        val map = TerrainControlMap.reduce(4, 4, layerCount = 4) { layer, x, _ -> if (layer == x) 1f else 0f }.controlMap
+
+        assertEquals(TextureFiltering.Nearest, map.indicesTexture().filtering)
+        assertEquals(TextureFiltering.Nearest, map.weightsTexture().filtering)
     }
 }

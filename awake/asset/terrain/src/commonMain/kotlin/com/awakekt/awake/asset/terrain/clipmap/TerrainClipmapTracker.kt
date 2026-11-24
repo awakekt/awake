@@ -94,8 +94,11 @@ class TerrainClipmapTracker(
      */
     fun update(cameraPosition: Vec3f): List<ClipmapRingState> {
         _ringStates.clear()
-        val focusX = terrain?.let { cameraPosition.x.coerceIn(it.minX, it.minX + it.halfExtentX * 2f) } ?: cameraPosition.x
-        val focusZ = terrain?.let { cameraPosition.z.coerceIn(it.minZ, it.minZ + it.halfExtentZ * 2f) } ?: cameraPosition.z
+        val outerHalf = config.extentForLevel(config.ringCount - 1) * 0.5f
+        val outerSnapMargin = config.spacingForLevel(config.ringCount - 1)
+        val reach = outerHalf - outerSnapMargin
+        val focusX = terrain?.let { clampFocus(cameraPosition.x, it.minX, it.minX + it.halfExtentX * 2f, reach) } ?: cameraPosition.x
+        val focusZ = terrain?.let { clampFocus(cameraPosition.z, it.minZ, it.minZ + it.halfExtentZ * 2f, reach) } ?: cameraPosition.z
         for (level in 0 until config.ringCount) {
             val spacing = config.spacingForLevel(level)
             val halfExtent = config.extentForLevel(level) * 0.5f
@@ -115,5 +118,17 @@ class TerrainClipmapTracker(
         }
         lastCameraPos = cameraPosition
         return _ringStates
+    }
+
+    /**
+     * Leaves [position] unclamped across the terrain and outside it while the outermost ring still
+     * covers the whole map ([reach]), so adjoining terrains share identical ring centres and LOD
+     * transitions across their shared border. Only clamps once the camera leaves far enough away
+     * that the far side of the map would otherwise fall outside the outermost ring.
+     */
+    private fun clampFocus(position: Float, min: Float, max: Float, reach: Float): Float {
+        val lo = minOf(min, max - reach)
+        val hi = maxOf(max, min + reach)
+        return position.coerceIn(lo, hi)
     }
 }

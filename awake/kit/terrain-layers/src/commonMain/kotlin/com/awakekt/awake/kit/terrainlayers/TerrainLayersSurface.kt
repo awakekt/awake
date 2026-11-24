@@ -41,5 +41,8 @@ fun terrainLayersSurface(
             CONTROL_WEIGHTS_BINDING to control.weightsTexture(),
             LIGHTMAP_BINDING to lightmap.texture(),
         ),
+        // Bind the shared layer sampler to the mipmapped, anisotropic albedo array rather than the
+        // single-level heightmap sampler.
+        samplerTextures = mapOf(LAYER_SAMPLER_BINDING to LAYER_ALBEDO_BINDING),
     )
 }

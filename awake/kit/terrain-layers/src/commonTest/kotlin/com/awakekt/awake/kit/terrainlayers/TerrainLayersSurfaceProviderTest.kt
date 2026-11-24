@@ -14,6 +14,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneLoader
@@ -114,6 +115,22 @@ class TerrainLayersSurfaceProviderTest {
             setOf(1, LAYER_ALBEDO_BINDING, LAYER_TABLE_BINDING, CONTROL_INDICES_BINDING, CONTROL_WEIGHTS_BINDING, LIGHTMAP_BINDING),
             host.attached.single().textures.keys,
         )
+        assertEquals(
+            mapOf(2 to 1, LAYER_SAMPLER_BINDING to LAYER_ALBEDO_BINDING),
+            host.attached.single().samplerTextures,
+        )
+    }
+
+    @Test
+    fun layeredSurfaceMarksDataTexturesMipSkipSafeAndBindsLinearLayerSampler() = runTest {
+        val surface = provider.resolve(reference())
+
+        assertEquals(TextureFiltering.Linear, surface.textures.getValue(LAYER_ALBEDO_BINDING).filtering)
+        assertEquals(TextureFiltering.Nearest, surface.textures.getValue(LAYER_TABLE_BINDING).filtering)
+        assertEquals(TextureFiltering.Nearest, surface.textures.getValue(CONTROL_INDICES_BINDING).filtering)
+        assertEquals(TextureFiltering.Nearest, surface.textures.getValue(CONTROL_WEIGHTS_BINDING).filtering)
+        assertEquals(TextureFiltering.BaseLevelLinear, surface.textures.getValue(LIGHTMAP_BINDING).filtering)
+        assertEquals(mapOf(LAYER_SAMPLER_BINDING to LAYER_ALBEDO_BINDING), surface.samplerTextures)
     }
 
     private fun reference() = TerrainSurfaceReference(

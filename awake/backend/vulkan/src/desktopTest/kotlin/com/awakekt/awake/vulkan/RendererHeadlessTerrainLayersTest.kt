@@ -149,6 +149,38 @@ class RendererHeadlessTerrainLayersTest {
         assertTrue(normals.mean(left = true).near(floatArrayOf(128f, 255f, 128f)), "Normals ${normals.mean(left = true).toList()}")
     }
 
+    /**
+     * `textureMipSkip = 2` (Low quality) must leave control indices, control weights, layer table,
+     * lightmap, and heightmap untouched: left half stays layer 0 (red) and right half stays layer 3
+     * (yellow) with the same halved-left lightmap ratio as `textureMipSkip = 0`.
+     * Negative control before marking control/table `Nearest` and lightmap/heightmap
+     * `BaseLevelLinear`: `mipSkip = 2` corrupted the left half mean from `[128.92, 0.0, 0.0]` to
+     * `[133.67, 0.68, 0.0]` (layer 1 green bleeding in from averaged indices plus lightmap shift).
+     */
+    @Test
+    fun layeredSurfaceStaysExactUnderMipSkip() {
+        val fourLayers = listOf(solid(255, 0, 0), solid(0, 255, 0), solid(0, 0, 255), solid(255, 255, 0))
+        val splitZeroThree = TerrainControlMap.reduce(SAMPLES, SAMPLES, layerCount = 4) { layer, x, _ ->
+            if (x < SAMPLES / 2) (if (layer == 0) 1f else 0f) else (if (layer == 3) 1f else 0f)
+        }.controlMap
+        val renderer = shared().renderer
+        val previousSkip = renderer.textureMipSkip
+        try {
+            renderer.textureMipSkip = 0
+            val full = render(splitZeroThree, halvedLeft(), layers = fourLayers)
+            renderer.textureMipSkip = 2
+            val skipped = render(splitZeroThree, halvedLeft(), layers = fourLayers)
+            val fullLeft = full.mean(left = true)
+            val fullRight = full.mean(left = false)
+            val skipLeft = skipped.mean(left = true)
+            val skipRight = skipped.mean(left = false)
+            assertTrue(skipLeft.near(fullLeft), "Left mean changed under mipSkip=2: ${skipLeft.toList()} vs ${fullLeft.toList()}")
+            assertTrue(skipRight.near(fullRight), "Right mean changed under mipSkip=2: ${skipRight.toList()} vs ${fullRight.toList()}")
+        } finally {
+            renderer.textureMipSkip = previousSkip
+        }
+    }
+
     private fun halvedLeft() = TerrainLightmap(
         SAMPLES,
         SAMPLES,
@@ -186,7 +218,13 @@ class RendererHeadlessTerrainLayersTest {
         val surface = terrainLayersSurface(palette, packLayerArray(layers), control, lightmap)
         val attached = runBlocking {
             shared().attacher.attachContentFeature(
-                terrainContentFeature(surface.shaders, FLAT, CONFIG, surfaceTextures = surface.textures),
+                terrainContentFeature(
+                    surface.shaders,
+                    FLAT,
+                    CONFIG,
+                    surfaceTextures = surface.textures,
+                    samplerTextures = surface.samplerTextures,
+                ),
             )
         }
         try {

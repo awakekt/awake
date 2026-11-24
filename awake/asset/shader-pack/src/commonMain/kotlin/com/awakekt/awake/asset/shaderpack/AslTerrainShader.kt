@@ -356,6 +356,7 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(
                 let("worldX", clamp(morphedX - phaseX, pages.grid.x, pages.grid.x + pages.dimensions.x * pages.grid.z)),
                 let("worldZ", clamp(morphedZ - phaseZ, pages.grid.y, pages.grid.y + pages.dimensions.y * pages.grid.z)),
                 vec2(0f.lit, 0f.lit),
+                0f.lit,
             )
         }
 
@@ -373,8 +374,16 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(
             )
             pagedNormal = null
         }
+        // Vertices clamped onto the non-paged perimeter drop slightly straight down to form an
+        // outward-facing skirt that seals sub-pixel quantization and LOD cracks between adjoining
+        // terrains without extending horizontally or changing shadow depth.
+        val skirtDrop = if (!cascadeDepth && pages == null) {
+            let("skirtDrop", ground.outsideBorder * clamp(terrainParams.x * BORDER_SKIRT_HEIGHT_RATIO.lit, 0f.lit, MAX_BORDER_SKIRT.lit))
+        } else {
+            0f.lit
+        }
         // Laid out around the origin, then moved to where this terrain lies.
-        val displaced = let("displaced", vec3(ground.x + origin.x, height * terrainParams.x + terrainParams.w + origin.y, ground.z + origin.z))
+        val displaced = let("displaced", vec3(ground.x + origin.x, height * terrainParams.x + terrainParams.w + origin.y - skirtDrop, ground.z + origin.z))
 
         out.position set placement * vec4(displaced, 1f.lit)
         worldNormal?.let {
@@ -446,10 +455,12 @@ fun AslFragmentBuilder.terrainClipmapDiscardUnderFinerRing(terrain: TerrainClipm
         ?: throw AslDefinitionException("ringCell is not exported by the discard-free core-ring stage.")
     val level = let("clipmapLevel", cell.z)
     // The core (level 0) has nothing finer; clamping keeps its index in range, and the level test
-    // below is what spares it.
+    // below is what spares it. A small inward margin keeps perspective-interpolation rounding along
+    // the shared border from discarding a coarse pixel whose centre barely missed the finer ring.
     val finer = let("finerRing", terrain.ringParams[toU32(max(level - 0.5f.lit, 0f.lit))])
+    val discardHalfExtent = let("finerDiscardHalfExtent", finer.w - finer.z * CLIPMAP_DISCARD_MARGIN_CELLS.lit)
     discardIf(
-        (level gt 0.5f.lit) and (abs(cell.x - finer.x) lt finer.w) and (abs(cell.y - finer.y) lt finer.w),
+        (level gt 0.5f.lit) and (abs(cell.x - finer.x) lt discardHalfExtent) and (abs(cell.y - finer.y) lt discardHalfExtent),
     )
 }
 
@@ -479,8 +490,17 @@ fun AslShaderBuilder.terrainShadowSampling(terrain: TerrainClipmapOutputs, clipS
     return cascadeShadowSampling(terrain.cascades, shadowMap, shadowMapSampler, clipSpace, epsilon)
 }
 
-/** A vertex's world X/Z on the heightmap, and the UV that samples it. */
-private class GroundPoint(val x: AslExpr, val z: AslExpr, val uv: AslExpr)
+/** A vertex's world X/Z on the heightmap, the UV that samples it, and 1 if clamped from outside the border. */
+private class GroundPoint(val x: AslExpr, val z: AslExpr, val uv: AslExpr, val outsideBorder: AslExpr)
+
+/** Fraction of a terrain's elevation range used for its downward perimeter skirt. */
+private const val BORDER_SKIRT_HEIGHT_RATIO = 0.005f
+
+/** Upper bound on the downward perimeter skirt in world metres. */
+private const val MAX_BORDER_SKIRT = 1.5f
+
+/** Inward ring-discard margin in units of the finer ring's cell spacing. */
+private const val CLIPMAP_DISCARD_MARGIN_CELLS = 0.01f
 
 /**
  * Rings reach past the heightmap, and its sampler repeats: a vertex beyond the footprint
@@ -495,6 +515,7 @@ private fun AslBlockBuilder.groundPoint(x: AslExpr, z: AslExpr, terrainSampling:
     val halfZ = let("halfFootprintZ", terrainSampling.y * 0.5f.lit)
     val worldX = let("worldX", clamp(x, -halfX, halfX))
     val worldZ = let("worldZ", clamp(z, -halfZ, halfZ))
+    val outsideBorder = let("outsideBorder", select(0f.lit, 1f.lit, max(abs(x) - halfX, abs(z) - halfZ) gt 0f.lit))
     val uv = let(
         "uv",
         vec2(
@@ -502,7 +523,7 @@ private fun AslBlockBuilder.groundPoint(x: AslExpr, z: AslExpr, terrainSampling:
             worldZ / terrainSampling.y * (1f.lit - terrainSampling.w) + 0.5f.lit,
         ),
     )
-    return GroundPoint(worldX, worldZ, uv)
+    return GroundPoint(worldX, worldZ, uv, outsideBorder)
 }
 
 /**
