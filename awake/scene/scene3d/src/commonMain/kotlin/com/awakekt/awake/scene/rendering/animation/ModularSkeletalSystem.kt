@@ -13,16 +13,20 @@ import com.awakekt.awake.ecs.componentType
 import com.awakekt.awake.ecs.family
 import com.awakekt.awake.ecs.get
 import com.awakekt.awake.ecs.has
+import com.awakekt.awake.scene.rendering.mesh.DetailPins
 
 /**
  * ECS System synchronizing modular skeletal characters with active skeletal animation poses.
  *
  * Each frame:
  * 1. Queries all entities carrying both [ModularCharacterComponent] and [Animator].
- * 2. Evaluates the skeletal pose from the animation player once.
- * 3. Updates or attaches the joint palette in [SkinnedPose] so all modular slot meshes
- *    deform against the shared skeleton without redundant CPU evaluations. A palette that already
- *    fits the character's skin is written in place, so a posed character allocates nothing per frame.
+ * 2. Skips bone posing for characters the renderer culled last frame and drew nowhere, advancing
+ *    only their animation clock so clip timing and crossfades stay exact, as [AnimationSystem] does.
+ * 3. Applies the opt-in [AnimationUpdateRate] by camera distance (always full rate for pinned
+ *    characters via [com.awakekt.awake.scene.rendering.mesh.DetailPin]), and skips held poses via
+ *    [AnimationPlayer.updateIfChanged].
+ * 4. Updates or attaches the joint palette in [SkinnedPose] in place so all modular slot meshes
+ *    deform against the shared skeleton without redundant CPU evaluations or per-frame allocations.
  *
  * With [hasRenderer] false, for a host that draws nothing such as a game server, every visible
  * character's clock, clip switch and crossfade advances exactly as it does on a host that draws, but
@@ -35,14 +39,35 @@ import com.awakekt.awake.ecs.has
  * @param hasRenderer Whether anything draws the poses; false skips posing all but the characters named above.
  */
 class ModularSkeletalSystem(private val hasRenderer: Boolean) : Family2System<ModularCharacterComponent, Animator>(ModularCharacterComponent::class, Animator::class) {
-    /** A system for a host that draws, posing every visible character every frame. */
+    private var updateRate: AnimationUpdateRate = AnimationUpdateRate.EveryFrame
+    private val detailPins = DetailPins()
+    private var attachedPins: DetailPins? = null
+
+    /** A system for a host that draws, posing every drawn visible character every frame. */
     constructor() : this(hasRenderer = true)
+
+    /**
+     * A system with an opt-in distance-based [updateRate] (see [AnimationUpdateRate]), matching
+     * [AnimationSystem].
+     *
+     * @param updateRate How often a drawn modular character far from the camera is posed.
+     * @param hasRenderer Whether anything draws the poses; false skips posing all but the characters named above.
+     */
+    constructor(
+        updateRate: AnimationUpdateRate,
+        hasRenderer: Boolean = true,
+    ) : this(hasRenderer) {
+        this.updateRate = updateRate
+    }
 
     override fun begin(world: World, delta: Float) {
         if (!hasRenderer) {
+            attachedPins = null
             world.family(SOCKET).forEach { _, socket ->
                 if (socket.enabled) world.get(socket.targetEntity, SKINNED_POSE)?.boneRead = true
             }
+        } else {
+            attachedPins = if (updateRate === AnimationUpdateRate.EveryFrame) null else detailPins.attach(world)
         }
     }
 
@@ -55,10 +80,56 @@ class ModularSkeletalSystem(private val hasRenderer: Boolean) : Family2System<Mo
     ) {
         if (!first.isVisible) return
         val skinnedPose = world.get(entity, SKINNED_POSE)
-        if (hasRenderer || skinnedPose == null || readsBones(world, entity, skinnedPose)) {
-            pose(world, entity, first, second.player, skinnedPose, delta)
+        if (!hasRenderer) {
+            processHeadless(world, delta, entity, first, second.player, skinnedPose)
+        } else if (skinnedPose == null) {
+            pose(world, entity, first, second.player, null, delta)
         } else {
-            second.player.advance(delta)
+            processDrawn(world, delta, entity, first, second.player, skinnedPose)
+        }
+    }
+
+    private fun processHeadless(
+        world: World,
+        delta: Float,
+        entity: Entity,
+        character: ModularCharacterComponent,
+        player: AnimationPlayer,
+        skinnedPose: SkinnedPose?,
+    ) {
+        if (skinnedPose == null || readsBones(world, entity, skinnedPose)) {
+            pose(world, entity, character, player, skinnedPose, delta)
+        } else {
+            player.advance(delta)
+        }
+    }
+
+    private fun processDrawn(
+        world: World,
+        delta: Float,
+        entity: Entity,
+        character: ModularCharacterComponent,
+        player: AnimationPlayer,
+        skinnedPose: SkinnedPose,
+    ) {
+        val unseen = skinnedPose.culled && !skinnedPose.drawn
+        skinnedPose.culled = false
+        skinnedPose.drawn = false
+        if (unseen) {
+            player.advance(delta)
+        } else {
+            val interval = if (attachedPins?.isPinned(entity) == true) {
+                0f
+            } else {
+                updateRate.intervalFor(skinnedPose.cameraDistance)
+            }
+            skinnedPose.nextPoseIn -= delta
+            if (interval > 0f && skinnedPose.nextPoseIn > 0f) {
+                player.advance(delta)
+            } else {
+                skinnedPose.nextPoseIn = (skinnedPose.nextPoseIn + interval).coerceAtLeast(0f)
+                pose(world, entity, character, player, skinnedPose, delta)
+            }
         }
     }
 
@@ -78,16 +149,18 @@ class ModularSkeletalSystem(private val hasRenderer: Boolean) : Family2System<Mo
         skinnedPose: SkinnedPose?,
         delta: Float,
     ) {
-        val pose = player.update(delta)
         val skin = character.skin
         if (skinnedPose == null) {
+            val pose = player.update(delta)
             // Adding SkinnedPose does not change the (character, animator) family being walked.
             world.add(entity, SkinnedPose(pose.jointPalette(skin)))
             return
         }
         val palette = skinnedPose.jointPalette
+        val fits = palette.size == skin.joints.size * MATRIX_FLOATS
+        val pose = if (fits) player.updateIfChanged(delta) ?: return else player.update(delta)
         // In place when the palette fits: a new one per character per frame is garbage that lives a frame.
-        skinnedPose.jointPalette = if (palette.size == skin.joints.size * MATRIX_FLOATS) {
+        skinnedPose.jointPalette = if (fits) {
             pose.jointPalette(skin, palette)
         } else {
             pose.jointPalette(skin)

@@ -29,14 +29,35 @@ import com.awakekt.awake.render.texture.TextureAsset
  * requests, so a frame that changes no text allocates nothing. Requests stay valid until the next
  * [collect] of the same text. Call [release] for a text that is gone, or [releaseUnseen] at the end of
  * a frame to release every text that frame did not collect, and [close] before the renderer is destroyed.
+ *
+ * Replaced or removed meshes are retired after [retireFrames] frames in [releaseUnseen] instead of
+ * calling synchronous `renderer.waitIdle()` mid-frame, avoiding full GPU pipeline stalls whenever
+ * floating labels, damage numbers, or world signs update or disappear. [close] waits for the GPU
+ * once and destroys every live and retiring mesh immediately.
  */
-class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
+class WorldTextBatch(
+    private val renderer: Renderer,
+    private val retireFrames: Int,
+) : AutoCloseable {
+    /** Creates a batch with three deferred GPU mesh retirement frames. */
+    constructor(renderer: Renderer) : this(renderer, DEFAULT_RETIRE_FRAMES)
+
+    init {
+        require(retireFrames >= 0) { "retireFrames must not be negative; was $retireFrames." }
+    }
+
     private val materials = HashMap<UiFont, Material>()
     private val uploads = HashMap<WorldText, Upload>()
 
     // The texts uploaded, by index, so the end of a frame finds those it did not draw without an iterator.
     private val uploaded = ArrayList<WorldText>()
+
+    // Meshes whose text changed or disappeared, kept alive until in-flight GPU frames finish reading them.
+    private val retiring = ArrayList<RetiringMesh>()
     private var frame = 0L
+
+    /** Meshes replaced or released and awaiting safe GPU retirement on a later frame. */
+    internal val retiringMeshCount: Int get() = retiring.size
 
     /**
      * Appends [text]'s draws to [out], placed by [placement]: its world matrix. A [WorldText.billboard]
@@ -66,15 +87,17 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
         uploads[text]?.frame = frame
     }
 
-    /** Frees [text]'s uploaded quads; drawing it again uploads them again. */
+    /** Frees [text]'s uploaded quads (deferred by [retireFrames]); drawing it again uploads them again. */
     fun release(text: WorldText) {
         val upload = uploads.remove(text) ?: return
         uploaded.remove(text)
-        renderer.waitIdle()
-        upload.free()
+        retireUpload(upload)
     }
 
-    /** Ends a frame: frees the quads of every text not collected since the last call, and starts the next. */
+    /**
+     * Ends a frame: retires the quads of every text not collected since the last call, destroys any
+     * retired meshes that have outlived [retireFrames] in-flight frames, and starts the next frame.
+     */
     fun releaseUnseen() {
         var index = uploaded.size - 1
         while (index >= 0) {
@@ -83,30 +106,29 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
             if (upload == null || upload.frame != frame) {
                 uploaded[index] = uploaded[uploaded.size - 1]
                 uploaded.removeAt(uploaded.size - 1)
-                uploads.remove(text)?.let {
-                    renderer.waitIdle()
-                    it.free()
-                }
+                uploads.remove(text)?.let(::retireUpload)
             }
             index--
         }
+        drainRetiring(frame)
         frame++
     }
 
-    /** Frees every text's quads and every atlas. Closing twice is harmless. */
+    /** Frees every text's quads (live and retiring) and every atlas. Closing twice is harmless. */
     override fun close() {
-        if (uploads.isEmpty() && materials.isEmpty()) return
+        if (uploads.isEmpty() && retiring.isEmpty() && materials.isEmpty()) return
         renderer.waitIdle()
         uploads.values.forEach(Upload::free)
         uploads.clear()
         uploaded.clear()
+        for (i in retiring.indices) retiring[i].mesh.destroy()
+        retiring.clear()
         materials.values.forEach(Material::destroy)
         materials.clear()
     }
 
     private fun reupload(upload: Upload, text: WorldText, layout: WorldTextLayout) {
-        if (upload.meshes.isNotEmpty()) renderer.waitIdle()
-        upload.free()
+        retireUpload(upload)
         for (page in layout.pages) {
             val mesh = renderer.createMesh(page.geometry)
             val extra = UniformWriter(WorldTextExtraUniformLayout)
@@ -121,11 +143,47 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
         upload.revision = text.revision
     }
 
+    private fun retireUpload(upload: Upload) {
+        if (upload.meshes.isEmpty()) {
+            upload.draws.clear()
+            upload.revision = -1
+            return
+        }
+        if (retireFrames == 0) {
+            renderer.waitIdle()
+            upload.free()
+            return
+        }
+        val retireAt = frame + retireFrames
+        for (i in upload.meshes.indices) {
+            retiring.add(RetiringMesh(upload.meshes[i], retireAt))
+        }
+        upload.meshes.clear()
+        upload.draws.clear()
+        upload.revision = -1
+    }
+
+    private fun drainRetiring(currentFrame: Long) {
+        var index = retiring.size - 1
+        while (index >= 0) {
+            val entry = retiring[index]
+            if (currentFrame >= entry.retireAtFrame) {
+                entry.mesh.destroy()
+                val last = retiring.size - 1
+                if (index != last) retiring[index] = retiring[last]
+                retiring.removeAt(last)
+            }
+            index--
+        }
+    }
+
     private fun materialFor(font: UiFont): Material = materials.getOrPut(font) {
         renderer.createMaterial(WorldTextUniformLayout, texture = TextureAsset(font.atlasPixelsRgba, font.atlasWidth, font.atlasHeight))
             // The material's texture has the atlas now: a font that can build its pixels again need not keep them.
             .also { font.releaseAtlasPixels() }
     }
+
+    private class RetiringMesh(val mesh: Mesh, val retireAtFrame: Long)
 
     private class Upload {
         var revision = -1
@@ -142,3 +200,6 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
         }
     }
 }
+
+/** Covers double and triple buffering on every backend without stalling the GPU mid-frame. */
+private const val DEFAULT_RETIRE_FRAMES = 3

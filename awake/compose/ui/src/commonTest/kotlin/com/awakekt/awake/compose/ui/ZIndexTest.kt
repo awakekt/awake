@@ -11,8 +11,13 @@ import com.awakekt.awake.compose.ui.draw.zIndex
 import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
+import com.awakekt.awake.compose.ui.layout.Layer
+import com.awakekt.awake.compose.ui.layout.LayerKind
+import com.awakekt.awake.compose.ui.layout.LayerPosition
+import com.awakekt.awake.compose.ui.layout.LayerPositionProvider
 import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
+import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.node.PointerInputNode
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
@@ -119,6 +124,95 @@ class ZIndexTest {
         )
 
         assertEquals("first_high", clicked)
+    }
+
+    @Test
+    fun nestedZIndexContainersSortStablyWithoutClobberingOuterOrder() {
+        val green = Color(0f, 1f, 0f, 1f)
+        val yellow = Color(1f, 1f, 0f, 1f)
+        val cyan = Color(0f, 1f, 1f, 1f)
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            Layout(nodeType = "root", measurePolicy = stackPolicy) {
+                Layout(
+                    nodeType = "outer_high",
+                    modifier = Modifier.zIndex(2f).drawBehind { drawRect(color = red) },
+                    measurePolicy = stackPolicy,
+                ) {
+                    Layout(
+                        nodeType = "inner_high",
+                        modifier = Modifier.zIndex(3f).drawBehind { drawRect(color = yellow) },
+                        measurePolicy = stackPolicy,
+                    )
+                    Layout(
+                        nodeType = "inner_low_a",
+                        modifier = Modifier.zIndex(1f).drawBehind { drawRect(color = green) },
+                        measurePolicy = stackPolicy,
+                    )
+                    Layout(
+                        nodeType = "inner_low_b",
+                        modifier = Modifier.zIndex(1f).drawBehind { drawRect(color = cyan) },
+                        measurePolicy = stackPolicy,
+                    )
+                }
+                Layout(
+                    nodeType = "outer_low",
+                    modifier = Modifier.zIndex(1f).drawBehind { drawRect(color = blue) },
+                    measurePolicy = stackPolicy,
+                )
+            }
+        }
+
+        val output = host.frame(FrameInput(viewportWidth = 100, viewportHeight = 100), content)
+        val colors = output.primitives.filterIsInstance<UiDrawPrimitive.Quad>().map { it.color }
+        assertEquals(listOf(blue, red, green, cyan, yellow), colors)
+    }
+
+    @Test
+    fun layoutTreeInvokesOnPlacedOncePerFrameForBaseAndOverlayLayers() {
+        var baseCalls = 0
+        var layerCalls = 0
+        var layerPos = -1 to -1
+        val anchorPolicy = MeasurePolicy { measurables, constraints ->
+            val placeables = measurables.map { it.measure(constraints) }
+            layout(100, 100) {
+                placeables.forEach { it.placeAt(12, 18) }
+            }
+        }
+        val fixedProvider = LayerPositionProvider { parentX, parentY, _, _, _, _ ->
+            LayerPosition(5, 7).also {
+                assertEquals(12, parentX)
+                assertEquals(18, parentY)
+            }
+        }
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            Layout(nodeType = "root", measurePolicy = anchorPolicy) {
+                Layout(
+                    nodeType = "anchor",
+                    modifier = Modifier.onPlaced { _, _, _, _ -> baseCalls++ },
+                    measurePolicy = stackPolicy,
+                ) {
+                    Layer(kind = LayerKind.Popup, measurePolicy = stackPolicy, positionProvider = fixedProvider) {
+                        Layout(
+                            nodeType = "popup_body",
+                            modifier = Modifier.onPlaced { x, y, _, _ ->
+                                layerCalls++
+                                layerPos = x to y
+                            },
+                            measurePolicy = stackPolicy,
+                        )
+                    }
+                }
+            }
+        }
+
+        host.frame(FrameInput(viewportWidth = 100, viewportHeight = 100), content)
+        assertEquals(1, baseCalls, "base node onPlaced must fire once per frame, not twice")
+        assertEquals(1, layerCalls, "overlay layer onPlaced must fire once per frame")
+        assertEquals(17 to 25, layerPos, "layer absolute position resolves against its placed anchor")
     }
 }
 

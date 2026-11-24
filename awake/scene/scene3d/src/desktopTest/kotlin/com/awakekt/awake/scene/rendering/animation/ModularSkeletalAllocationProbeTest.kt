@@ -34,6 +34,10 @@ class ModularSkeletalAllocationProbeTest {
     fun aDrawnCrowdAllocatesNothingPerFrame() = assertNoAllocation(ModularSkeletalSystem())
 
     @Test
+    fun aDistanceThrottledCrowdAllocatesNothingPerFrame() =
+        assertNoAllocation(ModularSkeletalSystem(AnimationUpdateRate.byDistance(near = 12f, far = 40f, farInterval = 0.1f)))
+
+    @Test
     fun aHeadlessCrowdAllocatesNothingPerFrame() = assertNoAllocation(ModularSkeletalSystem(hasRenderer = false))
 
     private fun assertNoAllocation(system: ModularSkeletalSystem) {

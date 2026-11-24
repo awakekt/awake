@@ -38,11 +38,16 @@ class WorldTextRenderFeature(renderer: Renderer) :
 
     override fun collect(world: World, context: RenderFeatureContext3D): RenderContribution {
         draws.clear()
+        val family = world.family<Transform, WorldText>()
+        if (family.size == 0) {
+            batch.releaseUnseen()
+            return contribution
+        }
         val lens = context.camera.lens
         // Each view draws only the texts in its frustum: a second view (a canvas portrait) drew every
         // label in the world again, in the transparent pass (#1621). The others are kept, not freed.
         val view = Frustum.planes(lens, context.viewportAspect)
-        world.queryEach<Transform, WorldText> { _, transform, text ->
+        family.forEach { _, transform, text ->
             if (text.text.isNotEmpty()) {
                 if (view.containsSphere(centerOf(transform.worldMatrix), radiusOf(text, transform.worldMatrix))) {
                     batch.collect(text, transform.worldMatrix, lens, draws)

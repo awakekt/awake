@@ -211,6 +211,8 @@ public final class com/awakekt/awake/scene/rendering/animation/ModularCharacterC
 
 public final class com/awakekt/awake/scene/rendering/animation/ModularSkeletalSystem : com/awakekt/awake/ecs/Family2System {
 	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Z)V
 	public synthetic fun process-MALM9kA (Lcom/awakekt/awake/ecs/World;FJLjava/lang/Object;Ljava/lang/Object;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V

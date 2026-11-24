@@ -378,6 +378,10 @@ class LayoutNode(
      * needs to know where it sits, which is what lets a subtree be measured and placed in isolation.
      */
     fun resolveAbsolutePositions(parentAbsoluteX: Int = 0, parentAbsoluteY: Int = 0) {
+        resolveAbsolutePositions(parentAbsoluteX, parentAbsoluteY, includeLayers = true)
+    }
+
+    internal fun resolveAbsolutePositions(parentAbsoluteX: Int, parentAbsoluteY: Int, includeLayers: Boolean) {
         absoluteX = parentAbsoluteX + x
         absoluteY = parentAbsoluteY + y
         // Children are placed relative to the content box, which the chain may have inset -- a
@@ -397,12 +401,14 @@ class LayoutNode(
         }
         for (i in 0 until children.size) {
             val child = children[i]
-            if (placesChild(child)) child.resolveAbsolutePositions(contentX, contentY)
+            if (placesChild(child)) child.resolveAbsolutePositions(contentX, contentY, includeLayers)
         }
-        // Layers resolve against this node too -- an anchored popup needs its declaring node's
-        // position -- but their size comes from the viewport, not from this node's constraints.
-        for (i in 0 until layers.size) {
-            layers[i].resolveAbsolutePositions(absoluteX, absoluteY)
+        if (includeLayers) {
+            // Layers resolve against this node too -- an anchored popup needs its declaring node's
+            // position -- but their size comes from the viewport, not from this node's constraints.
+            for (i in 0 until layers.size) {
+                layers[i].resolveAbsolutePositions(absoluteX, absoluteY, includeLayers = true)
+            }
         }
     }
 
