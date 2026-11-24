@@ -1,0 +1,1 @@
+- **iOS Vulkan bindings compile fix.** Disambiguated `allocArray<NativeVkClearValue>(2) { index: Int -> ... }` in `iosMain` `VulkanCommands.vkCmdBeginRenderPassColorDepth` so `:awake:backend:vulkan:bindings:compileKotlinIosArm64` compiles cleanly.
