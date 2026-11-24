@@ -25,6 +25,9 @@ internal class VulkanCompressedTextures(private val renderer: Renderer) : GpuCom
         if (image.format !in formats) return null
         val texture = Texture.compressed(renderer.graphicsDevice, renderer.transferContext::runOneTimeCommands, image, filtering)
         renderer.textureResources.register(texture)
-        return Material(renderer.graphicsDevice, uniformFloatCount).apply { createResources(texture, renderer.pbrImageViews(null)) }
+        return Material(renderer.graphicsDevice, uniformFloatCount).apply {
+            createResources(texture, renderer.pbrImageViews(null))
+            onDestroy = { renderer.textureResources.release(texture) }
+        }
     }
 }

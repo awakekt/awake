@@ -66,6 +66,10 @@ private fun Renderer.createPbrResources(material: Material, base: Texture, maps:
     val neutrals = listOf(Renderer.NEUTRAL_METALLIC_ROUGHNESS, Renderer.NEUTRAL_NORMAL, Renderer.NEUTRAL_OCCLUSION, Renderer.NEUTRAL_EMISSIVE)
     val pbr = maps.zip(neutrals) { map, neutral -> map ?: textureResources.neutral(neutral) { uploadTexture(neutral) } }
     material.createResources(base, pbr)
+    val owned = ArrayList<Texture>(maps.size + 1)
+    owned.add(base)
+    maps.forEach { if (it != null) owned.add(it) }
+    material.onDestroy = { owned.forEach(textureResources::release) }
 }
 
 internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =

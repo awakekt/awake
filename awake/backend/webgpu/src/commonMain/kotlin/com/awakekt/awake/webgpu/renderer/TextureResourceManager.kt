@@ -14,6 +14,8 @@ internal class TextureResourceManager<T>(private val destroyResource: (T) -> Uni
     private val textures = mutableSetOf<T>()
     private val neutralTextures = mutableMapOf<TextureAsset, T>()
 
+    internal val count: Int get() = textures.size
+
     fun register(texture: T): T = texture.also { textures += it }
 
     fun release(texture: T) {

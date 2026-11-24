@@ -13,18 +13,27 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 
 /**
- * GPU textures for the [ImageBitmap]s a UI draws, uploaded the first frame each one appears.
+ * GPU textures for the [ImageBitmap]s a UI draws, uploaded the first frame each one appears and
+ * evicted once it stops being drawn.
  *
- * Kept for the host's lifetime: a texture uploaded through `createMaterial` is owned by the
- * renderer and freed only at its teardown, so evicting an image and uploading it again would grow
- * GPU memory rather than save it. Memory is therefore every distinct bitmap drawn so far; reuse a
- * decoded bitmap instead of decoding the same file again.
+ * Unused entries are kept for a brief grace window ([minIdleFrames] frames so submitted GPU frames
+ * finish reading them, up to [maxIdleFrames] frames while idle pixels stay within [maxIdleBytes])
+ * so brief UI toggles do not re-upload every frame while transient or replaced bitmaps release both
+ * their managed pixel arrays and their renderer-owned GPU textures.
  */
-internal class ImageTextures {
+internal class ImageTextures(
+    private val minIdleFrames: Long = DEFAULT_MIN_IDLE_FRAMES,
+    private val maxIdleFrames: Long = DEFAULT_MAX_IDLE_FRAMES,
+    private val maxIdleBytes: Long = DEFAULT_MAX_IDLE_BYTES,
+) {
     // One texture per image and filter: an image drawn crisp in one place and smooth in another
     // samples two textures, since the filter is part of a texture's sampler. So is the mip chain:
     // a smooth image drawn both with and without its mips is uploaded twice.
-    private val materials = HashMap<Triple<ImageBitmap, FilterQuality, Boolean>, Material>()
+    private val entries = LinkedHashMap<ImageKey, Entry>()
+    private var frame = 0L
+    private var usedThisFrame = 0
+
+    internal val size: Int get() = entries.size
 
     /**
      * The material that samples [image] with [filterQuality]. [baseLevelOnly] leaves a smooth
@@ -42,13 +51,111 @@ internal class ImageTextures {
             baseLevelOnly -> TextureFiltering.BaseLevelLinear
             else -> TextureFiltering.Linear
         }
-        return materials.getOrPut(Triple(image, filterQuality, filtering == TextureFiltering.BaseLevelLinear)) {
-            renderer.createMaterial(texture = TextureAsset(image.pixels, image.width, image.height, filtering = filtering))
+        val key = ImageKey(image, filterQuality, filtering == TextureFiltering.BaseLevelLinear)
+        val existing = entries[key]
+        if (existing != null) {
+            markUsed(existing)
+            return existing.material
         }
+        val material = renderer.createMaterial(
+            texture = TextureAsset(image.pixels, image.width, image.height, filtering = filtering),
+        )
+        val byteSize = image.width.toLong() * image.height.toLong() * ImageBitmap.BYTES_PER_PIXEL
+        val created = Entry(material, byteSize, frame)
+        entries[key] = created
+        usedThisFrame += 1
+        return material
+    }
+
+    /**
+     * Advances the frame counter and destroys cached materials for images that have been idle past
+     * [maxIdleFrames], or past [minIdleFrames] when idle images exceed [maxIdleBytes].
+     */
+    fun endFrame() {
+        if (entries.isNotEmpty() && usedThisFrame < entries.size) {
+            evictIdleEntries()
+        }
+        frame += 1L
+        usedThisFrame = 0
     }
 
     fun dispose() {
-        materials.values.forEach(Material::destroy)
-        materials.clear()
+        entries.values.forEach { it.material.destroy() }
+        entries.clear()
+        usedThisFrame = 0
+    }
+
+    private fun markUsed(entry: Entry) {
+        if (entry.lastUsedFrame != frame) {
+            entry.lastUsedFrame = frame
+            usedThisFrame += 1
+        }
+    }
+
+    private fun evictIdleEntries() {
+        var idleBytes = 0L
+        val iterator = entries.entries.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next().value
+            val idle = frame - entry.lastUsedFrame
+            if (idle >= maxIdleFrames) {
+                entry.material.destroy()
+                iterator.remove()
+            } else if (idle > 0L) {
+                idleBytes += entry.byteSize
+            }
+        }
+        if (idleBytes > maxIdleBytes) {
+            evictOldestIdleOverBudget(idleBytes)
+        }
+    }
+
+    private fun evictOldestIdleOverBudget(initialIdleBytes: Long) {
+        var remaining = initialIdleBytes
+        var nextKey = findOldestEvictableKey()
+        while (remaining > maxIdleBytes && nextKey != null) {
+            val removed = entries.remove(nextKey)
+            if (removed != null) {
+                removed.material.destroy()
+                remaining -= removed.byteSize
+            }
+            nextKey = if (remaining > maxIdleBytes) findOldestEvictableKey() else null
+        }
+    }
+
+    private fun findOldestEvictableKey(): ImageKey? {
+        var oldestKey: ImageKey? = null
+        var oldestFrame = Long.MAX_VALUE
+        for ((key, entry) in entries) {
+            val idle = frame - entry.lastUsedFrame
+            if (idle >= minIdleFrames && entry.lastUsedFrame < oldestFrame) {
+                oldestFrame = entry.lastUsedFrame
+                oldestKey = key
+            }
+        }
+        return oldestKey
+    }
+
+    private data class ImageKey(
+        val image: ImageBitmap,
+        val filterQuality: FilterQuality,
+        val baseLevelOnly: Boolean,
+    )
+
+    private class Entry(
+        val material: Material,
+        val byteSize: Long,
+        var lastUsedFrame: Long,
+    )
+
+    internal companion object {
+        /** Clear of 2-3 frames in flight before releasing an idle GPU texture. */
+        const val DEFAULT_MIN_IDLE_FRAMES: Long = 2L
+
+        /** Idle grace window (~1 s at 60 FPS) for small warm UI bitmaps. */
+        const val DEFAULT_MAX_IDLE_FRAMES: Long = 60L
+
+        /** Idle pixel budget before large unused bitmaps are evicted at [DEFAULT_MIN_IDLE_FRAMES]. */
+        const val DEFAULT_MAX_IDLE_BYTES: Long = 4L * 1024L * 1024L
     }
 }

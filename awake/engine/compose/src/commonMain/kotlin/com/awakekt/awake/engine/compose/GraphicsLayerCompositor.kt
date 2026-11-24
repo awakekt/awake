@@ -82,6 +82,7 @@ class GraphicsLayerCompositor {
             }
         }
         val resolved = primitives.resolve(renderer, materials, flat)
+        images.endFrame()
         if (resolved.none { it is UiDrawPrimitive.Texture && it.blendMode.requiresDestinationSampling }) {
             frameTargets?.destroy()
             frameTargets = null
