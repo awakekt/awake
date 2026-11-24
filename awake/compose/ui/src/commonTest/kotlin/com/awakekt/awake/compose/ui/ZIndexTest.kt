@@ -214,6 +214,115 @@ class ZIndexTest {
         assertEquals(1, layerCalls, "overlay layer onPlaced must fire once per frame")
         assertEquals(17 to 25, layerPos, "layer absolute position resolves against its placed anchor")
     }
+
+    @Test
+    fun nestedOverlayLayersResolveCoordinatesOnFirstFrameAndFireOnPlacedOnce() {
+        var anchorCalls = 0
+        var outerChildCalls = 0
+        var innerLeafCalls = 0
+        var innerLeafPos = -1 to -1
+        var innerProviderSawParent = -1 to -1
+        val offsetPolicy = { dx: Int, dy: Int ->
+            MeasurePolicy { measurables, constraints ->
+                val placeables = measurables.map { it.measure(constraints) }
+                layout(100, 100) { placeables.forEach { it.placeAt(dx, dy) } }
+            }
+        }
+        val outerProvider = LayerPositionProvider { parentX, parentY, _, _, _, _ ->
+            assertEquals(12, parentX)
+            assertEquals(18, parentY)
+            LayerPosition(5, 7)
+        }
+        val innerProvider = LayerPositionProvider { parentX, parentY, _, _, _, _ ->
+            innerProviderSawParent = parentX to parentY
+            LayerPosition(10, 20)
+        }
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            Layout(nodeType = "root", measurePolicy = offsetPolicy(12, 18)) {
+                Layout(
+                    nodeType = "anchor",
+                    modifier = Modifier.onPlaced { _, _, _, _ -> anchorCalls++ },
+                    measurePolicy = stackPolicy,
+                ) {
+                    Layer(kind = LayerKind.Dialog, measurePolicy = offsetPolicy(3, 4), positionProvider = outerProvider) {
+                        Layout(
+                            nodeType = "dialog_child",
+                            modifier = Modifier.onPlaced { _, _, _, _ -> outerChildCalls++ },
+                            measurePolicy = stackPolicy,
+                        ) {
+                            Layer(kind = LayerKind.Tooltip, measurePolicy = stackPolicy, positionProvider = innerProvider) {
+                                Layout(
+                                    nodeType = "tooltip_leaf",
+                                    modifier = Modifier.onPlaced { x, y, _, _ ->
+                                        innerLeafCalls++
+                                        innerLeafPos = x to y
+                                    },
+                                    measurePolicy = stackPolicy,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        host.frame(FrameInput(viewportWidth = 200, viewportHeight = 200), content)
+        assertEquals(1, anchorCalls)
+        assertEquals(1, outerChildCalls)
+        assertEquals(1, innerLeafCalls)
+        // Anchor (12, 18) + outer layer (5, 7) = (17, 25); dialog_child (+3, +4) = (20, 29); inner layer (+10, +20) = (30, 49).
+        assertEquals(20 to 29, innerProviderSawParent, "nested layer must see outer layer child's fresh frame-1 coordinates")
+        assertEquals(30 to 49, innerLeafPos, "nested layer leaf resolves against its placed outer layer child")
+    }
+
+    @Test
+    fun deeplyNestedZIndexContainersGrowingScratchStackPreserveOrder() {
+        // 20 outer + 25 inner = 45 > INITIAL_Z_ORDER_CAPACITY (32), forcing stack resize during recursion.
+        val outerCount = 20
+        val innerCount = 25
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            Layout(nodeType = "root", measurePolicy = stackPolicy) {
+                for (i in 0 until outerCount) {
+                    val outerZ = (outerCount - i).toFloat()
+                    val outerColor = Color(outerZ / 100f, 0f, 0f, 1f)
+                    Layout(
+                        nodeType = "outer_$i",
+                        modifier = Modifier.zIndex(outerZ).drawBehind { drawRect(color = outerColor) },
+                        measurePolicy = stackPolicy,
+                    ) {
+                        if (i == outerCount - 1) {
+                            // Lowest outer zIndex (1f) paints first and grows zIndexOrderStack mid-recursion.
+                            for (j in 0 until innerCount) {
+                                val innerZ = (innerCount - j).toFloat()
+                                val innerColor = Color(0f, innerZ / 100f, 0f, 1f)
+                                Layout(
+                                    nodeType = "inner_$j",
+                                    modifier = Modifier.zIndex(innerZ).drawBehind { drawRect(color = innerColor) },
+                                    measurePolicy = stackPolicy,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        val output = host.frame(FrameInput(viewportWidth = 100, viewportHeight = 100), content)
+        val quads = output.primitives.filterIsInstance<UiDrawPrimitive.Quad>()
+        assertEquals(outerCount + innerCount, quads.size)
+        // First: outer z=1 (red=0.01), then 25 inner sorted z=1..25 (green=0.01..0.25), then outer z=2..20 (red=0.02..0.20).
+        assertEquals(0.01f, quads[0].color.r, 1e-5f)
+        for (k in 1..innerCount) {
+            assertEquals(k / 100f, quads[k].color.g, 1e-5f, "inner child $k out of order after stack growth")
+        }
+        for (k in 2..outerCount) {
+            assertEquals(k / 100f, quads[innerCount + k - 1].color.r, 1e-5f, "outer child $k clobbered after stack growth")
+        }
+    }
 }
 
 private class ZIndexPointerInputNode :

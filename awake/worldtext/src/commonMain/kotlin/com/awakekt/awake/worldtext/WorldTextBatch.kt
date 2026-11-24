@@ -53,11 +53,13 @@ class WorldTextBatch(
     private val uploaded = ArrayList<WorldText>()
 
     // Meshes whose text changed or disappeared, kept alive until in-flight GPU frames finish reading them.
-    private val retiring = ArrayList<RetiringMesh>()
+    // Parallel arrays avoid allocating a wrapper object per retired mesh during label churn.
+    private val retiringMeshes = ArrayList<Mesh>()
+    private var retiringAtFrame = LongArray(INITIAL_RETIRING_CAPACITY)
     private var frame = 0L
 
     /** Meshes replaced or released and awaiting safe GPU retirement on a later frame. */
-    internal val retiringMeshCount: Int get() = retiring.size
+    internal val retiringMeshCount: Int get() = retiringMeshes.size
 
     /**
      * Appends [text]'s draws to [out], placed by [placement]: its world matrix. A [WorldText.billboard]
@@ -87,11 +89,14 @@ class WorldTextBatch(
         uploads[text]?.frame = frame
     }
 
-    /** Frees [text]'s uploaded quads (deferred by [retireFrames]); drawing it again uploads them again. */
+    /**
+     * Frees [text]'s uploaded quads (deferred by [retireFrames] until [releaseUnseen] advances past
+     * the in-flight window, or flushed immediately on [close]); drawing it again uploads them again.
+     */
     fun release(text: WorldText) {
         val upload = uploads.remove(text) ?: return
         uploaded.remove(text)
-        retireUpload(upload)
+        retireUpload(upload, waitBeforeFree = true)
     }
 
     /**
@@ -99,6 +104,7 @@ class WorldTextBatch(
      * retired meshes that have outlived [retireFrames] in-flight frames, and starts the next frame.
      */
     fun releaseUnseen() {
+        var waitedImmediate = false
         var index = uploaded.size - 1
         while (index >= 0) {
             val text = uploaded[index]
@@ -106,7 +112,13 @@ class WorldTextBatch(
             if (upload == null || upload.frame != frame) {
                 uploaded[index] = uploaded[uploaded.size - 1]
                 uploaded.removeAt(uploaded.size - 1)
-                uploads.remove(text)?.let(::retireUpload)
+                uploads.remove(text)?.let {
+                    if (retireFrames == 0 && it.meshes.isNotEmpty() && !waitedImmediate) {
+                        renderer.waitIdle()
+                        waitedImmediate = true
+                    }
+                    retireUpload(it, waitBeforeFree = false)
+                }
             }
             index--
         }
@@ -116,19 +128,19 @@ class WorldTextBatch(
 
     /** Frees every text's quads (live and retiring) and every atlas. Closing twice is harmless. */
     override fun close() {
-        if (uploads.isEmpty() && retiring.isEmpty() && materials.isEmpty()) return
+        if (uploads.isEmpty() && retiringMeshes.isEmpty() && materials.isEmpty()) return
         renderer.waitIdle()
         uploads.values.forEach(Upload::free)
         uploads.clear()
         uploaded.clear()
-        for (i in retiring.indices) retiring[i].mesh.destroy()
-        retiring.clear()
+        for (i in retiringMeshes.indices) retiringMeshes[i].destroy()
+        retiringMeshes.clear()
         materials.values.forEach(Material::destroy)
         materials.clear()
     }
 
     private fun reupload(upload: Upload, text: WorldText, layout: WorldTextLayout) {
-        retireUpload(upload)
+        retireUpload(upload, waitBeforeFree = true)
         for (page in layout.pages) {
             val mesh = renderer.createMesh(page.geometry)
             val extra = UniformWriter(WorldTextExtraUniformLayout)
@@ -143,20 +155,25 @@ class WorldTextBatch(
         upload.revision = text.revision
     }
 
-    private fun retireUpload(upload: Upload) {
+    private fun retireUpload(upload: Upload, waitBeforeFree: Boolean) {
         if (upload.meshes.isEmpty()) {
             upload.draws.clear()
             upload.revision = -1
             return
         }
         if (retireFrames == 0) {
-            renderer.waitIdle()
+            if (waitBeforeFree) renderer.waitIdle()
             upload.free()
             return
         }
         val retireAt = frame + retireFrames
         for (i in upload.meshes.indices) {
-            retiring.add(RetiringMesh(upload.meshes[i], retireAt))
+            val slot = retiringMeshes.size
+            if (slot == retiringAtFrame.size) {
+                retiringAtFrame = retiringAtFrame.copyOf(retiringAtFrame.size * 2)
+            }
+            retiringMeshes.add(upload.meshes[i])
+            retiringAtFrame[slot] = retireAt
         }
         upload.meshes.clear()
         upload.draws.clear()
@@ -164,14 +181,16 @@ class WorldTextBatch(
     }
 
     private fun drainRetiring(currentFrame: Long) {
-        var index = retiring.size - 1
+        var index = retiringMeshes.size - 1
         while (index >= 0) {
-            val entry = retiring[index]
-            if (currentFrame >= entry.retireAtFrame) {
-                entry.mesh.destroy()
-                val last = retiring.size - 1
-                if (index != last) retiring[index] = retiring[last]
-                retiring.removeAt(last)
+            if (currentFrame >= retiringAtFrame[index]) {
+                retiringMeshes[index].destroy()
+                val last = retiringMeshes.size - 1
+                if (index != last) {
+                    retiringMeshes[index] = retiringMeshes[last]
+                    retiringAtFrame[index] = retiringAtFrame[last]
+                }
+                retiringMeshes.removeAt(last)
             }
             index--
         }
@@ -182,8 +201,6 @@ class WorldTextBatch(
             // The material's texture has the atlas now: a font that can build its pixels again need not keep them.
             .also { font.releaseAtlasPixels() }
     }
-
-    private class RetiringMesh(val mesh: Mesh, val retireAtFrame: Long)
 
     private class Upload {
         var revision = -1
@@ -203,3 +220,4 @@ class WorldTextBatch(
 
 /** Covers double and triple buffering on every backend without stalling the GPU mid-frame. */
 private const val DEFAULT_RETIRE_FRAMES = 3
+private const val INITIAL_RETIRING_CAPACITY = 8

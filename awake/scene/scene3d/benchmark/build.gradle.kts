@@ -23,7 +23,10 @@ dependencies {
     // SpatialGrid, the thing SpatialCullingBenchmarks measures against a per-entity scan, and
     // PointGrid2D, which PointGridBenchmarks measures against it.
     implementation(project(":awake:core:spatial"))
+    implementation(project(":awake:engine:render:testing"))
     implementation(project(":awake:scene:scene3d"))
+    implementation(project(":awake:worldtext"))
+    implementation(project(":awake:scene:worldtext"))
     implementation(libs.kotlinx.benchmark.runtime)
 }
 

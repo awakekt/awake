@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering
 import com.awakekt.awake.core.animation.AnimationChannel
 import com.awakekt.awake.core.animation.AnimationClip
 import com.awakekt.awake.core.animation.AnimationLibrary
+import com.awakekt.awake.core.animation.AnimationPlayback
 import com.awakekt.awake.core.animation.AnimationPlayer
 import com.awakekt.awake.core.animation.AnimationProperty
 import com.awakekt.awake.core.animation.AnimationSampler
@@ -112,6 +113,38 @@ class ModularSkeletalCullingAndRateTest {
         palette[TRANSLATION_X] = 99f
         system.update(world, delta = 0.5f)
         assertEquals(99f, palette[TRANSLATION_X], "held pose must skip redundant jointPalette recomputation")
+    }
+
+    @Test
+    fun multiViewCulledAndDrawnCharacterStillPoses() {
+        val world = World()
+        val (entity, _) = modularCharacter(world)
+        val system = ModularSkeletalSystem()
+
+        // View 1 culls the character, View 2 draws it in the same frame: culled=true AND drawn=true must still pose.
+        collect(world, lookingAway)
+        collect(world, lookingAt)
+        system.update(world, delta = 0.5f)
+        assertEquals(0.5f, pose(world, entity).jointPalette[TRANSLATION_X], 1e-5f, "character drawn in any view must pose")
+    }
+
+    @Test
+    fun culledCharacterFinishesOnceClipOnTimeAndPosesAtEndWhenVisible() {
+        val world = World()
+        val (entity, player) = modularCharacter(world)
+        player.play("walk", playback = AnimationPlayback.Once)
+        val system = ModularSkeletalSystem()
+
+        // Culled for the entire 4s duration: clip finishes off-screen without writing the palette.
+        collect(world, lookingAway)
+        system.update(world, delta = 4.5f)
+        assertEquals(true, player.isFinished, "Once clip must finish on time while culled")
+        assertEquals(0f, pose(world, entity).jointPalette[TRANSLATION_X], "culled character must not pose")
+
+        // Enters view after finishing: first visible frame must pose at the clip's end translation (4f).
+        collect(world, lookingAt)
+        system.update(world, delta = 0.016f)
+        assertEquals(4f, pose(world, entity).jointPalette[TRANSLATION_X], 1e-5f, "newly visible finished character must pose at clip end")
     }
 
     private fun modularCharacter(world: World, z: Float = 0f): Pair<Entity, AnimationPlayer> {

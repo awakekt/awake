@@ -126,4 +126,91 @@ class WorldTextBatchTest {
         immediate.close()
         assertEquals(2, immediateRenderer.destroyed)
     }
+
+    @Test
+    fun rapidEditsDrainRetiringMeshesBoundedWithoutMidFrameWaitIdle() {
+        val renderer = CountingRenderer()
+        val batch = WorldTextBatch(renderer)
+        val counter = WorldText("Tick 0")
+        val draws = ArrayList<RenderDrawCommand>()
+
+        // Frame 0: initial upload (mesh 0).
+        batch.collect(counter, Mat4(), camera, draws)
+        batch.releaseUnseen()
+        assertEquals(1, renderer.created)
+        assertEquals(0, renderer.destroyed)
+
+        // Frames 1..10: text changes every frame, retiring one mesh per frame and growing the scratch array past 8.
+        for (tick in 1..10) {
+            counter.text = "Tick $tick"
+            draws.clear()
+            batch.collect(counter, Mat4(), camera, draws)
+            batch.releaseUnseen()
+            assertEquals(0, renderer.waitIdles, "rapid text updates must never stall mid-frame")
+            // Default retireFrames = 3: frames 1..3 accumulate up to 3 retiring meshes; from frame 4 onward each frame drains 1.
+            val expectedDestroyed = (tick - 3).coerceAtLeast(0)
+            assertEquals(expectedDestroyed, renderer.destroyed, "tick $tick should have destroyed $expectedDestroyed meshes")
+            assertEquals(minOf(tick, 3), batch.retiringMeshCount, "retiring queue must remain bounded at <= 3")
+        }
+
+        batch.close()
+        assertEquals(11, renderer.created)
+        assertEquals(11, renderer.destroyed, "every uploaded mesh must be destroyed with zero leaks")
+        assertEquals(0, batch.retiringMeshCount)
+        assertEquals(1, renderer.waitIdles)
+    }
+
+    @Test
+    fun releaseThenRecollectBeforeRetirementKeepsNewMeshAndRetiresOld() {
+        val renderer = CountingRenderer()
+        val batch = WorldTextBatch(renderer, retireFrames = 2)
+        val sign = WorldText("Harbor")
+        val draws = ArrayList<RenderDrawCommand>()
+
+        batch.collect(sign, Mat4(), camera, draws)
+        batch.releaseUnseen()
+        batch.release(sign)
+        assertEquals(1, batch.retiringMeshCount)
+        assertEquals(0, renderer.destroyed)
+
+        // Frame 1: re-collect immediately uploads a fresh mesh while the old one awaits retirement.
+        draws.clear()
+        batch.collect(sign, Mat4(), camera, draws)
+        batch.releaseUnseen()
+        assertEquals(2, renderer.created)
+        assertEquals(0, renderer.destroyed)
+
+        // Frame 2: still inside the 2-frame window (retireAt = 1 + 2 = 3).
+        draws.clear()
+        batch.collect(sign, Mat4(), camera, draws)
+        batch.releaseUnseen()
+        assertEquals(0, renderer.destroyed)
+        assertEquals(1, batch.retiringMeshCount)
+
+        // Frame 3: retirement window elapses, destroying only the previously released mesh.
+        draws.clear()
+        batch.collect(sign, Mat4(), camera, draws)
+        batch.releaseUnseen()
+        assertEquals(1, renderer.destroyed, "only the previously released mesh should be destroyed")
+        assertEquals(0, batch.retiringMeshCount)
+        assertEquals(0, renderer.waitIdles)
+
+        batch.close()
+        assertEquals(2, renderer.destroyed)
+    }
+
+    @Test
+    fun immediateModeMultipleUnseenTextsWaitIdleOnlyOnce() {
+        val renderer = CountingRenderer()
+        val batch = WorldTextBatch(renderer, retireFrames = 0)
+        val draws = ArrayList<RenderDrawCommand>()
+        val signs = listOf(WorldText("A"), WorldText("B"), WorldText("C"))
+        signs.forEach { batch.collect(it, Mat4(), camera, draws) }
+        batch.releaseUnseen()
+
+        // Drop all three in one frame: immediate mode waits for the GPU once for the whole batch.
+        batch.releaseUnseen()
+        assertEquals(3, renderer.destroyed)
+        assertEquals(1, renderer.waitIdles, "multiple unseen texts in one frame should only call waitIdle once")
+    }
 }
