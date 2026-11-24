@@ -47,19 +47,27 @@ internal fun Renderer.performCreateMaterial(
 ): RenderMaterial {
     require(texture == null || renderTarget == null) { "Pass at most one of texture/renderTarget." }
     val material = Material(graphicsDevice, uniformFloatCount)
-    val pbr = pbrImageViews(pbrTextures)
+    val ownedTextures = ArrayList<Texture>(MAX_MATERIAL_TEXTURES)
+    val pbrViews = pbrImageViews(pbrTextures, ownedTextures)
     if (renderTarget != null) {
         val offscreen = renderTarget as OffscreenRenderTarget
         material.createResourcesFromRenderTarget(
             offscreen.sampler,
             offscreen.colorImageView,
-            pbr,
+            pbrViews,
         )
     } else {
-        material.createResources(uploadTexture(texture ?: Renderer.PLACEHOLDER_TEXTURE), pbr)
+        val base = uploadTexture(texture ?: Renderer.PLACEHOLDER_TEXTURE)
+        ownedTextures.add(base)
+        material.createResources(base, pbrViews)
+    }
+    if (ownedTextures.isNotEmpty()) {
+        material.onDestroy = { ownedTextures.forEach(textureResources::release) }
     }
     return material
 }
+
+private const val MAX_MATERIAL_TEXTURES = 5
 
 internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =
     Texture.skippingMips(graphicsDevice, transferContext::runOneTimeCommands, asset).let(textureResources::register)

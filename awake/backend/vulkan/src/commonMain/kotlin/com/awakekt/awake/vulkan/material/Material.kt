@@ -58,6 +58,8 @@ class Material(
 ) : RenderMaterial {
     internal val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
+    internal var onDestroy: (() -> Unit)? = null
+    private var destroyed = false
 
     val descriptorSetLayout: DescriptorSetLayoutHandle
 
@@ -333,6 +335,8 @@ class Material(
     }
 
     override fun destroy() {
+        if (destroyed) return
+        destroyed = true
         // Every frame/draw slot can still be referenced by submitted commands during scene reload.
         VulkanBuffers.vkDeviceWaitIdle(device)
         uniformSlotsByFrame.forEach { frameSlots ->
@@ -345,6 +349,9 @@ class Material(
             VulkanDescriptors.vkDestroyDescriptorPool(device, block.descriptorPool)
         }
         VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout.handle)
+        val release = onDestroy
+        onDestroy = null
+        release?.invoke()
     }
 
     internal class UniformSlot(

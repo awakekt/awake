@@ -49,6 +49,8 @@ class Material(
     private val bindings: GroupBindings = GroupBindings.StandardMaterial,
 ) : RenderMaterial {
     private val device = graphicsDevice.wgpuContext.device
+    internal var onDestroy: (() -> Unit)? = null
+    private var destroyed = false
 
     /** Sampled textures past the base-color one, in binding order -- [pbrTextures] fills them
      * positionally, the same rule Vulkan's `PBR_TEXTURE_BINDINGS` applies to its own writes. */
@@ -244,6 +246,8 @@ class Material(
      * keeps each until released. The [texture] itself is owned by `Renderer` (which created it),
      * same as Vulkan, and so is the render target whose view this material samples. */
     override fun destroy() {
+        if (destroyed) return
+        destroyed = true
         previewTextureView = null
         previewSampler = null
         sourceTarget = null
@@ -258,6 +262,9 @@ class Material(
         bindGroupHandles.clear()
         texture = null
         pbrTextures = emptyList()
+        val release = onDestroy
+        onDestroy = null
+        release?.invoke()
     }
 
     private companion object {

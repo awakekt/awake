@@ -9,8 +9,10 @@ import com.awakekt.awake.render.texture.TextureAsset
 
 /** Owns renderer-created sampled textures and the small set of cached asset textures. */
 internal class TextureResourceManager<T>(private val destroyResource: (T) -> Unit) {
-    private val textures = mutableListOf<T>()
+    private val textures = LinkedHashSet<T>()
     private val neutralTextures = mutableMapOf<TextureAsset, T>()
+
+    internal val count: Int get() = textures.size
 
     fun register(texture: T): T = texture.also { textures += it }
 
