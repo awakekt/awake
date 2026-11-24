@@ -163,15 +163,9 @@ class PackedUiFont internal constructor(
         } ?: visibleBottomEm
     }
 
-    // Keyed by code point, so a font loaded with characters past U+FFFF finds them.
-    private val glyphsByCode: Map<Int, GlyphRect> by lazy(::decodeGlyphRects)
+    // Keyed by code point via a primitive table, so neither ASCII nor non-ASCII lookups box `Int`.
     private val inkByCode: Map<Int, InkBounds> by lazy(::decodeInkBounds)
-    private val advancesByCode: Map<Int, Float> by lazy(::decodeAdvances)
-    private val effectsByCode: Map<Int, GlyphRect> by lazy {
-        val codes = ArrayList<Int>(data.advancesEm.size)
-        forEachGlyphCode { _, code -> codes += code }
-        EffectFields.tiles(codes.toIntArray(), data.effectUvBoundsPx, data.effectQuadMetricsEm, data.atlasHeight, atlasWidth, atlasHeight)
-    }
+    private val glyphTable: GlyphLookupTable by lazy(::buildGlyphLookupTable)
     internal val fontName: String get() = data.name
     internal val fallbackCode: Int = data.fallbackChar.code
 
@@ -198,15 +192,13 @@ class PackedUiFont internal constructor(
 
     override fun uvFor(char: Char): GlyphRect? = glyphFor(char.code, FontWeight.Normal)
 
-    override fun hasGlyph(char: Char): Boolean = char.code in glyphsByCode
+    override fun hasGlyph(char: Char): Boolean = hasGlyph(char.code)
 
-    override fun hasGlyph(codePoint: Int): Boolean = codePoint in glyphsByCode
+    override fun hasGlyph(codePoint: Int): Boolean = glyphTable.hasGlyph(codePoint)
 
-    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
-        glyphsByCode[codePoint] ?: glyphsByCode[fallbackCode]
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? = glyphTable.glyphFor(codePoint)
 
-    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
-        if (codePoint in glyphsByCode) effectsByCode[codePoint] else effectsByCode[fallbackCode]
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? = glyphTable.effectGlyphFor(codePoint)
 
     /**
      * A glyph's outline-exact ink box, in em, without the crop bleed and texel snap that
@@ -253,15 +245,8 @@ class PackedUiFont internal constructor(
      */
     override fun advanceFor(char: Char, glyphPx: Float): Float = advanceFor(char.code, glyphPx, FontWeight.Normal)
 
-    override fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float {
-        val advanceEm = advancesByCode[codePoint] ?: advancesByCode[fallbackCode] ?: 1f
-        // Clamp against the INK right edge, not the render quad's: the quad carries the crop
-        // bleed, and clamping to it would inflate spacing by a bleed-sized, per-glyph amount --
-        // the exact variable-inflation failure described above.
-        val ink = inkByCode[codePoint] ?: inkByCode[fallbackCode]
-        val rightEdgeEm = if (ink != null) ink.offsetXEm + ink.widthEm else 0f
-        return glyphPx * maxOf(advanceEm, rightEdgeEm)
-    }
+    override fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float =
+        glyphPx * glyphTable.effectiveAdvanceEm(codePoint)
 
     override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float =
         glyphPx * kerningPairs.em(left, right)
@@ -314,12 +299,18 @@ class PackedUiFont internal constructor(
         return rgba
     }
 
-    private fun decodeGlyphRects(): Map<Int, GlyphRect> {
-        val result = LinkedHashMap<Int, GlyphRect>(data.glyphOrder.length)
+    private fun buildGlyphLookupTable(): GlyphLookupTable {
+        val glyphCount = data.advancesEm.size
+        val codes = IntArray(glyphCount)
+        val glyphs = arrayOfNulls<GlyphRect>(glyphCount)
+        val effectiveAdvances = FloatArray(glyphCount)
+        val slotByCode = CodePointIntTable(glyphCount)
         var uvIndex = 0
         var metricIndex = 0
-        forEachGlyphCode { _, code ->
-            result[code] = GlyphRect(
+        forEachGlyphCode { glyph, code ->
+            codes[glyph] = code
+            slotByCode.put(code, glyph)
+            glyphs[glyph] = GlyphRect(
                 u0 = data.uvBoundsPx[uvIndex].toFloat() / atlasWidth,
                 v0 = data.uvBoundsPx[uvIndex + 1].toFloat() / atlasHeight,
                 u1 = data.uvBoundsPx[uvIndex + 2].toFloat() / atlasWidth,
@@ -329,10 +320,32 @@ class PackedUiFont internal constructor(
                 widthEm = data.quadMetricsEm[metricIndex + 2],
                 heightEm = data.quadMetricsEm[metricIndex + 3],
             )
+            // Clamp against the INK right edge, not the render quad's: the quad carries the crop
+            // bleed, and clamping to it would inflate spacing by a bleed-sized, per-glyph amount.
+            val inkRightEdgeEm = data.inkMetricsEm[metricIndex] + data.inkMetricsEm[metricIndex + 2]
+            effectiveAdvances[glyph] = maxOf(data.advancesEm[glyph], inkRightEdgeEm)
             uvIndex += 4
             metricIndex += 4
         }
-        return result
+        val effectsByCode = EffectFields.tiles(
+            codes,
+            data.effectUvBoundsPx,
+            data.effectQuadMetricsEm,
+            data.atlasHeight,
+            atlasWidth,
+            atlasHeight,
+        )
+        val effects = arrayOfNulls<GlyphRect>(glyphCount)
+        for (glyph in 0 until glyphCount) {
+            effects[glyph] = effectsByCode[codes[glyph]]
+        }
+        return GlyphLookupTable(
+            slotByCode = slotByCode,
+            fallbackSlot = slotByCode.get(fallbackCode),
+            glyphs = glyphs,
+            effects = effects,
+            effectiveAdvancesEm = effectiveAdvances,
+        )
     }
 
     private fun decodeInkBounds(): Map<Int, InkBounds> {
@@ -350,12 +363,34 @@ class PackedUiFont internal constructor(
         return result
     }
 
-    private fun decodeAdvances(): Map<Int, Float> {
-        val result = LinkedHashMap<Int, Float>(data.glyphOrder.length)
-        forEachGlyphCode { glyph, code ->
-            result[code] = data.advancesEm[glyph]
+    private class GlyphLookupTable(
+        private val slotByCode: CodePointIntTable,
+        private val fallbackSlot: Int,
+        private val glyphs: Array<GlyphRect?>,
+        private val effects: Array<GlyphRect?>,
+        private val effectiveAdvancesEm: FloatArray,
+    ) {
+        fun hasGlyph(codePoint: Int): Boolean = slotByCode.get(codePoint) != CodePointIntTable.MISSING
+
+        fun glyphFor(codePoint: Int): GlyphRect? {
+            val slot = resolveSlot(codePoint)
+            return if (slot >= 0) glyphs[slot] else null
         }
-        return result
+
+        fun effectGlyphFor(codePoint: Int): GlyphRect? {
+            val slot = resolveSlot(codePoint)
+            return if (slot >= 0) effects[slot] else null
+        }
+
+        fun effectiveAdvanceEm(codePoint: Int): Float {
+            val slot = resolveSlot(codePoint)
+            return if (slot >= 0) effectiveAdvancesEm[slot] else 1f
+        }
+
+        private fun resolveSlot(codePoint: Int): Int {
+            val slot = slotByCode.get(codePoint)
+            return if (slot >= 0) slot else fallbackSlot
+        }
     }
 
     /** Calls [action] with each glyph's index into the per-glyph arrays and its code point. */

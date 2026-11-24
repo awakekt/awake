@@ -96,9 +96,13 @@ data class GlyphDecoration(
 
     /** This decoration with its colours dimmed by [alpha], as a scope dims its glyph's. */
     fun dimmedBy(alpha: Float): GlyphDecoration =
-        if (alpha >= 1f) this else copy(outlineColor = outlineColor.timesAlpha(alpha), shadowColor = shadowColor.timesAlpha(alpha))
+        if (alpha >= 1f || (outlineColor.a == 0f && shadowColor.a == 0f)) {
+            this
+        } else {
+            copy(outlineColor = outlineColor.timesAlpha(alpha), shadowColor = shadowColor.timesAlpha(alpha))
+        }
 
-    private fun Color.timesAlpha(alpha: Float): Color = Color(r, g, b, a * alpha)
+    private fun Color.timesAlpha(alpha: Float): Color = if (a == 0f) this else Color(r, g, b, a * alpha)
 }
 
 /** The antialiased edge's own pixel. */

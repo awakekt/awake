@@ -52,6 +52,11 @@ internal class FallbackUiFont(
         stackedFaces.forEach { face -> face.atlasPages.takeIf { it.size > 1 }?.let { put(face, it.first()) } }
     }
     private val extraPages = ExtraAtlasPages(stackedFaces.flatMap { it.atlasPages.drop(1) }, primary, pageIndex = pages.size)
+    private val faceIndexTable = CodePointIntTable()
+    private val standardWeightCaches = arrayOfNulls<FallbackGlyphCache>(STANDARD_WEIGHT_COUNT)
+    private var customWeightKeys = IntArray(0)
+    private var customWeightCaches = emptyArray<FallbackGlyphCache?>()
+    private var customWeightCount = 0
 
     override val samplingMode: UiFontSamplingMode = primary.samplingMode
     override val cellSize: Int = primary.cellSize
@@ -124,7 +129,10 @@ internal class FallbackUiFont(
 
     override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? = glyphFor(char.code, weight)
 
-    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        cacheFor(weight).cachedGlyph(codePoint) { resolveGlyph(codePoint, weight) }
+
+    private fun resolveGlyph(codePoint: Int, weight: FontWeight): GlyphRect? {
         val face = faces[faceIndex(codePoint)]
         val glyph = face.glyphFor(codePoint, weight) ?: return null
         val page = faceToPage[face]
@@ -137,7 +145,10 @@ internal class FallbackUiFont(
     }
 
     /** The face's tile, moved where [glyphFor] moves its glyph; none unless the page it lands on reads its field. */
-    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        cacheFor(weight).cachedEffectGlyph(codePoint) { resolveEffectGlyph(codePoint, weight) }
+
+    private fun resolveEffectGlyph(codePoint: Int, weight: FontWeight): GlyphRect? {
         val face = faces[faceIndex(codePoint)]
         val range = face.effectFieldRangePx
         val readable = range > 0f && fontFor(codePoint, weight).effectFieldRangePx == range
@@ -149,6 +160,33 @@ internal class FallbackUiFont(
             extraOwner != null -> extraPages.glyphFor(extraOwner, tile)
             else -> page.glyphFor(face, tile)
         }
+    }
+
+    private fun cacheFor(weight: FontWeight): FallbackGlyphCache {
+        val v = weight.value
+        if (v in MIN_STANDARD_WEIGHT..MAX_STANDARD_WEIGHT && v % WEIGHT_STEP == 0) {
+            val slot = (v / WEIGHT_STEP) - 1
+            return standardWeightCaches[slot] ?: FallbackGlyphCache().also { standardWeightCaches[slot] = it }
+        }
+        return customWeightCacheFor(v)
+    }
+
+    private fun customWeightCacheFor(weightValue: Int): FallbackGlyphCache {
+        for (i in 0 until customWeightCount) {
+            if (customWeightKeys[i] == weightValue) {
+                customWeightCaches[i]?.let { return it }
+            }
+        }
+        if (customWeightCount == customWeightKeys.size) {
+            val nextSize = if (customWeightKeys.isEmpty()) INITIAL_CUSTOM_WEIGHT_CAPACITY else customWeightKeys.size * 2
+            customWeightKeys = customWeightKeys.copyOf(nextSize)
+            customWeightCaches = customWeightCaches.copyOf(nextSize)
+        }
+        val created = FallbackGlyphCache()
+        customWeightKeys[customWeightCount] = weightValue
+        customWeightCaches[customWeightCount] = created
+        customWeightCount++
+        return created
     }
 
     override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
@@ -202,6 +240,11 @@ internal class FallbackUiFont(
 
     /** The first face that has [codePoint], or the primary face, which draws its own stand-in. */
     private fun faceIndex(codePoint: Int): Int {
+        val cached = faceIndexTable.get(codePoint)
+        return if (cached >= 0) cached else faceIndexSlow(codePoint).also { faceIndexTable.put(codePoint, it) }
+    }
+
+    private fun faceIndexSlow(codePoint: Int): Int {
         for (index in faces.indices) {
             if (faces[index].hasGlyph(codePoint)) return index
         }
@@ -227,8 +270,24 @@ internal class FallbackUiFont(
         return result
     }
 
+    private class FallbackGlyphCache {
+        val glyphCache = CodePointGlyphCache()
+        val effectCache = CodePointGlyphCache()
+
+        inline fun cachedGlyph(codePoint: Int, compute: () -> GlyphRect?): GlyphRect? =
+            glyphCache.getOrPut(codePoint, compute)
+
+        inline fun cachedEffectGlyph(codePoint: Int, compute: () -> GlyphRect?): GlyphRect? =
+            effectCache.getOrPut(codePoint, compute)
+    }
+
     private companion object {
         const val RGBA_CHANNELS = 4
+        const val WEIGHT_STEP = 100
+        const val MIN_STANDARD_WEIGHT = 100
+        const val MAX_STANDARD_WEIGHT = 900
+        const val STANDARD_WEIGHT_COUNT = 9
+        const val INITIAL_CUSTOM_WEIGHT_CAPACITY = 4
 
         fun buildPages(
             stackedFaces: List<UiFont>,
