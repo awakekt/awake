@@ -41,4 +41,9 @@ class GpuResourcePool<T>(private val create: () -> T) {
             index += 1
         }
     }
+
+    /** Drops all retained pool entries after teardown so callers and leak checks see zero live items. */
+    fun clear() {
+        items.clear()
+    }
 }

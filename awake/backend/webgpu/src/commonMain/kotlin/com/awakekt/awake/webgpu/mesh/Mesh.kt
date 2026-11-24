@@ -148,8 +148,13 @@ private constructor(
         lineIndexBinding = WebGpuBufferHandle(rawLineIndexBuffer)
     }
 
+    internal var onDestroy: (() -> Unit)? = null
+    private var destroyed = false
+
     /** Releases the handle-table entries and closes the three buffers behind them. */
     override fun destroy() {
+        if (destroyed) return
+        destroyed = true
         if (--vertexOwner.meshes == 0) {
             WebGpuHandles.release(vertexBuffer.handle)
             vertexBinding.buffer.close()
@@ -158,13 +163,16 @@ private constructor(
         WebGpuHandles.release(lineIndexBuffer.handle)
         indexBinding.buffer.close()
         lineIndexBinding.buffer.close()
+        val release = onDestroy
+        onDestroy = null
+        release?.invoke()
     }
 
     /**
      * A mesh drawing this one's vertex buffer with [indices] instead of its own, or null when this
      * mesh has been destroyed and its vertex buffer with it.
      */
-    internal fun sharingVertices(indices: IntArray, bounds: Aabb?): Mesh? = if (vertexOwner.meshes == 0) {
+    internal fun sharingVertices(indices: IntArray, bounds: Aabb?): Mesh? = if (destroyed || vertexOwner.meshes == 0) {
         null
     } else {
         Mesh(graphicsDevice, runOneTimeCommands, EMPTY_VERTICES, indices, format, bounds, this)

@@ -246,17 +246,22 @@ private constructor(
         VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0)
     }
 
+    internal var onDestroy: (() -> Unit)? = null
+    private var destroyed = false
+
     /**
      * A mesh drawing this one's vertex buffer with [indices] instead of its own, or null when this
      * mesh has been destroyed and its vertex buffer with it.
      */
-    internal fun sharingVertices(indices: IntArray, bounds: Aabb?): Mesh? = if (vertexOwner.meshes == 0) {
+    internal fun sharingVertices(indices: IntArray, bounds: Aabb?): Mesh? = if (destroyed || vertexOwner.meshes == 0) {
         null
     } else {
         Mesh(graphicsDevice, runOneTimeCommands, EMPTY_VERTICES, indices, format, bounds, this)
     }
 
     override fun destroy() {
+        if (destroyed) return
+        destroyed = true
         // Scene replacement can release this mesh while another frame slot still references it.
         // Device idle covers every submitted queue without waiting on a reset, unsubmitted fence.
         VulkanBuffers.vkDeviceWaitIdle(device)
@@ -266,6 +271,9 @@ private constructor(
         }
         VulkanBuffers.vkDestroyBuffer(device, indexBuffer.handle)
         VulkanBuffers.vkFreeMemory(device, indexBufferMemory.handle)
+        val release = onDestroy
+        onDestroy = null
+        release?.invoke()
     }
 
     /** How many meshes still draw one vertex buffer. */

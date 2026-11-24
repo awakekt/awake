@@ -81,9 +81,17 @@ internal class WebGpuDynamicMesh(
         queue.writeMeshFloatRange(vertexBinding.buffer, vertices, firstVertex * stride, vertexCount * stride, staging)
     }
 
+    internal var onDestroy: (() -> Unit)? = null
+    private var destroyed = false
+
     override fun destroy() {
+        if (destroyed) return
+        destroyed = true
         vertexBinding.buffer.close()
         indexBinding.buffer.close()
+        val release = onDestroy
+        onDestroy = null
+        release?.invoke()
     }
 }
 

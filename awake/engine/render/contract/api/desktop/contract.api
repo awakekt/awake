@@ -1206,6 +1206,7 @@ public abstract interface class com/awakekt/awake/render/pipeline/GpuDevice {
 	public fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public fun getDeviceName ()Ljava/lang/String;
 	public fun getDriverVersion ()Ljava/lang/Long;
+	public fun getGpuResourceStats ()Lcom/awakekt/awake/render/renderer/GpuResourceStats;
 	public fun getVendorId ()Ljava/lang/Integer;
 	public fun waitIdle ()V
 }
@@ -1221,6 +1222,7 @@ public final class com/awakekt/awake/render/pipeline/GpuDevice$DefaultImpls {
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public static fun getDeviceName (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Ljava/lang/String;
 	public static fun getDriverVersion (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Ljava/lang/Long;
+	public static fun getGpuResourceStats (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Lcom/awakekt/awake/render/renderer/GpuResourceStats;
 	public static fun getVendorId (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Ljava/lang/Integer;
 	public static fun waitIdle (Lcom/awakekt/awake/render/pipeline/GpuDevice;)V
 }
@@ -2205,6 +2207,32 @@ public final class com/awakekt/awake/render/renderer/GpuFrameTimeCounter {
 	public final fun publish ()V
 }
 
+public final class com/awakekt/awake/render/renderer/GpuResourceStats {
+	public fun <init> ()V
+	public fun <init> (IIIIIJJ)V
+	public synthetic fun <init> (IIIIIJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()J
+	public final fun component7 ()J
+	public final fun copy (IIIIIJJ)Lcom/awakekt/awake/render/renderer/GpuResourceStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/GpuResourceStats;IIIIIJJILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/GpuResourceStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEstimatedTextureBytes ()J
+	public final fun getLiveMaterials ()I
+	public final fun getLiveMeshBytes ()J
+	public final fun getLiveMeshes ()I
+	public final fun getLivePooledBuffers ()I
+	public final fun getLiveRenderTargets ()I
+	public final fun getLiveTextures ()I
+	public final fun getTotalLiveResources ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/render/renderer/LineSegment {
 	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -2518,6 +2546,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getFrameRenderPasses (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getFrameUiUploads (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/UiUploadStats;
+	public static fun getGpuResourceStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/GpuResourceStats;
 	public static fun getMaskTargetBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
 	public static fun getMaxAnisotropy (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getMaxSupportedAnisotropy (Lcom/awakekt/awake/render/renderer/Renderer;)I

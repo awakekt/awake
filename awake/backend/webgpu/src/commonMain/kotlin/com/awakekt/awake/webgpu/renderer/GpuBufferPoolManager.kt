@@ -215,6 +215,22 @@ internal class GpuBufferPoolManager(
         sceneDepthBindGroupSlots.remove(pipeline)
     }
 
+    /** Total live pooled dynamic meshes, instance buffers, and per-draw uniform buffers currently held. */
+    val liveBufferCount: Int
+        get() {
+            var total = overlayUiSlots.liveMeshCount +
+                uiTextureMeshPool.size +
+                imagePassMeshPool.size +
+                instanceBufferPool.size +
+                skinnedInstanceBufferPool.size +
+                alphaInstanceBufferPool.size +
+                frameInstanceBufferPool.size +
+                uniformSlotCount +
+                skinnedInstancedUniformResources.size
+            targetUiSlots.values.forEach { total += it.liveMeshCount }
+            return total
+        }
+
     fun destroy() {
         overlayUiSlots.destroy()
         targetUiSlots.values.forEach(UiMeshSlots::destroy)
@@ -225,6 +241,12 @@ internal class GpuBufferPoolManager(
         skinnedInstanceBufferPool.forEach { it.destroy() }
         alphaInstanceBufferPool.forEach { it.destroy() }
         frameInstanceBufferPool.forEach { it.destroy() }
+        uiTextureMeshPool.clear()
+        imagePassMeshPool.clear()
+        instanceBufferPool.clear()
+        skinnedInstanceBufferPool.clear()
+        alphaInstanceBufferPool.clear()
+        frameInstanceBufferPool.clear()
         uniformSlotPools.values.forEach { pool -> pool.forEach(UniformSlot::close) }
         uniformSlotPools.clear()
         skinnedInstancedUniformResources.values.forEach(WebGpuUniformResources::close)

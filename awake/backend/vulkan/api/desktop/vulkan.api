@@ -438,6 +438,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getFrameUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
 	public fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
+	public fun getGpuResourceStats ()Lcom/awakekt/awake/render/renderer/GpuResourceStats;
 	public fun getMaskTargetBytes ()J
 	public fun getMaxAnisotropy ()I
 	public fun getMaxSupportedAnisotropy ()I

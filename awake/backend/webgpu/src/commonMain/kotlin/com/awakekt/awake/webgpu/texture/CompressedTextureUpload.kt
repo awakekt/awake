@@ -65,6 +65,7 @@ internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage, filt
         mipLevelCount = image.levels.size - skip,
         uploadedWidth = image.levelWidth(skip),
         uploadedHeight = image.levelHeight(skip),
+        estimatedGpuBytes = image.levels.drop(skip).sumOf { it.size.toLong() },
     )
 }
 

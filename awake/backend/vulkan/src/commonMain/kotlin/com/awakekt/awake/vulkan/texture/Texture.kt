@@ -92,6 +92,9 @@ class Texture internal constructor(
     /** Mip levels the GPU image holds, fewer than the source's chain by any levels mip skip left out. */
     val uploadedMipLevels: Int get() = mipLevels
 
+    /** Estimated GPU bytes held by this texture across all uploaded mip levels and array layers. */
+    internal val estimatedGpuBytes: Long = uploaded.byteSize
+
     /** The anisotropic samples [sampler] was made with: 1 unless [resample] raised it. */
     internal var samplerAnisotropy = 1
         private set

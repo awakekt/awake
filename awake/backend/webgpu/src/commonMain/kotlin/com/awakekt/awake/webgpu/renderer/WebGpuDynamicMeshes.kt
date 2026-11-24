@@ -13,5 +13,5 @@ import com.awakekt.awake.webgpu.mesh.WebGpuDynamicMesh
 /** The WebGPU [GpuDynamicMeshes]: a [WebGpuDynamicMesh], one vertex buffer written on the queue. */
 internal class WebGpuDynamicMeshes(private val renderer: Renderer) : GpuDynamicMeshes {
     override fun createDynamicMesh(format: VertexFormat, vertexCapacity: Int, indices: IntArray): DynamicMesh =
-        WebGpuDynamicMesh(renderer.graphicsDevice, format, vertexCapacity, indices)
+        renderer.trackDynamicMesh(WebGpuDynamicMesh(renderer.graphicsDevice, format, vertexCapacity, indices))
 }

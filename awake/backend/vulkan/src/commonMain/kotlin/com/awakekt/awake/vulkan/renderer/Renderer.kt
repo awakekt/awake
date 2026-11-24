@@ -51,6 +51,7 @@ import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.AntiAliasing
+import com.awakekt.awake.render.renderer.GpuResourceStats
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.PresentIntervalTracker
 import com.awakekt.awake.render.renderer.RenderFrameStats
@@ -513,7 +514,21 @@ class Renderer internal constructor(
     /** Samplers replaced for a new [maxAnisotropy], destroyed once no frame in flight can use them. */
     internal val retiredSamplers = RetiredSamplers(graphicsDevice)
 
-    internal val textureResources = TextureResourceManager<Texture>(Texture::destroy)
+    internal val textureResources = TextureResourceManager<Texture>(Texture::estimatedGpuBytes, Texture::destroy)
+    internal var liveMeshCount = 0
+    internal var liveMeshBytes = 0L
+    internal var liveMaterialCount = 0
+
+    override val gpuResourceStats: GpuResourceStats
+        get() = GpuResourceStats(
+            liveMeshes = liveMeshCount,
+            liveMaterials = liveMaterialCount,
+            liveTextures = textureResources.count,
+            liveRenderTargets = createdRenderTargets.size,
+            livePooledBuffers = bufferPools.liveBufferCount,
+            liveMeshBytes = liveMeshBytes,
+            estimatedTextureBytes = textureResources.totalBytes,
+        )
 
     override val maxSupportedAnisotropy: Int get() = graphicsDevice.maxSamplerAnisotropy
 
@@ -601,7 +616,7 @@ class Renderer internal constructor(
     override fun createMesh(geometry: MeshGeometry): RenderMesh = performCreateMesh(geometry)
 
     override fun createMeshSharingVertices(vertices: RenderMesh, geometry: MeshGeometry): RenderMesh =
-        (vertices as? Mesh)?.takeIf { it.format == geometry.format }?.sharingVertices(geometry.indices, geometry.bounds)
+        (vertices as? Mesh)?.takeIf { it.format == geometry.format }?.sharingVertices(geometry.indices, geometry.bounds)?.let(::trackMesh)
             ?: performCreateMesh(geometry)
 
     override fun createMaterial(

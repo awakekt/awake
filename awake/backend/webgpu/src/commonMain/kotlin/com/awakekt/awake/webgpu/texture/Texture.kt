@@ -67,6 +67,8 @@ class Texture private constructor(
     val uploadedWidth: Int = width,
     /** The GPU image's own height; see [uploadedWidth]. */
     val uploadedHeight: Int = height,
+    /** Estimated GPU bytes held by this texture across all uploaded mip levels and array layers. */
+    internal val estimatedGpuBytes: Long = estimateRgbaBytes(uploadedWidth, uploadedHeight, layerCount, mipLevels),
 ) : com.awakekt.awake.render.texture.WritableTexture {
     /** Mip levels the GPU image holds, fewer than the source's chain by any levels mip skip left out. */
     val uploadedMipLevels: Int get() = mipLevels
@@ -137,6 +139,8 @@ class Texture private constructor(
         mipLevels = filled.mipLevelCount,
         uploadedWidth = filled.uploadedWidth,
         uploadedHeight = filled.uploadedHeight,
+        estimatedGpuBytes = filled.estimatedGpuBytes.takeIf { it > 0L }
+            ?: estimateRgbaBytes(filled.uploadedWidth, filled.uploadedHeight, filled.layerCount, filled.mipLevelCount),
     )
 
     /** A GPU texture whose levels are already written, and how to view it. */
@@ -150,6 +154,8 @@ class Texture private constructor(
         /** The size of the level uploaded as the base: [width] x [height] unless mip skip left levels out. */
         val uploadedWidth: Int = width,
         val uploadedHeight: Int = height,
+        /** Exact uploaded GPU byte count when known; 0 falls back to RGBA8 mip-chain estimation. */
+        val estimatedGpuBytes: Long = 0L,
     )
 
     internal companion object {
@@ -209,7 +215,17 @@ class Texture private constructor(
                     ),
                 )
             }
-            return FilledTexture(texture, width, height, mipLevels.size, layerCount, isCubemap, base.width, base.height)
+            return FilledTexture(
+                texture,
+                width,
+                height,
+                mipLevels.size,
+                layerCount,
+                isCubemap,
+                base.width,
+                base.height,
+                estimatedGpuBytes = mipLevels.sumOf { it.data.size.toLong() },
+            )
         }
 
         private fun createSampler(graphicsDevice: GraphicsDevice, filtering: TextureFiltering, anisotropy: Int = 1): GPUSampler =
@@ -234,4 +250,16 @@ class Texture private constructor(
         sampler.close()
         texture.close()
     }
+}
+
+private fun estimateRgbaBytes(width: Int, height: Int, layerCount: Int, mipLevels: Int): Long {
+    var total = 0L
+    val layers = maxOf(1, layerCount).toLong()
+    val levels = maxOf(1, mipLevels)
+    for (level in 0 until levels) {
+        val levelWidth = maxOf(1, width shr level).toLong()
+        val levelHeight = maxOf(1, height shr level).toLong()
+        total += levelWidth * levelHeight * 4L * layers
+    }
+    return total
 }

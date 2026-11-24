@@ -43,11 +43,19 @@ internal class UiMeshSlots(graphicsDevice: GraphicsDevice, framesInFlight: Int) 
             return total
         }
 
+    /** Total pooled dynamic UI meshes currently allocated across these four pools. */
+    val liveMeshCount: Int
+        get() = quads.size + glyphs.size + decoratedGlyphs.size + roundedQuads.size
+
     fun destroy() {
         quads.forEach { it.destroy() }
         glyphs.forEach { it.destroy() }
         decoratedGlyphs.forEach { it.destroy() }
         roundedQuads.forEach { it.destroy() }
+        quads.clear()
+        glyphs.clear()
+        decoratedGlyphs.clear()
+        roundedQuads.clear()
     }
 }
 
