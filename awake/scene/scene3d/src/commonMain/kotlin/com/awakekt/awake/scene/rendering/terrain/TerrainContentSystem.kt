@@ -208,7 +208,7 @@ class TerrainContentSystem(
         entry.job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 val feature = host.attachContentFeature(
-                    terrainContentFeature(surface.shaders, entry.terrain, surface.textures) { entry.origin },
+                    terrainContentFeature(surface.shaders, entry.terrain, surface.textures, surface.samplerTextures) { entry.origin },
                 )
                 attached.trySend(Attached(entry.entity, entry.terrain, feature))
             } catch (cancelled: CancellationException) {

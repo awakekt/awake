@@ -33,6 +33,7 @@ fun terrainContentFeature(
     shaders: ShaderSet,
     terrain: TerrainComponent,
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    samplerTextures: Map<Int, Int>,
     origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource =
     terrainContentFeature(
@@ -41,8 +42,20 @@ fun terrainContentFeature(
         config = terrain.clipmapConfig,
         surfaceTextures = surfaceTextures,
         isVisible = { terrain.isVisible },
+        samplerTextures = samplerTextures,
         origin = origin,
     )
+
+/**
+ * [terrainContentFeature] with default sampler bindings only; keeps trailing-lambda [origin]
+ * callers source- and binary-compatible.
+ */
+fun terrainContentFeature(
+    shaders: ShaderSet,
+    terrain: TerrainComponent,
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    origin: () -> Vec3f = { AT_ORIGIN },
+): ContentFeatureSource = terrainContentFeature(shaders, terrain, surfaceTextures, emptyMap(), origin)
 
 /** The signature before [terrainContentFeature] took an origin; kept for compiled callers. */
 @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
@@ -50,7 +63,7 @@ fun terrainContentFeature(
     shaders: ShaderSet,
     terrain: TerrainComponent,
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
-): ContentFeatureSource = terrainContentFeature(shaders, terrain, surfaceTextures, origin = { AT_ORIGIN })
+): ContentFeatureSource = terrainContentFeature(shaders, terrain, surfaceTextures, emptyMap(), origin = { AT_ORIGIN })
 
 /** Never written: a terrain with no placement of its own reads it. */
 private val AT_ORIGIN = Vec3f(0f, 0f, 0f)

@@ -25,16 +25,27 @@ data class TerrainSurfaceReference(
 )
 
 /**
- * A resolved surface: a shader set built on `terrainClipmapVertexStage`, and the textures for its
- * bindings from `TERRAIN_SURFACE_FIRST_BINDING`.
+ * A resolved surface: a shader set built on `terrainClipmapVertexStage`, the textures for its
+ * bindings from `TERRAIN_SURFACE_FIRST_BINDING`, and optional overrides naming which texture's
+ * sampler each sampler binding reads (`samplerBinding -> textureBinding`).
  *
  * @property shaders Shader pipeline stages used to render the terrain surface.
  * @property textures Texture assets bound to shader slots for the surface.
+ * @property samplerTextures Optional mapping from sampler binding to the texture binding whose
+ *   sampler it should use, when surface textures mix filtering modes.
  */
 class TerrainSurface(
     val shaders: ShaderSet,
     val textures: Map<Int, TextureAsset> = emptyMap(),
-)
+    val samplerTextures: Map<Int, Int> = emptyMap(),
+) {
+    /** The constructor before [samplerTextures]; kept so compiled callers still link. */
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        shaders: ShaderSet,
+        textures: Map<Int, TextureAsset> = emptyMap(),
+    ) : this(shaders, textures, emptyMap())
+}
 
 /**
  * Turns a [TerrainSurfaceReference]'s payload into a [TerrainSurface], loading whatever assets

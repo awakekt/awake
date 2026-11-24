@@ -6,6 +6,7 @@
 package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 
 private const val RGBA = 4
 private const val NEUTRAL_LIGHT: Byte = 128.toByte()
@@ -34,8 +35,8 @@ class TerrainLightmap(
     /** Returns a defensive copy of the raw RGBA texel bytes. */
     fun copyRgba(): ByteArray = texels.copyOf()
 
-    /** Creates a [TextureAsset] wrapping this lightmap's RGBA data. */
-    fun texture(): TextureAsset = TextureAsset(texels.copyOf(), width, depth)
+    /** Creates a single-level [TextureAsset] wrapping this lightmap's RGBA data without mip-skip. */
+    fun texture(): TextureAsset = TextureAsset(texels.copyOf(), width, depth, filtering = TextureFiltering.BaseLevelLinear)
 
     /** Companion object containing common lightmap presets. */
     companion object {

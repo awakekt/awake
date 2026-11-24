@@ -6,6 +6,7 @@
 package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -65,7 +66,8 @@ fun layerTable(palette: TerrainLayerPalette): TextureAsset {
         data[index * RGBA + 1] = (layer.blendSharpness * BYTE_MAX).roundToInt().coerceIn(0, BYTE_MAX).toByte()
         data[index * RGBA + ALPHA] = BYTE_MAX.toByte()
     }
-    return TextureAsset(data, palette.layers.size, 1)
+    // Single-level lookup table: mip-skip would shrink the 1D palette width and scramble layer parameters.
+    return TextureAsset(data, palette.layers.size, 1, filtering = TextureFiltering.Nearest)
 }
 
 /** The byte the shader turns back into a tiling with `2^(byte / 255 * 8 - 2)`. */

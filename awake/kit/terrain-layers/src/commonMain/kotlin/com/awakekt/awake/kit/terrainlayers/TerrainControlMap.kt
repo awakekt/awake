@@ -6,6 +6,7 @@
 package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 
 /** Layer slots a control texel holds where at most this many layers meet: one RGBA texel each. */
 const val CONTROL_SLOTS: Int = 4
@@ -70,12 +71,19 @@ class TerrainControlMap(
 
     /**
      * Indices in RGBA order for the shader's control binding: `slots / 4` texels side by side per
-     * control texel.
+     * control texel. Marked [TextureFiltering.Nearest] so mip-chain generation and `textureMipSkip`
+     * never box-average palette indices.
      */
-    fun indicesTexture(): TextureAsset = TextureAsset(indexBytes.copyOf(), width * slots / CONTROL_SLOTS, depth)
+    fun indicesTexture(): TextureAsset =
+        TextureAsset(indexBytes.copyOf(), width * slots / CONTROL_SLOTS, depth, filtering = TextureFiltering.Nearest)
 
-    /** Weights in RGBA order packed into a [TextureAsset] matching the GPU control texture layout. */
-    fun weightsTexture(): TextureAsset = TextureAsset(weightBytes.copyOf(), width * slots / CONTROL_SLOTS, depth)
+    /**
+     * Weights in RGBA order packed into a [TextureAsset] matching the GPU control texture layout.
+     * Marked [TextureFiltering.Nearest] so `textureMipSkip` never drops top levels out from under
+     * texel-centred lookups.
+     */
+    fun weightsTexture(): TextureAsset =
+        TextureAsset(weightBytes.copyOf(), width * slots / CONTROL_SLOTS, depth, filtering = TextureFiltering.Nearest)
 
     private fun offset(x: Int, z: Int, slot: Int): Int {
         require(x in 0 until width && z in 0 until depth && slot in 0 until slots) {

@@ -29,6 +29,7 @@ import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 
 /** Grey the heightfield is shaded with. Terrain colour is authored world policy (D28); this is
  * the engine's neutral stand-in, not a design choice a consumer inherits. */
@@ -62,16 +63,21 @@ private const val VERTEX_BINDING = 0
  * @param isVisible Read every frame. A lambda rather than a flag so an ECS component can own the
  * answer without this module depending on the scene layer -- see `:awake:scene:scene3d`'s own
  * `terrainContentFeature` overload, which passes a `TerrainComponent`'s.
+ * @param samplerTextures Optional mapping from sampler binding to the texture binding whose
+ * sampler it should use, overriding the default heightmap sampler for surface shaders that mix
+ * single-level data textures with mipmapped albedo arrays.
  * @param origin Where the heightmap's centre lies in the world, read every frame like [isVisible],
  * so terrains drawn together can lie side by side. The rings follow the camera across the terrain
  * from there.
  */
+@Suppress("LongParameterList") // Public entry point kept additive for binary compatibility.
 fun terrainContentFeature(
     shaders: ShaderSet,
     heightmap: Heightmap,
     config: TerrainClipmapConfig = TerrainClipmapConfig(),
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     isVisible: () -> Boolean = { true },
+    samplerTextures: Map<Int, Int>,
     origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource {
     require(config.ringCount <= MAX_CLIPMAP_RINGS) {
@@ -115,6 +121,7 @@ fun terrainContentFeature(
             textures = surfaceTextures + (HEIGHTMAP_BINDING to encoded.texture),
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
             paint = ContentPaint.OpaqueGeometry,
+            samplerTextures = mapOf(HEIGHTMAP_SAMPLER_BINDING to HEIGHTMAP_BINDING) + samplerTextures,
             images = emptyMap(),
             alternateSpec = shaders.solidOpaque?.stagesFor(backend)?.spec(
                 vertexFormat = VertexFormat.PositionNormalColorUv,
@@ -126,6 +133,20 @@ fun terrainContentFeature(
     }
 }
 
+/**
+ * [terrainContentFeature] with the heightmap's default sampler bindings only; keeps trailing-lambda
+ * [origin] callers source- and binary-compatible.
+ */
+@Suppress("LongParameterList")
+fun terrainContentFeature(
+    shaders: ShaderSet,
+    heightmap: Heightmap,
+    config: TerrainClipmapConfig = TerrainClipmapConfig(),
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    isVisible: () -> Boolean = { true },
+    origin: () -> Vec3f = { AT_ORIGIN },
+): ContentFeatureSource = terrainContentFeature(shaders, heightmap, config, surfaceTextures, isVisible, emptyMap(), origin)
+
 /** The signature before [terrainContentFeature] took an origin; kept for compiled callers. */
 @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
 fun terrainContentFeature(
@@ -134,13 +155,16 @@ fun terrainContentFeature(
     config: TerrainClipmapConfig = TerrainClipmapConfig(),
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     isVisible: () -> Boolean = { true },
-): ContentFeatureSource = terrainContentFeature(shaders, heightmap, config, surfaceTextures, isVisible, origin = { AT_ORIGIN })
+): ContentFeatureSource = terrainContentFeature(shaders, heightmap, config, surfaceTextures, isVisible, emptyMap(), origin = { AT_ORIGIN })
 
 /** Never written: a terrain with no placement of its own reads it. */
 private val AT_ORIGIN = Vec3f(0f, 0f, 0f)
 
 /** Binding 1 of the terrain group -- see `AslTerrainShader`. */
 private const val HEIGHTMAP_BINDING = 1
+
+/** Binding 2 of the terrain group -- heightmap sampler in `AslTerrainShader`. */
+private const val HEIGHTMAP_SAMPLER_BINDING = 2
 
 /**
  * A heightmap as a sampleable texture, plus the scale and bias that undo the encoding.
@@ -183,7 +207,9 @@ internal fun Heightmap.encodeForSampling(): EncodedHeightmap {
     val worldX = (width - 1) * scale.x
     val worldZ = (depth - 1) * scale.z
     return EncodedHeightmap(
-        texture = TextureAsset(pixels, width, depth),
+        // Base-level linear: heightmaps are sampled at mip 0 in the vertex stage and encode 16-bit
+        // elevations across R/G, so mip-chain generation and textureMipSkip must never downsample them.
+        texture = TextureAsset(pixels, width, depth, filtering = TextureFiltering.BaseLevelLinear),
         scale = range * scale.y,
         bias = min * scale.y,
         sampling = floatArrayOf(worldX, worldZ, 1f / width, 1f / depth),

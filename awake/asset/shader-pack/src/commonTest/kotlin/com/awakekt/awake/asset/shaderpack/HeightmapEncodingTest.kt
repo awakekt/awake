@@ -7,6 +7,7 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.texture.TextureFiltering
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -83,6 +84,14 @@ class HeightmapEncodingTest {
         assertTrue(encoded.texture.data.none { it != 0.toByte() && it != 0xFF.toByte() })
         assertEquals(0f, encoded.scale)
         assertEquals(14f, encoded.bias, "7 units at a y scale of 2.")
+    }
+
+    /** Split 16-bit height channels must skip mip chains so texture quality reduction never downsamples elevation. */
+    @Test
+    fun encodedHeightmapUsesBaseLevelLinearSoMipSkipLeavesItUntouched() {
+        val encoded = rampHeightmap(65).encodeForSampling()
+
+        assertEquals(TextureFiltering.BaseLevelLinear, encoded.texture.filtering)
     }
 
     private companion object {

@@ -77,7 +77,7 @@ const val CONTROL_INDICES_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 2
 
 /** Shader texture binding slot for terrain control layer blend weights. */
 const val CONTROL_WEIGHTS_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 3
-private const val LAYER_SAMPLER_BINDING = TERRAIN_SURFACE_FIRST_BINDING + 4
+internal const val LAYER_SAMPLER_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 4
 
 /** Baked lighting. See [TerrainLightmap]. */
 const val LIGHTMAP_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 5
