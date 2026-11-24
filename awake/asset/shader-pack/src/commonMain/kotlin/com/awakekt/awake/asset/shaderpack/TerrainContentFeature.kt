@@ -77,7 +77,7 @@ fun terrainContentFeature(
     config: TerrainClipmapConfig = TerrainClipmapConfig(),
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     isVisible: () -> Boolean = { true },
-    samplerTextures: Map<Int, Int> = emptyMap(),
+    samplerTextures: Map<Int, Int>,
     origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource {
     require(config.ringCount <= MAX_CLIPMAP_RINGS) {
@@ -133,8 +133,10 @@ fun terrainContentFeature(
     }
 }
 
-/** The signature before [terrainContentFeature] took [samplerTextures]; kept for compiled callers. */
-@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+/**
+ * [terrainContentFeature] with the heightmap's default sampler bindings only; keeps trailing-lambda
+ * [origin] callers source- and binary-compatible.
+ */
 @Suppress("LongParameterList")
 fun terrainContentFeature(
     shaders: ShaderSet,

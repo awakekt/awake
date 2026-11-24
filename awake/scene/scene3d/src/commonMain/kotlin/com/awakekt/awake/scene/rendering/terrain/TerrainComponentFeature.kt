@@ -33,7 +33,7 @@ fun terrainContentFeature(
     shaders: ShaderSet,
     terrain: TerrainComponent,
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
-    samplerTextures: Map<Int, Int> = emptyMap(),
+    samplerTextures: Map<Int, Int>,
     origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource =
     terrainContentFeature(
@@ -46,8 +46,10 @@ fun terrainContentFeature(
         origin = origin,
     )
 
-/** The signature before [terrainContentFeature] took [samplerTextures]; kept for compiled callers. */
-@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+/**
+ * [terrainContentFeature] with default sampler bindings only; keeps trailing-lambda [origin]
+ * callers source- and binary-compatible.
+ */
 fun terrainContentFeature(
     shaders: ShaderSet,
     terrain: TerrainComponent,
