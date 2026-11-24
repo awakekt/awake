@@ -11,10 +11,7 @@ import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes2d.DrawRun
 import com.awakekt.awake.render.renderer.GpuFramePart
 import com.awakekt.awake.vulkan.Vulkan
-import com.awakekt.awake.vulkan.enums.VkSubpassContents
-import com.awakekt.awake.vulkan.models.VkRect2D
-import com.awakekt.awake.vulkan.models.VkViewport
-import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.pipeline.VulkanImagePassParentTarget
 
 /**
@@ -28,13 +25,13 @@ internal fun Renderer.recordScaledOutput(
     frameIndex: Int,
     acquiredImageIndex: Int,
     upscale: ImagePassChain,
-    viewport: VkViewport,
-    scissor: VkRect2D,
+    outputWidth: Int,
+    outputHeight: Int,
     context: VulkanFrameContext,
     environment: GpuEnvironmentState,
     timer: GpuFrameTimer?,
 ): Boolean {
-    val shared = recordUpscaleAndUi(commandBuffer, frameIndex, acquiredImageIndex, upscale, viewport, scissor, context, environment, timer)
+    val shared = recordUpscaleAndUi(commandBuffer, frameIndex, acquiredImageIndex, upscale, outputWidth, outputHeight, context, environment, timer)
     if (!shared) {
         recordSwapchainPostPasses(
             commandBuffer = commandBuffer,
@@ -69,30 +66,35 @@ internal fun Renderer.recordUpscaleAndUi(
     frameIndex: Int,
     acquiredImageIndex: Int,
     upscale: ImagePassChain,
-    viewport: VkViewport,
-    scissor: VkRect2D,
+    outputWidth: Int,
+    outputHeight: Int,
     context: VulkanFrameContext,
     environment: GpuEnvironmentState,
     timer: GpuFrameTimer?,
 ): Boolean {
     val swapchain = swapchainManager
+    val hasUiDraws = uiRenderPipeline != null && uiRuns.isNotEmpty()
     val framebuffer = uiFramebuffers.getOrNull(acquiredImageIndex)
+        ?: if (!hasUiDraws) ensureSwapchainColorFramebuffers().getOrNull(acquiredImageIndex) else null
     val colorImage = swapchain.images.getOrNull(acquiredImageIndex)
     val colorImageView = swapchain.imageViews.getOrNull(acquiredImageIndex)
-    val merges = uiRenderPipeline != null && framebuffer != null && colorImage != null && colorImageView != null &&
-        uiRuns.none { it is DrawRun.ImagePassRun } && imagePassExecutor.drawsOnlyOnActiveTarget(upscale)
+    val merges = framebuffer != null && colorImage != null && colorImageView != null &&
+        (!hasUiDraws || uiRuns.none { it is DrawRun.ImagePassRun }) &&
+        imagePassExecutor.drawsOnlyOnActiveTarget(upscale)
     if (!merges) return false
     val renderPass = imagePassExecutor.ensureSwapchainPresentRenderPass(swapchain.imageFormat)
+    val clearRgba = environment.clearColorOr(clearColor)
     statsCounter.recordPass()
-    Vulkan.vkCmdBeginRenderPass(
-        commandBuffer,
-        VkRenderPassBeginInfo(
-            renderPass = renderPass,
-            framebuffer = framebuffer,
-            renderArea = VkRect2D(extent = swapchain.extent),
-            pClearValues = arrayOf(clearColorValue(environment)),
-        ),
-        VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
+    VulkanCommands.vkCmdBeginRenderPassColor(
+        commandBuffer = commandBuffer,
+        renderPass = renderPass,
+        framebuffer = framebuffer,
+        width = swapchain.extent.width,
+        height = swapchain.extent.height,
+        r = clearRgba.r,
+        g = clearRgba.g,
+        b = clearRgba.b,
+        a = clearRgba.a,
     )
     imagePassExecutor.recordInOpenPass(
         commandBuffer = commandBuffer,
@@ -113,9 +115,11 @@ internal fun Renderer.recordUpscaleAndUi(
         stats = statsCounter,
     )
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.Upscale)
-    Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(viewport))
-    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
-    recordSharedPassFeatures(RenderPassSlot.Ui, context)
+    if (hasUiDraws) {
+        VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, outputWidth.toFloat(), outputHeight.toFloat(), 0f, 1f)
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, outputWidth, outputHeight)
+        recordSharedPassFeatures(RenderPassSlot.Ui, context)
+    }
     Vulkan.vkCmdEndRenderPass(commandBuffer)
     return true
 }

@@ -12,7 +12,8 @@ import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import com.awakekt.awake.vulkan.device.SMALL_UBO_REBAR_MIN_HEAP_BYTES
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.material.materialLayoutBindings
@@ -26,7 +27,6 @@ import com.awakekt.awake.vulkan.models.info.VkDescriptorPoolSize
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutBinding
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorType
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import com.awakekt.awake.vulkan.renderer.FrameBlockKind
 import com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
@@ -141,18 +141,12 @@ internal class PerFrameUniformSlots(
             ),
         )
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            graphicsDevice.physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(
+            requirements,
+            minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, uniformBytes.toLong())
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
         return Triple(buffer, memory, mappedPtr)
     }
 
@@ -245,7 +239,7 @@ internal class PerFrameUniformSlots(
         val slot = this[frameIndex]
         if (slot.matchesLastWritten(floats)) return false
         slot.recordWritten(floats)
-        VulkanBuffers.writeMappedMemoryFloats(slot.mappedPtr, 0, floats)
+        VulkanBuffers.writeMappedMemoryFloats(slot.mappedPtr, 0L, floats)
         return true
     }
 

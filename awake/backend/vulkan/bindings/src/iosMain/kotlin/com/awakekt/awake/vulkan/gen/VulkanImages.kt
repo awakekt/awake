@@ -25,6 +25,7 @@ import platform.MoltenVK.VK_ACCESS_SHADER_READ_BIT
 import platform.MoltenVK.VK_ACCESS_TRANSFER_READ_BIT
 import platform.MoltenVK.VK_ACCESS_TRANSFER_WRITE_BIT
 import platform.MoltenVK.VK_IMAGE_ASPECT_COLOR_BIT
+import platform.MoltenVK.VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
 import platform.MoltenVK.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 import platform.MoltenVK.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
 import platform.MoltenVK.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
@@ -259,6 +260,14 @@ actual object VulkanImages {
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT.toUInt()
             srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT.toUInt()
             dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.toUInt()
+        } else if (oldLayout == VkImageLayout2.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL &&
+            newLayout == VkImageLayout2.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        ) {
+            // Transitions a completed swapchain color attachment directly to present without an empty pass.
+            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.toUInt()
+            barrier.dstAccessMask = 0u
+            srcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.toUInt()
+            dstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT.toUInt()
         } else {
             error("vkTransitionImageLayout: unsupported layout transition ($oldLayout -> $newLayout)")
         }

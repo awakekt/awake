@@ -204,21 +204,23 @@ open class VulkanEngine(
             format: VertexFormat,
             variant: PipelineVariant = PipelineVariant.Opaque,
             extraLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
+            hasFragmentStage: Boolean = false,
         ) = DepthOnlyPipeline(
-            graphicsDevice,
-            map.renderPass,
-            pipelineDescriptorSetLayout,
-            loadShaderPair(shaders),
-            format,
-            map.size,
-            shaders.vulkan.entryPoint(ShaderStage.VERTEX),
-            shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
+            graphicsDevice = graphicsDevice,
+            renderPass = map.renderPass,
+            descriptorSetLayout = pipelineDescriptorSetLayout,
+            shaders = loadShaderPair(shaders),
+            vertexFormat = format,
+            targetSize = map.size,
+            vertexEntryPoint = shaders.vulkan.entryPoint(ShaderStage.VERTEX),
+            fragmentEntryPoint = shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
             // Every layer the array can grow to: it holds none until a light casts (#1688, #1698).
             cascadeCount = MAX_SHADOW_TARGET_LAYERS,
             framesInFlight = MAX_FRAMES_IN_FLIGHT,
             variant = variant,
             extraDescriptorSetLayouts = extraLayouts,
             shadowBias = shadowBias,
+            hasFragmentStage = hasFragmentStage,
         )
 
         val variants = plan.depthPrePassVariants
@@ -239,7 +241,8 @@ open class VulkanEngine(
         val keyedPipelines = buildMap {
             plan.depthPrePassKeyedVariants.forEach { (key, variant) ->
                 val (format, pipelineVariant) = key.keyedCasterLayout() ?: return@forEach
-                put(key, pipeline(variant, format, pipelineVariant))
+                val needsFragment = key.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked
+                put(key, pipeline(variant, format, pipelineVariant, hasFragmentStage = needsFragment))
             }
         }
         // Each instanced scene pipeline past the primary format casts through its own depth shader.

@@ -5,17 +5,15 @@
  */
 package com.awakekt.awake.vulkan.ui
 
-import com.awakekt.awake.core.geometry.toByteArrayLE
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.handles.BufferHandle
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkIndexType
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 
 /**
  * A vertex+index buffer rewritten every frame -- unlike [com.awakekt.awake
@@ -84,13 +82,7 @@ class DynamicMesh(
         /** Last uploaded arrays. Identity can skip an upload only when the caller supplies immutable content. */
         var writtenVertices: FloatArray? = null,
         var writtenIndices: IntArray? = null,
-        /** Reused little-endian index bytes for this slot, so a per-frame upload converts in place
-         * rather than allocating a fresh `ByteArray` each time (see [toByteArrayLE]). */
-        var indexBytes: ByteArray = EMPTY_INDEX_BYTES,
-    ) {
-        /** What `vkCmdBindVertexBuffers` takes, kept so binding allocates nothing. */
-        var vertexBinding = longArrayOf(vertexBuffer.handle)
-    }
+    )
 
     private val frameResources: Array<FrameResources>
     private var activeFrameIndex: Int = 0
@@ -170,11 +162,8 @@ class DynamicMesh(
         if (indices.isEmpty()) return
         // A UI that did not change hands back the same staged arrays, already in this slot.
         if (!forceUpload && vertices === frame.writtenVertices && indices === frame.writtenIndices) return
-        VulkanBuffers.writeMappedMemoryFloats(frame.vertexMappedPtr, 0, vertices)
-        // writeMappedMemoryBytes copies into mapped memory synchronously, so the reused buffer is
-        // free to be overwritten on the next frame's upload.
-        frame.indexBytes = indices.toByteArrayLE(frame.indexBytes)
-        VulkanBuffers.writeMappedMemoryBytes(frame.indexMappedPtr, 0, frame.indexBytes)
+        VulkanBuffers.writeMappedMemoryFloats(frame.vertexMappedPtr, 0L, vertices)
+        VulkanBuffers.writeMappedMemoryInts(frame.indexMappedPtr, 0L, indices, 0, indices.size)
         frame.writtenVertices = vertices
         frame.writtenIndices = indices
         uploadCount += 1
@@ -224,7 +213,6 @@ class DynamicMesh(
         frame.maxVertices = grownVertices
         frame.maxIndices = grownIndices
         frame.drawIndexCount = 0
-        frame.vertexBinding = longArrayOf(vBuffer)
         frame.writtenVertices = null
         frame.writtenIndices = null
     }
@@ -245,7 +233,7 @@ class DynamicMesh(
      */
     fun bind(frameIndex: Int, commandBuffer: Long) {
         val frame = resourcesFor(frameIndex)
-        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 0, frame.vertexBinding, ZERO_OFFSET)
+        VulkanBuffers.vkCmdBindVertexBuffer(commandBuffer, 0, frame.vertexBuffer.handle, 0L)
         VulkanBuffers.vkCmdBindIndexBuffer(
             commandBuffer,
             frame.indexBuffer.handle,
@@ -302,29 +290,14 @@ class DynamicMesh(
     private fun allocateHostVisibleBuffer(byteSize: Long, usage: Int): Triple<Long, Long, Long> {
         val buffer = VulkanBuffers.vkCreateBuffer(device, VkBufferCreateInfo(size = byteSize, usage = usage))
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-        )
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(requirements)
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
         return Triple(buffer, memory, mappedPtr)
     }
 
     /** Vertex layout sizes and quad geometry constants shared with the UI render pipelines. */
     companion object {
-        /** Every vertex buffer here binds at offset 0; shared so binding allocates nothing. */
-        private val ZERO_OFFSET = longArrayOf(0L)
-
-        /** A slot's index-byte buffer before its first upload grows it to fit. */
-        private val EMPTY_INDEX_BYTES = ByteArray(0)
-
         /** Default (colored-quad) layout: pos (vec2) + color (vec4) + transform (vec4:
          * scale.xy + pivot.xy, see `UiPrimitiveTransform`) -- see `ui_quad.vert`. */
         const val FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.FLOATS_PER_VERTEX

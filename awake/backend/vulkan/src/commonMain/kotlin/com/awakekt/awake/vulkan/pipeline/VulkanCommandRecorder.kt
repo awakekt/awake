@@ -11,24 +11,24 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.RenderStatsCounter
-import com.awakekt.awake.vulkan.Vulkan
-import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
-import com.awakekt.awake.vulkan.models.info.VkIndexType
 import com.awakekt.awake.render.command.BufferHandle as RenderBufferHandle
 
 /**
- * This backend's half of the [CommandRecorder] port: one `vkCmd*` call per method, no draw-order
- * logic (that lives once, in `SharedOpaqueRenderFeature`). The only file in this module allowed to
- * turn a shared render-feature call into a real Vulkan call.
+ * This backend's half of the [CommandRecorder] port: turns shared render-feature calls into
+ * real Vulkan commands with redundant-bind elision and single-JNI draw submission.
  *
- * [commandBuffer] is a `var` rather than a constructor parameter because one frame records into
- * several buffers (the swapchain frame's, and the offscreen one `renderToTexture` reuses) -- one
- * recorder per `Renderer`, retargeted, beats allocating one per record site per frame. Safe for
- * the same reason `Renderer`'s other per-frame scratch state is: a `Renderer` records from one
- * thread.
+ * Pipeline, set-0 material descriptor, vertex buffer 0, and index buffer changes are coalesced
+ * and submitted together with `vkCmdDrawIndexed` / `vkCmdDraw` via [VulkanCommands.vkCmdDrawIndexedWithState]
+ * / [VulkanCommands.vkCmdDrawWithState], cutting per-draw JNI transitions from 4-5 down to 1 while
+ * skipping unchanged handles altogether.
+ *
+ * [commandBuffer] is retargeted per render pass via [beginPass] rather than allocating a new
+ * recorder per frame. Safe because a `Renderer` records from one thread.
  */
+@Suppress("TooManyFunctions")
 internal class VulkanCommandRecorder(
     /** Where every draw recorded through this port is counted; the owning `Renderer`'s. */
     val stats: RenderStatsCounter,
@@ -38,95 +38,224 @@ internal class VulkanCommandRecorder(
     /**
      * Descriptor sets the engine owns and rebinds per frame, by what they mean.
      *
-     * Shadow depth and scene depth are both this: written by a pre-pass, read by whichever
-     * pipelines declare them, and not owned by any draw. A map rather than a field each, so a
-     * third engine-provided group needs no new plumbing here -- and so the two cannot silently
-     * contend for one slot the way a single handle did.
+     * Mirrored into a flat [engineSetHandles] array on assignment so [bindPipeline] iterates zero
+     * `Map.Entry` objects on hot pipeline switches.
      */
     var engineDescriptorSets: Map<BindingSemantic, Long> = emptyMap()
+        set(value) {
+            field = value
+            val entries = value.entries.filter { it.value != 0L }
+            engineSemantics = Array(entries.size) { entries[it].key }
+            engineSetHandles = LongArray(entries.size) { entries[it].value }
+        }
 
-    /** Set by [bindPipeline]. Vulkan needs the bound pipeline's layout to bind a descriptor set;
-     * WebGPU's `setBindGroup` doesn't, which is why [CommandRecorder.bindMaterial] doesn't carry
-     * one and this is tracked here instead. */
-    private var boundPipelineLayout: Long = 0
+    private var engineSemantics: Array<BindingSemantic> = emptyArray()
+    private var engineSetHandles: LongArray = LongArray(0)
+
+    /** Set by [bindPipeline]. Vulkan needs the bound pipeline's layout to bind a descriptor set. */
+    private var boundPipelineLayout: Long = 0L
+    private var boundPipeline: Long = 0L
+    private var boundSet0: Long = 0L
+    private val boundExtraSets = LongArray(MAX_DESCRIPTOR_SETS)
+    private val boundVertexBuffers = LongArray(MAX_VERTEX_BINDINGS)
+    private var boundIndexBuffer: Long = 0L
+
+    private var pendingPipeline: Long = 0L
+    private var pendingSet0: Long = 0L
+    private var pendingVertexBuffer0: Long = 0L
+    private var pendingIndexBuffer: Long = 0L
+
     private var bindingLayout: BindingLayout = BindingLayout.Standard
     private var drawsTriangles: Boolean = true
 
+    /** Diagnostic counters for tests verifying state-bind elision. */
+    internal var elidedPipelineBinds: Long = 0L
+        private set
+    internal var elidedDescriptorBinds: Long = 0L
+        private set
+    internal var elidedBufferBinds: Long = 0L
+        private set
+    internal var batchedDrawCalls: Long = 0L
+        private set
+
+    /**
+     * Retargets this recorder to [targetCommandBuffer] at the start of a render pass and clears
+     * cached Vulkan bind state so the first draw in the pass binds everything fresh.
+     */
+    fun beginPass(targetCommandBuffer: Long) {
+        commandBuffer = targetCommandBuffer
+        boundPipeline = 0L
+        boundPipelineLayout = 0L
+        boundSet0 = 0L
+        boundExtraSets.fill(0L)
+        boundVertexBuffers.fill(0L)
+        boundIndexBuffer = 0L
+        pendingPipeline = 0L
+        pendingSet0 = 0L
+        pendingVertexBuffer0 = 0L
+        pendingIndexBuffer = 0L
+    }
+
+    /** Resets diagnostic bind-elision counters, for deterministic tests. */
+    internal fun resetDiagnostics() {
+        elidedPipelineBinds = 0L
+        elidedDescriptorBinds = 0L
+        elidedBufferBinds = 0L
+        batchedDrawCalls = 0L
+    }
+
     override fun bindPipeline(pipeline: PipelineHandle) {
         val vulkanPipeline = pipeline as VulkanPipelineHandle
-        Vulkan.vkCmdBindPipeline(
-            commandBuffer,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            vulkanPipeline.pipelineHandle,
-        )
-        boundPipelineLayout = vulkanPipeline.pipelineLayoutHandle
+        val nextPipeline = vulkanPipeline.pipelineHandle
+        val nextLayout = vulkanPipeline.pipelineLayoutHandle
+        if (nextPipeline == boundPipeline && pendingPipeline == 0L) {
+            elidedPipelineBinds += 1L
+        } else if (nextPipeline == pendingPipeline) {
+            elidedPipelineBinds += 1L
+        } else {
+            pendingPipeline = nextPipeline
+        }
+        val layoutChanged = nextLayout != boundPipelineLayout
+        boundPipelineLayout = nextLayout
         bindingLayout = vulkanPipeline.bindingLayout
         drawsTriangles = vulkanPipeline.drawsTriangles
-        engineDescriptorSets.forEach { (semantic, handle) ->
-            if (handle != 0L && semantic in vulkanPipeline.engineBoundSemantics) {
-                VulkanDescriptors.vkCmdBindDescriptorSet(
-                    commandBuffer,
-                    boundPipelineLayout,
-                    bindingLayout.slot(semantic),
-                    handle,
-                )
+        if (layoutChanged) {
+            boundSet0 = 0L
+            pendingSet0 = 0L
+            boundExtraSets.fill(0L)
+        }
+        bindEngineDescriptorSets(vulkanPipeline, layoutChanged)
+    }
+
+    private fun bindEngineDescriptorSets(pipeline: VulkanPipelineHandle, layoutChanged: Boolean) {
+        val semantics = engineSemantics
+        val handles = engineSetHandles
+        for (index in semantics.indices) {
+            val handle = handles[index]
+            val semantic = semantics[index]
+            if (handle != 0L && semantic in pipeline.engineBoundSemantics) {
+                val slot = bindingLayout.slot(semantic)
+                if (!layoutChanged && slot < boundExtraSets.size && boundExtraSets[slot] == handle) {
+                    elidedDescriptorBinds += 1L
+                } else {
+                    VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, boundPipelineLayout, slot, handle)
+                    if (slot < boundExtraSets.size) boundExtraSets[slot] = handle
+                }
             }
         }
     }
 
     override fun bindMaterial(semantic: BindingSemantic, binding: MaterialBinding) {
-        VulkanDescriptors.vkCmdBindDescriptorSet(
-            commandBuffer,
-            boundPipelineLayout,
-            bindingLayout.slot(semantic),
-            (binding as VulkanMaterialBinding).descriptorSetHandle,
-        )
+        val slot = bindingLayout.slot(semantic)
+        val handle = (binding as VulkanMaterialBinding).descriptorSetHandle
+        if (slot == 0) {
+            val effectiveSet0 = if (pendingSet0 != 0L) pendingSet0 else boundSet0
+            if (handle == effectiveSet0) {
+                elidedDescriptorBinds += 1L
+            } else {
+                pendingSet0 = handle
+            }
+            return
+        }
+        if (slot < boundExtraSets.size && boundExtraSets[slot] == handle) {
+            elidedDescriptorBinds += 1L
+            return
+        }
+        VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, boundPipelineLayout, slot, handle)
+        if (slot < boundExtraSets.size) boundExtraSets[slot] = handle
     }
 
     override fun bindVertexBuffer(binding: Int, buffer: RenderBufferHandle) {
-        VulkanBuffers.vkCmdBindVertexBuffers(
-            commandBuffer,
-            binding,
-            (buffer as VulkanBufferBinding).asArray,
-            ZERO_OFFSET,
-        )
+        val handle = (buffer as VulkanBufferBinding).handle
+        if (binding == 0) {
+            val effectiveVbo0 = if (pendingVertexBuffer0 != 0L) pendingVertexBuffer0 else boundVertexBuffers[0]
+            if (handle == effectiveVbo0) {
+                elidedBufferBinds += 1L
+            } else {
+                pendingVertexBuffer0 = handle
+            }
+            return
+        }
+        if (binding in boundVertexBuffers.indices && boundVertexBuffers[binding] == handle) {
+            elidedBufferBinds += 1L
+            return
+        }
+        VulkanBuffers.vkCmdBindVertexBuffer(commandBuffer, binding, handle, 0L)
+        if (binding in boundVertexBuffers.indices) boundVertexBuffers[binding] = handle
     }
 
     override fun bindIndexBuffer(buffer: RenderBufferHandle) {
-        VulkanBuffers.vkCmdBindIndexBuffer(
-            commandBuffer,
-            (buffer as VulkanBufferBinding).handle,
-            0,
-            VkIndexType.VK_INDEX_TYPE_UINT32,
-        )
+        val handle = (buffer as VulkanBufferBinding).handle
+        val effectiveIbo = if (pendingIndexBuffer != 0L) pendingIndexBuffer else boundIndexBuffer
+        if (handle == effectiveIbo) {
+            elidedBufferBinds += 1L
+        } else {
+            pendingIndexBuffer = handle
+        }
     }
 
     override fun setScissor(x: Int, y: Int, width: Int, height: Int) {
-        Vulkan.vkCmdSetScissor(
-            commandBuffer,
-            0,
-            arrayOf(
-                com.awakekt.awake.vulkan.models.VkRect2D(
-                    offset = com.awakekt.awake.vulkan.models.VkOffset2D(x = x, y = y),
-                    extent = com.awakekt.awake.vulkan.models.VkExtent2D(width = width, height = height),
-                ),
-            ),
-        )
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, x, y, width, height)
     }
 
     override fun draw(vertexCount: Int, instanceCount: Int) {
-        Vulkan.vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0)
+        VulkanCommands.vkCmdDrawWithState(
+            commandBuffer = commandBuffer,
+            pipeline = pendingPipeline,
+            pipelineLayout = boundPipelineLayout,
+            descriptorSet0 = pendingSet0,
+            vertexBuffer0 = pendingVertexBuffer0,
+            vertexCount = vertexCount,
+            instanceCount = instanceCount,
+        )
+        commitPendingState(includeIndex = false)
+        batchedDrawCalls += 1L
         stats.recordDraw(vertexCount, instanceCount, drawsTriangles)
     }
 
     override fun drawIndexed(indexCount: Int, instanceCount: Int) {
-        VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0)
-        stats.recordDraw(indexCount, instanceCount, drawsTriangles)
+        drawIndexed(indexCount, instanceCount, firstIndex = 0)
     }
 
     override fun drawIndexed(indexCount: Int, instanceCount: Int, firstIndex: Int) {
-        VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, 0, 0)
+        VulkanCommands.vkCmdDrawIndexedWithState(
+            commandBuffer = commandBuffer,
+            pipeline = pendingPipeline,
+            pipelineLayout = boundPipelineLayout,
+            descriptorSet0 = pendingSet0,
+            vertexBuffer0 = pendingVertexBuffer0,
+            indexBuffer = pendingIndexBuffer,
+            indexCount = indexCount,
+            instanceCount = instanceCount,
+            firstIndex = firstIndex,
+        )
+        commitPendingState(includeIndex = true)
+        batchedDrawCalls += 1L
         stats.recordDraw(indexCount, instanceCount, drawsTriangles)
+    }
+
+    private fun commitPendingState(includeIndex: Boolean) {
+        if (pendingPipeline != 0L) {
+            boundPipeline = pendingPipeline
+            pendingPipeline = 0L
+        }
+        if (pendingSet0 != 0L) {
+            boundSet0 = pendingSet0
+            pendingSet0 = 0L
+        }
+        if (pendingVertexBuffer0 != 0L) {
+            boundVertexBuffers[0] = pendingVertexBuffer0
+            pendingVertexBuffer0 = 0L
+        }
+        if (includeIndex && pendingIndexBuffer != 0L) {
+            boundIndexBuffer = pendingIndexBuffer
+            pendingIndexBuffer = 0L
+        }
+    }
+
+    private companion object {
+        const val MAX_DESCRIPTOR_SETS = 8
+        const val MAX_VERTEX_BINDINGS = 8
     }
 }
 

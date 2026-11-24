@@ -11,6 +11,7 @@ import cnames.structs.VkDevice_T
 import com.awakekt.awake.vulkan.models.VkMemoryRequirements
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
+import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
@@ -19,7 +20,6 @@ import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.set
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.usePinned
@@ -52,6 +52,7 @@ import platform.MoltenVK.vkUnmapMemory as nativeVkUnmapMemory
  * allocation call throws an [IllegalStateException], and so does a failed memory-type search,
  * instead of returning -1.
  */
+@Suppress("TooManyFunctions")
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanBuffers {
     /** Creates a buffer. It has no memory until one is bound with [vkBindBufferMemory]. */
@@ -158,18 +159,20 @@ actual object VulkanBuffers {
      * The memory must be host-visible, and host-coherent unless the caller flushes it. [data] must
      * not be empty, because mapping a zero-byte range is invalid.
      */
-    actual fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray) = memScoped {
-        val dataVar = alloc<kotlinx.cinterop.COpaquePointerVar>()
-        val nativeDevice = device.toCPointer<VkDevice_T>()
-        val nativeMemory = memory.toCPointer<VkDeviceMemory_T>()
-        val byteSize = (data.size * Float.SIZE_BYTES).toULong()
-        val result = nativeVkMapMemory(nativeDevice, nativeMemory, offset.toULong(), byteSize, 0u, dataVar.ptr)
-        check(result == VK_SUCCESS) { "vkMapMemory failed: $result" }
-        val dst = dataVar.value!!.reinterpret<kotlinx.cinterop.FloatVar>()
-        for (i in data.indices) {
-            dst[i] = data[i]
+    actual fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray) {
+        if (data.isEmpty()) return
+        memScoped {
+            val dataVar = alloc<kotlinx.cinterop.COpaquePointerVar>()
+            val nativeDevice = device.toCPointer<VkDevice_T>()
+            val nativeMemory = memory.toCPointer<VkDeviceMemory_T>()
+            val byteSize = (data.size * Float.SIZE_BYTES).toULong()
+            val result = nativeVkMapMemory(nativeDevice, nativeMemory, offset.toULong(), byteSize, 0u, dataVar.ptr)
+            check(result == VK_SUCCESS) { "vkMapMemory failed: $result" }
+            data.usePinned { pinned ->
+                memcpy(dataVar.value, pinned.addressOf(0), byteSize)
+            }
+            nativeVkUnmapMemory(nativeDevice, nativeMemory)
         }
-        nativeVkUnmapMemory(nativeDevice, nativeMemory)
     }
 
     /**
@@ -187,9 +190,8 @@ actual object VulkanBuffers {
             val byteSize = (count * Float.SIZE_BYTES).toULong()
             val result = nativeVkMapMemory(nativeDevice, nativeMemory, offset.toULong(), byteSize, 0u, dataVar.ptr)
             check(result == VK_SUCCESS) { "vkMapMemory failed: $result" }
-            val dst = dataVar.value!!.reinterpret<kotlinx.cinterop.FloatVar>()
-            for (i in 0 until count) {
-                dst[i] = data[dataOffset + i]
+            data.usePinned { pinned ->
+                memcpy(dataVar.value, pinned.addressOf(dataOffset), byteSize)
             }
             nativeVkUnmapMemory(nativeDevice, nativeMemory)
         }
@@ -317,11 +319,12 @@ actual object VulkanBuffers {
     actual fun vkMapMemory(device: Long, memory: Long, offset: Long, size: Long): Long = memScoped {
         require(size > 0L || size == -1L) { "vkMapMemory size must be positive or -1 (VK_WHOLE_SIZE), not $size." }
         val dataVar = alloc<kotlinx.cinterop.COpaquePointerVar>()
+        val vkSize = if (size == -1L) ULong.MAX_VALUE else size.toULong()
         val result = nativeVkMapMemory(
             device.toCPointer<VkDevice_T>(),
             memory.toCPointer<VkDeviceMemory_T>(),
             offset.toULong(),
-            size.toULong(),
+            vkSize,
             0u,
             dataVar.ptr,
         )
@@ -357,6 +360,18 @@ actual object VulkanBuffers {
         }
     }
 
+    /** Copies [count] ints of [data] from [dataOffset] into persistently mapped memory. */
+    actual fun writeMappedMemoryInts(mappedPtr: Long, offset: Long, data: IntArray, dataOffset: Int, count: Int) {
+        requireArrayRange(data.size, dataOffset, count, "ints")
+        if (count == 0) return
+        check(mappedPtr != 0L) { "writeMappedMemoryInts: mapped pointer not initialized" }
+        require(offset >= 0L) { "offset must be non-negative: $offset" }
+        val dst = (mappedPtr + offset).toCPointer<kotlinx.cinterop.ByteVar>()!!
+        data.usePinned { pinned ->
+            memcpy(dst, pinned.addressOf(dataOffset), (count * Int.SIZE_BYTES).toULong())
+        }
+    }
+
     /** Copies [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
     actual fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray) {
         if (data.isEmpty()) return
@@ -365,6 +380,18 @@ actual object VulkanBuffers {
         val dst = (mappedPtr + offset).toCPointer<kotlinx.cinterop.ByteVar>()!!
         data.usePinned { pinned ->
             memcpy(dst, pinned.addressOf(0), data.size.toULong())
+        }
+    }
+
+    /** Copies [count] bytes of [data] from [dataOffset] into persistently mapped memory. */
+    actual fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray, dataOffset: Int, count: Int) {
+        requireArrayRange(data.size, dataOffset, count, "bytes")
+        if (count == 0) return
+        check(mappedPtr != 0L) { "writeMappedMemoryBytes: mapped pointer not initialized" }
+        require(offset >= 0L) { "offset must be non-negative: $offset" }
+        val dst = (mappedPtr + offset).toCPointer<kotlinx.cinterop.ByteVar>()!!
+        data.usePinned { pinned ->
+            memcpy(dst, pinned.addressOf(dataOffset), count.toULong())
         }
     }
 
@@ -380,5 +407,94 @@ actual object VulkanBuffers {
             memcpy(pinned.addressOf(0), src, size.toULong())
         }
         return out
+    }
+
+    /** Finds a memory type matching [preferredProperties], falling back to [fallbackProperties], or -1. */
+    actual fun findPreferredMemoryType(
+        physicalDevice: Long,
+        typeFilter: Int,
+        preferredProperties: Int,
+        fallbackProperties: Int,
+    ): Int = memScoped {
+        val memProps = alloc<platform.MoltenVK.VkPhysicalDeviceMemoryProperties>()
+        nativeVkGetPhysicalDeviceMemoryProperties(physicalDevice.toCPointer(), memProps.ptr)
+        val count = memProps.memoryTypeCount.toInt()
+        var fallback = -1
+        for (i in 0 until count) {
+            if ((typeFilter and (1 shl i)) == 0) continue
+            val flags = memProps.memoryTypes[i].propertyFlags.toInt()
+            if ((flags and preferredProperties) == preferredProperties) return@memScoped i
+            if (fallback < 0 && (flags and fallbackProperties) == fallbackProperties) fallback = i
+        }
+        fallback
+    }
+
+    /** Finds a `DEVICE_LOCAL | HOST_VISIBLE | HOST_COHERENT` memory type backed by a heap `>= minHeapBytes`, or -1. */
+    actual fun findDeviceLocalHostVisibleMemoryType(
+        physicalDevice: Long,
+        typeFilter: Int,
+        minHeapBytes: Long,
+    ): Int = memScoped {
+        val memProps = alloc<platform.MoltenVK.VkPhysicalDeviceMemoryProperties>()
+        nativeVkGetPhysicalDeviceMemoryProperties(physicalDevice.toCPointer(), memProps.ptr)
+        val want =
+            com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT or
+                com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
+                com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        val count = memProps.memoryTypeCount.toInt()
+        for (i in 0 until count) {
+            val memType = memProps.memoryTypes[i]
+            val matchesType = (typeFilter and (1 shl i)) != 0
+            val matchesFlags = (memType.propertyFlags.toInt() and want) == want
+            val heapSize = memProps.memoryHeaps[memType.heapIndex.toInt()].size.toLong()
+            if (matchesType && matchesFlags && heapSize >= minHeapBytes) return@memScoped i
+        }
+        -1
+    }
+
+    /** Allocates image memory; MoltenVK already backs each Metal texture with its own allocation. */
+    actual fun vkAllocateDedicatedImageMemory(
+        device: Long,
+        allocationSize: Long,
+        memoryTypeIndex: Int,
+        image: Long,
+        deviceApiVersion: Int,
+    ): Long = vkAllocateMemory(device, VkMemoryAllocateInfo(allocationSize, memoryTypeIndex))
+
+    /** Records a single-region buffer copy with explicit [srcOffset] and [dstOffset]. */
+    @Suppress("LongParameterList")
+    actual fun vkCmdCopyBufferRange(
+        commandBuffer: Long,
+        srcBuffer: Long,
+        dstBuffer: Long,
+        srcOffset: Long,
+        dstOffset: Long,
+        size: Long,
+    ) = memScoped {
+        val copyRegion = alloc<NativeVkBufferCopy>().apply {
+            this.srcOffset = srcOffset.toULong()
+            this.dstOffset = dstOffset.toULong()
+            this.size = size.toULong()
+        }
+        nativeVkCmdCopyBuffer(
+            commandBuffer.toCPointer(),
+            srcBuffer.toCPointer<VkBuffer_T>(),
+            dstBuffer.toCPointer<VkBuffer_T>(),
+            1u,
+            copyRegion.ptr,
+        )
+    }
+
+    /** Scalar fast path for binding a single vertex buffer with zero heap allocations. */
+    actual fun vkCmdBindVertexBuffer(commandBuffer: Long, binding: Int, buffer: Long, offset: Long) = memScoped {
+        val nativeBuffer = alloc<VkBufferVar>().apply { value = buffer.toCPointer() }
+        val nativeOffset = alloc<kotlinx.cinterop.ULongVar>().apply { value = offset.toULong() }
+        nativeVkCmdBindVertexBuffers(
+            commandBuffer.toCPointer(),
+            binding.toUInt(),
+            1u,
+            nativeBuffer.ptr,
+            nativeOffset.ptr,
+        )
     }
 }

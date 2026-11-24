@@ -68,9 +68,9 @@ internal class VulkanFrameContext(
             )
         }
 
-    /** Aimed at [commandBuffer] here, once per frame, rather than at every record site. */
+    /** Aimed at [commandBuffer] here, once per pass, clearing cached state for the new render pass. */
     override val recorder: CommandRecorder = renderer.commandRecorder.apply {
-        commandBuffer = this@VulkanFrameContext.commandBuffer
+        beginPass(this@VulkanFrameContext.commandBuffer)
     }
 
     override fun uiPipelines(): UiPipelineSet? {

@@ -22,10 +22,10 @@ import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.VkCullModeFlagBits
 import com.awakekt.awake.vulkan.enums.VkDynamicState
 import com.awakekt.awake.vulkan.enums.VkFrontFace
-import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.enums.VkPrimitiveTopology
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
 import com.awakekt.awake.vulkan.enums.VkVertexInputRate
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkOffset2D
@@ -64,41 +64,112 @@ import com.awakekt.awake.vulkan.models.info.pipeline.VkVertexInputBindingDescrip
  * see `SHADOW_DEPTH_BIAS_CONSTANT` for why the source pass, not the sampling shader, is where
  * slope belongs.
  */
-class DepthOnlyPipeline(
+@Suppress("LongParameterList")
+class DepthOnlyPipeline private constructor(
     graphicsDevice: GraphicsDevice,
     renderPass: Long,
     descriptorSetLayout: DescriptorSetLayoutHandle,
     shaders: ShaderPair,
     val vertexFormat: VertexFormat,
     targetSize: Int,
-    vertexEntryPoint: String = "vertexMain",
-    fragmentEntryPoint: String = "fragmentMain",
-    /**
-     * How many cascades this pass renders -- one slot each in its own set-1 block.
-     *
-     * The block exists because the pass draws the same meshes once per cascade, and the matrix
-     * differs between those draws. A per-draw uniform is written once a frame and cannot say
-     * two things.
-     */
-    cascadeCount: Int = 0,
-    /**
-     * Frames the renderer keeps in flight. Each gets its own cascade slots: the CPU records the
-     * next frame while the GPU may not yet have drawn this one's shadow maps.
-     */
-    framesInFlight: Int = 1,
-    variant: PipelineVariant = PipelineVariant.Opaque,
+    vertexEntryPoint: String,
+    fragmentEntryPoint: String,
+    cascadeCount: Int,
+    framesInFlight: Int,
+    variant: PipelineVariant,
     /**
      * Which triangle winding this pipeline treats as front-facing; it must agree with the winding
      * of the geometry it renders.
      */
-    val frontFace: FrontFace = FrontFace.CounterClockwise,
-    extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
-    /**
-     * Whether a pipeline with a cascade block biases its depth against shadow acne. The scene-depth
-     * pass places its casters by a pass matrix too, but feeds raw depth to depth fog: it passes false.
-     */
-    shadowBias: Boolean = true,
+    val frontFace: FrontFace,
+    extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle>,
+    shadowBias: Boolean,
+    hasFragmentStage: Boolean,
 ) : VulkanPipelineHandle {
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        renderPass: Long,
+        descriptorSetLayout: DescriptorSetLayoutHandle,
+        shaders: ShaderPair,
+        vertexFormat: VertexFormat,
+        targetSize: Int,
+        vertexEntryPoint: String = "vertexMain",
+        fragmentEntryPoint: String = "fragmentMain",
+        /**
+         * How many cascades this pass renders -- one slot each in its own set-1 block.
+         *
+         * The block exists because the pass draws the same meshes once per cascade, and the matrix
+         * differs between those draws. A per-draw uniform is written once a frame and cannot say
+         * two things.
+         */
+        cascadeCount: Int = 0,
+        /**
+         * Frames the renderer keeps in flight. Each gets its own cascade slots: the CPU records the
+         * next frame while the GPU may not yet have drawn this one's shadow maps.
+         */
+        framesInFlight: Int = 1,
+        variant: PipelineVariant = PipelineVariant.Opaque,
+        /**
+         * Which triangle winding this pipeline treats as front-facing; it must agree with the winding
+         * of the geometry it renders.
+         */
+        frontFace: FrontFace = FrontFace.CounterClockwise,
+        extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
+        /**
+         * Whether a pipeline with a cascade block biases its depth against shadow acne. The scene-depth
+         * pass places its casters by a pass matrix too, but feeds raw depth to depth fog: it passes false.
+         */
+        shadowBias: Boolean = true,
+    ) : this(
+        graphicsDevice = graphicsDevice,
+        renderPass = renderPass,
+        descriptorSetLayout = descriptorSetLayout,
+        shaders = shaders,
+        vertexFormat = vertexFormat,
+        targetSize = targetSize,
+        vertexEntryPoint = vertexEntryPoint,
+        fragmentEntryPoint = fragmentEntryPoint,
+        cascadeCount = cascadeCount,
+        framesInFlight = framesInFlight,
+        variant = variant,
+        frontFace = frontFace,
+        extraDescriptorSetLayouts = extraDescriptorSetLayouts,
+        shadowBias = shadowBias,
+        hasFragmentStage = true,
+    )
+
+    internal constructor(
+        graphicsDevice: GraphicsDevice,
+        renderPass: Long,
+        descriptorSetLayout: DescriptorSetLayoutHandle,
+        shaders: ShaderPair,
+        vertexFormat: VertexFormat,
+        targetSize: Int,
+        vertexEntryPoint: String,
+        fragmentEntryPoint: String,
+        cascadeCount: Int,
+        framesInFlight: Int,
+        variant: PipelineVariant,
+        extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle>,
+        shadowBias: Boolean,
+        hasFragmentStage: Boolean,
+    ) : this(
+        graphicsDevice = graphicsDevice,
+        renderPass = renderPass,
+        descriptorSetLayout = descriptorSetLayout,
+        shaders = shaders,
+        vertexFormat = vertexFormat,
+        targetSize = targetSize,
+        vertexEntryPoint = vertexEntryPoint,
+        fragmentEntryPoint = fragmentEntryPoint,
+        cascadeCount = cascadeCount,
+        framesInFlight = framesInFlight,
+        variant = variant,
+        frontFace = FrontFace.CounterClockwise,
+        extraDescriptorSetLayouts = extraDescriptorSetLayouts,
+        shadowBias = shadowBias,
+        hasFragmentStage = hasFragmentStage,
+    )
     private val device = graphicsDevice.device
 
     private val cascadeCount = cascadeCount
@@ -155,21 +226,38 @@ class DepthOnlyPipeline(
     // See RenderPipeline's own init doc comment -- same partial-creation-leak guard.
     init {
         try {
-            val fragShaderModule = createShaderModule(device, shaders.fragment.toShaderIntArray())
+            // Opaque depth-only casters omit the fragment stage completely so hardware can run
+            // double-rate Z-only rasterization without scheduling empty fragment warps. Masked
+            // casters keep the fragment stage for alpha discard.
+            val fragShaderModule = if (hasFragmentStage) {
+                createShaderModule(device, shaders.fragment.toShaderIntArray())
+            } else {
+                0L
+            }
             val vertShaderModule = createShaderModule(device, shaders.vertex.toShaderIntArray())
 
-            val shaderStages = arrayOf(
-                VkPipelineShaderStageCreateInfo(
-                    stage = VkShaderStageFlagBits.FRAGMENT,
-                    module = fragShaderModule,
-                    pName = fragmentEntryPoint,
-                ),
-                VkPipelineShaderStageCreateInfo(
-                    stage = VkShaderStageFlagBits.VERTEX,
-                    module = vertShaderModule,
-                    pName = vertexEntryPoint,
-                ),
-            )
+            val shaderStages = if (hasFragmentStage) {
+                arrayOf(
+                    VkPipelineShaderStageCreateInfo(
+                        stage = VkShaderStageFlagBits.FRAGMENT,
+                        module = fragShaderModule,
+                        pName = fragmentEntryPoint,
+                    ),
+                    VkPipelineShaderStageCreateInfo(
+                        stage = VkShaderStageFlagBits.VERTEX,
+                        module = vertShaderModule,
+                        pName = vertexEntryPoint,
+                    ),
+                )
+            } else {
+                arrayOf(
+                    VkPipelineShaderStageCreateInfo(
+                        stage = VkShaderStageFlagBits.VERTEX,
+                        module = vertShaderModule,
+                        pName = vertexEntryPoint,
+                    ),
+                )
+            }
 
             val bindings = mutableListOf<VkVertexInputBindingDescription>()
             val attributes = vertexFormat.entries.mapTo(mutableListOf()) { entry ->
@@ -318,7 +406,7 @@ class DepthOnlyPipeline(
             }
             graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)
 
-            Vulkan.vkDestroyShaderModule(device, fragShaderModule)
+            if (fragShaderModule != 0L) Vulkan.vkDestroyShaderModule(device, fragShaderModule)
             Vulkan.vkDestroyShaderModule(device, vertShaderModule)
         } catch (e: Throwable) {
             destroy()
@@ -332,7 +420,7 @@ class DepthOnlyPipeline(
      * @param commandBuffer The command buffer being recorded, inside a depth render pass.
      */
     fun bind(commandBuffer: Long) {
-        Vulkan.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline[0])
+        VulkanCommands.vkCmdBindGraphicsPipeline(commandBuffer, graphicsPipeline[0])
     }
 
     /**

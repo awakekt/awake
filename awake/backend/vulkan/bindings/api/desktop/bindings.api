@@ -2325,14 +2325,19 @@ public final class com/awakekt/awake/vulkan/enums/flags/VkQueryPipelineStatistic
 
 public final class com/awakekt/awake/vulkan/gen/VulkanBuffers {
 	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanBuffers;
+	public final fun findDeviceLocalHostVisibleMemoryType (JIJ)I
 	public final fun findMemoryType (JII)I
+	public final fun findPreferredMemoryType (JIII)I
 	public final fun readBufferMemoryBytes (JJJI)[B
 	public final fun readMappedMemoryBytes (JJI)[B
+	public final fun vkAllocateDedicatedImageMemory (JJIJI)J
 	public final fun vkAllocateMemory (JLcom/awakekt/awake/vulkan/models/info/VkMemoryAllocateInfo;)J
 	public final fun vkBindBufferMemory (JJJJ)V
 	public final fun vkCmdBindIndexBuffer (JJJI)V
+	public final fun vkCmdBindVertexBuffer (JIJJ)V
 	public final fun vkCmdBindVertexBuffers (JI[J[J)V
 	public final fun vkCmdCopyBuffer (JJJJ)V
+	public final fun vkCmdCopyBufferRange (JJJJJJ)V
 	public final fun vkCmdDrawIndexed (JIIIII)V
 	public final fun vkCreateBuffer (JLcom/awakekt/awake/vulkan/models/info/VkBufferCreateInfo;)J
 	public final fun vkDestroyBuffer (JJ)V
@@ -2345,8 +2350,33 @@ public final class com/awakekt/awake/vulkan/gen/VulkanBuffers {
 	public final fun writeBufferMemoryFloats (JJJ[F)V
 	public final fun writeBufferMemoryFloats (JJJ[FII)V
 	public final fun writeMappedMemoryBytes (JJ[B)V
+	public final fun writeMappedMemoryBytes (JJ[BII)V
 	public final fun writeMappedMemoryFloats (JJ[F)V
 	public final fun writeMappedMemoryFloats (JJ[FII)V
+	public final fun writeMappedMemoryInts (JJ[III)V
+}
+
+public final class com/awakekt/awake/vulkan/gen/VulkanCommands {
+	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanCommands;
+	public final fun vkBeginCommandBuffer (JI)V
+	public final fun vkCmdBeginRenderPassColor (JJJIIFFFF)V
+	public final fun vkCmdBeginRenderPassColorDepth (JJJIIFFFFF)V
+	public final fun vkCmdBeginRenderPassDepth (JJJIIF)V
+	public final fun vkCmdBeginRenderPassEmpty (JJJII)V
+	public final fun vkCmdBindGraphicsPipeline (JJ)V
+	public final fun vkCmdDrawIndexedWithState (JJJJJJIII)V
+	public final fun vkCmdDrawWithState (JJJJJII)V
+	public final fun vkCmdSetScissorRect (JIIII)V
+	public final fun vkCmdSetViewportRect (JFFFFFF)V
+	public final fun vkCmdTransferToGraphicsBarrier (J)V
+	public final fun vkCreateLogicalDeviceWithFeatures (J[I[Ljava/lang/String;III)J
+	public final fun vkCreatePipelineCacheFromBytes (J[B)J
+	public final fun vkGetPipelineCacheData (JJ)[B
+	public final fun vkQueryModernFeatures (JJI)I
+	public final fun vkQueuePresentSingleStatus (JJIJ)Lcom/awakekt/awake/vulkan/enums/VkResult;
+	public final fun vkQueueSubmitSingle (JJJIJJ)V
+	public final fun vkResetFence (JJ)V
+	public final fun vkWaitForFence (JJJ)V
 }
 
 public final class com/awakekt/awake/vulkan/gen/VulkanDescriptors {
@@ -2359,6 +2389,18 @@ public final class com/awakekt/awake/vulkan/gen/VulkanDescriptors {
 	public final fun vkDestroyDescriptorSetLayout (JJ)V
 	public final fun vkUpdateDescriptorSetBuffer (JJIILcom/awakekt/awake/vulkan/models/info/VkDescriptorBufferInfo;)V
 	public final fun vkUpdateDescriptorSetImage (JJIILcom/awakekt/awake/vulkan/models/info/VkDescriptorImageInfo;)V
+}
+
+public final class com/awakekt/awake/vulkan/gen/VulkanFeatures10 {
+	public static final field DEPTH_CLAMP I
+	public static final field FILL_MODE_NON_SOLID I
+	public static final field FULL_DRAW_INDEX_UINT32 I
+	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanFeatures10;
+	public static final field MULTI_DRAW_INDIRECT I
+	public static final field SAMPLER_ANISOTROPY I
+	public static final field TEXTURE_COMPRESSION_ASTC_LDR I
+	public static final field TEXTURE_COMPRESSION_BC I
+	public static final field TEXTURE_COMPRESSION_ETC2 I
 }
 
 public final class com/awakekt/awake/vulkan/gen/VulkanImages {
@@ -2374,6 +2416,19 @@ public final class com/awakekt/awake/vulkan/gen/VulkanImages {
 	public final fun vkGetImageMemoryRequirements (JJ)Lcom/awakekt/awake/vulkan/models/VkMemoryRequirements;
 	public final fun vkTransitionImageLayout (JJIIII)V
 	public static synthetic fun vkTransitionImageLayout$default (Lcom/awakekt/awake/vulkan/gen/VulkanImages;JJIIIIILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/vulkan/gen/VulkanModernFeatures {
+	public static final field BUFFER_DEVICE_ADDRESS I
+	public static final field DESCRIPTOR_INDEXING I
+	public static final field DRAW_INDIRECT_COUNT I
+	public static final field DYNAMIC_RENDERING I
+	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanModernFeatures;
+	public static final field MAINTENANCE_4 I
+	public static final field PIPELINE_CREATION_CACHE_CONTROL I
+	public static final field SCALAR_BLOCK_LAYOUT I
+	public static final field SYNCHRONIZATION_2 I
+	public static final field TIMELINE_SEMAPHORE I
 }
 
 public final class com/awakekt/awake/vulkan/gen/VulkanQueries {
@@ -3281,6 +3336,7 @@ public final class com/awakekt/awake/vulkan/models/info/VkImageCreateInfo {
 public final class com/awakekt/awake/vulkan/models/info/VkImageLayout2 {
 	public static final field INSTANCE Lcom/awakekt/awake/vulkan/models/info/VkImageLayout2;
 	public static final field VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL I
+	public static final field VK_IMAGE_LAYOUT_PRESENT_SRC_KHR I
 	public static final field VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL I
 	public static final field VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL I
 	public static final field VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL I

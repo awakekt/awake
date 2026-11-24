@@ -6,11 +6,9 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.core.host.FrameCostReport
-import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
-import com.awakekt.awake.vulkan.models.info.VkPresentInfoKHR
-import com.awakekt.awake.vulkan.models.info.VkSubmitInfo
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import kotlin.time.TimeSource
 
 /** Submits the recorded frame and presents it, including swapchain recovery. */
@@ -29,51 +27,46 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     // fence this frame already owns is what a reader waits on.
     if (swapchainManager.isHeadlessPresentable) {
         graphicsDevice.queueLock.withLock {
-            Vulkan.vkQueueSubmit(
-                graphicsQueue,
-                arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffers[currentFrame]))),
-                swapchainManager.inFlightFences[currentFrame],
+            VulkanCommands.vkQueueSubmitSingle(
+                queue = graphicsQueue,
+                commandBuffer = commandBuffers[currentFrame],
+                waitSemaphore = 0L,
+                waitStageMask = 0,
+                signalSemaphore = 0L,
+                fence = swapchainManager.inFlightFences[currentFrame],
             )
         }
         bufferPools.frameSubmitted(currentFrame)
         retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
+        deferredResourceReaper.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
+        transferContext.uploadBatcher.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
         swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
         return
     }
-    val waitSemaphores = arrayOf(swapchainManager.imageAvailableSemaphores[currentFrame])
-    val waitStages =
-        intArrayOf(VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value)
-    val signalSemaphores = arrayOf(swapchainManager.renderFinishedSemaphores[imageIndex])
+    val waitSemaphore = swapchainManager.imageAvailableSemaphores[currentFrame]
+    val signalSemaphore = swapchainManager.renderFinishedSemaphores[imageIndex]
 
     graphicsDevice.queueLock.withLock {
-        Vulkan.vkQueueSubmit(
-            graphicsQueue,
-            arrayOf(
-                VkSubmitInfo(
-                    pWaitSemaphores = waitSemaphores,
-                    pWaitDstStageMask = waitStages,
-                    pCommandBuffers = arrayOf(commandBuffers[currentFrame]),
-                    pSignalSemaphores = signalSemaphores,
-                ),
-            ),
-            swapchainManager.inFlightFences[currentFrame],
+        VulkanCommands.vkQueueSubmitSingle(
+            queue = graphicsQueue,
+            commandBuffer = commandBuffers[currentFrame],
+            waitSemaphore = waitSemaphore,
+            waitStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
+            signalSemaphore = signalSemaphore,
+            fence = swapchainManager.inFlightFences[currentFrame],
         )
     }
     bufferPools.frameSubmitted(currentFrame)
     retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
+    deferredResourceReaper.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
+    transferContext.uploadBatcher.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
 
-    val presentInfo = VkPresentInfoKHR(
-        pWaitSemaphores = signalSemaphores,
-        pSwapchains = arrayOf(swapchainManager.swapChain),
-        pImageIndices = intArrayOf(imageIndex),
-        pResults = VkResult.values(),
-    )
     // Suboptimal and out of date come back as results, not exceptions: a phone panel whose
     // swapchain is not pre-rotated presents suboptimally every frame. The surface is asked once per
     // swapchain whether it changed; a resize or rotation the platform reports re-asks (#1688).
     // A change of pacer or of frame-rate mode applies here, between frames, on the thread that presents.
     graphicsDevice.swapchainPacer?.beforePresent()
-    val result = present(presentInfo)
+    val result = present(swapchainManager.swapChain, imageIndex, signalSemaphore)
     swapchainManager.presentResults[result.ordinal]++
     presentIntervals.recordPresent()
     when (presentAction(result, swapchainManager.suboptimalAccepted) { swapchainManager.surfaceChangedSinceBuild }) {
@@ -95,9 +88,11 @@ private fun Renderer.reportFrameCost() {
 }
 
 /** Presents, counting the call as a wait: a pacer holds the frame here, as Swappy does (#1699). */
-private fun Renderer.present(presentInfo: VkPresentInfoKHR): VkResult {
+private fun Renderer.present(swapchain: Long, imageIndex: Int, waitSemaphore: Long): VkResult {
     val start = TimeSource.Monotonic.markNow()
-    val result = graphicsDevice.queueLock.withLock { Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo) }
+    val result = graphicsDevice.queueLock.withLock {
+        VulkanCommands.vkQueuePresentSingleStatus(presentQueue, swapchain, imageIndex, waitSemaphore)
+    }
     FrameCostReport.submitted(start.elapsedNow().inWholeNanoseconds, 0L)
     return result
 }

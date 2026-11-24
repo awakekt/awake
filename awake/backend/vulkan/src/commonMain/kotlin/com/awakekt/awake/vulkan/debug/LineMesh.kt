@@ -8,13 +8,12 @@ package com.awakekt.awake.vulkan.debug
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.handles.BufferHandle
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 
 /**
@@ -45,6 +44,7 @@ class LineMesh(
     private class FrameResources(
         var vertexBuffer: BufferHandle,
         var vertexBufferMemory: DeviceMemoryHandle,
+        var mappedPtr: Long,
         var capacityVertices: Int,
     ) {
         var binding = VulkanBufferBinding(vertexBuffer.handle)
@@ -84,10 +84,12 @@ class LineMesh(
     private fun growTo(frame: FrameResources, neededVertices: Int) {
         val capacity = DebugLineLayout.grownVertexCapacity(frame.capacityVertices, neededVertices)
         VulkanBuffers.vkDestroyBuffer(device, frame.vertexBuffer.handle)
+        VulkanBuffers.vkUnmapMemory(device, frame.vertexBufferMemory.handle)
         VulkanBuffers.vkFreeMemory(device, frame.vertexBufferMemory.handle)
         val grown = allocate(capacity)
         frame.vertexBuffer = grown.vertexBuffer
         frame.vertexBufferMemory = grown.vertexBufferMemory
+        frame.mappedPtr = grown.mappedPtr
         frame.capacityVertices = grown.capacityVertices
         frame.binding = VulkanBufferBinding(grown.vertexBuffer.handle)
     }
@@ -101,18 +103,10 @@ class LineMesh(
             ),
         )
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-        )
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(requirements)
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), capacityVertices)
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
+        return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), mappedPtr, capacityVertices)
     }
 
     /** Overwrites this frame's vertex contents. [vertices] must be at most
@@ -151,7 +145,7 @@ class LineMesh(
         activeFrameIndex = frameIndex
         frame.vertexCount = neededVertices
         if (vertices.isEmpty()) return
-        VulkanBuffers.writeBufferMemoryFloats(device, frame.vertexBufferMemory.handle, 0, vertices)
+        VulkanBuffers.writeMappedMemoryFloats(frame.mappedPtr, 0L, vertices, 0, vertices.size)
     }
 
     /** This frame slot's vertex buffer, for the shared opaque feature to bind at binding 0. */
@@ -177,12 +171,7 @@ class LineMesh(
      */
     fun bind(frameIndex: Int, commandBuffer: Long) {
         val frame = resourcesFor(frameIndex)
-        VulkanBuffers.vkCmdBindVertexBuffers(
-            commandBuffer,
-            0,
-            longArrayOf(frame.vertexBuffer.handle),
-            longArrayOf(0L),
-        )
+        VulkanBuffers.vkCmdBindVertexBuffer(commandBuffer, 0, frame.vertexBuffer.handle, 0L)
     }
 
     /**
@@ -214,6 +203,7 @@ class LineMesh(
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.vertexBuffer.handle)
+            VulkanBuffers.vkUnmapMemory(device, frame.vertexBufferMemory.handle)
             VulkanBuffers.vkFreeMemory(device, frame.vertexBufferMemory.handle)
         }
     }

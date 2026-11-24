@@ -28,6 +28,7 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
  * that still fits the auto-generated model with a hand-written native body, exactly like
  * `vkCreateBuffer`.
  */
+@Suppress("TooManyFunctions")
 expect object VulkanBuffers {
     /**
      * Creates a buffer. It has no memory until one is bound with [vkBindBufferMemory].
@@ -161,11 +162,29 @@ expect object VulkanBuffers {
      */
     fun writeMappedMemoryFloats(mappedPtr: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int)
 
+    /**
+     * Copies [count] 32-bit ints of [data] starting at [dataOffset] into persistently mapped
+     * memory at [mappedPtr] + [offset] bytes. Avoids CPU `IntArray` -> `ByteArray` index conversion.
+     */
+    fun writeMappedMemoryInts(mappedPtr: Long, offset: Long, data: IntArray, dataOffset: Int, count: Int)
+
     /** Copies all of [data] into persistently mapped memory at [mappedPtr] + [offset] bytes. */
     fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray)
 
+    /**
+     * Copies [count] bytes of [data] starting at [dataOffset] into persistently mapped memory at
+     * [mappedPtr] + [offset] bytes without mapping or unmapping per call.
+     */
+    fun writeMappedMemoryBytes(mappedPtr: Long, offset: Long, data: ByteArray, dataOffset: Int, count: Int)
+
     /** Reads [size] bytes from persistently mapped memory at [mappedPtr] + [offset] bytes. */
     fun readMappedMemoryBytes(mappedPtr: Long, offset: Long, size: Int): ByteArray
+
+    /**
+     * Scalar fast path for binding a single vertex buffer at [binding] and [offset] with zero
+     * Kotlin array or C++ heap allocations.
+     */
+    fun vkCmdBindVertexBuffer(commandBuffer: Long, binding: Int, buffer: Long, offset: Long)
 
     /** `bindingCount` is implicit (`buffers.size`); `offsets` must be the same size. */
     fun vkCmdBindVertexBuffers(
@@ -177,6 +196,60 @@ expect object VulkanBuffers {
 
     /** `indexType` uses the plain-`Int` [com.awakekt.awake.vulkan.models.info.VkIndexType] values. */
     fun vkCmdBindIndexBuffer(commandBuffer: Long, buffer: Long, offset: Long, indexType: Int)
+
+    /**
+     * Finds a memory type allowed by [typeFilter] that satisfies [preferredProperties], falling
+     * back to [fallbackProperties] when the preferred type is unavailable (for example,
+     * `DEVICE_LOCAL | LAZILY_ALLOCATED` falling back to `DEVICE_LOCAL` on desktop GPUs, or
+     * `HOST_VISIBLE | HOST_COHERENT | HOST_CACHED` falling back to `HOST_VISIBLE | HOST_COHERENT`).
+     *
+     * @return The matching memory type index, or -1 if neither matches.
+     */
+    fun findPreferredMemoryType(
+        physicalDevice: Long,
+        typeFilter: Int,
+        preferredProperties: Int,
+        fallbackProperties: Int,
+    ): Int
+
+    /**
+     * Finds a `DEVICE_LOCAL | HOST_VISIBLE | HOST_COHERENT` memory type allowed by [typeFilter]
+     * whose backing heap is at least [minHeapBytes] bytes (for example, ReBAR/SAM on desktop or
+     * unified memory on mobile/iGPU), or `-1` when no such heap is available.
+     */
+    fun findDeviceLocalHostVisibleMemoryType(
+        physicalDevice: Long,
+        typeFilter: Int,
+        minHeapBytes: Long,
+    ): Int
+
+    /**
+     * Allocates memory for [image], chaining Vulkan 1.1 `VkMemoryDedicatedAllocateInfo` when
+     * [deviceApiVersion] is at least 1.1 and `vkGetImageMemoryRequirements2` reports that the
+     * driver prefers or requires a dedicated allocation (enabling UBWC/AFBC/DCC compression on
+     * render targets and depth buffers). Falls back to plain `vkAllocateMemory` otherwise.
+     */
+    fun vkAllocateDedicatedImageMemory(
+        device: Long,
+        allocationSize: Long,
+        memoryTypeIndex: Int,
+        image: Long,
+        deviceApiVersion: Int,
+    ): Long
+
+    /**
+     * Records a single-region buffer copy from [srcBuffer] at [srcOffset] to [dstBuffer] at
+     * [dstOffset] of [size] bytes.
+     */
+    @Suppress("LongParameterList")
+    fun vkCmdCopyBufferRange(
+        commandBuffer: Long,
+        srcBuffer: Long,
+        dstBuffer: Long,
+        srcOffset: Long,
+        dstOffset: Long,
+        size: Long,
+    )
 
     /** Single-region copy (`srcOffset`/`dstOffset` both 0) -- the staging-buffer upload
      * pattern (a HOST_VISIBLE staging buffer written via [writeBufferMemoryFloats]/
@@ -215,7 +288,11 @@ expect object VulkanBuffers {
  * range write maps memory for them.
  */
 internal fun requireFloatRange(size: Int, dataOffset: Int, count: Int) {
+    requireArrayRange(size, dataOffset, count, "floats")
+}
+
+internal fun requireArrayRange(size: Int, dataOffset: Int, count: Int, unit: String) {
     require(dataOffset >= 0 && count >= 0 && count <= size - dataOffset) {
-        "A write of $count floats from index $dataOffset is outside an array of $size."
+        "A write of $count $unit from index $dataOffset is outside an array of $size."
     }
 }

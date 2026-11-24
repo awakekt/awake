@@ -20,7 +20,7 @@ import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.render.pipeline.usesSolidOpaquePipeline
 import com.awakekt.awake.render.renderer.RenderViewport
-import com.awakekt.awake.vulkan.Vulkan
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.material.SlotBlock
 import com.awakekt.awake.vulkan.material.stageUniformBuffer
@@ -324,7 +324,7 @@ internal fun RenderViewport.toVkScissor(): VkRect2D = VkRect2D(
  * loop through `SharedOpaqueRenderFeature.recordCommands` instead. */
 
 internal fun VulkanRenderer.recordDrawCalls(commandBuffer: Long, drawCalls: List<PreparedDrawCall>) {
-    commandRecorder.commandBuffer = commandBuffer
+    commandRecorder.beginPass(commandBuffer)
     sharedOpaqueFeature.recordDraws(commandRecorder, drawCalls)
 }
 
@@ -334,7 +334,7 @@ internal fun VulkanRenderer.recordDrawCalls(commandBuffer: Long, drawCalls: List
 internal fun VulkanRenderer.waitForCurrentFrameResourceSlot() {
     val currentFrame = swapchainManager.currentFrame
     val fence = swapchainManager.inFlightFences.getOrNull(currentFrame)
-    if (fence != null && fence != 0L) frameWaits.fence { Vulkan.vkWaitForFences(device, longArrayOf(fence), true, Long.MAX_VALUE) }
+    if (fence != null && fence != 0L) frameWaits.fence { VulkanCommands.vkWaitForFence(device, fence, Long.MAX_VALUE) }
     // Without a fence nothing of this slot is in flight; either way the slot is idle now.
     bufferPools.frameSlotIdle(currentFrame)
 }

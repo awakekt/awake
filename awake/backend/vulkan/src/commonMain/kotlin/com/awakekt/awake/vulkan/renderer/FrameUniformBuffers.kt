@@ -12,11 +12,11 @@ import com.awakekt.awake.render.passes.uniforms.FrameUniformBlock
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes.uniforms.identityFrameBlock
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import com.awakekt.awake.vulkan.device.SMALL_UBO_REBAR_MIN_HEAP_BYTES
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 
 /**
  * The device's frame blocks, one per frame in flight: what the camera, the light and the shadow
@@ -114,20 +114,12 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
             VkBufferCreateInfo(size = BYTES, usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
         )
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(
-                allocationSize = requirements.size,
-                memoryTypeIndex = VulkanBuffers.findMemoryType(
-                    graphicsDevice.physicalDevice,
-                    requirements.memoryTypeBits,
-                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                        VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                ),
-            ),
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(
+            requirements,
+            minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0L)
-        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, BYTES)
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
         return Entry(buffer, memory, mappedPtr)
     }
 

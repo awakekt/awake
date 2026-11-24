@@ -12,8 +12,8 @@ import com.awakekt.awake.render.passes.InstanceTintPacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.render.renderer.SkinnedInstanceLayout
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.handles.BufferHandle
@@ -172,7 +172,7 @@ class SkinnedInstanceBuffer(
         val paletteCount = packer.packSlice(palettes, maxInstances)
         if (tintCount == 0 || paletteCount == 0) return
         val resources = resourcesFor(frameIndex)
-        uploadSliceIfChanged(resources.mappedPtr, 0, packer.buffer, paletteCount, resources.residentPalettes)
+        uploadSliceIfChanged(resources.mappedPtr, 0L, packer.buffer, paletteCount, resources.residentPalettes)
         uploadSliceIfChanged(resources.mappedPtr, byteSize, tintPacker.buffer, tintCount, resources.residentTints)
     }
 
@@ -252,18 +252,9 @@ class SkinnedInstanceBuffer(
             ),
         )
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-        )
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(requirements)
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
         return Triple(buffer, memory, mappedPtr)
     }
 

@@ -9,13 +9,12 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.handles.BufferHandle
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 
 /**
@@ -70,7 +69,7 @@ class FrameInstanceBuffer(
     fun update(frameIndex: Int, frames: List<Float>) {
         val count = packer.packSlice(frames, maxInstances)
         if (count == 0) return
-        VulkanBuffers.writeMappedMemoryFloats(resourcesFor(frameIndex).mappedPtr, 0, packer.buffer, 0, count)
+        VulkanBuffers.writeMappedMemoryFloats(resourcesFor(frameIndex).mappedPtr, 0L, packer.buffer, 0, count)
     }
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 3. */
@@ -84,11 +83,11 @@ class FrameInstanceBuffer(
      * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
      */
     fun bind(frameIndex: Int, commandBuffer: Long) {
-        VulkanBuffers.vkCmdBindVertexBuffers(
+        VulkanBuffers.vkCmdBindVertexBuffer(
             commandBuffer,
             INSTANCE_FRAME_BINDING,
-            longArrayOf(resourcesFor(frameIndex).buffer.handle),
-            longArrayOf(0L),
+            resourcesFor(frameIndex).buffer.handle,
+            0L,
         )
     }
 
@@ -120,18 +119,9 @@ class FrameInstanceBuffer(
             ),
         )
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-        )
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(requirements)
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
         return Triple(buffer, memory, mappedPtr)
     }
 

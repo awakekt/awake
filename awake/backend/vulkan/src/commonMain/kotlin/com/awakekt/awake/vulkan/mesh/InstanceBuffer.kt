@@ -10,13 +10,12 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.handles.BufferHandle
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 import com.awakekt.awake.vulkan.renderer.sameBitsAs
 
@@ -101,7 +100,7 @@ class InstanceBuffer(
         // Copies of a static prop hold still frame after frame: the slot's buffer already has them (#1452).
         val resident = resources.resident
         if (resident != null && resources.residentCount == count && resident.sameBitsAs(floats, count)) return
-        VulkanBuffers.writeMappedMemoryFloats(resources.mappedPtr, 0, floats, 0, count)
+        VulkanBuffers.writeMappedMemoryFloats(resources.mappedPtr, 0L, floats, 0, count)
         uploads += 1
         val target = if (resident != null && resident.size >= count) resident else FloatArray(count).also { resources.resident = it }
         floats.copyInto(target, 0, 0, count)
@@ -119,11 +118,11 @@ class InstanceBuffer(
      * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
      */
     fun bind(frameIndex: Int, commandBuffer: Long) {
-        VulkanBuffers.vkCmdBindVertexBuffers(
+        VulkanBuffers.vkCmdBindVertexBuffer(
             commandBuffer,
             INSTANCE_BINDING,
-            longArrayOf(resourcesFor(frameIndex).buffer.handle),
-            longArrayOf(0L),
+            resourcesFor(frameIndex).buffer.handle,
+            0L,
         )
     }
 
@@ -164,18 +163,9 @@ class InstanceBuffer(
             ),
         )
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
-        )
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(requirements)
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, byteSize)
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
         return Triple(buffer, memory, mappedPtr)
     }
 

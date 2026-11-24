@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.texture
 
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.allocateDeviceImageMemory
 import com.awakekt.awake.vulkan.enums.VkFormat
 import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
@@ -48,32 +49,25 @@ internal class ColorAttachment(
 
     init {
         try {
+            val effectiveUsage = usage or VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
             image = VulkanImages.vkCreateImage(
                 graphicsDevice.device,
-                VkImageCreateInfo(width, height, format, usage, samples = samples),
+                VkImageCreateInfo(
+                    width,
+                    height,
+                    format,
+                    effectiveUsage,
+                    samples = samples,
+                ),
             )
             val requirements = VulkanImages.vkGetImageMemoryRequirements(graphicsDevice.device, image)
-            val isTransient = (usage and VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT) != 0
-            val type = if (isTransient) {
-                val lazyType = findLazyAttachmentMemoryTypeOrNegative(graphicsDevice.physicalDevice, requirements.memoryTypeBits)
-                if (lazyType >= 0) {
-                    lazilyAllocated = true
-                    lazyType
-                } else {
-                    VulkanBuffers.findMemoryType(
-                        graphicsDevice.physicalDevice,
-                        requirements.memoryTypeBits,
-                        VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    )
-                }
+            val lazyType = findLazyAttachmentMemoryTypeOrNegative(graphicsDevice.physicalDevice, requirements.memoryTypeBits)
+            memory = if (lazyType >= 0) {
+                lazilyAllocated = true
+                VulkanBuffers.vkAllocateMemory(graphicsDevice.device, VkMemoryAllocateInfo(requirements.size, lazyType))
             } else {
-                VulkanBuffers.findMemoryType(
-                    graphicsDevice.physicalDevice,
-                    requirements.memoryTypeBits,
-                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                )
+                graphicsDevice.allocateDeviceImageMemory(image, requirements)
             }
-            memory = VulkanBuffers.vkAllocateMemory(graphicsDevice.device, VkMemoryAllocateInfo(requirements.size, type))
             bytes = requirements.size
             VulkanImages.vkBindImageMemory(graphicsDevice.device, image, memory, 0)
             view = Vulkan.vkCreateImageView(

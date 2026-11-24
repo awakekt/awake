@@ -12,6 +12,7 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.Vulkan
+import com.awakekt.awake.vulkan.device.allocateReadbackStagingMemory
 import com.awakekt.awake.vulkan.enums.VkImageLayout
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -167,19 +168,7 @@ internal suspend fun Renderer.readImageBytes(
         ),
     )
     val stagingRequirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, stagingBuffer)
-    val stagingMemoryTypeIndex = VulkanBuffers.findMemoryType(
-        physicalDevice,
-        stagingRequirements.memoryTypeBits,
-        VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    )
-    val stagingMemory = VulkanBuffers.vkAllocateMemory(
-        device,
-        VkMemoryAllocateInfo(
-            allocationSize = stagingRequirements.size,
-            memoryTypeIndex = stagingMemoryTypeIndex,
-        ),
-    )
+    val stagingMemory = graphicsDevice.allocateReadbackStagingMemory(stagingRequirements)
     VulkanBuffers.vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0)
 
     val pixels: ByteArray

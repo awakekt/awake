@@ -17,14 +17,14 @@ import com.awakekt.awake.vulkan.createSurface
 import com.awakekt.awake.vulkan.enums.VkPhysicalDeviceType
 import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.flags.VkDebugUtilsMessageSeverityFlagBitsEXT
+import com.awakekt.awake.vulkan.gen.VulkanCommands
+import com.awakekt.awake.vulkan.gen.VulkanFeatures10
+import com.awakekt.awake.vulkan.gen.VulkanModernFeatures
 import com.awakekt.awake.vulkan.gen.VulkanWindow
 import com.awakekt.awake.vulkan.models.info.VkApplicationInfo
-import com.awakekt.awake.vulkan.models.info.VkDeviceCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkDeviceQueueCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 import com.awakekt.awake.vulkan.models.info.debug.DebugUtilsFormattedCallback
 import com.awakekt.awake.vulkan.models.info.debug.VkDebugUtilsMessengerCreateInfoEXT
-import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineCacheCreateInfo
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDevice
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceFeatures
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceProperties
@@ -48,6 +48,23 @@ import com.awakekt.awake.vulkan.utils.getAppLayerProps
 class GraphicsDevice {
     /** Serializes host access to Vulkan queues (`vkQueueSubmit` / `vkQueuePresentKHR`) across threads. */
     internal val queueLock = QueueLock()
+
+    /** Reusable persistently-mapped staging buffer shared by static mesh and texture uploads. */
+    internal var stagingBufferPool = ReusableStagingBuffer(this)
+        private set
+
+    /** Pooled `DEVICE_LOCAL` memory slab allocator for static meshes and sampled textures. */
+    internal var deviceMemoryAllocator = DeviceMemorySlabAllocator(this)
+        private set
+
+    /** Active renderer reaper for frame-safe deferred destruction, or null when no presentable renderer runs. */
+    internal var activeReaper: DeferredResourceReaper? = null
+
+    /** Active transfer-context upload batcher for deferred/batched mesh and texture uploads, if registered. */
+    internal var activeUploadBatcher: com.awakekt.awake.vulkan.commands.UploadBatcher? = null
+
+    /** Number of resource destructions deferred through [activeReaper] without `vkDeviceWaitIdle`. */
+    internal var deferredDestructionCount: Long = 0L
 
     private var frameUniformBuffers: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers? = null
 
@@ -149,6 +166,32 @@ class GraphicsDevice {
     /** Device-wide `VkPipelineCache` shared across all graphics pipelines created on [device]. */
     internal var sharedPipelineCache: Long = 0L
         private set
+
+    /**
+     * Optional serialized `VkPipelineCache` bytes loaded from disk before [create] or
+     * [createHeadless] to seed [sharedPipelineCache]. Incompatible or stale driver blobs are
+     * safely ignored by Vulkan.
+     */
+    var initialPipelineCacheData: ByteArray? = null
+
+    /** Effective Vulkan API version `min(instanceVersion, deviceApiVersion)` for this device. */
+    internal var effectiveApiVersion: Version = Version(1, 0, 0)
+        private set
+
+    /** Bitmask of [VulkanModernFeatures] genuinely enabled on [device] via `pNext` chaining. */
+    internal var enabledModernFeatures: Int = 0
+        private set
+
+    /**
+     * Exports [sharedPipelineCache] as raw bytes suitable for disk persistence, or an empty array
+     * before [create] / after [destroy].
+     */
+    fun exportPipelineCacheData(): ByteArray =
+        if (device != 0L && sharedPipelineCache != 0L) {
+            VulkanCommands.vkGetPipelineCacheData(device, sharedPipelineCache)
+        } else {
+            ByteArray(0)
+        }
 
     /**
      * Whether [destroy] throws when the validation layer reported errors. Always on for a headless
@@ -396,70 +439,51 @@ class GraphicsDevice {
             indices.graphicsFamily!!,
             indices.presentFamily!!,
         )
-        val queueInfos = uniqueQueueFamilies.map { uniqueQueueFamilyIndex ->
-            VkDeviceQueueCreateInfo(
-                queueFamilyIndex = uniqueQueueFamilyIndex,
-                queueCount = 1,
-                pQueuePriorities = floatArrayOf(1.0f),
-            )
-        }
 
-        val features = Vulkan.vkGetPhysicalDeviceFeatures(physicalDevice)
-        // Every supported feature is enabled below, so supported here means usable.
-        depthClamp = features.depthClamp
-        compressedTextureFormats = compressedFormats(features)
-        maxSamplerAnisotropy = if (features.samplerAnisotropy) maxOf(1, physicalDeviceProperties.limits.maxSamplerAnisotropy.toInt()) else 1
+        val supportedFeatures = Vulkan.vkGetPhysicalDeviceFeatures(physicalDevice)
+        val enabledFeatures = selectEnabledDeviceFeatures(supportedFeatures)
+        val features10Mask = packFeatures10Mask(enabledFeatures)
+        depthClamp = enabledFeatures.depthClamp
+        compressedTextureFormats = compressedFormats(enabledFeatures)
+        maxSamplerAnisotropy = if (enabledFeatures.samplerAnisotropy) maxOf(1, physicalDeviceProperties.limits.maxSamplerAnisotropy.toInt()) else 1
         val availableDeviceExtensions =
             Vulkan.vkEnumerateDeviceExtensionProperties(physicalDevice)
                 .map { it.extensionName }
                 .toSet()
-        // Deliberately NOT also querying vkEnumerateDeviceExtensionProperties(physicalDevice,
-        // layerName) per-layer (as an earlier version of this function did) -- device-level
-        // layers are a deprecated Vulkan 1.0 concept the loader/ICD already ignore in
-        // practice (a device's real extension list is layer-independent), and querying them
-        // per-layer is actively broken on at least this project's own dev/CI setup: found
-        // (2026-07-12, D24 minimap-crash investigation) that as soon as ANY instance layer
-        // is discoverable on the host (e.g. `brew install vulkan-validationlayers`, which on
-        // macOS ends up scanned even without VK_LAYER_PATH set), this call fails loader-side
-        // with "pLayerName is too long or is badly formed", which cascades into
-        // `vkCreateDevice` itself failing with VK_ERROR_EXTENSION_NOT_PRESENT -- i.e. the
-        // app couldn't even start. Skipping the per-layer query entirely avoids this without
-        // losing anything real (the plain, no-layer `deviceExtensions` query above already
-        // returns the physical device's actual extension list).
-        val requiredDeviceExtensions = buildList {
-            // Headless too when the device has it: presentable headless images end each frame in
-            // PRESENT_SRC_KHR, a layout only this extension defines.
-            if (surface != 0L || SWAPCHAIN_EXTENSION in availableDeviceExtensions) add(SWAPCHAIN_EXTENSION)
-            if ("VK_KHR_portability_subset" in availableDeviceExtensions) {
-                add("VK_KHR_portability_subset")
-            }
-            // What the pacer asks for, of what the device has (#1699).
-            swapchainPacer?.deviceExtensions(physicalDevice, availableDeviceExtensions)
-                ?.filter { it in availableDeviceExtensions && it !in this }
-                ?.let(::addAll)
-        }
-        val missingDeviceExtensions = requiredDeviceExtensions.filterNot(availableDeviceExtensions::contains)
-        require(missingDeviceExtensions.isEmpty()) {
-            "Missing Vulkan device extensions: ${missingDeviceExtensions.joinToString()}"
-        }
-
-        val deviceInfo = VkDeviceCreateInfo(
-            pQueueCreateInfos = queueInfos.toTypedArray(),
-            pEnabledFeatures = arrayOf(features),
-            ppEnabledExtensionNames = requiredDeviceExtensions.toTypedArray(),
+        val requiredDeviceExtensions = selectRequiredDeviceExtensions(
+            surface = surface,
+            physicalDevice = physicalDevice,
+            swapchainPacer = swapchainPacer,
+            availableDeviceExtensions = availableDeviceExtensions,
         )
-        device = Vulkan.vkCreateDevice(physicalDevice, deviceInfo)
+
+        val deviceApiVersion = Version.fromVkVersion(physicalDeviceProperties.apiVersion)
+        effectiveApiVersion = minOf(instanceVersion, deviceApiVersion)
+        enabledModernFeatures = VulkanCommands.vkQueryModernFeatures(
+            instance = instance,
+            physicalDevice = physicalDevice,
+            apiVersion = effectiveApiVersion.vkVersion,
+        )
+        device = VulkanCommands.vkCreateLogicalDeviceWithFeatures(
+            physicalDevice = physicalDevice,
+            queueFamilyIndices = uniqueQueueFamilies.toIntArray(),
+            enabledExtensions = requiredDeviceExtensions.toTypedArray(),
+            features10Mask = features10Mask,
+            apiVersion = effectiveApiVersion.vkVersion,
+            modernFeaturesMask = enabledModernFeatures,
+        )
         swapchainExtensionEnabled = SWAPCHAIN_EXTENSION in requiredDeviceExtensions
-        sharedPipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+        sharedPipelineCache = VulkanCommands.vkCreatePipelineCacheFromBytes(device, initialPipelineCacheData)
 
         graphicsQueue = Vulkan.vkGetDeviceQueue(device, indices.graphicsFamily!!, 0)
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
         swapchainPacer?.deviceCreated(physicalDevice, device, presentQueue, indices.presentFamily!!)
 
         vendorId = physicalDeviceProperties.vendorID
-        val deviceApiVersion = Version.fromVkVersion(physicalDeviceProperties.apiVersion)
         capabilities = deriveDeviceCapabilities(
             deviceApiVersion = deviceApiVersion,
+            effectiveApiVersion = effectiveApiVersion,
+            enabledModernFeatures = enabledModernFeatures,
             properties = physicalDeviceProperties,
             deviceClass = deviceClass,
             availableDeviceExtensions = availableDeviceExtensions,
@@ -475,7 +499,18 @@ class GraphicsDevice {
      * validation layer reported errors; the message lists them.
      */
     fun destroy() {
-        if (device != 0L) frameUniformBuffers?.destroy()
+        if (device != 0L) {
+            activeReaper?.let { reaper ->
+                com.awakekt.awake.vulkan.gen.VulkanBuffers.vkDeviceWaitIdle(device)
+                reaper.destroyAll()
+                activeReaper = null
+            }
+            stagingBufferPool.destroy()
+            stagingBufferPool = ReusableStagingBuffer(this)
+            deviceMemoryAllocator.destroy()
+            deviceMemoryAllocator = DeviceMemorySlabAllocator(this)
+            frameUniformBuffers?.destroy()
+        }
         frameUniformBuffers = null
         if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)
         if (sharedPipelineCache != 0L && device != 0L) {
@@ -488,6 +523,8 @@ class GraphicsDevice {
         if (instance != 0L) Vulkan.vkDestroyInstance(instance)
         capabilities = DeviceCapabilities.Uninitialized
         instanceVersion = Version(1, 0, 0)
+        effectiveApiVersion = Version(1, 0, 0)
+        enabledModernFeatures = 0
         if (failOnValidationError && validationErrors.isNotEmpty()) {
             error(
                 "Vulkan validation errors were reported:\n" +
@@ -497,53 +534,89 @@ class GraphicsDevice {
     }
 }
 
+@Suppress("LongParameterList")
 private fun deriveDeviceCapabilities(
     deviceApiVersion: Version,
+    effectiveApiVersion: Version,
+    enabledModernFeatures: Int,
     properties: VkPhysicalDeviceProperties,
     deviceClass: GpuDeviceClass,
     availableDeviceExtensions: Set<String>,
     enabledExtensions: Set<String>,
 ): DeviceCapabilities {
-    val v12 = Version(1, 2, 0)
     val v13 = Version(1, 3, 0)
     val v14 = Version(1, 4, 0)
+    fun hasModern(bit: Int): Boolean = (enabledModernFeatures and bit) != 0
 
     return DeviceCapabilities(
         apiVersion = deviceApiVersion,
         driverVersion = properties.driverVersion,
         deviceName = properties.deviceName.toNullTerminatedString(),
         deviceClass = deviceClass,
-        dynamicRendering = supportsCapability(deviceApiVersion, v13, DYNAMIC_RENDERING_EXTENSION, availableDeviceExtensions),
-        synchronization2 = supportsCapability(deviceApiVersion, v13, SYNCHRONIZATION_2_EXTENSION, availableDeviceExtensions),
-        timelineSemaphores = supportsCapability(deviceApiVersion, v12, TIMELINE_SEMAPHORE_EXTENSION, availableDeviceExtensions),
-        extendedDynamicState = supportsCapability(deviceApiVersion, v13, EXTENDED_DYNAMIC_STATE_EXTENSION, availableDeviceExtensions),
-        extendedDynamicState2 = supportsCapability(deviceApiVersion, v13, EXTENDED_DYNAMIC_STATE_2_EXTENSION, availableDeviceExtensions),
-        descriptorIndexing = supportsCapability(deviceApiVersion, v12, DESCRIPTOR_INDEXING_EXTENSION, availableDeviceExtensions),
-        bufferDeviceAddress = supportsCapability(deviceApiVersion, v12, BUFFER_DEVICE_ADDRESS_EXTENSION, availableDeviceExtensions),
-        drawIndirectCount = supportsCapability(deviceApiVersion, v12, DRAW_INDIRECT_COUNT_EXTENSION, availableDeviceExtensions),
-        pipelineCreationCacheControl = supportsCapability(
-            deviceApiVersion,
-            v13,
-            PIPELINE_CREATION_CACHE_CONTROL_EXTENSION,
-            availableDeviceExtensions,
-        ),
-        pushDescriptors = supportsCapability(deviceApiVersion, v14, PUSH_DESCRIPTOR_EXTENSION, availableDeviceExtensions),
+        dynamicRendering = hasModern(VulkanModernFeatures.DYNAMIC_RENDERING),
+        synchronization2 = hasModern(VulkanModernFeatures.SYNCHRONIZATION_2),
+        timelineSemaphores = hasModern(VulkanModernFeatures.TIMELINE_SEMAPHORE),
+        extendedDynamicState = effectiveApiVersion >= v13 || EXTENDED_DYNAMIC_STATE_EXTENSION in enabledExtensions,
+        extendedDynamicState2 = effectiveApiVersion >= v13 || EXTENDED_DYNAMIC_STATE_2_EXTENSION in enabledExtensions,
+        descriptorIndexing = hasModern(VulkanModernFeatures.DESCRIPTOR_INDEXING),
+        bufferDeviceAddress = hasModern(VulkanModernFeatures.BUFFER_DEVICE_ADDRESS),
+        drawIndirectCount = hasModern(VulkanModernFeatures.DRAW_INDIRECT_COUNT),
+        pipelineCreationCacheControl = hasModern(VulkanModernFeatures.PIPELINE_CREATION_CACHE_CONTROL),
+        pushDescriptors = supportsCapability(effectiveApiVersion, v14, PUSH_DESCRIPTOR_EXTENSION, enabledExtensions),
         dynamicRenderingLocalRead = supportsCapability(
-            deviceApiVersion,
+            effectiveApiVersion,
             v14,
             DYNAMIC_RENDERING_LOCAL_READ_EXTENSION,
-            availableDeviceExtensions,
+            enabledExtensions,
         ),
-        maintenance4 = supportsCapability(deviceApiVersion, v13, MAINTENANCE_4_EXTENSION, availableDeviceExtensions),
-        maintenance5 = supportsCapability(deviceApiVersion, v14, MAINTENANCE_5_EXTENSION, availableDeviceExtensions),
-        maintenance6 = supportsCapability(deviceApiVersion, v14, MAINTENANCE_6_EXTENSION, availableDeviceExtensions),
-        scalarBlockLayout = supportsCapability(deviceApiVersion, v12, SCALAR_BLOCK_LAYOUT_EXTENSION, availableDeviceExtensions),
-        hostImageCopy = HOST_IMAGE_COPY_EXTENSION in availableDeviceExtensions,
-        lineRasterization = deviceApiVersion >= v14 ||
-            LINE_RASTERIZATION_KHR_EXTENSION in availableDeviceExtensions ||
-            LINE_RASTERIZATION_EXT_EXTENSION in availableDeviceExtensions,
+        maintenance4 = hasModern(VulkanModernFeatures.MAINTENANCE_4),
+        maintenance5 = supportsCapability(effectiveApiVersion, v14, MAINTENANCE_5_EXTENSION, enabledExtensions),
+        maintenance6 = supportsCapability(effectiveApiVersion, v14, MAINTENANCE_6_EXTENSION, enabledExtensions),
+        scalarBlockLayout = hasModern(VulkanModernFeatures.SCALAR_BLOCK_LAYOUT),
+        hostImageCopy = HOST_IMAGE_COPY_EXTENSION in availableDeviceExtensions && HOST_IMAGE_COPY_EXTENSION in enabledExtensions,
+        lineRasterization = effectiveApiVersion >= v14 ||
+            LINE_RASTERIZATION_KHR_EXTENSION in enabledExtensions ||
+            LINE_RASTERIZATION_EXT_EXTENSION in enabledExtensions,
         enabledExtensions = enabledExtensions,
     )
+}
+
+internal fun packFeatures10Mask(features: VkPhysicalDeviceFeatures): Int {
+    var mask = 0
+    if (features.fullDrawIndexUint32) mask = mask or VulkanFeatures10.FULL_DRAW_INDEX_UINT32
+    if (features.multiDrawIndirect) mask = mask or VulkanFeatures10.MULTI_DRAW_INDIRECT
+    if (features.depthClamp) mask = mask or VulkanFeatures10.DEPTH_CLAMP
+    if (features.fillModeNonSolid) mask = mask or VulkanFeatures10.FILL_MODE_NON_SOLID
+    if (features.samplerAnisotropy) mask = mask or VulkanFeatures10.SAMPLER_ANISOTROPY
+    if (features.textureCompressionETC2) mask = mask or VulkanFeatures10.TEXTURE_COMPRESSION_ETC2
+    if (features.textureCompressionASTC_LDR) mask = mask or VulkanFeatures10.TEXTURE_COMPRESSION_ASTC_LDR
+    if (features.textureCompressionBC) mask = mask or VulkanFeatures10.TEXTURE_COMPRESSION_BC
+    return mask
+}
+
+private fun selectRequiredDeviceExtensions(
+    surface: Long,
+    physicalDevice: Long,
+    swapchainPacer: SwapchainPacer?,
+    availableDeviceExtensions: Set<String>,
+): List<String> {
+    val required = buildList {
+        // Headless too when the device has it: presentable headless images end each frame in
+        // PRESENT_SRC_KHR, a layout only this extension defines.
+        if (surface != 0L || SWAPCHAIN_EXTENSION in availableDeviceExtensions) add(SWAPCHAIN_EXTENSION)
+        if ("VK_KHR_portability_subset" in availableDeviceExtensions) {
+            add("VK_KHR_portability_subset")
+        }
+        // What the pacer asks for, of what the device has (#1699).
+        swapchainPacer?.deviceExtensions(physicalDevice, availableDeviceExtensions)
+            ?.filter { it in availableDeviceExtensions && it !in this }
+            ?.let(::addAll)
+    }
+    val missing = required.filterNot(availableDeviceExtensions::contains)
+    require(missing.isEmpty()) {
+        "Missing Vulkan device extensions: ${missing.joinToString()}"
+    }
+    return required
 }
 
 private fun supportsCapability(
@@ -558,21 +631,12 @@ private fun VkDebugUtilsMessageSeverityFlagBitsEXT.isValidationError(): Boolean 
 
 private const val SWAPCHAIN_EXTENSION = "VK_KHR_swapchain"
 private const val DEBUG_UTILS_EXTENSION = "VK_EXT_debug_utils"
-private const val DYNAMIC_RENDERING_EXTENSION = "VK_KHR_dynamic_rendering"
-private const val SYNCHRONIZATION_2_EXTENSION = "VK_KHR_synchronization2"
-private const val TIMELINE_SEMAPHORE_EXTENSION = "VK_KHR_timeline_semaphore"
 private const val EXTENDED_DYNAMIC_STATE_EXTENSION = "VK_EXT_extended_dynamic_state"
 private const val EXTENDED_DYNAMIC_STATE_2_EXTENSION = "VK_EXT_extended_dynamic_state2"
-private const val DESCRIPTOR_INDEXING_EXTENSION = "VK_EXT_descriptor_indexing"
-private const val BUFFER_DEVICE_ADDRESS_EXTENSION = "VK_KHR_buffer_device_address"
-private const val DRAW_INDIRECT_COUNT_EXTENSION = "VK_KHR_draw_indirect_count"
-private const val PIPELINE_CREATION_CACHE_CONTROL_EXTENSION = "VK_EXT_pipeline_creation_cache_control"
 private const val PUSH_DESCRIPTOR_EXTENSION = "VK_KHR_push_descriptor"
 private const val DYNAMIC_RENDERING_LOCAL_READ_EXTENSION = "VK_KHR_dynamic_rendering_local_read"
-private const val MAINTENANCE_4_EXTENSION = "VK_KHR_maintenance4"
 private const val MAINTENANCE_5_EXTENSION = "VK_KHR_maintenance5"
 private const val MAINTENANCE_6_EXTENSION = "VK_KHR_maintenance6"
-private const val SCALAR_BLOCK_LAYOUT_EXTENSION = "VK_EXT_scalar_block_layout"
 private const val HOST_IMAGE_COPY_EXTENSION = "VK_EXT_host_image_copy"
 private const val LINE_RASTERIZATION_KHR_EXTENSION = "VK_KHR_line_rasterization"
 private const val LINE_RASTERIZATION_EXT_EXTENSION = "VK_EXT_line_rasterization"
@@ -635,3 +699,22 @@ internal fun compressedFormats(features: VkPhysicalDeviceFeatures): Set<Compress
     if (features.textureCompressionETC2) add(CompressedTextureFormat.Etc2Rgba8)
     if (features.textureCompressionASTC_LDR) add(CompressedTextureFormat.Astc4x4)
 }
+
+/**
+ * Enables only the Vulkan 1.0 device features Awake actually uses.
+ *
+ * Blindly forwarding `vkGetPhysicalDeviceFeatures` turns on `robustBufferAccess` and other
+ * unused features that force driver shader bounds-checks and disable fast paths on both mobile
+ * and desktop GPUs.
+ */
+internal fun selectEnabledDeviceFeatures(supported: VkPhysicalDeviceFeatures): VkPhysicalDeviceFeatures =
+    VkPhysicalDeviceFeatures(
+        fullDrawIndexUint32 = supported.fullDrawIndexUint32,
+        multiDrawIndirect = supported.multiDrawIndirect,
+        depthClamp = supported.depthClamp,
+        fillModeNonSolid = supported.fillModeNonSolid,
+        samplerAnisotropy = supported.samplerAnisotropy,
+        textureCompressionETC2 = supported.textureCompressionETC2,
+        textureCompressionASTC_LDR = supported.textureCompressionASTC_LDR,
+        textureCompressionBC = supported.textureCompressionBC,
+    )

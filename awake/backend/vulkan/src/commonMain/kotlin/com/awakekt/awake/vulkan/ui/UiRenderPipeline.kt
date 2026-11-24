@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.vulkan.ui
 
-import com.awakekt.awake.core.geometry.toByteArrayLE
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.text.font.UiFont
@@ -19,6 +18,8 @@ import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.vulkan.VK_SUBPASS_EXTERNAL
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.SMALL_UBO_REBAR_MIN_HEAP_BYTES
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
 import com.awakekt.awake.vulkan.enums.VkAttachmentLoadOp
 import com.awakekt.awake.vulkan.enums.VkBlendFactor
 import com.awakekt.awake.vulkan.enums.VkColorComponentFlagBits
@@ -37,6 +38,7 @@ import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.models.VkAttachmentDescription
 import com.awakekt.awake.vulkan.models.VkAttachmentReference
@@ -151,6 +153,7 @@ class UiRenderPipeline(
     private var descriptorSet: Long = 0
     private var screenSizeBuffer: Long = 0
     private var screenSizeBufferMemory: Long = 0
+    private var screenSizeMappedPtr: Long = 0
     private var pipelineLayout: Long = 0
     private var pipelineCache: Long = 0
     private var ownsPipelineCache: Boolean = false
@@ -162,14 +165,20 @@ class UiRenderPipeline(
     private val descriptorSlotsByFrame = List(framesInFlight) {
         mutableListOf<TextureDescriptorSlot>()
     }
+    private val textureDescriptorPools = mutableListOf<Long>()
+    private var remainingInTexturePool = 0
+    private val compositeModeScratch = IntArray(1)
+    private var lastCompositeModeOrdinal = -1
 
     private class TextureDescriptorSlot(
-        val descriptorPool: Long,
         val descriptorSet: Long,
     ) {
         var boundImageView: Long = 0L
         var boundSampler: Long = 0L
         var boundVersion: Long = 0L
+        var boundDstImageView: Long = 0L
+        var boundDstSampler: Long = 0L
+        var uniformBound: Boolean = false
     }
 
     /** Descriptor set writes performed by [bindMaterial], for tests verifying steady-state caching. */
@@ -182,6 +191,7 @@ class UiRenderPipeline(
         val descriptorSet: Long,
         val uniformBuffer: Long,
         val uniformMemory: Long,
+        val uniformMappedPtr: Long,
         val fontInfo: Vec4,
     )
 
@@ -311,31 +321,27 @@ class UiRenderPipeline(
     }
 
     private fun createScreenSizeUniformBuffer() {
-        val (buffer, memory) = createUniformBuffer()
+        val (buffer, memory, mappedPtr) = createUniformBuffer()
         screenSizeBuffer = buffer
         screenSizeBufferMemory = memory
+        screenSizeMappedPtr = mappedPtr
     }
 
-    /** A host-visible buffer sized for [UiUniformLayouts.Buffer], and its memory. */
-    private fun createUniformBuffer(): Pair<Long, Long> {
+    /** A persistently mapped host-visible buffer sized for [UiUniformLayouts.Buffer], and its memory. */
+    private fun createUniformBuffer(): Triple<Long, Long, Long> {
         val bufferSize = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong()
         val buffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(size = bufferSize, usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
         )
         val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            requirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val memory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
+        val memory = graphicsDevice.allocateHostVisibleBufferMemory(
+            requirements,
+            minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
         )
         VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        return buffer to memory
+        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
+        return Triple(buffer, memory, mappedPtr)
     }
 
     private fun createFixedDescriptorSet() {
@@ -410,11 +416,11 @@ class UiRenderPipeline(
             ),
         )
         val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout)
-        val (buffer, memory) = createUniformBuffer()
+        val (buffer, memory, mappedPtr) = createUniformBuffer()
         writeUniformBinding(set, buffer)
         writeImageBindings(set, atlas.sampler.handle, atlas.imageView.handle)
-        writeUniforms(memory, fontInfo)
-        return FontSlot(pool, set, buffer, memory, fontInfo)
+        writeUniforms(mappedPtr, fontInfo)
+        return FontSlot(pool, set, buffer, memory, mappedPtr, fontInfo)
     }
 
     private fun descriptorSlot(frameIndex: Int, drawSlotIndex: Int): TextureDescriptorSlot {
@@ -425,74 +431,85 @@ class UiRenderPipeline(
         return slots[drawSlotIndex]
     }
 
-    private fun createDescriptorSlot(): TextureDescriptorSlot {
-        if (targetComposite) {
+    private fun allocateFromTexturePool(): Long {
+        if (remainingInTexturePool == 0) {
+            val blockSets = if (targetComposite) COMPOSITE_POOL_BLOCK else TEXTURE_POOL_BLOCK
+            val poolSizes = if (targetComposite) {
+                arrayOf(
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount = 2 * blockSets),
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount = 2 * blockSets),
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = blockSets),
+                )
+            } else {
+                arrayOf(
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = blockSets),
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount = blockSets),
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount = blockSets),
+                )
+            }
             val pool = VulkanDescriptors.vkCreateDescriptorPool(
                 device,
-                VkDescriptorPoolCreateInfo(
-                    maxSets = 1,
-                    pPoolSizes = arrayOf(
-                        VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount = 2),
-                        VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount = 2),
-                        VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
-                    ),
+                VkDescriptorPoolCreateInfo(maxSets = blockSets, pPoolSizes = poolSizes),
+            )
+            textureDescriptorPools.add(pool)
+            remainingInTexturePool = blockSets
+        }
+        remainingInTexturePool -= 1
+        return VulkanDescriptors.vkAllocateDescriptorSet(device, textureDescriptorPools.last(), descriptorSetLayout)
+    }
+
+    private fun createDescriptorSlot(): TextureDescriptorSlot {
+        val set = allocateFromTexturePool()
+        val slot = TextureDescriptorSlot(set)
+        if (!targetComposite) {
+            VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+                device,
+                set,
+                0,
+                VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                VkDescriptorBufferInfo(
+                    buffer = screenSizeBuffer,
+                    range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
                 ),
             )
-            val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout)
-            return TextureDescriptorSlot(pool, set)
+            slot.uniformBound = true
         }
-        val pool = VulkanDescriptors.vkCreateDescriptorPool(
-            device,
-            VkDescriptorPoolCreateInfo(
-                maxSets = 1,
-                pPoolSizes = arrayOf(
-                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
-                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount = 1),
-                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount = 1),
-                ),
-            ),
-        )
-        val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout)
-        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
-            device,
-            set,
-            0,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            VkDescriptorBufferInfo(
-                buffer = screenSizeBuffer,
-                range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
-            ),
-        )
-        return TextureDescriptorSlot(pool, set)
+        return slot
+    }
+
+    /** Clears cached bindings referencing a destroyed [imageView] so handle reuse cannot alias a stale descriptor. */
+    internal fun invalidateImageView(imageView: Long) {
+        if (imageView == 0L) return
+        for (frameSlots in descriptorSlotsByFrame) {
+            for (slot in frameSlots) {
+                if (slot.boundImageView == imageView) {
+                    slot.boundImageView = 0L
+                    slot.boundVersion = 0L
+                }
+                if (slot.boundDstImageView == imageView) slot.boundDstImageView = 0L
+            }
+        }
+    }
+
+    /** Binds only this pipeline's `VkPipeline` handle, without touching descriptor sets. */
+    internal fun bindPipelineOnly(commandBuffer: Long) {
+        VulkanCommands.vkCmdBindGraphicsPipeline(commandBuffer, graphicsPipeline[0])
     }
 
     /**
-     * Points one draw slot's descriptor set at the given image and sampler, then binds this
-     * pipeline and that set.
-     *
-     * @param commandBuffer The command buffer being recorded.
-     * @param frameIndex The frame slot, so frames in flight never share a descriptor set.
-     * @param drawSlotIndex The per-frame draw slot, so several textured draws in one frame keep
-     * separate descriptors. Slots are created on first use.
-     * @param sampler The sampler to read the image with.
-     * @param imageView The image view to draw.
-     */
-    fun bindMaterial(commandBuffer: Long, frameIndex: Int, drawSlotIndex: Int, sampler: Long, imageView: Long) =
-        bindMaterial(commandBuffer, frameIndex, drawSlotIndex, sampler, imageView, version = 0L)
-
-    /**
-     * Binds [sampler]/[imageView] using a monotonic [version] tag from [GraphicsDevice] so steady-state
-     * UI texture slots skip redundant `vkUpdateDescriptorSetImage` JNI/driver writes while remaining
-     * immune to recycled native Vulkan handles. Passing `version <= 0L` always refreshes the descriptor.
+     * Updates (when changed) and binds the texture descriptor set for `(frameIndex, drawSlotIndex)`
+     * without rebinding the pipeline. When [version] is positive, matching `(version, imageView, sampler)`
+     * skips redundant `vkUpdateDescriptorSetImage` writes while remaining immune to recycled native
+     * Vulkan handles; passing `version <= 0L` always refreshes the descriptor.
      */
     @Suppress("LongParameterList")
-    internal fun bindMaterial(
+    internal fun bindMaterialDescriptorOnly(
         commandBuffer: Long,
         frameIndex: Int,
         drawSlotIndex: Int,
         sampler: Long,
         imageView: Long,
-        version: Long,
+        version: Long = 0L,
     ) {
         val slot = descriptorSlot(frameIndex, drawSlotIndex)
         val cached = version > 0L &&
@@ -525,12 +542,39 @@ class UiRenderPipeline(
             slot.boundVersion = version
             textureDescriptorWrites += 1
         }
-        Vulkan.vkCmdBindPipeline(
-            commandBuffer,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            graphicsPipeline[0],
-        )
         VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, slot.descriptorSet)
+    }
+
+    /**
+     * Points one draw slot's descriptor set at the given image and sampler, then binds this
+     * pipeline and that set.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param frameIndex The frame slot, so frames in flight never share a descriptor set.
+     * @param drawSlotIndex The per-frame draw slot, so several textured draws in one frame keep
+     * separate descriptors. Slots are created on first use.
+     * @param sampler The sampler to read the image with.
+     * @param imageView The image view to draw.
+     */
+    fun bindMaterial(commandBuffer: Long, frameIndex: Int, drawSlotIndex: Int, sampler: Long, imageView: Long) =
+        bindMaterial(commandBuffer, frameIndex, drawSlotIndex, sampler, imageView, version = 0L)
+
+    /**
+     * Binds [sampler]/[imageView] using a monotonic [version] tag from [GraphicsDevice] so steady-state
+     * UI texture slots skip redundant `vkUpdateDescriptorSetImage` JNI/driver writes while remaining
+     * immune to recycled native Vulkan handles. Passing `version <= 0L` always refreshes the descriptor.
+     */
+    @Suppress("LongParameterList")
+    internal fun bindMaterial(
+        commandBuffer: Long,
+        frameIndex: Int,
+        drawSlotIndex: Int,
+        sampler: Long,
+        imageView: Long,
+        version: Long,
+    ) {
+        bindPipelineOnly(commandBuffer)
+        bindMaterialDescriptorOnly(commandBuffer, frameIndex, drawSlotIndex, sampler, imageView, version)
     }
 
     /**
@@ -555,51 +599,71 @@ class UiRenderPipeline(
     ) {
         check(targetComposite) { "bindTargetComposite requires a target-composite UiRenderPipeline." }
         val slot = descriptorSlot(frameIndex, 0)
-        VulkanDescriptors.vkUpdateDescriptorSetImage(
-            device,
-            slot.descriptorSet,
-            0,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            VkDescriptorImageInfo(sampler = 0, imageView = sourceImageView),
-        )
-        VulkanDescriptors.vkUpdateDescriptorSetImage(
-            device,
-            slot.descriptorSet,
-            1,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
-            VkDescriptorImageInfo(sampler = sourceSampler, imageView = 0),
-        )
-        VulkanDescriptors.vkUpdateDescriptorSetImage(
-            device,
-            slot.descriptorSet,
-            2,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            VkDescriptorImageInfo(sampler = 0, imageView = destinationImageView),
-        )
-        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
-            device,
-            slot.descriptorSet,
-            4,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            VkDescriptorBufferInfo(
-                buffer = screenSizeBuffer,
-                range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
-            ),
-        )
-        VulkanBuffers.writeBufferMemoryBytes(
-            device,
-            screenSizeBufferMemory,
-            0,
-            intArrayOf(mode.ordinal).toByteArrayLE(),
-        )
-        VulkanDescriptors.vkUpdateDescriptorSetImage(
-            device,
-            slot.descriptorSet,
-            3,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
-            VkDescriptorImageInfo(sampler = destinationSampler, imageView = 0),
-        )
+        updateTargetCompositeDescriptors(slot, sourceSampler, sourceImageView, destinationSampler, destinationImageView)
+        if (lastCompositeModeOrdinal != mode.ordinal) {
+            compositeModeScratch[0] = mode.ordinal
+            VulkanBuffers.writeMappedMemoryInts(screenSizeMappedPtr, 0L, compositeModeScratch, 0, 1)
+            lastCompositeModeOrdinal = mode.ordinal
+        }
         bind(commandBuffer, slot.descriptorSet)
+    }
+
+    private fun updateTargetCompositeDescriptors(
+        slot: TextureDescriptorSlot,
+        sourceSampler: Long,
+        sourceImageView: Long,
+        destinationSampler: Long,
+        destinationImageView: Long,
+    ) {
+        if (slot.boundImageView != sourceImageView) {
+            writeSampledImage(slot.descriptorSet, 0, sourceImageView)
+            slot.boundImageView = sourceImageView
+        }
+        if (slot.boundSampler != sourceSampler) {
+            writeSampler(slot.descriptorSet, 1, sourceSampler)
+            slot.boundSampler = sourceSampler
+        }
+        if (slot.boundDstImageView != destinationImageView) {
+            writeSampledImage(slot.descriptorSet, 2, destinationImageView)
+            slot.boundDstImageView = destinationImageView
+        }
+        if (slot.boundDstSampler != destinationSampler) {
+            writeSampler(slot.descriptorSet, 3, destinationSampler)
+            slot.boundDstSampler = destinationSampler
+        }
+        if (!slot.uniformBound) {
+            VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+                device,
+                slot.descriptorSet,
+                4,
+                VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                VkDescriptorBufferInfo(
+                    buffer = screenSizeBuffer,
+                    range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
+                ),
+            )
+            slot.uniformBound = true
+        }
+    }
+
+    private fun writeSampledImage(set: Long, binding: Int, imageView: Long) {
+        VulkanDescriptors.vkUpdateDescriptorSetImage(
+            device,
+            set,
+            binding,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            VkDescriptorImageInfo(sampler = 0, imageView = imageView),
+        )
+    }
+
+    private fun writeSampler(set: Long, binding: Int, sampler: Long) {
+        VulkanDescriptors.vkUpdateDescriptorSetImage(
+            device,
+            set,
+            binding,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
+            VkDescriptorImageInfo(sampler = sampler, imageView = 0),
+        )
     }
 
     /**
@@ -652,21 +716,14 @@ class UiRenderPipeline(
     }
 
     private fun writeUiUniforms() {
-        writeUniforms(screenSizeBufferMemory, NO_FONT_INFO)
-        for (slot in fontSlots.values) writeUniforms(slot.uniformMemory, slot.fontInfo)
+        writeUniforms(screenSizeMappedPtr, NO_FONT_INFO)
+        for (slot in fontSlots.values) writeUniforms(slot.uniformMappedPtr, slot.fontInfo)
     }
 
-    /**
-     * Writes a whole UI block from offset zero. Partial mapped writes at the `fontInfo` offset are
-     * not portable: Vulkan requires vkMapMemory offsets to satisfy minMemoryMapAlignment.
-     */
-    private fun writeUniforms(memory: Long, fontInfo: Vec4) {
-        VulkanBuffers.writeBufferMemoryFloats(
-            device,
-            memory,
-            0,
-            uiUniformFloats(screenToNdc = Vec4(2f / screenWidth, 2f / screenHeight, -1f, -1f), fontInfo = fontInfo),
-        )
+    /** Writes a whole UI block from offset zero into persistently mapped memory. */
+    private fun writeUniforms(mappedPtr: Long, fontInfo: Vec4) {
+        val floats = uiUniformFloats(screenToNdc = Vec4(2f / screenWidth, 2f / screenHeight, -1f, -1f), fontInfo = fontInfo)
+        VulkanBuffers.writeMappedMemoryFloats(mappedPtr, 0L, floats)
     }
 
     private fun createGraphicsPipeline(vertShaderCode: ByteArray, fragShaderCode: ByteArray) {
@@ -1009,11 +1066,7 @@ class UiRenderPipeline(
      * `null` for this pipeline's fixed set.
      */
     fun bind(commandBuffer: Long, customDescriptorSet: Long? = null) {
-        Vulkan.vkCmdBindPipeline(
-            commandBuffer,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            graphicsPipeline[0],
-        )
+        VulkanCommands.vkCmdBindGraphicsPipeline(commandBuffer, graphicsPipeline[0])
         val setToBind = customDescriptorSet ?: descriptorSet
         if (setToBind != 0L) {
             VulkanDescriptors.vkCmdBindDescriptorSet(
@@ -1034,15 +1087,16 @@ class UiRenderPipeline(
         fontSlots.values.forEach { slot ->
             VulkanDescriptors.vkDestroyDescriptorPool(device, slot.descriptorPool)
             VulkanBuffers.vkDestroyBuffer(device, slot.uniformBuffer)
+            VulkanBuffers.vkUnmapMemory(device, slot.uniformMemory)
             VulkanBuffers.vkFreeMemory(device, slot.uniformMemory)
         }
         fontSlots.clear()
-        descriptorSlotsByFrame.forEach { slots ->
-            slots.forEach { slot ->
-                VulkanDescriptors.vkDestroyDescriptorPool(device, slot.descriptorPool)
-            }
-            slots.clear()
+        descriptorSlotsByFrame.forEach { it.clear() }
+        textureDescriptorPools.forEach { pool ->
+            VulkanDescriptors.vkDestroyDescriptorPool(device, pool)
         }
+        textureDescriptorPools.clear()
+        remainingInTexturePool = 0
         if (descriptorPool != 0L) {
             VulkanDescriptors.vkDestroyDescriptorPool(device, descriptorPool)
             descriptorPool = 0
@@ -1053,6 +1107,10 @@ class UiRenderPipeline(
         }
         if (screenSizeBuffer != 0L) {
             VulkanBuffers.vkDestroyBuffer(device, screenSizeBuffer)
+            if (screenSizeMappedPtr != 0L) {
+                VulkanBuffers.vkUnmapMemory(device, screenSizeBufferMemory)
+                screenSizeMappedPtr = 0
+            }
             VulkanBuffers.vkFreeMemory(device, screenSizeBufferMemory)
             screenSizeBuffer = 0
             screenSizeBufferMemory = 0
@@ -1083,3 +1141,5 @@ class UiRenderPipeline(
 
 /** The `fontInfo` lanes of a uniform block no glyph reads. */
 private val NO_FONT_INFO = Vec4(0f, 0f, 0f, 0f)
+private const val TEXTURE_POOL_BLOCK = 64
+private const val COMPOSITE_POOL_BLOCK = 16

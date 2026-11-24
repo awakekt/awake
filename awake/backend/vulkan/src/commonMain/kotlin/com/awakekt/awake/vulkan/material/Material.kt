@@ -12,8 +12,10 @@ import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.pipeline.ShaderStage
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.SMALL_UBO_REBAR_MIN_HEAP_BYTES
+import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
+import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.handles.BufferHandle
@@ -31,7 +33,6 @@ import com.awakekt.awake.vulkan.models.info.VkDescriptorPoolSize
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutBinding
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorType
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import com.awakekt.awake.vulkan.renderer.FrameBlockKind
 import com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
@@ -337,21 +338,29 @@ class Material(
     override fun destroy() {
         if (destroyed) return
         destroyed = true
-        // Every frame/draw slot can still be referenced by submitted commands during scene reload.
-        VulkanBuffers.vkDeviceWaitIdle(device)
-        uniformSlotsByFrame.forEach { frameSlots ->
-            frameSlots.forEach { slot -> VulkanBuffers.vkDestroyBuffer(device, slot.uniformBuffer.handle) }
+        val vkDevice = device
+        val buffersToDestroy = buildList {
+            uniformSlotsByFrame.forEach { frameSlots ->
+                frameSlots.forEach { slot -> add(slot.uniformBuffer.handle) }
+            }
         }
-        slotBlocks.forEach { block ->
-            block.destroyed = true
-            VulkanBuffers.vkUnmapMemory(device, block.memory)
-            VulkanBuffers.vkFreeMemory(device, block.memory)
-            VulkanDescriptors.vkDestroyDescriptorPool(device, block.descriptorPool)
-        }
-        VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout.handle)
+        val blocksToDestroy = slotBlocks.toList()
+        blocksToDestroy.forEach { it.destroyed = true }
+        val layoutToDestroy = descriptorSetLayout.handle
         val release = onDestroy
         onDestroy = null
+        // Update logical resource accounting (and enqueue owned texture retirement) immediately,
+        // while deferring Vulkan handle destruction until in-flight frames drain.
         release?.invoke()
+        graphicsDevice.destroyOrRetire {
+            buffersToDestroy.forEach { VulkanBuffers.vkDestroyBuffer(vkDevice, it) }
+            blocksToDestroy.forEach { block ->
+                VulkanBuffers.vkUnmapMemory(vkDevice, block.memory)
+                VulkanBuffers.vkFreeMemory(vkDevice, block.memory)
+                VulkanDescriptors.vkDestroyDescriptorPool(vkDevice, block.descriptorPool)
+            }
+            VulkanDescriptors.vkDestroyDescriptorSetLayout(vkDevice, layoutToDestroy)
+        }
     }
 
     internal class UniformSlot(
@@ -514,7 +523,7 @@ internal class SlotBlock(val memory: Long, val mappedPtr: Long, val descriptorPo
         dirtyMask = dirtyMask or bit
     }
 
-    @Suppress("UnusedParameter") // Kept matching flush(device) call sites across Renderer/tests.
+    @Suppress("UnusedParameter") // Kept matching flush(device) call sites; writes go straight into mappedPtr.
     fun flush(device: Long) {
         val mask = dirtyMask
         val single = singleDirtySlot
@@ -565,17 +574,9 @@ private fun allocateSlotBlock(
     val alignment = maxOf(requirements.alignment, Float.SIZE_BYTES.toLong())
     val stride = (requirements.size + alignment - 1) / alignment * alignment
     val totalSize = stride * Material.SLOTS_PER_BLOCK
-    val memory = VulkanBuffers.vkAllocateMemory(
-        graphicsDevice.device,
-        VkMemoryAllocateInfo(
-            allocationSize = totalSize,
-            memoryTypeIndex = VulkanBuffers.findMemoryType(
-                graphicsDevice.physicalDevice,
-                requirements.memoryTypeBits,
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            ),
-        ),
+    val memory = graphicsDevice.allocateHostVisibleBufferMemory(
+        VkMemoryRequirements(totalSize, alignment, requirements.memoryTypeBits),
+        minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
     )
     var mappedPtr = 0L
     try {

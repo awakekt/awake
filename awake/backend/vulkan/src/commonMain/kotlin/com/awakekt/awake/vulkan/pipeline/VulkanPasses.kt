@@ -18,13 +18,10 @@ import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.passes2d.UiRunRecorder
 import com.awakekt.awake.render.renderer.RenderStatsCounter
-import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.debug.LineMesh
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.material.Material
-import com.awakekt.awake.vulkan.models.VkExtent2D
-import com.awakekt.awake.vulkan.models.VkOffset2D
-import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 import com.awakekt.awake.vulkan.ui.UiRenderPipeline
 
@@ -96,6 +93,8 @@ internal class VulkanUiRunRecorder(
     private val onExecuteImagePass: ((ImagePassChain, Boolean) -> Unit)? = null,
 ) : UiRunRecorder<DynamicMesh> {
 
+    private var boundPipeline: UiRenderPipeline? = null
+
     override fun bindPipeline(kind: UiPipelineKind): Boolean {
         val pipeline = when (kind) {
             UiPipelineKind.Quad -> pipelines.quad
@@ -107,10 +106,12 @@ internal class VulkanUiRunRecorder(
             // render-target textures.
             UiPipelineKind.Texture -> pipelines.textures.values.firstOrNull()
         }
-        // Texture binds nothing up front: bindMaterial rebinds the pipeline per primitive,
-        // since each one also needs its own descriptor set bound at the same point.
+        // Texture binds its blend-mode pipeline lazily in drawTexturePrimitive.
         // Glyph binds only the pipeline here: its group 0 is the font's, bound in bindGlyphFont.
-        if (pipeline != null && kind != UiPipelineKind.Texture) pipeline.bind(commandBuffer)
+        if (pipeline != null && kind != UiPipelineKind.Texture && boundPipeline !== pipeline) {
+            pipeline.bind(commandBuffer)
+            boundPipeline = pipeline
+        }
         if (kind.isGlyph) glyphPipeline = pipeline
         return pipeline != null
     }
@@ -132,17 +133,17 @@ internal class VulkanUiRunRecorder(
     }
 
     override fun setScissor(x: Int, y: Int, width: Int, height: Int) =
-        Vulkan.vkCmdSetScissor(
-            commandBuffer,
-            0,
-            arrayOf(VkRect2D(offset = VkOffset2D(x = x, y = y), extent = VkExtent2D(width = width, height = height))),
-        )
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, x, y, width, height)
 
     override fun drawTexturePrimitive(primitive: TexturedPrimitiveRun, slotIndex: Int) {
         val pipeline = pipelines.textures[primitive.compositeMode] ?: return
         val material = primitive.texture as Material
         val mesh = textureMeshForPrimitive(slotIndex)
-        pipeline.bindMaterial(
+        if (boundPipeline !== pipeline) {
+            pipeline.bindPipelineOnly(commandBuffer)
+            boundPipeline = pipeline
+        }
+        pipeline.bindMaterialDescriptorOnly(
             commandBuffer,
             frameIndex,
             slotIndex,
@@ -156,6 +157,7 @@ internal class VulkanUiRunRecorder(
     }
 
     override fun executeImagePass(chain: ImagePassChain, hasMoreImagePasses: Boolean) {
+        boundPipeline = null
         onExecuteImagePass?.invoke(chain, hasMoreImagePasses)
     }
 }

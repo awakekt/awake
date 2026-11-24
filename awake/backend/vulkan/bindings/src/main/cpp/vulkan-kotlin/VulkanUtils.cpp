@@ -295,6 +295,12 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         presentHook.store(hook, std::memory_order_release);
     }
 
+    VkResult
+    presentWithHook(VkQueue queue, const VkPresentInfoKHR *info) {
+        PresentHook hook = presentHook.load(std::memory_order_acquire);
+        return hook != nullptr ? hook(queue, info) : vkQueuePresentKHR(queue, info);
+    }
+
     // vkQueuePresentKHR answering VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR instead of throwing
     // them: a pre-rotated phone panel presents suboptimally every frame (#1688). Other errors throw.
     jint
@@ -303,8 +309,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         VkPresentInfoKHR info{};
         VkPresentInfoKHRAccessor accessor(env, arg1);
         accessor.fromObject(info);
-        PresentHook hook = presentHook.load(std::memory_order_acquire);
-        VkResult result = hook != nullptr ? hook(queue, &info) : vkQueuePresentKHR(queue, &info);
+        VkResult result = presentWithHook(queue, &info);
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR && result != VK_ERROR_OUT_OF_DATE_KHR) {
             exception_utils::resultException(env, result,
                                              "There was a problem executing vkQueuePresentKHR");

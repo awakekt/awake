@@ -17,13 +17,8 @@ import com.awakekt.awake.render.passes2d.uploadUiRuns
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.Vulkan
-import com.awakekt.awake.vulkan.enums.VkSubpassContents
+import com.awakekt.awake.vulkan.gen.VulkanCommands
 import com.awakekt.awake.vulkan.material.Material
-import com.awakekt.awake.vulkan.models.VkClearColorValue
-import com.awakekt.awake.vulkan.models.VkExtent2D
-import com.awakekt.awake.vulkan.models.VkRect2D
-import com.awakekt.awake.vulkan.models.VkViewport
-import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.pipeline.UiPipelineSet
 import com.awakekt.awake.vulkan.pipeline.VulkanImagePassParentTarget
 import com.awakekt.awake.vulkan.pipeline.VulkanUiRunRecorder
@@ -107,6 +102,10 @@ private fun Renderer.ensureGlyphRunAtlases(): Boolean {
  * descriptor set.
  */
 internal fun Renderer.dropStagedUiSampling(target: OffscreenRenderTarget) {
+    uiTextureRenderPipelines.values.forEach { it.invalidateImageView(target.colorImageView) }
+    offscreenTextureRenderPipelines.values.forEach { it.invalidateImageView(target.colorImageView) }
+    uiTargetCompositePipeline?.invalidateImageView(target.colorImageView)
+    imagePassExecutor.invalidateImageView(target.colorImageView)
     uiRuns = uiRuns.map { run ->
         if (run !is DrawRun.TextureRun) return@map run
         DrawRun.TextureRun(run.primitives.filterNot { (it.texture as? Material)?.imageViewHandle == target.colorImageView })
@@ -179,19 +178,22 @@ fun Renderer.renderUiToTexture(
     runOffscreenCommands { commandBuffer ->
         imagePassExecutor.beginFrame(frameIndex)
         offscreen.prepareForColorAttachment(commandBuffer)
-        val renderPassInfo = VkRenderPassBeginInfo(
-            renderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
-            framebuffer = offscreen.colorFramebuffer(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)),
-            renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
-            // A graphics layer is sampled over the parent UI, so its untouched pixels must stay
-            // transparent rather than inherit the application's scene clear colour.
-            pClearValues = arrayOf(VkClearColorValue.rgba(0f, 0f, 0f, 0f)),
+        val clearPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)
+        // A graphics layer is sampled over the parent UI, so its untouched pixels must stay
+        // transparent rather than inherit the application's scene clear colour.
+        VulkanCommands.vkCmdBeginRenderPassColor(
+            commandBuffer,
+            clearPass,
+            offscreen.colorFramebuffer(clearPass),
+            offscreen.width,
+            offscreen.height,
+            0f,
+            0f,
+            0f,
+            0f,
         )
-        Vulkan.vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
-        val viewport = VkViewport(width = offscreen.width.toFloat(), height = offscreen.height.toFloat())
-        Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(viewport))
-        val fullScissor = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height))
-        Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(fullScissor))
+        VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, offscreen.width.toFloat(), offscreen.height.toFloat(), 0f, 1f)
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, offscreen.width, offscreen.height)
 
         SharedUiRenderFeature().recordCommands(
             runs = uiRuns,
@@ -247,15 +249,20 @@ internal fun Renderer.performCompositeUiTargets(
     val frameIndex = swapchainManager.currentFrame
     runOffscreenCommands { commandBuffer ->
         outputTarget.prepareForColorAttachment(commandBuffer)
-        val renderPassInfo = VkRenderPassBeginInfo(
-            renderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
-            framebuffer = outputTarget.colorFramebuffer(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)),
-            renderArea = VkRect2D(extent = VkExtent2D(outputTarget.width, outputTarget.height)),
-            pClearValues = arrayOf(VkClearColorValue.rgba(0f, 0f, 0f, 0f)),
+        val clearPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)
+        VulkanCommands.vkCmdBeginRenderPassColor(
+            commandBuffer,
+            clearPass,
+            outputTarget.colorFramebuffer(clearPass),
+            outputTarget.width,
+            outputTarget.height,
+            0f,
+            0f,
+            0f,
+            0f,
         )
-        Vulkan.vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
-        Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(VkViewport(width = outputTarget.width.toFloat(), height = outputTarget.height.toFloat())))
-        Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(VkRect2D(extent = VkExtent2D(outputTarget.width, outputTarget.height))))
+        VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, outputTarget.width.toFloat(), outputTarget.height.toFloat(), 0f, 1f)
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, outputTarget.width, outputTarget.height)
         pipeline.bindTargetComposite(
             commandBuffer = commandBuffer,
             frameIndex = frameIndex,
@@ -300,17 +307,20 @@ fun Renderer.renderUiGlyphsToTexture(target: RenderTarget, glyphs: List<UiDrawPr
 
     runOffscreenCommands { commandBuffer ->
         offscreen.prepareForColorAttachment(commandBuffer)
-        val renderPassInfo = VkRenderPassBeginInfo(
-            renderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
-            framebuffer = offscreen.colorFramebuffer(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)),
-            renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
-            pClearValues = arrayOf(clearColorValue),
+        val clearPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)
+        VulkanCommands.vkCmdBeginRenderPassColor(
+            commandBuffer,
+            clearPass,
+            offscreen.colorFramebuffer(clearPass),
+            offscreen.width,
+            offscreen.height,
+            clearColor.r,
+            clearColor.g,
+            clearColor.b,
+            clearColor.a,
         )
-        Vulkan.vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
-        val viewport = VkViewport(width = offscreen.width.toFloat(), height = offscreen.height.toFloat())
-        Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(viewport))
-        val scissor = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height))
-        Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
+        VulkanCommands.vkCmdSetViewportRect(commandBuffer, 0f, 0f, offscreen.width.toFloat(), offscreen.height.toFloat(), 0f, 1f)
+        VulkanCommands.vkCmdSetScissorRect(commandBuffer, 0, 0, offscreen.width, offscreen.height)
         glyphPipeline.bind(commandBuffer)
         glyphPipeline.bindFontAtlas(commandBuffer, font, atlas)
         glyphRunMeshes.forEach { mesh ->
