@@ -22,5 +22,7 @@ internal class VulkanDynamicMeshes(private val renderer: Renderer) : GpuDynamicM
     private val windows = PowerOfTwoFloats()
 
     override fun createDynamicMesh(format: VertexFormat, vertexCapacity: Int, indices: IntArray): DynamicMesh =
-        VulkanDynamicMesh(renderer.graphicsDevice, format, vertexCapacity, indices, renderer.maxFramesInFlight + 1, windows)
+        renderer.trackDynamicMesh(
+            VulkanDynamicMesh(renderer.graphicsDevice, format, vertexCapacity, indices, renderer.maxFramesInFlight + 1, windows),
+        )
 }

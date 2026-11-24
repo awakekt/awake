@@ -31,7 +31,7 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 
 internal fun Renderer.performCreateMesh(geometry: MeshGeometry): RenderMesh =
-    Mesh(graphicsDevice, {}, geometry.vertices, geometry.indices, geometry.format, geometry.bounds)
+    trackMesh(Mesh(graphicsDevice, {}, geometry.vertices, geometry.indices, geometry.format, geometry.bounds))
 
 internal fun Renderer.performCreateMaterial(
     texture: TextureAsset?,
@@ -41,16 +41,21 @@ internal fun Renderer.performCreateMaterial(
 ): RenderMaterial {
     require(texture == null || renderTarget == null) { "Pass at most one of texture/renderTarget." }
     val material = Material(graphicsDevice, uniformFloatCount)
-    if (renderTarget != null) {
-        val offscreen = renderTarget as OffscreenRenderTarget
-        val sampler = graphicsDevice.wgpuContext.device.createSampler(SamplerDescriptor())
-        material.createResourcesFromRenderTarget(offscreen.colorView, sampler)
-        material.sourceTarget = offscreen
-    } else if (texture != null) {
-        val maps = listOf(pbrTextures?.metallicRoughness, pbrTextures?.normal, pbrTextures?.occlusion, pbrTextures?.emissive)
-        createPbrResources(material, uploadTexture(texture), maps.map { it?.let(::uploadTexture) })
+    return when {
+        renderTarget != null -> {
+            val offscreen = renderTarget as OffscreenRenderTarget
+            val sampler = graphicsDevice.wgpuContext.device.createSampler(SamplerDescriptor())
+            material.createResourcesFromRenderTarget(offscreen.colorView, sampler)
+            material.sourceTarget = offscreen
+            trackMaterial(material)
+        }
+        texture != null -> {
+            val maps = listOf(pbrTextures?.metallicRoughness, pbrTextures?.normal, pbrTextures?.occlusion, pbrTextures?.emissive)
+            createPbrResources(material, uploadTexture(texture), maps.map { it?.let(::uploadTexture) })
+            material
+        }
+        else -> trackMaterial(material)
     }
-    return material
 }
 
 /**
@@ -69,7 +74,7 @@ private fun Renderer.createPbrResources(material: Material, base: Texture, maps:
     val owned = ArrayList<Texture>(maps.size + 1)
     owned.add(base)
     maps.forEach { if (it != null) owned.add(it) }
-    material.onDestroy = { owned.forEach(textureResources::release) }
+    trackMaterial(material) { owned.forEach(textureResources::release) }
 }
 
 internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =

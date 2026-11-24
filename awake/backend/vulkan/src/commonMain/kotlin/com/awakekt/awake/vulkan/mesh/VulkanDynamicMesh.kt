@@ -122,11 +122,19 @@ internal class VulkanDynamicMesh(
         vertexBinding = slot.binding
     }
 
+    internal var onDestroy: (() -> Unit)? = null
+    private var destroyed = false
+
     override fun destroy() {
+        if (destroyed) return
+        destroyed = true
         // A submitted frame may still read a slot; device idle covers every queue, as Mesh.destroy does.
         VulkanBuffers.vkDeviceWaitIdle(device)
         slots.forEach { it.vertices.free(graphicsDevice) }
         indexBuffer.free(graphicsDevice)
+        val release = onDestroy
+        onDestroy = null
+        release?.invoke()
     }
 
     /** One frame slot's vertex buffer and the float range not yet written to it. */

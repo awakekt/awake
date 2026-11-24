@@ -154,6 +154,7 @@ public final class com/awakekt/awake/render/passes/FrameUniformInputs {
 
 public final class com/awakekt/awake/render/passes/GpuResourcePool {
 	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public final fun clear ()V
 	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
 	public final fun get (I)Ljava/lang/Object;
 	public final fun getSize ()I

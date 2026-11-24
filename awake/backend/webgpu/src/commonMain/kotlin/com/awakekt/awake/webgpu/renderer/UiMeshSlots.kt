@@ -33,10 +33,18 @@ internal class UiMeshSlots(graphicsDevice: GraphicsDevice) {
     /** The [index]th glyph run's mesh, from the decorated glyph layout's pool when [decorated] (#1061). */
     fun glyphMesh(index: Int, decorated: Boolean = false): DynamicMesh = if (decorated) decoratedGlyphs[index] else glyphs[index]
 
+    /** Total pooled dynamic UI meshes currently allocated across these four pools. */
+    val liveMeshCount: Int
+        get() = quads.size + glyphs.size + decoratedGlyphs.size + roundedQuads.size
+
     fun destroy() {
         quads.forEach { it.destroy() }
         glyphs.forEach { it.destroy() }
         decoratedGlyphs.forEach { it.destroy() }
         roundedQuads.forEach { it.destroy() }
+        quads.clear()
+        glyphs.clear()
+        decoratedGlyphs.clear()
+        roundedQuads.clear()
     }
 }

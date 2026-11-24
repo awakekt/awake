@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.renderer.GpuResourceStats
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -127,6 +128,14 @@ interface GpuDevice {
      * is not supported by the underlying GPU hardware or backend implementation.
      */
     fun <T : GpuCapability> capability(kind: GpuCapabilityKind<T>): T? = null
+
+    /**
+     * Snapshot of live GPU resources currently held or tracked by this device, or `null` when a
+     * backend does not report resource accounting. Intended for leak assertions and runtime
+     * memory diagnostics; reading it is pull-only and never runs automatically per frame.
+     */
+    val gpuResourceStats: GpuResourceStats?
+        get() = null
 
     /** Releases every GPU resource this device owns. */
     fun destroy()

@@ -34,4 +34,25 @@ class TextureResourceManagerTest {
 
         assertEquals(listOf(3), destroyed)
     }
+
+    @Test
+    fun totalBytesTracksRegisterReleaseAndDestroy() {
+        val destroyed = mutableListOf<Int>()
+        val manager = TextureResourceManager<Int>(
+            destroyResource = { destroyed += it },
+            sizeOf = { it * 100L },
+        )
+
+        manager.register(2)
+        manager.register(5)
+        assertEquals(700L, manager.totalBytes)
+
+        manager.release(2)
+        manager.release(2)
+        assertEquals(500L, manager.totalBytes)
+
+        manager.destroy()
+        assertEquals(0L, manager.totalBytes)
+        assertEquals(0, manager.count)
+    }
 }

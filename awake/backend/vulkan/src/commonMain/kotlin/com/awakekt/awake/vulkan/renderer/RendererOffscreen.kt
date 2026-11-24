@@ -30,13 +30,15 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 
 internal fun Renderer.performCreateMesh(geometry: MeshGeometry): RenderMesh =
-    Mesh(
-        graphicsDevice,
-        transferContext::runOneTimeCommands,
-        geometry.vertices,
-        geometry.indices,
-        geometry.format,
-        geometry.bounds,
+    trackMesh(
+        Mesh(
+            graphicsDevice,
+            transferContext::runOneTimeCommands,
+            geometry.vertices,
+            geometry.indices,
+            geometry.format,
+            geometry.bounds,
+        ),
     )
 
 internal fun Renderer.performCreateMaterial(
@@ -61,10 +63,12 @@ internal fun Renderer.performCreateMaterial(
         ownedTextures.add(base)
         material.createResources(base, pbrViews)
     }
-    if (ownedTextures.isNotEmpty()) {
-        material.onDestroy = { ownedTextures.forEach(textureResources::release) }
+    val release = if (ownedTextures.isNotEmpty()) {
+        { ownedTextures.forEach(textureResources::release) }
+    } else {
+        null
     }
-    return material
+    return trackMaterial(material, release)
 }
 
 private const val MAX_MATERIAL_TEXTURES = 5

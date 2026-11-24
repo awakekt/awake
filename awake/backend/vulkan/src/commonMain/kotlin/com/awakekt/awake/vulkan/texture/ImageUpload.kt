@@ -45,6 +45,8 @@ internal class UploadedImage(
     /** The base level's size as uploaded: smaller than the source when mip skip left levels out (#1660). */
     val width: Int = 0,
     val height: Int = 0,
+    /** Exact uploaded payload size in bytes across all uploaded mip levels and layers. */
+    val byteSize: Long = 0L,
 )
 
 /**
@@ -105,6 +107,7 @@ internal object ImageUpload {
                 mipLevels,
                 width,
                 height,
+                data.size.toLong(),
             )
             return uploaded
         } finally {
