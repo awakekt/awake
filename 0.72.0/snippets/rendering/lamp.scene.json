@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "lamp",
+      "transform": { "position": { "x": 0.0, "y": 2.5, "z": 1.0 } },
+      "components": [
+        {
+          "component": "light",
+          "type": "Point",
+          "color": { "r": 1.0, "g": 0.85, "b": 0.6 },
+          "intensity": 2.0,
+          "range": 8.0
+        }
+      ]
+    }
+  ]
+}
