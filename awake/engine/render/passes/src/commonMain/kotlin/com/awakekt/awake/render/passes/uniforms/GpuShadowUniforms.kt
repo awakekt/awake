@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
@@ -65,13 +66,13 @@ fun gpuLitShadowUniforms(
     val out = LitShadowFrameFields
         .shared(lightPayload, cascades, cameraEye, fogColor, fogDensity, cameraForward, debugView, exposure)
         .copyOf()
-    mvp.data.copyInto(out, MVP_AT)
-    transform.data.copyInto(out, MODEL_AT)
+    out.putFloats(MVP_AT, mvp.data)
+    out.putFloats(MODEL_AT, transform.data)
     out[ANIMATION_AT] = vertexAnimation.x
     out[ANIMATION_AT + 1] = vertexAnimation.y
     out[ANIMATION_AT + 2] = vertexAnimation.z
     out[ANIMATION_AT + VEC4_W] = vertexAnimationClock(vertexAnimation, timeSeconds)
-    pbrMaterialFloats(extraUniformFloats).copyInto(out, MATERIAL_AT, 0, UniformFields.Material.floats)
+    copyPbrMaterialPayloadInto(extraUniformFloats, out, MATERIAL_AT)
     return out
 }
 

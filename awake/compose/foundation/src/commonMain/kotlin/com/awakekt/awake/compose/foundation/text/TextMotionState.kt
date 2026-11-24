@@ -149,25 +149,44 @@ internal class TextMotionState {
             paintOffsetTracker.resetTo(offsetX, offsetY)
             // A constant scale paints the same each pass; a hold counting down to the pixel glyphs does not.
             runAgainWhile((!isScopeScaled && scaleHoldFrames > 0) || sizeHoldFrames > 0)
-            return TextPaintMotion(
-                forceDistanceField = true,
-                subpixelTranslated = false,
-                residualX = 0f,
-                residualY = 0f,
-            )
+            return FORCE_DISTANCE_FIELD
         }
         val snappedX = wholePixelHalfUp(offsetX).toInt()
         val snappedY = wholePixelHalfUp(offsetY).toInt()
         paintOffsetTracker.step(offsetX, offsetY, snappedX, snappedY)
         runAgainWhile(paintOffsetTracker.isSettling)
-        val hasDirectResidual = abs(paintOffsetTracker.residualX) > RESIDUAL_EPSILON ||
-            abs(paintOffsetTracker.residualY) > RESIDUAL_EPSILON
-        return TextPaintMotion(
-            forceDistanceField = false,
-            subpixelTranslated = !isScopeAligned || hasDirectResidual,
-            residualX = paintOffsetTracker.residualX,
-            residualY = paintOffsetTracker.residualY,
-        )
+        val residualX = paintOffsetTracker.residualX
+        val residualY = paintOffsetTracker.residualY
+        val hasDirectResidual = abs(residualX) > RESIDUAL_EPSILON || abs(residualY) > RESIDUAL_EPSILON
+        val subpixelTranslated = !isScopeAligned || hasDirectResidual
+        return paintMotionFor(subpixelTranslated, residualX, residualY)
+    }
+
+    private fun paintMotionFor(subpixelTranslated: Boolean, residualX: Float, residualY: Float): TextPaintMotion {
+        if (residualX == 0f && residualY == 0f) {
+            return if (subpixelTranslated) SNAPPED_UNALIGNED else SNAPPED_ALIGNED
+        }
+        val previous = lastPaint
+        return if (previous != null && matchesResidual(previous, subpixelTranslated, residualX, residualY)) {
+            previous
+        } else {
+            TextPaintMotion(
+                forceDistanceField = false,
+                subpixelTranslated = subpixelTranslated,
+                residualX = residualX,
+                residualY = residualY,
+            )
+        }
+    }
+
+    private fun matchesResidual(
+        previous: TextPaintMotion,
+        subpixelTranslated: Boolean,
+        residualX: Float,
+        residualY: Float,
+    ): Boolean {
+        val sameMode = !previous.forceDistanceField && previous.subpixelTranslated == subpixelTranslated
+        return sameMode && previous.residualX == residualX && previous.residualY == residualY
     }
 
     companion object {
@@ -178,6 +197,25 @@ internal class TextMotionState {
 
         /** No frame yet: [FrameClock.frame] counts from 1. */
         private const val NO_FRAME = -1L
+
+        private val FORCE_DISTANCE_FIELD = TextPaintMotion(
+            forceDistanceField = true,
+            subpixelTranslated = false,
+            residualX = 0f,
+            residualY = 0f,
+        )
+        private val SNAPPED_ALIGNED = TextPaintMotion(
+            forceDistanceField = false,
+            subpixelTranslated = false,
+            residualX = 0f,
+            residualY = 0f,
+        )
+        private val SNAPPED_UNALIGNED = TextPaintMotion(
+            forceDistanceField = false,
+            subpixelTranslated = true,
+            residualX = 0f,
+            residualY = 0f,
+        )
     }
 }
 

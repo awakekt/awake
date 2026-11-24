@@ -30,8 +30,13 @@ internal class GlyphEffects private constructor(
      * Each code point's decoration, built the first time it is drawn: its tile sits at the same place from its quad
      * at this run's size every frame, so a run at rest allocates none. A [GlyphEffects] serves one laid-out run, whose
      * font, size and weight do not change; null records a glyph with no effect tile.
+     *
+     * ASCII code points use a flat array to avoid `Int` boxing on every glyph paint; higher code points fall back to
+     * a lazily allocated map.
      */
-    private val decorations = HashMap<Int, GlyphDecoration?>()
+    private val asciiDecorations = arrayOfNulls<GlyphDecoration>(ASCII_COUNT)
+    private val asciiChecked = BooleanArray(ASCII_COUNT)
+    private var extraDecorations: HashMap<Int, GlyphDecoration?>? = null
 
     /**
      * Draws the glyph [uv] of [codePoint] with these effects, its pen at [penX] on the line whose em box starts at
@@ -52,7 +57,7 @@ internal class GlyphEffects private constructor(
         color: Color,
     ): Boolean {
         val decoration = if (glyphFont.effectFieldRangePx > 0f) {
-            decorations.getOrPut(codePoint) { decorationOf(font, codePoint, weight, uv, glyphPx) }
+            cachedDecoration(font, codePoint, weight, uv, glyphPx)
         } else {
             null
         }
@@ -72,6 +77,26 @@ internal class GlyphEffects private constructor(
             decoration = decoration,
         )
         return true
+    }
+
+    private fun cachedDecoration(
+        font: UiFont,
+        codePoint: Int,
+        weight: FontWeight,
+        uv: GlyphRect,
+        glyphPx: Float,
+    ): GlyphDecoration? = if (codePoint in 0 until ASCII_COUNT) {
+        if (asciiChecked[codePoint]) {
+            asciiDecorations[codePoint]
+        } else {
+            val built = decorationOf(font, codePoint, weight, uv, glyphPx)
+            asciiDecorations[codePoint] = built
+            asciiChecked[codePoint] = true
+            built
+        }
+    } else {
+        val map = extraDecorations ?: HashMap<Int, GlyphDecoration?>().also { extraDecorations = it }
+        map.getOrPut(codePoint) { decorationOf(font, codePoint, weight, uv, glyphPx) }
     }
 
     /** [codePoint]'s decoration at [glyphPx], its tile placed from the corner of the quad [uv] draws; null with no tile. */
@@ -127,5 +152,6 @@ internal class GlyphEffects private constructor(
         // Unit steps to the eight neighbours; the diagonals are shortened so the ring is round, not square.
         internal val OUTLINE_X = floatArrayOf(1f, 0.7071f, 0f, -0.7071f, -1f, -0.7071f, 0f, 0.7071f)
         internal val OUTLINE_Y = floatArrayOf(0f, 0.7071f, 1f, 0.7071f, 0f, -0.7071f, -1f, -0.7071f)
+        private const val ASCII_COUNT = 128
     }
 }

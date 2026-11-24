@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.command.UniformBlockOwner
@@ -324,6 +325,7 @@ class RenderPipeline(
     override val uniformBlock: UniformBlock? = uniformBuffer?.takeIf { usesMaterialGroup }?.let { buffer ->
         val layout = requireNotNull(uniforms)
         object : UniformBlock {
+            private val writer = UniformWriter(layout)
             private var lastWritten: FloatArray? = null
 
             // Recreated when invalidated, caching until the next pipeline swap.
@@ -348,10 +350,14 @@ class RenderPipeline(
             }
 
             override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
-                val floats = UniformWriter(layout).apply(fill).build()
+                val floats = writer.reset().apply(fill).build()
                 val prev = lastWritten
                 if (prev != null && prev.sameBitsAs(floats)) return
-                lastWritten = if (prev != null && prev.size == floats.size) floats.copyInto(prev) else floats.copyOf()
+                if (prev != null && prev.size == floats.size) {
+                    prev.putFloats(0, floats)
+                } else {
+                    lastWritten = floats.copyOf()
+                }
                 graphicsDevice.contentUniformWrites += 1
                 device.queue.writeBufferFloats(buffer, 0uL, floats)
             }

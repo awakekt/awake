@@ -239,7 +239,7 @@ actual object VulkanCommands {
         a: Float,
         depth: Float,
     ) = memScoped {
-        val clears = allocArray<NativeVkClearValue>(2) { index ->
+        val clears = allocArray<NativeVkClearValue>(2) { index: Int ->
             if (index == 0) {
                 color.float32[0] = r
                 color.float32[1] = g

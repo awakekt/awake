@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
@@ -202,11 +203,10 @@ private class SignatureBuffer {
         floats[floatCount++] = value
     }
 
-    /** All of [values], copied in one move. */
+    /** All of [values], copied without `copyInto` (#1621). */
     fun floats(values: FloatArray) {
         while (floatCount + values.size > floats.size) floats = floats.copyOf(floats.size * 2)
-        values.copyInto(floats, floatCount)
-        floatCount += values.size
+        floatCount = floats.putFloats(floatCount, values)
     }
 
     /** By identity. */

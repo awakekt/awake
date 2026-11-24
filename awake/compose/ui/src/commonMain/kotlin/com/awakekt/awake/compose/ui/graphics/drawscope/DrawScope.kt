@@ -558,6 +558,8 @@ internal class PaintScope :
 
     private val transform = DrawTransformState()
 
+    private val decorationCache = DecoratedGlyphCache()
+
     fun primitives(): List<UiDrawPrimitive> = output
 
     fun layers(): List<GraphicsLayerFrame> = layers
@@ -581,6 +583,7 @@ internal class PaintScope :
         nextLayerId = 0
         alpha = 1f
         transform.reset()
+        decorationCache.beginPaint()
     }
 
     @Suppress("DEPRECATION", "LongMethod")
@@ -1079,15 +1082,15 @@ internal class PaintScope :
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
-        val mapped = decoration.scaled(transform.scaleX, transform.scaleY)
-        // Culled by what it draws, its quad grown by the decoration's reach, not by the glyph alone.
-        val reach = mapped.reach
+        // Culled by what it draws, its quad grown by the decoration's scaled reach, before any allocation.
+        val reach = scaledReach(decoration, transform.scaleX, transform.scaleY)
         if (isFullyOutsideActiveClip(px - reach, py - reach, pw + 2 * reach, ph + 2 * reach)) return
+        val mapped = decorationCache.map(decoration, transform.scaleX, transform.scaleY, alpha)
         output += UiDrawPrimitive.Glyph(
             px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha),
             font = font,
             page = page,
-            decoration = mapped.dimmedBy(alpha),
+            decoration = mapped,
         )
     }
 
@@ -1262,7 +1265,136 @@ private fun overflowInset(reach: Float, size: Int): Int =
  * quad per frame regardless cost 2.5 kB/frame -- measured, not guessed.
  */
 private fun Color.dimmedBy(alpha: Float): Color =
-    if (alpha >= 1f) this else Color(r, g, b, a * alpha)
+    if (alpha >= 1f || a == 0f) this else Color(r, g, b, a * alpha)
+
+private fun scaledReach(decoration: GlyphDecoration, scaleX: Float, scaleY: Float): Float {
+    val outline = if (decoration.outlineColor.a == 0f) 0f else decoration.outlineWidth * scaleX
+    val shadow = if (decoration.shadowColor.a == 0f) {
+        0f
+    } else {
+        decoration.shadowBlur * scaleX + maxOf(
+            kotlin.math.abs(decoration.shadowOffsetX * scaleX),
+            kotlin.math.abs(decoration.shadowOffsetY * scaleY),
+        )
+    }
+    return maxOf(outline, shadow) + DECORATION_EDGE_PX
+}
+
+/**
+ * Fixed-size identity cache of scaled/dimmed [GlyphDecoration] instances per [PaintScope].
+ *
+ * Avoids allocating two intermediate [GlyphDecoration]s and two [Color]s per glyph when decorated
+ * text draws under `alpha < 1f` or `scale != 1f` (#1742). Entries not touched during the just-ended
+ * paint are cleared in [beginPaint] so disposed labels never stay retained.
+ */
+private class DecoratedGlyphCache {
+    private var generation = 1
+    private val sourceKeys = arrayOfNulls<GlyphDecoration>(CACHE_SLOTS)
+    private val mappedValues = arrayOfNulls<GlyphDecoration>(CACHE_SLOTS)
+    private val scaleXs = FloatArray(CACHE_SLOTS)
+    private val scaleYs = FloatArray(CACHE_SLOTS)
+    private val alphas = FloatArray(CACHE_SLOTS)
+    private val touchedGeneration = IntArray(CACHE_SLOTS)
+    private var hasEntries = false
+
+    fun beginPaint() {
+        if (!hasEntries) return
+        val prev = generation
+        var remaining = false
+        for (i in 0 until CACHE_SLOTS) {
+            if (sourceKeys[i] != null) {
+                if (touchedGeneration[i] != prev) {
+                    sourceKeys[i] = null
+                    mappedValues[i] = null
+                } else {
+                    remaining = true
+                }
+            }
+        }
+        hasEntries = remaining
+        generation = prev + 1
+    }
+
+    fun map(source: GlyphDecoration, scaleX: Float, scaleY: Float, alpha: Float): GlyphDecoration {
+        val scaled = scaleX != 1f || scaleY != 1f
+        val dimmed = alpha < 1f && (source.outlineColor.a != 0f || source.shadowColor.a != 0f)
+        if (!scaled && !dimmed) return source
+        val slot = slotOf(source, scaleX, scaleY, alpha)
+        val cached = mappedValues[slot]
+        return if (cached != null && matchesSlot(slot, source, scaleX, scaleY, alpha)) {
+            touchedGeneration[slot] = generation
+            cached
+        } else {
+            storeMapped(slot, source, scaleX, scaleY, alpha, scaled, dimmed)
+        }
+    }
+
+    private fun matchesSlot(slot: Int, source: GlyphDecoration, scaleX: Float, scaleY: Float, alpha: Float): Boolean {
+        val sameKeyAndScale = sourceKeys[slot] === source && scaleXs[slot] == scaleX && scaleYs[slot] == scaleY
+        return sameKeyAndScale && alphas[slot] == alpha
+    }
+
+    @Suppress("LongParameterList")
+    private fun storeMapped(
+        slot: Int,
+        source: GlyphDecoration,
+        scaleX: Float,
+        scaleY: Float,
+        alpha: Float,
+        scaled: Boolean,
+        dimmed: Boolean,
+    ): GlyphDecoration {
+        val outlineColor = if (dimmed) source.outlineColor.dimmedBy(alpha) else source.outlineColor
+        val shadowColor = if (dimmed) source.shadowColor.dimmedBy(alpha) else source.shadowColor
+        val built = if (scaled) {
+            GlyphDecoration(
+                fieldOffsetX = source.fieldOffsetX * scaleX,
+                fieldOffsetY = source.fieldOffsetY * scaleY,
+                fieldW = source.fieldW * scaleX,
+                fieldH = source.fieldH * scaleY,
+                fieldU0 = source.fieldU0,
+                fieldV0 = source.fieldV0,
+                fieldU1 = source.fieldU1,
+                fieldV1 = source.fieldV1,
+                outlineColor = outlineColor,
+                outlineWidth = source.outlineWidth * scaleX,
+                shadowColor = shadowColor,
+                shadowOffsetX = source.shadowOffsetX * scaleX,
+                shadowOffsetY = source.shadowOffsetY * scaleY,
+                shadowBlur = source.shadowBlur * scaleX,
+            )
+        } else {
+            source.copy(outlineColor = outlineColor, shadowColor = shadowColor)
+        }
+        sourceKeys[slot] = source
+        mappedValues[slot] = built
+        scaleXs[slot] = scaleX
+        scaleYs[slot] = scaleY
+        alphas[slot] = alpha
+        touchedGeneration[slot] = generation
+        hasEntries = true
+        return built
+    }
+
+    private fun slotOf(source: GlyphDecoration, scaleX: Float, scaleY: Float, alpha: Float): Int {
+        var h = source.fieldU0.toBits()
+        h = h * HASH_MULT + source.fieldV0.toBits()
+        h = h * HASH_MULT + scaleX.toBits()
+        h = h * HASH_MULT + scaleY.toBits()
+        h = h * HASH_MULT + alpha.toBits()
+        h = h xor (h ushr HASH_SHIFT)
+        return h and CACHE_MASK
+    }
+
+    private companion object {
+        const val CACHE_SLOTS = 256
+        const val CACHE_MASK = CACHE_SLOTS - 1
+        const val HASH_MULT = 31
+        const val HASH_SHIFT = 16
+    }
+}
+
+private const val DECORATION_EDGE_PX = 1f
 
 /** All four stops, so a dimmed gradient keeps its ramp instead of flattening; at full alpha, itself (#1742). */
 private fun UiLinearGradient.dimmedBy(alpha: Float): UiLinearGradient = if (alpha >= 1f) {

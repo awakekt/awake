@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.debug
 
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.GroupBindings
@@ -77,9 +78,11 @@ internal class PerFrameUniformSlots(
         internal var samplers: LongArray = LongArray(0)
 
         internal fun matchesLastWritten(floats: FloatArray): Boolean {
-            val prev = lastWritten ?: return false
-            return prev.size == floats.size &&
-                floats.indices.all { prev[it].toRawBits() == floats[it].toRawBits() }
+            val prev = lastWritten
+            if (prev == null || prev.size != floats.size) return false
+            var index = 0
+            while (index < floats.size && prev[index].toRawBits() == floats[index].toRawBits()) index += 1
+            return index == floats.size
         }
 
         internal fun recordWritten(floats: FloatArray) {
@@ -87,7 +90,7 @@ internal class PerFrameUniformSlots(
             if (prev == null || prev.size != floats.size) {
                 lastWritten = floats.copyOf()
             } else {
-                floats.copyInto(prev)
+                prev.putFloats(0, floats)
             }
         }
     }
@@ -245,9 +248,11 @@ internal class PerFrameUniformSlots(
 
     /** These slots as a [UniformBlock] laid out by [layout]: one slot per frame index. */
     fun uniformBlock(layout: UniformLayout): UniformBlock = object : UniformBlock {
+        private val writer = UniformWriter(layout)
+
         override fun binding(frameIndex: Int) = this@PerFrameUniformSlots[frameIndex]
         override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
-            if (this@PerFrameUniformSlots.writeChanged(frameIndex, UniformWriter(layout).apply(fill).build())) {
+            if (this@PerFrameUniformSlots.writeChanged(frameIndex, writer.reset().apply(fill).build())) {
                 graphicsDevice.contentUniformWrites += 1
             }
         }

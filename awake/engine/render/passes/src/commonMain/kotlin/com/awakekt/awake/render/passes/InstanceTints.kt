@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.Vec4
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.renderer.UniformFields
 
@@ -55,8 +56,12 @@ internal object InstanceTints {
         return true
     }
 
-    private fun sameTint(first: FloatArray, second: FloatArray): Boolean =
-        !hasTint(first) || (0 until RGB).all { lane -> first[tintAt + lane].toRawBits() == second[tintAt + lane].toRawBits() }
+    private fun sameTint(first: FloatArray, second: FloatArray): Boolean {
+        if (!hasTint(first)) return true
+        return first[tintAt].toRawBits() == second[tintAt].toRawBits() &&
+            first[tintAt + 1].toRawBits() == second[tintAt + 1].toRawBits() &&
+            first[tintAt + 2].toRawBits() == second[tintAt + 2].toRawBits()
+    }
 
     /** [into] set to [draw]'s tint rgb and fade: white and 1 for a draw without a tint lane. */
     fun write(draw: RenderDrawCommand, into: Vec4) {
@@ -76,7 +81,7 @@ internal object InstanceTints {
     /** [into], resized to [extras], holding [extras] with a white tint: the block a tinted group shares. */
     fun whiteTinted(extras: FloatArray, into: FloatArray): FloatArray {
         val shared = if (into.size == extras.size) into else FloatArray(extras.size)
-        extras.copyInto(shared)
+        shared.putFloats(0, extras)
         if (hasTint(extras)) for (lane in 0 until RGB) shared[tintAt + lane] = 1f
         return shared
     }

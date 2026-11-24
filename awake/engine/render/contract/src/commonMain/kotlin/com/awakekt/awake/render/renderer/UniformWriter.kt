@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.core.math.putVec4
 
 /**
@@ -122,7 +123,12 @@ class UniformWriter(private val layout: UniformLayout) {
         require(values.size - start >= expected) {
             "'${names()}' declares $expected floats, got ${values.size - start} from source index $start."
         }
-        values.copyInto(out, offset, start, start + expected)
+        // Plain loop rather than copyInto: Kotlin/Wasm allocates ~84 B per FloatArray.copyInto call (#1621).
+        var index = 0
+        while (index < expected) {
+            out[offset + index] = values[start + index]
+            index += 1
+        }
         offset += expected
         nextField += fields
         return this
@@ -178,7 +184,7 @@ class UniformWriter(private val layout: UniformLayout) {
         requireShape(field, GpuDataShape.Mat4, 1)
         val start = offset
         accept(field)
-        value.data.copyInto(out, start)
+        out.putFloats(start, value.data)
         return this
     }
 
@@ -213,7 +219,7 @@ class UniformWriter(private val layout: UniformLayout) {
         }
         val start = offset
         accept(field)
-        values.copyInto(out, start)
+        out.putFloats(start, values)
         return this
     }
 
