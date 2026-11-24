@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.72.0] - 2026-11-24
+
+### Changed
+
+- **Mobile GPU Early-Z / Forward Pixel Kill, paged terrain fetch cuts, and dedicated Fast cloud/water pipelines.**
+  - Split solid opaque scene shaders and terrain Level-0 core rings into discard-free pipelines (with `alphaToCoverageEnabled = false` on solid MSAA pipelines) so opaque geometry keeps hardware Early-Z / FPK active while masked and dither-fading draws still route to their discard-capable siblings.
+  - Ordered scene recording so opaque meshes write depth before terrain (`OpaqueGeometry`), and moved `Skybox`, `SkyboxCubemap`, and `Celestial` to `ContentPaint.AfterOpaque` with `PipelineVariant.Sky*` (`depthTestEnabled = true`, `depthWriteEnabled = false`, `LESS_EQUAL`), eliminating sky shading behind opaque geometry and terrain.
+  - Cut `pagedTerrain` vertex fetches from 40 to 6 (unmorphed single-cell stencil) / 13 (morphed interior stencil), added a 2-fetch hardware-bilinear single-cell fast path for `samplePagedLight`, and added single-cell page-table sharing plus a uniform single-layer patch fast path in 4-slot `mergeControlTaps`.
+  - Split `CloudLayer` and `StylizedWater` into dedicated lean `Fast` shaders (`CloudLayerFastShader`, `StylizedWaterFastShader`) bound automatically when `Fast` quality is selected, shedding unused `Standard` branches, `cumulusMacro`/`valueNoiseGrad` helpers, and `SceneDepth` bindings to lower mobile GPU register pressure.
+- **Vulkan mobile TBDR transient attachments, gated per-part GPU timestamps, persistent host-visible buffer mapping, zero-alloc vertex binds, and UI texture descriptor caching.**
+  - Added `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT` and `VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT` (with `DEVICE_LOCAL` fallback) to swapchain and offscreen scene depth and MSAA color attachments so mobile tile-based GPUs keep them in on-chip tile SRAM.
+  - Updated `GpuFrameTimer` to skip emitting `BOTTOM_OF_PIPE` timestamps for inactive frame parts and default mobile GPUs to 2 coarse frame-boundary timestamps (auto-arming full per-part timing while `Renderer.frameGpuTiming` is read), eliminating mid-frame tile-pipeline drains.
+  - Added persistent buffer mapping (`vkMapMemory`, `vkUnmapMemory`, `writeMappedMemoryFloats`, `writeMappedMemoryBytes`, `readMappedMemoryBytes`) to `:awake:backend:vulkan:bindings` and wired it across `Material`/`SlotBlock`, `PerFrameUniformSlots`, `FrameUniformBuffers`, `DynamicMesh`, `InstanceBuffer`, `AlphaInstanceBuffer`, `FrameInstanceBuffer`, `SkinnedInstanceBuffer`, `VulkanDynamicMesh`, and `VulkanImagePassExecutor`.
+  - Replaced per-bind `std::vector` heap allocations in `VulkanBuffers.vkCmdBindVertexBuffers` with a stack fast path for up to 8 bindings, and added monotonic version-guarded texture descriptor caching to `UiRenderPipeline.bindMaterial`.
+
 ## [0.71.0] - 2026-11-24
 
 ### Changed
