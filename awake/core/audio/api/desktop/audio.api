@@ -41,6 +41,10 @@ public final class com/awakekt/awake/core/audio/AudioClip {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/core/audio/AudioClipKt {
+	public static final fun durationMillis (Lcom/awakekt/awake/core/audio/AudioClip;)J
+}
+
 public abstract interface class com/awakekt/awake/core/audio/AudioPlayer {
 	public abstract fun dispose ()V
 	public abstract fun getMasterVolume ()F

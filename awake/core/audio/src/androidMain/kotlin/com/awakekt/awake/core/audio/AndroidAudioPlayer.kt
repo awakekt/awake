@@ -8,13 +8,20 @@ package com.awakekt.awake.core.audio
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.os.SystemClock
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Android low-latency audio player built directly on standard [AudioTrack] in static buffer mode.
  * Supports stereo and mono PCM clips, volume controls, dynamic stereo panning, and loop modes.
+ *
+ * @param maxConcurrentOneShots Maximum number of concurrent non-looping sound effects before the
+ *   oldest active one-shot track is evicted and released.
  */
-class AndroidAudioPlayer : AudioPlayer {
+class AndroidAudioPlayer @JvmOverloads constructor(
+    maxConcurrentOneShots: Int = OneShotTrackReaper.DEFAULT_MAX_CONCURRENT_ONE_SHOTS,
+) : AudioPlayer {
     override var masterVolume: Float = 1.0f
         set(value) {
             field = value.coerceIn(0f, 1f)
@@ -34,8 +41,15 @@ class AndroidAudioPlayer : AudioPlayer {
         }
 
     private val activeHandles = CopyOnWriteArrayList<AndroidSoundHandle>()
+    private val reaperLock = Any()
+    private val oneShotReaper = OneShotTrackReaper(
+        nowMs = SystemClock::elapsedRealtime,
+        maxConcurrent = maxConcurrentOneShots,
+    )
     private var activeMusicHandle: AndroidSoundHandle? = null
     private var activeMusicVolume: Float = 1f
+
+    @Volatile
     private var isDisposed = false
 
     override fun playSound(
@@ -46,6 +60,14 @@ class AndroidAudioPlayer : AudioPlayer {
     ): SoundHandle? {
         if (isDisposed || !clip.isValidForPlayback()) return null
 
+        synchronized(reaperLock) {
+            if (loop) {
+                oneShotReaper.reap()
+            } else {
+                oneShotReaper.reserveSlot()
+            }
+        }
+
         val handle = createTrackHandle(
             clip = clip,
             volume = volume,
@@ -53,9 +75,21 @@ class AndroidAudioPlayer : AudioPlayer {
             loop = loop,
             isMusic = false,
         )
-        return handle?.also {
-            activeHandles.add(it)
-            it.play()
+        return handle?.let { created ->
+            activeHandles.add(created)
+            created.play()
+            val disposedDuringStart = synchronized(reaperLock) {
+                if (!isDisposed && !loop) {
+                    oneShotReaper.track(created, clip.durationMillis())
+                }
+                isDisposed
+            }
+            if (disposedDuringStart) {
+                created.stop()
+                null
+            } else {
+                created
+            }
         }
     }
 
@@ -79,6 +113,9 @@ class AndroidAudioPlayer : AudioPlayer {
     override fun stopMusic() {
         activeMusicHandle?.stop()
         activeMusicHandle = null
+        synchronized(reaperLock) {
+            oneShotReaper.reap()
+        }
     }
 
     override fun dispose() {
@@ -86,6 +123,9 @@ class AndroidAudioPlayer : AudioPlayer {
         isDisposed = true
 
         stopMusic()
+        synchronized(reaperLock) {
+            oneShotReaper.stopAll()
+        }
         for (handle in activeHandles) {
             handle.stop()
         }
@@ -175,7 +215,7 @@ class AndroidAudioPlayer : AudioPlayer {
         private var userVolume: Float,
         private var userPan: Float,
     ) : SoundHandle {
-        private var stopped = false
+        private val stopped = AtomicBoolean(false)
 
         init {
             applyCurrentVolumes()
@@ -183,7 +223,7 @@ class AndroidAudioPlayer : AudioPlayer {
 
         fun play() {
             runCatching {
-                if (!stopped && track.state == AudioTrack.STATE_INITIALIZED) {
+                if (!stopped.get() && track.state == AudioTrack.STATE_INITIALIZED) {
                     track.play()
                 }
             }
@@ -191,14 +231,13 @@ class AndroidAudioPlayer : AudioPlayer {
 
         override val isPlaying: Boolean
             get() = runCatching {
-                !stopped &&
+                !stopped.get() &&
                     track.state == AudioTrack.STATE_INITIALIZED &&
                     track.playState == AudioTrack.PLAYSTATE_PLAYING
             }.getOrDefault(false)
 
         override fun stop() {
-            if (stopped) return
-            stopped = true
+            if (!stopped.compareAndSet(false, true)) return
             runCatching {
                 if (track.state == AudioTrack.STATE_INITIALIZED) {
                     if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
@@ -220,7 +259,7 @@ class AndroidAudioPlayer : AudioPlayer {
 
         @Suppress("DEPRECATION")
         fun applyCurrentVolumes() {
-            if (stopped || track.state != AudioTrack.STATE_INITIALIZED) return
+            if (stopped.get() || track.state != AudioTrack.STATE_INITIALIZED) return
             val busVolume = if (isMusic) musicVolume else sfxVolume
             val effectiveVolume = (masterVolume * busVolume * userVolume).coerceIn(0f, 1f)
 

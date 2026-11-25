@@ -28,20 +28,30 @@ class FocusAudioPlayerTest {
         channels = 2,
     )
 
+    private class TrackingSoundHandle(
+        var playing: Boolean = true,
+    ) : SoundHandle {
+        var stopCalls: Int = 0
+
+        override val isPlaying: Boolean
+            get() = playing
+
+        override fun stop() {
+            stopCalls++
+            playing = false
+        }
+    }
+
     private class FakeAudioPlayer : NoOpAudioPlayer() {
         val playedSounds = mutableListOf<AudioClip>()
+        val emittedHandles = mutableListOf<TrackingSoundHandle>()
         var activeMusic: AudioClip? = null
         var musicStops = 0
         var disposed = false
 
         override fun playSound(clip: AudioClip, volume: Float, pan: Float, loop: Boolean): SoundHandle {
             playedSounds += clip
-            return object : SoundHandle {
-                override var isPlaying: Boolean = true
-                override fun stop() {
-                    isPlaying = false
-                }
-            }
+            return TrackingSoundHandle().also { emittedHandles += it }
         }
 
         override fun playMusic(clip: AudioClip, volume: Float, loop: Boolean) {
@@ -97,5 +107,57 @@ class FocusAudioPlayerTest {
         windowFocused = true
         player.syncFocus()
         assertNull(backend.activeMusic)
+    }
+
+    @Test
+    fun playSoundCallsStopBeforeDroppingFinishedNonPlayingHandles() {
+        val backend = FakeAudioPlayer()
+        val player = FocusAudioPlayer(backend, initiallyFocused = true)
+
+        assertNotNull(player.playSound(sfx))
+        assertNotNull(player.playSound(sfx))
+        val first = backend.emittedHandles[0]
+        val second = backend.emittedHandles[1]
+
+        // Simulate a backend handle whose playback ended without stop() being called yet.
+        first.playing = false
+        assertEquals(0, first.stopCalls)
+
+        // Playing another sound prunes non-playing handles and explicitly calls stop() before drop.
+        assertNotNull(player.playSound(sfx))
+        assertEquals(1, first.stopCalls)
+        assertEquals(0, second.stopCalls)
+        assertTrue(second.isPlaying)
+
+        // Subsequent plays must not invoke stop() again on the already-dropped handle.
+        assertNotNull(player.playSound(sfx))
+        assertEquals(1, first.stopCalls)
+        assertEquals(0, second.stopCalls)
+    }
+
+    @Test
+    fun disposeStopsRemainingTrackedHandlesBeforeClearing() {
+        val backend = FakeAudioPlayer()
+        val player = FocusAudioPlayer(backend, initiallyFocused = true)
+
+        assertNotNull(player.playSound(sfx))
+        assertNotNull(player.playSound(sfx))
+        val first = backend.emittedHandles[0]
+        val second = backend.emittedHandles[1]
+        // Also ensure a handle whose isPlaying flipped false before dispose still gets stop().
+        first.playing = false
+
+        player.dispose()
+        assertTrue(backend.disposed)
+        assertEquals(1, first.stopCalls)
+        assertEquals(1, second.stopCalls)
+        assertFalse(first.isPlaying)
+        assertFalse(second.isPlaying)
+
+        // Repeated dispose is a no-op and subsequent playSound calls are ignored.
+        player.dispose()
+        assertEquals(1, first.stopCalls)
+        assertEquals(1, second.stopCalls)
+        assertNull(player.playSound(sfx))
     }
 }

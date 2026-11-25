@@ -55,3 +55,26 @@ data class AudioClip(
         return result
     }
 }
+
+/**
+ * Computes the playback duration of this [AudioClip] in whole milliseconds from its PCM byte
+ * length, [AudioClip.sampleRate], [AudioClip.channels], and [AudioClip.bitsPerSample].
+ *
+ * Returns `0L` when the buffer is empty or the sample format metadata is non-positive.
+ *
+ * @return Total clip duration in milliseconds, or `0L` for empty or invalid PCM metadata.
+ */
+fun AudioClip.durationMillis(): Long {
+    val bytesPerSample = bitsPerSample / BITS_PER_BYTE
+    val invalidFormat = sampleRate <= 0 || channels <= 0 || bytesPerSample <= 0
+    return if (invalidFormat || pcmBytes.isEmpty()) {
+        0L
+    } else {
+        val bytesPerFrame = bytesPerSample.toLong() * channels.toLong()
+        val totalFrames = pcmBytes.size.toLong() / bytesPerFrame
+        (totalFrames * MILLIS_PER_SECOND) / sampleRate.toLong()
+    }
+}
+
+private const val BITS_PER_BYTE = 8
+private const val MILLIS_PER_SECOND = 1_000L
