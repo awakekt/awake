@@ -13,7 +13,9 @@ that order, and regenerating.
 Each glyph gets a tile of its own, its sample rect and two texels around it, and the tiles are packed in
 shelves, tallest first (`ShelfPacking`). The atlas holds the ink and little else: the 339 glyphs fill about the
 same 0.9 million texels per weight that the 102 of ASCII did when every glyph had a cell as large as the
-widest one (`@`, then `‰`). A glyph's texels are the same wherever its tile sits, since its pen origin lands on a
+widest one (`@`, then `‰`). Each face's RGBA8 atlas ships losslessly PNG-encoded (`AtlasPngEncoder`, decoded
+at load time by `PngDecoder`), shrinking the seven generated Kotlin files from ~10.3 MB to ~2.8 MB with
+bit-exact RGBA output. A glyph's texels are the same wherever its tile sits, since its pen origin lands on a
 whole texel, so moving a glyph moves no texel of it. `awake:core:text` packs a font loaded at run time with the
 same algorithm, and `OpenTypeUiFontTest` holds the two to one another.
 

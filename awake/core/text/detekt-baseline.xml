@@ -2,13 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>LargeClass:RobotoBlackUiFontData.kt:RobotoBlackUiFontData : PackedUiFontData</ID>
-    <ID>LargeClass:RobotoBoldUiFontData.kt:RobotoBoldUiFontData : PackedUiFontData</ID>
-    <ID>LargeClass:RobotoLightUiFontData.kt:RobotoLightUiFontData : PackedUiFontData</ID>
-    <ID>LargeClass:RobotoMediumUiFontData.kt:RobotoMediumUiFontData : PackedUiFontData</ID>
-    <ID>LargeClass:RobotoRegularUiFontData.kt:RobotoRegularUiFontData : PackedUiFontData</ID>
-    <ID>LargeClass:RobotoSemiBoldUiFontData.kt:RobotoSemiBoldUiFontData : PackedUiFontData</ID>
-    <ID>LargeClass:RobotoThinUiFontData.kt:RobotoThinUiFontData : PackedUiFontData</ID>
     <ID>ReturnCount:GlyphAtlasSource.kt:GlyphAtlasSource$fun sampleCoverage: Float</ID>
   </CurrentIssues>
 </SmellBaseline>

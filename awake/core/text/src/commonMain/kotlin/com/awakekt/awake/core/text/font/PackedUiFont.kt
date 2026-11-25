@@ -35,7 +35,7 @@ internal interface PackedUiFontData {
      * MTSDF one (RGB carries the multi-channel distance, A a true signed distance). */
     val atlasChannels: Int get() = 1
 
-    /** Raw atlas bytes, [atlasChannels] per texel, row-major from the top-left, as base64. */
+    /** Atlas bytes, [atlasChannels] per texel, row-major from the top-left, as base64 (raw bytes or PNG when [atlasChannels] is 4). */
     val encodedAtlasBase64: String
 
     /** The code points the atlas holds, in the order of the per-glyph arrays; a surrogate pair is one. */
@@ -55,8 +55,23 @@ internal interface PackedUiFontData {
     val inkMetricsEm: FloatArray get() = quadMetricsEm
     val advancesEm: FloatArray
 
-    /** The atlas bytes [encodedAtlasBase64] holds. A font baked at run time hands its bytes over instead. */
-    fun atlasBytes(): ByteArray = Base64.Default.decode(encodedAtlasBase64.filterNot(Char::isWhitespace))
+    /**
+     * The atlas bytes [encodedAtlasBase64] holds. A font baked at run time hands its bytes over instead.
+     *
+     * When [atlasChannels] is 4 and the decoded payload carries a PNG signature, it is decoded losslessly via
+     * [PngDecoder]; raw byte payloads are returned verbatim for backwards compatibility.
+     */
+    fun atlasBytes(): ByteArray {
+        val raw = decodeBase64(encodedAtlasBase64)
+        if (atlasChannels == ATLAS_RGBA_CHANNELS && PngDecoder.isPng(raw)) {
+            val decoded = PngDecoder.decode(raw)
+            require(decoded.width == atlasWidth && decoded.height == atlasHeight) {
+                "Decoded PNG atlas is ${decoded.width}x${decoded.height}, expected ${atlasWidth}x$atlasHeight"
+            }
+            return decoded.rgba
+        }
+        return raw
+    }
 
     /** The outlines the atlas was drawn from, for [PackedUiFont.pixelGlyphs]; null when they were not kept. */
     fun outlineFont(): OpenTypeFont? = null
@@ -457,3 +472,16 @@ class PackedUiFont internal constructor(
 /** U+00A0 to U+017F: Latin-1 Supplement and Latin Extended-A, which [PackedUiFont]'s ink band leaves out. */
 private const val LATIN_SUPPLEMENT_FIRST = 0x00A0
 private const val LATIN_EXTENDED_A_LAST = 0x017F
+private const val ATLAS_RGBA_CHANNELS = 4
+
+/**
+ * Decodes [encoded] as standard base64 without allocating an intermediate whitespace-stripped copy.
+ */
+internal fun decodeBase64(encoded: String): ByteArray {
+    if (encoded.isEmpty()) return ByteArray(0)
+    return if (encoded.any(Char::isWhitespace)) {
+        Base64.Mime.decode(encoded)
+    } else {
+        Base64.Default.decode(encoded)
+    }
+}

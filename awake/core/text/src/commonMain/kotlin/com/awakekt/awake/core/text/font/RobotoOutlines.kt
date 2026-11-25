@@ -3,12 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:OptIn(ExperimentalEncodingApi::class)
-
 package com.awakekt.awake.core.text.font
-
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * The outlines and pair kerning of the built-in Roboto's atlas glyphs, one face per weight, read from
@@ -26,5 +21,5 @@ internal object RobotoOutlines {
     val black: OpenTypeFont by lazy { read(RobotoUiFontOutlineData.BLACK, "Roboto Black") }
 
     private fun read(base64: String, name: String): OpenTypeFont =
-        OpenTypeFont(Base64.Default.decode(base64.filterNot(Char::isWhitespace)), name)
+        OpenTypeFont(decodeBase64(base64), name)
 }

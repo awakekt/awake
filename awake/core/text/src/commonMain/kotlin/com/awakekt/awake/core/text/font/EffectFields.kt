@@ -3,12 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:OptIn(ExperimentalEncodingApi::class)
-
 package com.awakekt.awake.core.text.font
-
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * A font's effect field: one coarse, wide-reaching signed distance per texel, 0.5 on the outline, that an outline
@@ -22,7 +17,8 @@ internal object EffectFields {
      * stored as differences from the texel to its left (PNG's `Sub` filter).
      */
     fun decode(encoded: String, width: Int, height: Int): ByteArray {
-        val filtered = DeflateInflater.inflateZlib(Base64.Default.decode(encoded.filterNot(Char::isWhitespace)))
+        val compressed = decodeBase64(encoded)
+        val filtered = DeflateInflater.inflateZlib(compressed, expectedSize = width * height)
         require(filtered.size == width * height) { "An effect field of ${filtered.size} bytes is not $width by $height" }
         for (index in filtered.indices) {
             if (index % width != 0) filtered[index] = (filtered[index] + filtered[index - 1]).toByte()
