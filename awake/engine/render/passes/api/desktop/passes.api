@@ -1056,14 +1056,20 @@ public final class com/awakekt/awake/render/renderer/OutlineFieldsKt {
 
 public final class com/awakekt/awake/render/renderer/OutlineStyle {
 	public static final field Companion Lcom/awakekt/awake/render/renderer/OutlineStyle$Companion;
-	public fun <init> (Lcom/awakekt/awake/core/color/Color;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;F)V
+	public fun <init> (Lcom/awakekt/awake/core/color/Color;FF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component2 ()F
-	public final fun copy (Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/render/renderer/OutlineStyle;
+	public final fun component3 ()F
+	public final synthetic fun copy (Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/render/renderer/OutlineStyle;
+	public final fun copy (Lcom/awakekt/awake/core/color/Color;FF)Lcom/awakekt/awake/render/renderer/OutlineStyle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/OutlineStyle;Lcom/awakekt/awake/core/color/Color;FFILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/OutlineStyle;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/OutlineStyle;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/OutlineStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getDraws ()Z
+	public final fun getSoftness ()F
 	public final fun getWidthPixels ()F
 	public fun hashCode ()I
 	public final fun packed ()[F

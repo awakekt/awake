@@ -72,6 +72,14 @@ class OutlineOverlayDrawTest {
         assertEquals(emptyList(), unknown.scissors)
     }
 
+    @Test
+    fun styleSoftnessRoundTripsAndLegacyFiveFloatPayloadDefaultsToCrisp() {
+        val soft = OutlineStyle(Color(1f, 0.9f, 0.5f, 0.95f), widthPixels = 10f, softness = 0.85f)
+        assertEquals(soft, OutlineStyle.unpack(soft.packed()))
+        val legacy = OutlineStyle.unpack(floatArrayOf(1f, 0f, 0f, 1f, 4f))
+        assertEquals(OutlineStyle(Color(1f, 0f, 0f, 1f), widthPixels = 4f, softness = 0f), legacy)
+    }
+
     private fun layer(layer: Int, style: OutlineStyle) =
         GpuSubPass(target = null, targetLayer = layer, viewProjection = Mat4(), passUniforms = style.packed())
 
