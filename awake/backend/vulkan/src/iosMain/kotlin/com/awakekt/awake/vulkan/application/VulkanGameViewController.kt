@@ -27,7 +27,10 @@ fun makeVulkanGameViewController(
         onCreate = { metalLayer -> application.create(metalLayer) },
         onUpdate = { delta -> application.update(delta) },
         onResize = { width, height -> application.resize(0, 0, width, height) },
-        onPause = { application.pause() },
+        onPause = {
+            application.flushPipelineCache()
+            application.pause()
+        },
         onResume = { application.resume() },
         onSafeArea = { insets -> application.setSafeArea(insets) },
         onKeyboard = { insets -> application.setImeInsets(insets) },

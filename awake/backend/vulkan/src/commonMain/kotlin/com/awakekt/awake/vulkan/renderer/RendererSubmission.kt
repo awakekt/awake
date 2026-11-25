@@ -41,6 +41,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         deferredResourceReaper.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
         transferContext.uploadBatcher.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
         swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
+        notifyFirstFrameSubmitted()
         return
     }
     val waitSemaphore = swapchainManager.imageAvailableSemaphores[currentFrame]
@@ -75,6 +76,13 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         PresentAction.None -> Unit
     }
     swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
+    notifyFirstFrameSubmitted()
+}
+
+private fun Renderer.notifyFirstFrameSubmitted() {
+    val hook = onFirstFrameSubmitted ?: return
+    onFirstFrameSubmitted = null
+    hook()
 }
 
 /**
