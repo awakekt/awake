@@ -139,3 +139,10 @@ internal enum class FrameBlockKind {
     /** The identity view-projection, for a draw whose single block starts with its whole MVP. */
     Identity,
 }
+
+/** The frame block a draw's set binds: none of the batch's for a draw whose one block carries everything. */
+internal fun frameBlockKind(splitDrawBlockFloats: Int, edges: Boolean): FrameBlockKind = when {
+    splitDrawBlockFloats == 0 -> FrameBlockKind.Identity
+    edges -> FrameBlockKind.Edges
+    else -> FrameBlockKind.Scene
+}

@@ -13,11 +13,13 @@ import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
+import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 
 /**
  * Manages reusable, grow-on-demand dynamic mesh and instance buffer pools across frames.
  */
+@Suppress("TooManyFunctions") // One typed accessor per managed GPU buffer pool plus lifecycle hooks.
 internal class GpuBufferPoolManager(
     private val graphicsDevice: GraphicsDevice,
     private val maxFramesInFlight: Int,
@@ -50,6 +52,9 @@ internal class GpuBufferPoolManager(
     private val frameInstanceBufferPool = GpuResourcePool {
         FrameInstanceBuffer(graphicsDevice, framesInFlight = maxFramesInFlight + 1)
     }
+
+    /** Immutable read-only fallback vertex buffers shared by untinted and frame-less instanced draws. */
+    private val sharedFallbacks = SharedInstanceFallbackBuffers(graphicsDevice)
 
     /**
      * Buffer reallocations across every UI mesh pool.
@@ -111,6 +116,55 @@ internal class GpuBufferPoolManager(
     fun alphaInstanceBufferForRun(index: Int): AlphaInstanceBuffer = alphaInstanceBufferPool[index]
     fun frameInstanceBufferForRun(index: Int): FrameInstanceBuffer = frameInstanceBufferPool[index]
 
+    /**
+     * Binding of the single shared all-white per-instance colour buffer, allocated lazily on first
+     * untinted instanced draw so untinted runs never allocate per-run [AlphaInstanceBuffer]s.
+     */
+    val whiteInstanceColorBinding: VulkanBufferBinding
+        get() = sharedFallbacks.whiteColorBinding()
+
+    /**
+     * Binding of the single shared all-zero per-instance frame buffer, allocated lazily when a
+     * particle draw omits sprite-strip frame indices.
+     */
+    val zeroInstanceFrameBinding: VulkanBufferBinding
+        get() = sharedFallbacks.zeroFrameBinding()
+
+    internal val instanceBufferPoolSize: Int get() = instanceBufferPool.size
+    internal val skinnedInstanceBufferPoolSize: Int get() = skinnedInstanceBufferPool.size
+    internal val alphaInstanceBufferPoolSize: Int get() = alphaInstanceBufferPool.size
+    internal val frameInstanceBufferPoolSize: Int get() = frameInstanceBufferPool.size
+    internal val hasWhiteAlphaInstanceBuffer: Boolean get() = sharedFallbacks.hasWhiteColorBuffer
+
+    /**
+     * Drains retired UI mesh slots and releases pooled transient GPU buffers to reclaim high-water
+     * memory on trim. Caller must have waited for device idle and cleared any draw caches
+     * referencing the trimmed pools.
+     */
+    fun trimPools(trimUiMeshes: Boolean, trimInstanceBuffers: Boolean) {
+        retiredUiSlots.destroyAll()
+        if (trimUiMeshes) {
+            overlayUiSlots.destroy()
+            targetUiSlots.values.forEach(UiMeshSlots::destroy)
+            targetUiSlots.clear()
+            uiTextureMeshPool.forEach { it.destroy() }
+            imagePassMeshPool.forEach { it.destroy() }
+            uiTextureMeshPool.clear()
+            imagePassMeshPool.clear()
+        }
+        if (trimInstanceBuffers) {
+            instanceBufferPool.forEach { it.destroy() }
+            skinnedInstanceBufferPool.forEach { it.destroy() }
+            alphaInstanceBufferPool.forEach { it.destroy() }
+            frameInstanceBufferPool.forEach { it.destroy() }
+            instanceBufferPool.clear()
+            skinnedInstanceBufferPool.clear()
+            alphaInstanceBufferPool.clear()
+            frameInstanceBufferPool.clear()
+            sharedFallbacks.destroy()
+        }
+    }
+
     /** Total live pooled dynamic meshes and instance buffers currently held across all pools. */
     val liveBufferCount: Int
         get() {
@@ -120,7 +174,8 @@ internal class GpuBufferPoolManager(
                 instanceBufferPool.size +
                 skinnedInstanceBufferPool.size +
                 alphaInstanceBufferPool.size +
-                frameInstanceBufferPool.size
+                frameInstanceBufferPool.size +
+                sharedFallbacks.liveCount
             targetUiSlots.values.forEach { total += it.liveMeshCount }
             return total
         }
@@ -136,11 +191,45 @@ internal class GpuBufferPoolManager(
         skinnedInstanceBufferPool.forEach { it.destroy() }
         alphaInstanceBufferPool.forEach { it.destroy() }
         frameInstanceBufferPool.forEach { it.destroy() }
+        sharedFallbacks.destroy()
         uiTextureMeshPool.clear()
         imagePassMeshPool.clear()
         instanceBufferPool.clear()
         skinnedInstanceBufferPool.clear()
         alphaInstanceBufferPool.clear()
         frameInstanceBufferPool.clear()
+    }
+}
+
+private class SharedInstanceFallbackBuffers(private val graphicsDevice: GraphicsDevice) {
+    private var whiteAlpha: AlphaInstanceBuffer? = null
+    private var zeroFrame: FrameInstanceBuffer? = null
+
+    val hasWhiteColorBuffer: Boolean get() = whiteAlpha != null
+    val liveCount: Int get() = (if (whiteAlpha != null) 1 else 0) + (if (zeroFrame != null) 1 else 0)
+
+    fun whiteColorBinding(): VulkanBufferBinding {
+        val existing = whiteAlpha
+        if (existing != null) return existing.binding(0)
+        return AlphaInstanceBuffer(graphicsDevice, framesInFlight = 1).also {
+            it.fillWhite(0)
+            whiteAlpha = it
+        }.binding(0)
+    }
+
+    fun zeroFrameBinding(): VulkanBufferBinding {
+        val existing = zeroFrame
+        if (existing != null) return existing.binding(0)
+        return FrameInstanceBuffer(graphicsDevice, framesInFlight = 1).also {
+            it.fillZero(0)
+            zeroFrame = it
+        }.binding(0)
+    }
+
+    fun destroy() {
+        whiteAlpha?.destroy()
+        whiteAlpha = null
+        zeroFrame?.destroy()
+        zeroFrame = null
     }
 }

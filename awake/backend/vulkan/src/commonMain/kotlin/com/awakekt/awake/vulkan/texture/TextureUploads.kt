@@ -121,6 +121,22 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
         VulkanBuffers.vkFreeMemory(device, staging.memory)
     }
 
+    /** Number of staging buffers currently pooled across idle and in-use lists, for tests. */
+    val pooledBufferCount: Int
+        get() = free.size + inUse.values.sumOf { it.size }
+
+    /** Total staging bytes currently pooled across idle and in-use lists, for tests. */
+    val pooledBytes: Long
+        get() = free.sumOf { it.size } + inUse.values.sumOf { list -> list.sumOf { it.size } }
+
+    /** Frees all idle and completed staging buffers. Caller must have waited for device idle. */
+    fun trimIdle() {
+        inUse.values.forEach { it.forEach(::release) }
+        inUse.clear()
+        free.forEach(::release)
+        free.clear()
+    }
+
     fun destroy() {
         inUse.values.forEach { it.forEach(::release) }
         inUse.clear()

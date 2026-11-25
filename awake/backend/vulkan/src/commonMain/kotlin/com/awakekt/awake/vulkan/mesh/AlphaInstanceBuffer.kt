@@ -11,23 +11,25 @@ import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
+import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.handles.BufferHandle
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
+import com.awakekt.awake.vulkan.renderer.sameBitsAs
 
 /**
- * The per-instance RGBA color+alpha behind one particle-instanced draw call -- an instance-rate
- * vertex buffer bound at binding 2, alongside the mesh's own per-vertex buffer at binding 0
- * and [InstanceBuffer]'s model matrices at binding 1 (see `RenderPipeline`'s `instanceAlpha`
- * parameter, which declares the matching vertex input state). Same
- * HOST_VISIBLE|HOST_COHERENT, fixed-capacity, rewritten-every-frame lifecycle as
- * [InstanceBuffer] itself -- this is that same shape with `FLOATS_PER_INSTANCE = 4` (one
- * `vec4f` per instance, not a generalization of [InstanceBuffer]'s own `mat4` stride) and its
- * own binding, since widening [InstanceBuffer]'s own stride would ripple into every OTHER
- * instanced format that doesn't use per-instance color at all.
+ * The per-instance RGBA color+alpha behind one particle-instanced or tinted-instanced draw call --
+ * an instance-rate vertex buffer bound at binding 2, alongside the mesh's own per-vertex buffer at
+ * binding 0 and [InstanceBuffer]'s model matrices at binding 1 (see `RenderPipeline`'s
+ * `instanceAlpha` parameter, which declares the matching vertex input state).
+ *
+ * Same HOST_VISIBLE|HOST_COHERENT, grow-on-demand lifecycle as [InstanceBuffer], with
+ * `FLOATS_PER_INSTANCE = 4` (one `vec4f` per instance). Each frame slot starts unallocated and
+ * grows in powers of two from [MIN_CAPACITY] up to [maxInstances], retiring outgrown buffers
+ * through the device reaper once frames in flight complete.
  */
 class AlphaInstanceBuffer(
     private val graphicsDevice: GraphicsDevice,
@@ -37,25 +39,49 @@ class AlphaInstanceBuffer(
     framesInFlight: Int = 1,
 ) {
     private val device get() = graphicsDevice.device
-    private val physicalDevice get() = graphicsDevice.physicalDevice
 
     private data class FrameResources(
         val buffer: BufferHandle,
         val memory: DeviceMemoryHandle,
         val mappedPtr: Long,
+        val capacity: Int,
+        val byteSize: Long,
     ) {
         /** This slot's buffer as the port's opaque handle -- built once, not per draw. */
         val binding = VulkanBufferBinding(buffer.handle)
+        var holdsWhite: Boolean = false
+        var resident: FloatArray? = null
+        var residentCount: Int = 0
+
+        fun matchesResident(floats: FloatArray, count: Int): Boolean =
+            !holdsWhite && residentCount == count && resident?.sameBitsAs(floats, count) == true
     }
 
-    private val frameResources: Array<FrameResources> = Array(framesInFlight) {
-        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer((maxInstances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
-        FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), mappedPtr)
-    }
+    private val frameResources = arrayOfNulls<FrameResources>(framesInFlight)
+
+    /** Uploads [update] or [fillWhite] made, for tests. */
+    internal var uploads = 0L
+        private set
+
+    /** Outgrown slot buffers handed to the deferred reaper so far, for tests. */
+    internal var retiredCount = 0L
+        private set
+
+    /** Current allocated instance capacity for [frameIndex], or 0 before first use. */
+    internal fun capacityFor(frameIndex: Int): Int = frameResources.getOrNull(frameIndex)?.capacity ?: 0
+
+    /** Total requested GPU buffer bytes currently held across live frame slots, for tests. */
+    internal val allocatedBytes: Long
+        get() {
+            var total = 0L
+            for (i in frameResources.indices) {
+                total += frameResources[i]?.byteSize ?: 0L
+            }
+            return total
+        }
 
     // Reused across frames so a steady instance count allocates nothing per frame -- same
     // "resize only when the count actually changes" shape InstanceBuffer's own `packed` uses.
-
     private val packer = InstancePacker<Vec4>(
         GpuDataShape.Vec4,
         "AlphaInstanceBuffer",
@@ -69,7 +95,8 @@ class AlphaInstanceBuffer(
 
     /**
      * Writes one RGBA tint per instance into [frameIndex]'s buffer, in the same order as the
-     * instance matrices. An empty list writes nothing and leaves the previous contents in place.
+     * instance matrices, growing that slot's buffer on demand. An empty list writes nothing and
+     * leaves the previous contents in place.
      *
      * @param frameIndex The frame slot to write.
      * @param colors Per-instance colour and alpha, one entry per drawn instance.
@@ -79,23 +106,40 @@ class AlphaInstanceBuffer(
     fun update(frameIndex: Int, colors: List<Vec4>) {
         val count = packer.packSlice(colors, maxInstances)
         if (count == 0) return
-        VulkanBuffers.writeMappedMemoryFloats(resourcesFor(frameIndex).mappedPtr, 0L, packer.buffer, 0, count)
-        holdsWhite[frameIndex] = false
+        val floats = packer.buffer
+        val resources = resourcesFor(frameIndex, colors.size)
+        if (resources.matchesResident(floats, count)) return
+        val resident = resources.resident
+        VulkanBuffers.writeMappedMemoryFloats(resources.mappedPtr, 0L, floats, 0, count)
+        uploads += 1L
+        val target = if (resident != null && resident.size >= count) resident else FloatArray(count).also { resources.resident = it }
+        floats.copyInto(target, 0, 0, count)
+        resources.residentCount = count
+        resources.holdsWhite = false
     }
 
     /**
-     * Every instance (1, 1, 1, 1) in [frameIndex]'s buffer: untinted and unfaded, for an
-     * instanced draw on a tinted pipeline that carries no colours. A slot already holding it is
-     * left alone.
+     * Every instance (1, 1, 1, 1) in [frameIndex]'s buffer up to [maxInstances]: untinted and
+     * unfaded, for an instanced draw on a tinted pipeline that carries no colours. A slot already
+     * holding it is left alone.
      */
     fun fillWhite(frameIndex: Int) {
-        if (holdsWhite[frameIndex]) return
-        val white = FloatArray(maxInstances * FLOATS_PER_INSTANCE) { 1f }
-        VulkanBuffers.writeMappedMemoryFloats(resourcesFor(frameIndex).mappedPtr, 0L, white)
-        holdsWhite[frameIndex] = true
+        fillWhite(frameIndex, maxInstances)
     }
 
-    private val holdsWhite = BooleanArray(frameResources.size)
+    internal fun fillWhite(frameIndex: Int, instanceCount: Int) {
+        require(instanceCount in 1..maxInstances) {
+            "AlphaInstanceBuffer fillWhite count $instanceCount is outside 1..$maxInstances."
+        }
+        val resources = resourcesFor(frameIndex, instanceCount)
+        if (resources.holdsWhite) return
+        val white = FloatArray(resources.capacity * FLOATS_PER_INSTANCE) { 1f }
+        VulkanBuffers.writeMappedMemoryFloats(resources.mappedPtr, 0L, white)
+        uploads += 1L
+        resources.holdsWhite = true
+        resources.resident = null
+        resources.residentCount = 0
+    }
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 2. */
     fun binding(frameIndex: Int): VulkanBufferBinding = resourcesFor(frameIndex).binding
@@ -117,22 +161,52 @@ class AlphaInstanceBuffer(
     }
 
     /**
-     * Destroys and frees every frame slot's buffer and memory. Call once, after the GPU has
+     * Destroys and frees every live frame slot's buffer and memory. Call once, after the GPU has
      * finished with them.
      */
     fun destroy() {
-        frameResources.forEach { frame ->
-            VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
-            if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.memory.handle)
-            VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
+        val vkDevice = device
+        for (i in frameResources.indices) {
+            val frame = frameResources[i] ?: continue
+            frameResources[i] = null
+            freeFrameResources(vkDevice, frame)
         }
     }
 
-    private fun resourcesFor(frameIndex: Int): FrameResources {
+    private fun resourcesFor(frameIndex: Int, instances: Int = 1): FrameResources {
         require(frameIndex in frameResources.indices) {
             "AlphaInstanceBuffer frame index $frameIndex is outside 0..${frameResources.lastIndex}."
         }
-        return frameResources[frameIndex]
+        val current = frameResources[frameIndex]
+        if (current != null && current.capacity >= instances) return current
+        current?.let(::retireFrameResources)
+        var capacity = MIN_CAPACITY.coerceAtMost(maxInstances)
+        while (capacity < instances) capacity *= 2
+        capacity = capacity.coerceAtMost(maxInstances)
+        val byteSize = (capacity * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong()
+        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer(byteSize)
+        return FrameResources(
+            BufferHandle(buffer),
+            DeviceMemoryHandle(memory),
+            mappedPtr,
+            capacity,
+            byteSize,
+        ).also { frameResources[frameIndex] = it }
+    }
+
+    private fun retireFrameResources(old: FrameResources) {
+        val vkDevice = device
+        retiredCount += 1L
+        graphicsDevice.destroyOrRetire {
+            freeFrameResources(vkDevice, old)
+        }
+    }
+
+    private fun freeFrameResources(vkDevice: Long, frame: FrameResources) {
+        if (vkDevice == 0L) return
+        VulkanBuffers.vkDestroyBuffer(vkDevice, frame.buffer.handle)
+        if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(vkDevice, frame.memory.handle)
+        VulkanBuffers.vkFreeMemory(vkDevice, frame.memory.handle)
     }
 
     private fun allocateHostVisibleBuffer(byteSize: Long): Triple<Long, Long, Long> {
@@ -160,5 +234,7 @@ class AlphaInstanceBuffer(
 
         /** Floats per instance: 4, one `vec4` colour. */
         val FLOATS_PER_INSTANCE = GpuDataShape.Vec4.componentCount
+
+        internal const val MIN_CAPACITY = 16
     }
 }

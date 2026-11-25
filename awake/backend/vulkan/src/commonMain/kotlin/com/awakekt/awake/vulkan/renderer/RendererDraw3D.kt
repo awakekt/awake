@@ -67,12 +67,21 @@ internal fun VulkanRenderer.prepareGpuDraws(
     fogDensity: Float = 0f,
 ): List<PreparedDrawCall> {
     var instancedIndex = 0
+    var skinnedInstancedIndex = 0
+    var alphaInstancedIndex = 0
+    var frameInstancedIndex = 0
     return buildList(draws.size) {
         for (cmd in draws) {
+            val instancedKind = cmd.instancedDrawKind()
+            val hasColors = !cmd.instanceColors.isNullOrEmpty()
+            val hasFrames = !cmd.instanceFrames.isNullOrEmpty()
             prepareGpuDraw(
                 cmd = cmd,
                 frameIndex = frameIndex,
                 instancedIndex = instancedIndex,
+                skinnedInstancedIndex = skinnedInstancedIndex,
+                alphaInstancedIndex = alphaInstancedIndex,
+                frameInstancedIndex = frameInstancedIndex,
                 isTransparent = isTransparent,
                 materialUsage = materialUsage,
                 viewProjection = viewProjection,
@@ -84,12 +93,18 @@ internal fun VulkanRenderer.prepareGpuDraws(
                 fogDensity = fogDensity,
             )?.let {
                 add(it)
-                if (cmd.instanceModels != null) instancedIndex++
+                if (instancedKind != null) {
+                    instancedIndex++
+                    if (instancedKind == InstancedDrawKind.Skinned) skinnedInstancedIndex++
+                    if (instancedKind != InstancedDrawKind.Skinned && hasColors) alphaInstancedIndex++
+                    if (instancedKind == InstancedDrawKind.Particle && hasFrames) frameInstancedIndex++
+                }
             }
         }
     }
 }
 
+@Suppress("LongParameterList")
 internal fun VulkanRenderer.prepareGpuDraw(
     cmd: GpuDrawRequest,
     frameIndex: Int,
@@ -111,80 +126,119 @@ internal fun VulkanRenderer.prepareGpuDraw(
     // Filled in place. A caller that copies the draw out before preparing the next one passes one
     // it keeps; the default is a fresh draw, for a caller that keeps every draw it prepares.
     into: PreparedDrawCall = PreparedDrawCall(),
+    skinnedInstancedIndex: Int = instancedIndex,
+    alphaInstancedIndex: Int = instancedIndex,
+    frameInstancedIndex: Int = instancedIndex,
 ): PreparedDrawCall? {
     val mesh = cmd.mesh as RenderMesh
     val buffers = mesh.sceneBuffers(frameIndex)
     val material = cmd.material as Material
     val solidOpaque = !isTransparent && cmd.usesSolidOpaquePipeline()
     val instanceModels = cmd.instanceModels
-    if (instanceModels != null) {
-        if (instanceModels.isEmpty()) return null
-        val kind = cmd.instancedDrawKind() ?: return null
-        val instancedPipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode, solidOpaque) ?: return null
-        val instanceBuffer = instanceBufferForRun(instancedIndex).also {
-            it.update(frameIndex, instanceModels)
-        }
-        val uniformSlotIndex = materialUsage.slotFor(material, explicitUniformSlotIndex)
-        val coverage = instancedPipeline.multisample.alphaToCoverageEnabled
-        val split = instancedPipeline.drawBlockFloatsFor(cmd, material, kind, shadowCascades != null)
-        val binding = material.writeBlock(
-            cmd, frameIndex, uniformSlotIndex, split, kind, coverage, frameBlockKind(split, edges = false),
-            viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
-            dirtyUniformBlocks,
+    return if (instanceModels != null) {
+        prepareInstancedGpuDraw(
+            cmd, mesh, buffers, material, solidOpaque, instanceModels,
+            frameIndex, instancedIndex, skinnedInstancedIndex, alphaInstancedIndex, frameInstancedIndex,
+            isTransparent, materialUsage, viewProjection, cameraPosition, cameraForward,
+            lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure, explicitUniformSlotIndex, into,
         )
-        val palettes = cmd.instanceJointPalettes?.let {
-            skinnedInstanceBufferForRun(instancedIndex).also { buffer ->
-                buffer.update(frameIndex, it, cmd.instanceColors)
-            }
-        }
-        val colors = instanceColorsFor(cmd, kind, instancedPipeline, frameIndex, instancedIndex)
-        val frames = if (kind == InstancedDrawKind.Particle) {
-            frameInstanceBufferForRun(instancedIndex).also { it.update(frameIndex, cmd.instanceFrames.orEmpty()) }
-        } else {
+    } else {
+        // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
+        val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive, cmd.depthWrite, solidOpaque)
+        if (pipeline == null) {
             null
+        } else {
+            val uniformSlotIndex = materialUsage.slotFor(material, explicitUniformSlotIndex)
+            val coverage = pipeline.multisample.alphaToCoverageEnabled
+            val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)
+            val binding = material.writeBlock(
+                cmd, frameIndex, uniformSlotIndex, split, null, coverage, frameBlockKind(split, edges = edgePipeline != null),
+                viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
+                dirtyUniformBlocks,
+            )
+            into.set(
+                mesh = mesh,
+                vertexBuffer = buffers.vertexBinding,
+                indexBuffer = buffers.indexBinding,
+                elementCount = buffers.indexCount,
+                isTransparent = isTransparent,
+                pipeline = pipeline,
+                material = material,
+                frameIndex = frameIndex,
+                uniformSlotIndex = uniformSlotIndex,
+                materialBinding = binding,
+                depthSortKey = cmd.sortKeyFor(isTransparent, cameraPosition),
+                sortOrder = cmd.sortOrder,
+                sortLayer = cmd.sortLayer,
+            )
         }
-        return into.set(
-            mesh = mesh,
-            vertexBuffer = buffers.vertexBinding,
-            indexBuffer = buffers.indexBinding,
-            elementCount = buffers.indexCount,
-            isTransparent = isTransparent,
-            pipeline = instancedPipeline,
-            material = material,
-            frameIndex = frameIndex,
-            uniformSlotIndex = uniformSlotIndex,
-            materialBinding = binding,
-            instanceBuffer = instanceBuffer,
-            instanceCount = instanceModels.size,
-            jointPaletteBuffer = palettes,
-            alphaInstanceBuffer = colors,
-            frameInstanceBuffer = frames,
-            depthSortKey = cmd.sortKeyFor(isTransparent, cameraPosition),
-            sortOrder = cmd.sortOrder,
-            sortLayer = cmd.sortLayer,
-        )
     }
-    // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
-    val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive, cmd.depthWrite, solidOpaque) ?: return null
+}
+
+@Suppress("LongParameterList", "ReturnCount")
+private fun VulkanRenderer.prepareInstancedGpuDraw(
+    cmd: GpuDrawRequest,
+    mesh: RenderMesh,
+    buffers: com.awakekt.awake.vulkan.mesh.SceneMeshBuffers,
+    material: Material,
+    solidOpaque: Boolean,
+    instanceModels: List<Mat4>,
+    frameIndex: Int,
+    instancedIndex: Int,
+    skinnedInstancedIndex: Int,
+    alphaInstancedIndex: Int,
+    frameInstancedIndex: Int,
+    isTransparent: Boolean,
+    materialUsage: MutableMap<RenderMaterial, Int>?,
+    viewProjection: Mat4,
+    cameraPosition: Vec3f,
+    cameraForward: Vec3f,
+    lightUniforms: FloatArray,
+    shadowCascades: GpuShadowCascadeData?,
+    fogColor: Color,
+    fogDensity: Float,
+    debugView: GpuDebugView,
+    exposure: Float,
+    explicitUniformSlotIndex: Int,
+    into: PreparedDrawCall,
+): PreparedDrawCall? {
+    if (instanceModels.isEmpty()) return null
+    val kind = cmd.instancedDrawKind() ?: return null
+    val instancedPipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode, solidOpaque) ?: return null
+    val instanceBuffer = instanceBufferForRun(instancedIndex).also {
+        it.update(frameIndex, instanceModels)
+    }
     val uniformSlotIndex = materialUsage.slotFor(material, explicitUniformSlotIndex)
-    val coverage = pipeline.multisample.alphaToCoverageEnabled
-    val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)
+    val coverage = instancedPipeline.multisample.alphaToCoverageEnabled
+    val split = instancedPipeline.drawBlockFloatsFor(cmd, material, kind, shadowCascades != null)
     val binding = material.writeBlock(
-        cmd, frameIndex, uniformSlotIndex, split, null, coverage, frameBlockKind(split, edges = edgePipeline != null),
+        cmd, frameIndex, uniformSlotIndex, split, kind, coverage, frameBlockKind(split, edges = false),
         viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
         dirtyUniformBlocks,
     )
+    val palettes = cmd.instanceJointPalettes?.let {
+        skinnedInstanceBufferForRun(skinnedInstancedIndex).also { buffer ->
+            buffer.update(frameIndex, it, cmd.instanceColors)
+        }
+    }
+    val colors = instanceColorsFor(cmd, kind, instancedPipeline, frameIndex, alphaInstancedIndex)
+    val frames = instanceFramesFor(cmd, kind, frameIndex, frameInstancedIndex)
     return into.set(
         mesh = mesh,
         vertexBuffer = buffers.vertexBinding,
         indexBuffer = buffers.indexBinding,
         elementCount = buffers.indexCount,
         isTransparent = isTransparent,
-        pipeline = pipeline,
+        pipeline = instancedPipeline,
         material = material,
         frameIndex = frameIndex,
         uniformSlotIndex = uniformSlotIndex,
         materialBinding = binding,
+        instanceBuffer = instanceBuffer,
+        instanceCount = instanceModels.size,
+        jointPaletteBuffer = palettes,
+        instanceColorBuffer = colors,
+        instanceFrameBuffer = frames,
         depthSortKey = cmd.sortKeyFor(isTransparent, cameraPosition),
         sortOrder = cmd.sortOrder,
         sortLayer = cmd.sortLayer,
@@ -301,13 +355,6 @@ private const val SPLIT_INPUTS = 16
 
 /** A split draw block holds nothing of the frame's, so every frame is the same frame to it. */
 private const val SPLIT_FRAME_VERSION = 0
-
-/** The frame block a draw's set binds: none of the batch's for a draw whose one block carries everything. */
-private fun frameBlockKind(splitDrawBlockFloats: Int, edges: Boolean): FrameBlockKind = when {
-    splitDrawBlockFloats == 0 -> FrameBlockKind.Identity
-    edges -> FrameBlockKind.Edges
-    else -> FrameBlockKind.Scene
-}
 
 internal fun RenderViewport.toVkViewport(): VkViewport =
     VkViewport(x = x, y = y, width = width, height = height)

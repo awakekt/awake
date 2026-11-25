@@ -84,6 +84,15 @@ internal class StableDrawSlots {
         return entry.slots[entry.used++]
     }
 
+    /** Clears all tracked slot assignments and resets indices back to 0 (e.g. after pool trim). */
+    fun clear() {
+        held.clear()
+        entries.clear()
+        freeCount = 0
+        next = 0
+        batch = 0L
+    }
+
     private fun release(entry: Held, keep: Int) {
         while (entry.count > keep) {
             if (freeCount == free.size) free = free.copyOf(free.size * 2)
