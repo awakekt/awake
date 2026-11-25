@@ -197,6 +197,34 @@ object UniformFields {
      */
     val FogRange = UniformField("fogRange", GpuDataShape.Vec4)
 
+    /**
+     * Dynamic upward-facing surface deposit colour and strength: `rgb` = primary crest/highlight
+     * deposit colour, `w` = coverage amount in `[0, 1]` (`0` disables surface deposit shading with
+     * an early-out).
+     */
+    val SurfaceDepositColor = UniformField("surfaceDepositColor", GpuDataShape.Vec4)
+
+    /**
+     * Dynamic upward-facing surface deposit shaping parameters: `x` = upward normal slope threshold,
+     * `y` = transition softness & organic breakup, `z` = roughness override for coated PBR
+     * surfaces, `w` = world-space noise frequency.
+     */
+    val SurfaceDepositParams = UniformField("surfaceDepositParams", GpuDataShape.Vec4)
+
+    /**
+     * Dynamic upward-facing surface deposit secondary texture tone and sparkle: `rgb` = crevice /
+     * hollow contrast colour, `w` = micro-sparkle glint intensity in `[0, 1]` (`0` for matte ash
+     * or dust, positive for crystalline snow or frost).
+     */
+    val SurfaceDepositDetail = UniformField("surfaceDepositDetail", GpuDataShape.Vec4)
+
+    /**
+     * Dynamic upward-facing surface deposit randomization and micro-grain: `xy` = storm-seeded
+     * world noise offset, `z` = wind-stretch rotation angle (radians), `w` = micro-texture and
+     * micro-bump grain strength in `[0, 1]`.
+     */
+    val SurfaceDepositSeed = UniformField("surfaceDepositSeed", GpuDataShape.Vec4)
+
     /** PBR surface roughness and metallic parameters uniform field. */
     val PbrFactors = UniformField("pbrFactors", GpuDataShape.Vec4)
 
@@ -243,8 +271,10 @@ object UniformFields {
     val ViewProjection = UniformField("viewProjection", GpuDataShape.Mat4)
 
     /**
-     * `x` = the share of an opaque draw's pixels a dither fade discards, `1 - opacity`; `yzw`
-     * unused. A draw's own, so it sits in the draw's block where [Exposure] sits in the frame's.
+     * `x` = the share of an opaque draw's pixels a dither fade discards, `1 - opacity`; `y` =
+     * `1 - surfaceDepositScale` (default `0` means `1.0x` scene deposit, `1` exempts the draw);
+     * `z` = per-draw surface deposit randomization seed; `w` unused. A draw's own, so it sits in
+     * the draw's block where [Exposure] sits in the frame's.
      */
     val DrawFade = UniformField("drawFade", GpuDataShape.Vec4)
 

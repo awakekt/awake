@@ -59,7 +59,78 @@ data class EnvironmentUniforms(
     val fogStart: Float = 0f,
     /** Where linear fog reaches [fogColor], in metres from the eye; see [fogStart]. */
     val fogEnd: Float = 0f,
+    /** Primary highlight/crest colour of dynamic upward-facing surface coating (e.g. snow, ash, dust). */
+    val surfaceDepositColor: Color = Color.White,
+    /** Dynamic surface coating coverage in `[0, 1]`; `0` disables surface deposit shading. */
+    val surfaceDepositAmount: Float = 0f,
+    /** Minimum world-up normal component `dot(N, +Y)` where surface coating settles. */
+    val surfaceDepositSlope: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SLOPE,
+    /** Edge feathering and organic breakup width for surface coating transitions. */
+    val surfaceDepositSoftness: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SOFTNESS,
+    /** Surface roughness applied to coated PBR fragments (`0` glossy wet, `1` matte powder). */
+    val surfaceDepositRoughness: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_ROUGHNESS,
+    /** World-space frequency for procedural organic breakup of surface coating. */
+    val surfaceDepositNoiseScale: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+    /** Optional crevice/hollow contrast colour (`null` auto-derives a darker shaded tone). */
+    val surfaceDepositSecondaryColor: Color? = null,
+    /** Micro-sparkle glint intensity in `[0, 1]` (`0` for matte ash/dust, positive for snow/frost). */
+    val surfaceDepositGlint: Float = 0f,
+    /** Procedural micro-texture and micro-bump grain contrast in `[0, 1]`. */
+    val surfaceDepositGrain: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_GRAIN,
+    /** Per-storm spatial randomization seed shifting drift placement and wind-stretch angle. */
+    val surfaceDepositSeed: Float = 0f,
 ) {
+    /** The constructor as released before [surfaceDepositColor], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with surfaceDeposit fields.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        showSky: Boolean = false,
+        horizonColor: Color = DEFAULT_HORIZON_COLOR,
+        zenithColor: Color = DEFAULT_ZENITH_COLOR,
+        fogDensity: Float = 0f,
+        fogColor: Color = DEFAULT_FOG_COLOR,
+        shadowsEnabled: Boolean = true,
+        debugView: RenderDebugView = RenderDebugView.Off,
+        debugLayer: Int = 0,
+        exposure: Float = 1f,
+        contentFeatures: Boolean = true,
+        clearColor: Color? = null,
+        wireframe: Boolean = false,
+        skyBodies: Boolean = true,
+        fogStart: Float = 0f,
+        fogEnd: Float = 0f,
+    ) : this(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
+        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd, Color.White, 0f,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SLOPE, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SOFTNESS,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_ROUGHNESS, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        null, 0f, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_GRAIN, 0f,
+    )
+
+    /** [copy] as released before [surfaceDepositColor]. */
+    @Deprecated("Use copy with surfaceDeposit fields.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        showSky: Boolean = this.showSky,
+        horizonColor: Color = this.horizonColor,
+        zenithColor: Color = this.zenithColor,
+        fogDensity: Float = this.fogDensity,
+        fogColor: Color = this.fogColor,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        debugView: RenderDebugView = this.debugView,
+        debugLayer: Int = this.debugLayer,
+        exposure: Float = this.exposure,
+        contentFeatures: Boolean = this.contentFeatures,
+        clearColor: Color? = this.clearColor,
+        wireframe: Boolean = this.wireframe,
+        skyBodies: Boolean = this.skyBodies,
+        fogStart: Float = this.fogStart,
+        fogEnd: Float = this.fogEnd,
+    ): EnvironmentUniforms = copy(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
+        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd, surfaceDepositColor, surfaceDepositAmount,
+        surfaceDepositSlope, surfaceDepositSoftness, surfaceDepositRoughness, surfaceDepositNoiseScale,
+        surfaceDepositSecondaryColor, surfaceDepositGlint, surfaceDepositGrain, surfaceDepositSeed,
+    )
+
     /** The constructor as released before [fogStart], kept so compiled callers still link. */
     @Deprecated("Use the constructor with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -78,7 +149,10 @@ data class EnvironmentUniforms(
         skyBodies: Boolean = true,
     ) : this(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
-        contentFeatures, clearColor, wireframe, skyBodies, 0f, 0f,
+        contentFeatures, clearColor, wireframe, skyBodies, 0f, 0f, Color.White, 0f,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SLOPE, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SOFTNESS,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_ROUGHNESS, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        null, 0f, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_GRAIN, 0f,
     )
 
     /** [copy] as released before [fogStart]. */
@@ -99,7 +173,9 @@ data class EnvironmentUniforms(
         skyBodies: Boolean = this.skyBodies,
     ): EnvironmentUniforms = copy(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
-        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd,
+        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd, surfaceDepositColor, surfaceDepositAmount,
+        surfaceDepositSlope, surfaceDepositSoftness, surfaceDepositRoughness, surfaceDepositNoiseScale,
+        surfaceDepositSecondaryColor, surfaceDepositGlint, surfaceDepositGrain, surfaceDepositSeed,
     )
 
     /** The constructor as released before [skyBodies], kept so compiled callers still link. */
@@ -119,7 +195,10 @@ data class EnvironmentUniforms(
         wireframe: Boolean = false,
     ) : this(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
-        contentFeatures, clearColor, wireframe, true, 0f, 0f,
+        contentFeatures, clearColor, wireframe, true, 0f, 0f, Color.White, 0f,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SLOPE, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SOFTNESS,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_ROUGHNESS, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        null, 0f, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_GRAIN, 0f,
     )
 
     /** [copy] as released before [skyBodies]. */
@@ -139,7 +218,9 @@ data class EnvironmentUniforms(
         wireframe: Boolean = this.wireframe,
     ): EnvironmentUniforms = copy(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
-        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd,
+        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd, surfaceDepositColor, surfaceDepositAmount,
+        surfaceDepositSlope, surfaceDepositSoftness, surfaceDepositRoughness, surfaceDepositNoiseScale,
+        surfaceDepositSecondaryColor, surfaceDepositGlint, surfaceDepositGrain, surfaceDepositSeed,
     )
 
     init {
@@ -177,5 +258,15 @@ data class EnvironmentUniforms(
         skyBodies = skyBodies,
         fogStart = fogStart,
         fogEnd = fogEnd,
+        surfaceDepositColor = surfaceDepositColor,
+        surfaceDepositAmount = surfaceDepositAmount,
+        surfaceDepositSlope = surfaceDepositSlope,
+        surfaceDepositSoftness = surfaceDepositSoftness,
+        surfaceDepositRoughness = surfaceDepositRoughness,
+        surfaceDepositNoiseScale = surfaceDepositNoiseScale,
+        surfaceDepositSecondaryColor = surfaceDepositSecondaryColor,
+        surfaceDepositGlint = surfaceDepositGlint,
+        surfaceDepositGrain = surfaceDepositGrain,
+        surfaceDepositSeed = surfaceDepositSeed,
     )
 }

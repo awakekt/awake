@@ -63,21 +63,7 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
     /** Writes [context]'s frame block into frame [frameIndex]'s buffer, the batch's or its [edges]'. */
     fun write(frameIndex: Int, context: GpuDrawPreparationContext, cascades: GpuShadowCascadeData?, edges: Boolean = false) {
         val kind = if (edges) FrameBlockKind.Edges else FrameBlockKind.Scene
-        val environment = context.environment
-        val floats = block.pack(
-            viewProjection = context.viewProjection,
-            cameraEye = context.cameraEye,
-            cameraForward = context.cameraForward,
-            lightPayload = context.passUniforms,
-            shadowCascades = cascades,
-            fogColor = environment.fogColor,
-            fogDensity = environment.fogDensity,
-            debugView = environment.debugView,
-            exposure = environment.exposure,
-            fogStart = environment.fogStart,
-            fogEnd = environment.fogEnd,
-        )
-        writeEntry(entry(frameIndex, kind), floats)
+        writeEntry(entry(frameIndex, kind), block.pack(context, cascades))
     }
 
     /** Writes [input]'s frame block into frame [frameIndex]'s buffer, for offscreen slots or pass-only frames. */

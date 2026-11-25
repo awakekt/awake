@@ -110,6 +110,19 @@ data class GpuDrawRequest(
     var depthWrite: Boolean = false
 
     /**
+     * Per-draw multiplier for scene dynamic surface coating (`0` exempts this draw such as faces or
+     * sheltered interiors, `1` uses the scene's coating amount unchanged, up to `2` amplifies it).
+     * [set] resets it to `1`.
+     */
+    var surfaceDepositScale: Float = 1f
+
+    /**
+     * Per-draw spatial randomization seed shifting procedural deposit noise so distinct entities
+     * wearing identical gear receive unique organic clump patterns. [set] resets it to `0`.
+     */
+    var surfaceDepositSeed: Float = 0f
+
+    /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
      * [model] and [vertexAnimation] have no default: `Mat4()` and `Vec3f.ZERO` each build a new
      * object on every read, so a default would allocate per call. The constructor's default
@@ -164,6 +177,8 @@ data class GpuDrawRequest(
         this.exemptFromCoverings = exemptFromCoverings
         this.fadeOpacity = 1f
         this.depthWrite = false
+        this.surfaceDepositScale = 1f
+        this.surfaceDepositSeed = 0f
         return this
     }
 

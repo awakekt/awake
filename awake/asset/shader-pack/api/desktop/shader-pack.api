@@ -119,6 +119,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslSunFlareShaderKt {
 	public static synthetic fun sunFlareShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslSurfaceDepositKt {
+	public static final fun applyTerrainSurfaceDeposit (Lcom/awakekt/awake/asset/shaderdsl/AslBlockBuilder;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
 	public static final field TERRAIN_SURFACE_FIRST_BINDING I
@@ -469,6 +473,7 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowUniforms {
 	public final fun getCascadeDepthScales ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getCascadeViewProjections ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getDebugView ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getDrawFade ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getExposure ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getFogColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getFogRange ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
@@ -479,6 +484,10 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowUniforms {
 	public final fun getMvp ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getPointLightColors ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getPointLightPositions ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getSurfaceDepositColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSurfaceDepositDetail ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSurfaceDepositParams ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSurfaceDepositSeed ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getViewProjection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
@@ -718,6 +727,10 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {
 	public final fun getLocalPosition ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getPages ()Lcom/awakekt/awake/asset/shaderpack/TerrainPageSampling;
 	public final fun getSunDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSurfaceDepositColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSurfaceDepositDetail ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSurfaceDepositParams ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSurfaceDepositSeed ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainOrigin ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainParams ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainSampling ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

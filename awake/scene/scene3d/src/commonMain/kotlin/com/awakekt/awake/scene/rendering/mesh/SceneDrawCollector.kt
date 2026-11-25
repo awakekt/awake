@@ -105,6 +105,7 @@ internal class SceneDrawCollector(
         val animationStore = world.componentStore<TextureAnimation>(resolution.animationType)
         val outlineStore = world.componentStore<Outlined>(resolution.outlineType)
         val fadeStore = world.componentStore<DitherFade>(resolution.fadeType)
+        val depositMaskStore = world.componentStore<SurfaceDepositMask>(resolution.depositMaskType)
 
         resolution.meshFamily.forEach { entity, transform, meshRenderer ->
             // Hidden, or past its own draw distance: drawn nowhere, its shadow included.
@@ -197,6 +198,10 @@ internal class SceneDrawCollector(
                 instanceFrames = null,
             )
             fadeStore?.get(entity)?.let { command.fadeOpacity = it.opacity }
+            depositMaskStore?.get(entity)?.let {
+                command.surfaceDepositScale = it.scale
+                command.surfaceDepositSeed = it.seed
+            }
             if (verdict != CullVerdict.ShadowOnly || shadowMesh == null) drawCalls.add(command)
             if (shadowMesh != null) drawCalls.add(beforeCommands.shadowTwin(command, shadowMesh, command.material))
         }
@@ -321,6 +326,10 @@ internal class SceneDrawCollector(
                     additive = false,
                 )
                 fadeStore?.get(entity)?.let { command.fadeOpacity = it.opacity }
+                depositMaskStore?.get(entity)?.let {
+                    command.surfaceDepositScale = it.scale
+                    command.surfaceDepositSeed = it.seed
+                }
                 drawCalls.add(command)
             }
         }
@@ -411,6 +420,7 @@ internal class SceneDrawCollector(
         val animationType = world.typeId(TextureAnimation::class)
         val outlineType = world.typeId(Outlined::class)
         val fadeType = world.typeId(DitherFade::class)
+        val depositMaskType = world.typeId(SurfaceDepositMask::class)
 
         val meshFamily = world.family<Transform, MeshRenderer>()
         val instancedFamily = world.family<InstancedMeshRenderer>()

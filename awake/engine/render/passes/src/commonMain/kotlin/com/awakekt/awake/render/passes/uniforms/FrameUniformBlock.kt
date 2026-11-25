@@ -11,6 +11,8 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.GpuDebugView
+import com.awakekt.awake.render.command.GpuDrawPreparationContext
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.RenderDrawCommand
@@ -53,6 +55,16 @@ class FrameUniformBlock {
         exposure: Float,
         fogStart: Float = 0f,
         fogEnd: Float = 0f,
+        surfaceDepositColor: Color = Color.White,
+        surfaceDepositAmount: Float = 0f,
+        surfaceDepositSlope: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SLOPE,
+        surfaceDepositSoftness: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SOFTNESS,
+        surfaceDepositRoughness: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_ROUGHNESS,
+        surfaceDepositNoiseScale: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        surfaceDepositSecondaryColor: Color? = null,
+        surfaceDepositGlint: Float = 0f,
+        surfaceDepositGrain: Float = GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_GRAIN,
+        surfaceDepositSeed: Float = 0f,
     ): FloatArray {
         val cascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED
         fillCascades(cascades)
@@ -67,8 +79,43 @@ class FrameUniformBlock {
             .putDebugView(debugView, cameraForward)
             .put(UniformFields.Exposure, exposure, debugView.layer.toFloat(), 0f, 0f)
             .putFogRange(fogStart, fogEnd)
+            .putSurfaceDeposit(
+                surfaceDepositColor,
+                surfaceDepositAmount,
+                surfaceDepositSlope,
+                surfaceDepositSoftness,
+                surfaceDepositRoughness,
+                surfaceDepositNoiseScale,
+                surfaceDepositSecondaryColor,
+                surfaceDepositGlint,
+                surfaceDepositGrain,
+                surfaceDepositSeed,
+            )
             .build()
     }
+
+    /** [pack] as released before surface deposit fields, kept so compiled callers still link. */
+    @Deprecated("Use pack with surfaceDeposit fields.", level = DeprecationLevel.HIDDEN)
+    @Suppress("LongParameterList")
+    fun pack(
+        viewProjection: Mat4,
+        cameraEye: Vec3f,
+        cameraForward: Vec3f,
+        lightPayload: FloatArray,
+        shadowCascades: GpuShadowCascadeData?,
+        fogColor: Color,
+        fogDensity: Float,
+        debugView: GpuDebugView,
+        exposure: Float,
+        fogStart: Float = 0f,
+        fogEnd: Float = 0f,
+    ): FloatArray = pack(
+        viewProjection, cameraEye, cameraForward, lightPayload, shadowCascades, fogColor, fogDensity,
+        debugView, exposure, fogStart, fogEnd, Color.White, 0f,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SLOPE, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_SOFTNESS,
+        GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_ROUGHNESS, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        null, 0f, GpuEnvironmentState.DEFAULT_SURFACE_DEPOSIT_GRAIN, 0f,
+    )
 
     /** [pack] as released before `fogStart` and `fogEnd`, kept so compiled callers still link. */
     @Deprecated("Use pack with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
@@ -88,6 +135,34 @@ class FrameUniformBlock {
     // Zeros for exponential fog, which the shaders then fog by density as before; z = 1 is linear.
     private fun UniformWriter.putFogRange(start: Float, end: Float): UniformWriter =
         if (end > start) put(UniformFields.FogRange, start, end, 1f, 0f) else put(UniformFields.FogRange, 0f, 0f, 0f, 0f)
+
+    /** Packs [context]'s frame block with [cascades] without duplicating environment field forwarding in backends. */
+    fun pack(context: GpuDrawPreparationContext, cascades: GpuShadowCascadeData?): FloatArray {
+        val environment = context.environment
+        return pack(
+            viewProjection = context.viewProjection,
+            cameraEye = context.cameraEye,
+            cameraForward = context.cameraForward,
+            lightPayload = context.passUniforms,
+            shadowCascades = cascades,
+            fogColor = environment.fogColor,
+            fogDensity = environment.fogDensity,
+            debugView = environment.debugView,
+            exposure = environment.exposure,
+            fogStart = environment.fogStart,
+            fogEnd = environment.fogEnd,
+            surfaceDepositColor = environment.surfaceDepositColor,
+            surfaceDepositAmount = environment.surfaceDepositAmount,
+            surfaceDepositSlope = environment.surfaceDepositSlope,
+            surfaceDepositSoftness = environment.surfaceDepositSoftness,
+            surfaceDepositRoughness = environment.surfaceDepositRoughness,
+            surfaceDepositNoiseScale = environment.surfaceDepositNoiseScale,
+            surfaceDepositSecondaryColor = environment.surfaceDepositSecondaryColor,
+            surfaceDepositGlint = environment.surfaceDepositGlint,
+            surfaceDepositGrain = environment.surfaceDepositGrain,
+            surfaceDepositSeed = environment.surfaceDepositSeed,
+        )
+    }
 
     /** Packs [input]'s frame block, supplying default forward/light values for pass-only or offscreen inputs. */
     fun pack(input: GpuPassInput): FloatArray {
@@ -114,6 +189,16 @@ class FrameUniformBlock {
             exposure = environment.exposure,
             fogStart = environment.fogStart,
             fogEnd = environment.fogEnd,
+            surfaceDepositColor = environment.surfaceDepositColor,
+            surfaceDepositAmount = environment.surfaceDepositAmount,
+            surfaceDepositSlope = environment.surfaceDepositSlope,
+            surfaceDepositSoftness = environment.surfaceDepositSoftness,
+            surfaceDepositRoughness = environment.surfaceDepositRoughness,
+            surfaceDepositNoiseScale = environment.surfaceDepositNoiseScale,
+            surfaceDepositSecondaryColor = environment.surfaceDepositSecondaryColor,
+            surfaceDepositGlint = environment.surfaceDepositGlint,
+            surfaceDepositGrain = environment.surfaceDepositGrain,
+            surfaceDepositSeed = environment.surfaceDepositSeed,
         )
     }
 
@@ -214,15 +299,20 @@ private fun RenderDrawCommand.packDrawBlock(
             .build()
     }
     val fade = if (fadeOpacity < 1f) 1f - fadeOpacity.coerceIn(0f, 1f) else 0f
-    return (if (instancedKind == null) singlePlanDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, fade, writers) else null)
-        ?: sharedLayoutDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, instancedKind, fade, writers)
+    val depositMod = 1f - surfaceDepositScale.coerceIn(0f, MAX_SURFACE_DEPOSIT_SCALE)
+    val depositSeed = if (surfaceDepositSeed.isFinite()) surfaceDepositSeed else 0f
+    return (if (instancedKind == null) singlePlanDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, fade, depositMod, depositSeed, writers) else null)
+        ?: sharedLayoutDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, instancedKind, fade, depositMod, depositSeed, writers)
 }
 
+@Suppress("LongParameterList")
 private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
     drawBlockFloats: Int,
     alphaToCoverageEnabled: Boolean,
     instancedKind: InstancedDrawKind?,
     fade: Float,
+    depositMod: Float,
+    depositSeed: Float,
     writers: DrawBlockWriters?,
 ): FloatArray {
     val transform = if (instancedKind != null) IDENTITY else model
@@ -240,13 +330,13 @@ private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
                         into = writers?.texturedPayload,
                     ),
                 )
-                .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+                .put(UniformFields.DrawFade, fade, depositMod, depositSeed, 0f)
                 .build()
         drawBlockFloats == MaterialUniformLayouts.LitDraw.total ->
             (writers?.lit?.reset() ?: UniformWriter(MaterialUniformLayouts.LitDraw))
                 .put(transform.data, UniformFields.Model)
                 .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
-                .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+                .put(UniformFields.DrawFade, fade, depositMod, depositSeed, 0f)
                 .build()
         // A shader that declares only the leading fields, as a depth shader does, reads them from this one.
         drawBlockFloats in 1..MaterialUniformLayouts.LitShadowDraw.total ->
@@ -254,20 +344,23 @@ private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
                 .put(transform.data, UniformFields.Model)
                 .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
                 .put(pbrMaterialFloats(extraUniformFloats, into = writers?.pbrPayload), UniformFields.Material)
-                .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+                .put(UniformFields.DrawFade, fade, depositMod, depositSeed, 0f)
                 .build()
         else -> error("No draw block holds $drawBlockFloats floats beside the frame block.")
     }
 }
 
+@Suppress("LongParameterList")
 private fun RenderDrawCommand.singlePlanDrawBlockFloats(
     drawBlockFloats: Int,
     alphaToCoverageEnabled: Boolean,
     fade: Float,
+    depositMod: Float,
+    depositSeed: Float,
     writers: DrawBlockWriters?,
 ): FloatArray? = when (drawUniformPlan(mesh.format, materialUniformFloatCount = drawBlockFloats, hasShadowCascades = false)) {
     DrawUniformPlan.Skinned -> if (drawBlockFloats in 1..SkinnedDrawLayout.total) {
-        skinnedDrawBlockFloats(sceneCoverageCutoff(alphaToCoverageEnabled), fade, writers)
+        skinnedDrawBlockFloats(sceneCoverageCutoff(alphaToCoverageEnabled), fade, depositMod, depositSeed, writers)
     } else {
         null
     }
@@ -289,7 +382,13 @@ private fun RenderDrawCommand.singlePlanDrawBlockFloats(
     else -> null
 }
 
-private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: Float, writers: DrawBlockWriters?): FloatArray {
+private fun RenderDrawCommand.skinnedDrawBlockFloats(
+    alphaCutoff: Float,
+    fade: Float,
+    depositMod: Float,
+    depositSeed: Float,
+    writers: DrawBlockWriters?,
+): FloatArray {
     val writer = writers?.skinned?.reset() ?: UniformWriter(SkinnedDrawLayout)
     val metallic: Float
     val roughness: Float
@@ -315,7 +414,7 @@ private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: F
     }
     return writer
         .put(UniformFields.PbrFactors, metallic, roughness, alphaCutoff, unlit)
-        .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+        .put(UniformFields.DrawFade, fade, depositMod, depositSeed, 0f)
         .build()
 }
 
@@ -364,4 +463,5 @@ private val SKINNED_EMISSIVE_AT = SkinnedMaterialLayout.offsetOf(UniformFields.E
 private val SKINNED_PBR_FACTORS_AT = SkinnedMaterialLayout.offsetOf(UniformFields.PbrFactors)
 private const val SKINNED_ROUGHNESS_LANE = 1
 private const val SKINNED_UNLIT_LANE = 3
+private const val MAX_SURFACE_DEPOSIT_SCALE = 2f
 private val NO_LIGHTS = FloatArray(0)

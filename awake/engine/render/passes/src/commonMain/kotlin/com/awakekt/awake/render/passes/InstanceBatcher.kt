@@ -260,4 +260,6 @@ private fun RenderDrawCommand.copyFrom(source: RenderDrawCommand) {
     )
     fadeOpacity = source.fadeOpacity
     depthWrite = source.depthWrite
+    surfaceDepositScale = source.surfaceDepositScale
+    surfaceDepositSeed = source.surfaceDepositSeed
 }

@@ -56,22 +56,8 @@ internal class FrameUniformBuffer(private val device: GPUDevice) {
      * holds it; returns whether it staged.
      */
     fun stage(uploads: UniformUploads, context: GpuDrawPreparationContext, cascades: GpuShadowCascadeData?, edges: Boolean = false): Boolean {
-        val environment = context.environment
         val target = block(edges)
-        val floats = target.packer.pack(
-            viewProjection = context.viewProjection,
-            cameraEye = context.cameraEye,
-            cameraForward = context.cameraForward,
-            lightPayload = context.passUniforms,
-            shadowCascades = cascades,
-            fogColor = environment.fogColor,
-            fogDensity = environment.fogDensity,
-            debugView = environment.debugView,
-            exposure = environment.exposure,
-            fogStart = environment.fogStart,
-            fogEnd = environment.fogEnd,
-        )
-        return uploads.stageChanged(target.slot, floats)
+        return uploads.stageChanged(target.slot, target.packer.pack(context, cascades))
     }
 
     /** Stages [input]'s frame block when no draw preparation ran for this pass (e.g. terrain-only frames). */

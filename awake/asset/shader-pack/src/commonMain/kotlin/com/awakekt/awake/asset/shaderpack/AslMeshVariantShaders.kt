@@ -89,6 +89,8 @@ private fun meshVariant(
         val cameraPosition = frame.value("cameraPosition")
         val fogColor = frame.value("fogColor")
         val fogRange = frame.value("fogRange")
+        val surfaceDeposit = surfaceDepositUniforms(frame)
+        val drawFade = handles.value("drawFade")
         val uniformPalette = if (skinned && !instanced) handles.array("jointPalette") else null
         val entityModel = if (skinned && !instanced) handles.value("model") else null
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
@@ -176,12 +178,14 @@ private fun meshVariant(
             val ambientShare = let("ambientShare", select(ambient, lightColor.w, lightColor.w gt 0f.lit))
             val shade = variable("shade", sunShade(ambientShare, diffuse, lightColor))
             if (pointLights != null) addPointLights(shade, ambientShare, n, debugVaryings!!.worldPosition, pointLights)
-            val rgb = if (instanceTints != null) color.xyz else color
-            val lit = rgb * shade
+            val rgb = variable("baseRgb", if (instanceTints != null) color.xyz else color)
             val fragWorldPos = debugVaryings?.worldPosition ?: worldPos!!
+            val depositPos = if (entityModel != null) fragWorldPos - (entityModel * vec4(0f.lit, 0f.lit, 0f.lit, 1f.lit)).xyz else fragWorldPos
             // Colours here are display-referred, lit as stored; the transform decodes them first.
             val output = if (tint != null && glow != null) {
-                val stored = let("stored", rgb * tint.xyz)
+                val stored = variable("stored", rgb * tint.xyz)
+                applyUnlitSurfaceDeposit(stored, n, depositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = skinned)
+                val lit = stored * shade
                 val v = let("v", normalize(cameraPosition.xyz - fragWorldPos))
                 val metallic = let("metallic", clamp(pbrFactors!!.x, 0f.lit, 1f.lit))
                 val roughness = let("roughness", clamp(pbrFactors.y, 0.05f.lit, 1f.lit))
@@ -191,7 +195,7 @@ private fun meshVariant(
                     environmentReflection(n, v, l, lightColor, stored, f0, metallic, roughness, glow.w, 1f.lit),
                 )
                 val litShaded = applySceneFog(
-                    displayTransform.displayReferred(lit * tint.xyz + envRefl + glow.xyz, exposure.x),
+                    displayTransform.displayReferred(lit + envRefl + glow.xyz, exposure.x),
                     cameraPosition,
                     fragWorldPos,
                     fogColor,
@@ -200,6 +204,8 @@ private fun meshVariant(
                 val shaded = vec4(select(litShaded, displayTransform.unlit(stored), pbrFactors.w gt UNLIT_THRESHOLD.lit), tint.w)
                 skinnedDebugColor(debug!!, debugVaryings!!, n, stored, displayTransform, exposure, shaded)
             } else {
+                applyUnlitSurfaceDeposit(rgb, n, depositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = skinned)
+                val lit = rgb * shade
                 val fogged = applySceneFog(
                     displayTransform.displayReferred(lit, exposure.x),
                     cameraPosition,
@@ -230,6 +236,8 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
         val tint = handles.value("baseColorFactor")
         val glow = handles.value("emissiveFactor")
         val pbrFactors = handles.value("pbrFactors")
+        val drawFade = handles.value("drawFade")
+        val surfaceDeposit = surfaceDepositUniforms(frame)
         val exposure = exposureAndFade(frame, handles)
         val debug = SkinnedDebugInputs(frame::value)
         val displayTransform = sceneDisplayTransform()
@@ -353,13 +361,15 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
             val needsLit = select(1u.lit, 0u.lit, skipLit) eq 1u.lit
             val finalColor = variable("finalColor", vec4(0f.lit))
 
+            val localDepositPos = worldPos - (model * vec4(0f.lit, 0f.lit, 0f.lit, 1f.lit)).xyz
             iff(skipLit) {
                 val unlitRgb = variable("unlitRgb", stored)
+                val unlitN = let("unlitN", normalize(normal))
                 iff(glow.w gt 0.001f.lit) {
-                    val unlitN = let("unlitN", normalize(normal))
                     val unlitV = let("unlitV", normalize(cameraPosition.xyz - worldPos))
                     assign(unlitRgb, unlitSignedChrome(stored, unlitN, unlitV, glow.w))
                 }
+                applyUnlitSurfaceDeposit(unlitRgb, unlitN, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true)
                 assign(finalColor, vec4(displayTransform.unlit(unlitRgb), alpha))
             }
 
@@ -375,12 +385,13 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
                     srgbToLinear(textureSampleGrad(emissiveTexture, baseColorSampler, uv, dUvDx, dUvDy).rgb),
                 )
 
-                val albedo = let("albedo", srgbToLinear(texColor.rgb) * color * tint.xyz)
-                val metallic = let("metallic", clamp(mrSample.b * pbrFactors.x, 0f.lit, 1f.lit))
-                val roughness = let("roughness", clamp(mrSample.g * pbrFactors.y, minRoughness, 1f.lit))
+                val albedo = variable("albedo", srgbToLinear(texColor.rgb) * color * tint.xyz)
+                val metallic = variable("metallic", clamp(mrSample.b * pbrFactors.x, 0f.lit, 1f.lit))
+                val roughness = variable("roughness", clamp(mrSample.g * pbrFactors.y, minRoughness, 1f.lit))
                 val emissive = let("emissive", emissiveMask * glow.xyz)
 
-                val n = let("n", perturbNormal(normalize(normal), dPosDx, dPosDy, dUvDx, dUvDy, tangentNormal))
+                val n = variable("n", perturbNormal(normalize(normal), dPosDx, dPosDy, dUvDx, dUvDy, tangentNormal))
+                applyLitSurfaceDeposit(albedo, metallic, roughness, n, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true)
                 val l = let("l", normalize(frame.value("lightDirection").xyz))
                 val v = let("v", normalize(cameraPosition.xyz - worldPos))
                 val h = let("h", normalize(v + l))
@@ -438,7 +449,8 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
                 )
                 val shadedRgb = variable("shadedRgb", litShaded)
                 iff(materialUnlit) {
-                    val unlitReflected = unlitSignedChrome(stored, n, v, glow.w)
+                    val unlitReflected = variable("debugUnlitRgb", unlitSignedChrome(stored, n, v, glow.w))
+                    applyUnlitSurfaceDeposit(unlitReflected, n, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true)
                     assign(shadedRgb, displayTransform.unlit(unlitReflected))
                 }
                 val shaded = vec4(shadedRgb, alpha)

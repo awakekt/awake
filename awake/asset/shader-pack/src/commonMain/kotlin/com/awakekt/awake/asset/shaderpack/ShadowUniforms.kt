@@ -80,7 +80,24 @@ class ShadowUniforms internal constructor(
     /** `x` = the exposure [SceneDisplayTransform.display] applies, from the frame block; `y` =
      * this draw's dither fade, from its own. */
     val exposure: AslExpr?,
-)
+    /** `UniformFields.SurfaceDepositColor`: `rgb` = deposit colour, `w` = coverage amount. */
+    val surfaceDepositColor: AslExpr? = null,
+    /** `UniformFields.SurfaceDepositParams`: `x` = slope, `y` = softness, `z` = roughness, `w` = noise scale. */
+    val surfaceDepositParams: AslExpr? = null,
+    /** `UniformFields.SurfaceDepositDetail`: `rgb` = secondary/crevice colour, `w` = glint strength. */
+    val surfaceDepositDetail: AslExpr? = null,
+    /** `UniformFields.SurfaceDepositSeed`: `xy` = storm noise offset, `z` = wind angle, `w` = grain strength. */
+    val surfaceDepositSeed: AslExpr? = null,
+    /** `UniformFields.DrawFade`: `x` = dither fade, `y` = `1 - surfaceDepositScale`, `z` = per-draw seed. */
+    val drawFade: AslExpr? = null,
+) {
+    internal fun surfaceDepositUniforms(): SurfaceDepositUniforms = SurfaceDepositUniforms(
+        color = surfaceDepositColor!!,
+        params = surfaceDepositParams!!,
+        detail = surfaceDepositDetail!!,
+        seed = surfaceDepositSeed!!,
+    )
+}
 
 /**
  * Declares and binds standard shadow and lighting uniform fields for the current shader.
@@ -114,6 +131,11 @@ fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
         fogRange = if (includeLitTail) frame.value("fogRange") else null,
         debugView = if (includeLitTail) frame.value("debugView") else null,
         exposure = if (includeLitTail) exposureAndFade(frame, draw) else null,
+        surfaceDepositColor = if (includeLitTail) frame.value("surfaceDepositColor") else null,
+        surfaceDepositParams = if (includeLitTail) frame.value("surfaceDepositParams") else null,
+        surfaceDepositDetail = if (includeLitTail) frame.value("surfaceDepositDetail") else null,
+        surfaceDepositSeed = if (includeLitTail) frame.value("surfaceDepositSeed") else null,
+        drawFade = if (includeLitTail) draw.value("drawFade") else null,
     )
 }
 
