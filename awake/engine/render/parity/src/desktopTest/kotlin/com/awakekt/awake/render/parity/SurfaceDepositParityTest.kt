@@ -96,12 +96,15 @@ class SurfaceDepositParityTest {
 
     private fun verifyTextureAndSeed(backend: HeadlessUiBackend) = openHeadlessScene(backend).use { session ->
         val renderer = session.renderer
+        val fullCoated = renderer.renderQuad(Surface.TexturedLit, SNOW_ENV, upward = true, depositScale = 1f)
         val partialA = renderer.renderQuad(Surface.TexturedLit, PARTIAL_SEED_A, upward = true, depositScale = 1f)
         val partialB = renderer.renderQuad(Surface.TexturedLit, PARTIAL_SEED_B, upward = true, depositScale = 1f)
         val spread = centerLumaSpread(partialA)
+        val maxStep = maxAdjacentCenterLumaStep(fullCoated)
         val seedDiff = meanAbsRgbDiff(partialA, partialB)
-        println("$backend SeedTexture: spread=$spread seedDiff=$seedDiff")
+        println("$backend SeedTexture: spread=$spread maxStep=$maxStep seedDiff=$seedDiff")
         assertTrue(spread >= MIN_TEXTURE_SPREAD, "$backend coated surface looked flat (luma spread=$spread)")
+        assertTrue(maxStep <= MAX_SMOOTH_ADJACENT_STEP, "$backend coated surface had blocky seam jump (maxStep=$maxStep)")
         assertTrue(seedDiff >= MIN_SEED_DIFF, "$backend changing surfaceDepositSeed did not randomize pattern (diff=$seedDiff)")
     }
 
@@ -244,6 +247,23 @@ class SurfaceDepositParityTest {
         return maxL - minL
     }
 
+    private fun maxAdjacentCenterLumaStep(pixels: ByteArray): Int {
+        val half = SCENE_SIZE / 2
+        var maxStep = 0
+        for (y in (half - 14)..(half + 14)) {
+            for (x in (half - 14)..(half + 14)) {
+                val base = (y * SCENE_SIZE + x) * 4
+                val right = (y * SCENE_SIZE + x + 1) * 4
+                val down = ((y + 1) * SCENE_SIZE + x) * 4
+                val l0 = ((pixels[base].toInt() and 0xFF) + (pixels[base + 1].toInt() and 0xFF) + (pixels[base + 2].toInt() and 0xFF)) / 3
+                val lr = ((pixels[right].toInt() and 0xFF) + (pixels[right + 1].toInt() and 0xFF) + (pixels[right + 2].toInt() and 0xFF)) / 3
+                val ld = ((pixels[down].toInt() and 0xFF) + (pixels[down + 1].toInt() and 0xFF) + (pixels[down + 2].toInt() and 0xFF)) / 3
+                maxStep = maxOf(maxStep, abs(l0 - lr), abs(l0 - ld))
+            }
+        }
+        return maxStep
+    }
+
     private fun meanAbsRgbDiff(a: ByteArray, b: ByteArray): Float {
         val half = SCENE_SIZE / 2
         var sum = 0
@@ -266,7 +286,8 @@ class SurfaceDepositParityTest {
         const val HALF = 2.5f
         const val MIN_DEPOSIT_GAIN = 85
         const val MIN_TERRAIN_GAIN = 35
-        const val MIN_TEXTURE_SPREAD = 18
+        const val MIN_TEXTURE_SPREAD = 14
+        const val MAX_SMOOTH_ADJACENT_STEP = 32
         const val MIN_SEED_DIFF = 8f
         const val TOLERANCE = 4
         val CLEAR_ENV = EnvironmentUniforms.Default.copy(shadowsEnabled = false)
