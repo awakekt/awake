@@ -181,6 +181,90 @@ class RendererHeadlessTerrainLayersTest {
         }
     }
 
+    /**
+     * Adjoining terrains sharing a lightmap colour along their border (`x = 0`) must not bleed the
+     * opposite far edge's colour across the seam through the repeating shared layer sampler.
+     * Negative control before clamping non-paged lightmap UVs to `[0.5 / size, 1 - 0.5 / size]`:
+     * the far-edge red `(255, 0, 0)` wrapped onto the shared teal `(0, 128, 128)` border with
+     * `maxRed = 124.0` and `minGreen = 66.0`.
+     */
+    @Test
+    fun adjoiningTerrainLightmapDoesNotWrapAcrossSharedBorder() {
+        val halfSpan = (SAMPLES - 1) * 0.5f
+        val leftMap = seamLightmap(brightOnWest = true)
+        val rightMap = seamLightmap(brightOnWest = false)
+        val white = listOf(solid(255, 255, 255), solid(255, 255, 255))
+        val palette = TerrainLayerPalette(layers = white.indices.map { TerrainLayer(id = "l$it", albedo = "l$it.png") })
+        val packed = packLayerArray(white)
+        val leftSurface = terrainLayersSurface(palette, packed, allRed(), leftMap)
+        val rightSurface = terrainLayersSurface(palette, packed, allRed(), rightMap)
+        val left = runBlocking {
+            shared().attacher.attachContentFeature(
+                terrainContentFeature(
+                    leftSurface.shaders,
+                    FLAT,
+                    CONFIG,
+                    surfaceTextures = leftSurface.textures,
+                    samplerTextures = leftSurface.samplerTextures,
+                    origin = { Vec3f(-halfSpan, 0f, 0f) },
+                ),
+            )
+        }
+        val right = runBlocking {
+            shared().attacher.attachContentFeature(
+                terrainContentFeature(
+                    rightSurface.shaders,
+                    FLAT,
+                    CONFIG,
+                    surfaceTextures = rightSurface.textures,
+                    samplerTextures = rightSurface.samplerTextures,
+                    origin = { Vec3f(halfSpan, 0f, 0f) },
+                ),
+            )
+        }
+        try {
+            val orthoSeam = Lens(
+                eye = Vec3f(0f, 10f, 0f),
+                center = Vec3f(0f, 0f, 0f),
+                up = Vec3f(0f, 0f, -1f),
+                fovYRadians = 1f,
+                near = 0.1f,
+                far = 50f,
+            ).apply {
+                projection = Lens.Projection.Orthographic
+                orthoHalfHeight = 2f
+            }
+            val frame = Frame(shared().render(orthoSeam, EnvironmentUniforms(debugView = RenderDebugView.Lightmap)), shared().size)
+            val row = frame.middleRow()
+            assertTrue(row.size >= shared().size / 2, "Expected orthographic seam coverage, got ${row.size} pixels")
+            val maxRed = row.maxOf { it[0] }
+            val minGreen = row.minOf { it[1] }
+            assertTrue(
+                maxRed <= COLOUR_TOLERANCE && minGreen >= (NEUTRAL_LIGHT.toInt() and 0xFF) - COLOUR_TOLERANCE,
+                "Far-edge lightmap wrapped onto the shared border: maxRed=$maxRed, minGreen=$minGreen",
+            )
+        } finally {
+            right.detach()
+            left.detach()
+        }
+    }
+
+    /** Teal `(0, 128, 128)` across the half next to the seam, bright red `(255, 0, 0)` on the opposite far edge. */
+    private fun seamLightmap(brightOnWest: Boolean) = TerrainLightmap(
+        SAMPLES,
+        SAMPLES,
+        ByteArray(SAMPLES * SAMPLES * 4) { index ->
+            val x = (index / 4) % SAMPLES
+            val isFarEdge = if (brightOnWest) x < 2 else x >= SAMPLES - 2
+            when (index % 4) {
+                0 -> if (isFarEdge) -1 else 0
+                1 -> if (isFarEdge) 0 else NEUTRAL_LIGHT
+                2 -> if (isFarEdge) 0 else NEUTRAL_LIGHT
+                else -> -1
+            }
+        },
+    )
+
     private fun halvedLeft() = TerrainLightmap(
         SAMPLES,
         SAMPLES,

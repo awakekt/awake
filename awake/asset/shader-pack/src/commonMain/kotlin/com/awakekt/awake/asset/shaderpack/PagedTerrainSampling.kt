@@ -91,7 +91,8 @@ class TerrainPageSampling internal constructor(val grid: AslExpr, val dimensions
         }
         val coarseSize = textureDimensions(fallback)
         val coarseUV = if (coarseLinear) {
-            relative / (vec2(dimensions.x, dimensions.y) * grid.z)
+            val halfTexel = vec2(0.5f.lit, 0.5f.lit) / vec2(toF32(coarseSize.x), toF32(coarseSize.y))
+            clamp(relative / (vec2(dimensions.x, dimensions.y) * grid.z), halfTexel, vec2(1f.lit, 1f.lit) - halfTexel)
         } else if (endpoints) {
             vec2(
                 (relative.x / (dimensions.x * grid.z) * (toF32(coarseSize.x) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.x),
@@ -216,7 +217,8 @@ class TerrainPageSampling internal constructor(val grid: AslExpr, val dimensions
     private fun fallbackUv(fallback: AslExpr, relative: AslExpr, endpoints: Boolean, parts: Int, part: Int, coarseLinear: Boolean): AslExpr {
         val coarseSize = textureDimensions(fallback)
         return if (coarseLinear) {
-            relative / (vec2(dimensions.x, dimensions.y) * grid.z)
+            val halfTexel = vec2(0.5f.lit, 0.5f.lit) / vec2(toF32(coarseSize.x), toF32(coarseSize.y))
+            clamp(relative / (vec2(dimensions.x, dimensions.y) * grid.z), halfTexel, vec2(1f.lit, 1f.lit) - halfTexel)
         } else if (endpoints) {
             vec2(
                 (relative.x / (dimensions.x * grid.z) * (toF32(coarseSize.x) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.x),
