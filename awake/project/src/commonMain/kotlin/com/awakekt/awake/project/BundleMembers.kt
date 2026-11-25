@@ -37,6 +37,7 @@ internal class BundleMembers(
 ) : AutoCloseable {
     private val bundles = index.bundles.associateBy { it.sha256 }
     private val membersOf = index.files.filter { it.bundle != null }.groupBy { it.bundle!! }
+    private val rangedMemberAboveBytes: Long? = limits.rangedMemberAboveBytes
 
     private val lock = Mutex()
     private val inFlight = mutableMapOf<String, CompletableDeferred<FetchedBundle>>()
@@ -48,26 +49,38 @@ internal class BundleMembers(
     @Volatile
     private var closed = false
 
+    /** Whether [bundleSha256] should be fetched member by member via [rangeFetch] during `prefetch`. */
+    fun prefersRangeFor(bundleSha256: String): Boolean =
+        rangeFetch != null && rangedMemberAboveBytes != null && bundles.getValue(bundleSha256).sizeBytes > rangedMemberAboveBytes
+
     /** [entry]'s bytes, checked: kept from an earlier fetch, by range, or from its whole bundle. */
     suspend fun read(entry: ProjectIndexEntry, label: String): ByteArray {
         check(!closed) { "IndexedAssetSource is closed" }
         val bundle = bundles.getValue(entry.bundle!!)
-        val range = rangeFetch
+        val useRange = rangeFetch != null && (rangedMemberAboveBytes == null || bundle.sizeBytes > rangedMemberAboveBytes)
         return takeStaged(entry)
-            ?: range?.let {
-                val stored = it(bundle.url, entry.offset!!, index.storedSizeOf(entry))
-                opened(bundle, entry, label, stored).also { plain ->
-                    if (closed) {
-                        if (plain !== stored) plain.fill(0)
-                        error("IndexedAssetSource is closed")
-                    }
-                    cache?.put(index.cacheKeyOf(entry), stored)
+            ?: if (useRange) {
+                readRange(entry, label)
+            } else {
+                load(bundle.sha256).let { fetched ->
+                    // This read takes its member; what is staged is for reads still to come.
+                    takeStaged(entry) ?: fetched.read(entry)
                 }
             }
-            ?: load(bundle.sha256).let { fetched ->
-                // This read takes its member; what is staged is for reads still to come.
-                takeStaged(entry) ?: fetched.read(entry)
+    }
+
+    /** Reads a single bundle member [entry] via [rangeFetch], verifies/opens it, and caches the stored bytes. */
+    suspend fun readRange(entry: ProjectIndexEntry, label: String): ByteArray {
+        check(!closed) { "IndexedAssetSource is closed" }
+        val bundle = bundles.getValue(entry.bundle!!)
+        val stored = checkNotNull(rangeFetch)(bundle.url, entry.offset!!, index.storedSizeOf(entry))
+        return opened(bundle, entry, label, stored).also { plain ->
+            if (closed) {
+                if (plain !== stored) plain.fill(0)
+                error("IndexedAssetSource is closed")
             }
+            cache?.put(index.cacheKeyOf(entry), stored)
+        }
     }
 
     /** The bundle [sha256], checked, fetched once however many reads ask at the same time. */

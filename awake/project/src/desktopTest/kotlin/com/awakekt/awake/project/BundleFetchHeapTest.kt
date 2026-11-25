@@ -76,6 +76,72 @@ class BundleFetchHeapTest {
         assertTrue(peak <= MANY_BUNDLES_PEAK_BYTES, "${project.bundleBytes.size} bundles read at once kept ${mib(peak)} MiB")
     }
 
+    @Test
+    fun rangedThresholdCutsPeakHeapOnTheManyBundleShapeWhileKeepingSmallBundlesWhole() = runTest {
+        val project = project(sizes = MANY_BUNDLES)
+        val paths = project.index.files.map { it.path }
+        val discardingCache = object : ContentCache {
+            override suspend fun get(sha256: String): ByteArray? = null
+
+            override suspend fun put(sha256: String, bytes: ByteArray) = Unit
+        }
+
+        // Baseline: threshold off (whole-bundle prefetch for all 200 bundles, including five 12-15.5 MiB bundles).
+        var offWhole = 0
+        var offRange = 0
+        val offBaseline = retained()
+        var offPeak = 0L
+        val offSource = IndexedAssetSource(
+            index = project.index,
+            fetch = { url ->
+                offWhole++
+                project.fetch(url).also { offPeak = maxOf(offPeak, retained() - offBaseline) }
+            },
+            cache = discardingCache,
+            rangeFetch = { url, offset, length ->
+                offRange++
+                project.fetchRange(url, offset, length)
+            },
+        )
+        offSource.prefetch(paths)
+        offSource.close()
+
+        // Enabled: bundles > 2 MiB fetched member by member (5 × 16 = 80 ranges); 195 small bundles fetched whole.
+        var onWhole = 0
+        var onRange = 0
+        val onBaseline = retained()
+        var onPeak = 0L
+        val onSource = IndexedAssetSource(
+            index = project.index,
+            fetch = { url ->
+                onWhole++
+                project.fetch(url).also { onPeak = maxOf(onPeak, retained() - onBaseline) }
+            },
+            cache = discardingCache,
+            rangeFetch = { url, offset, length ->
+                onRange++
+                project.fetchRange(url, offset, length).also {
+                    if (onRange % 10 == 0) onPeak = maxOf(onPeak, retained() - onBaseline)
+                }
+            },
+            limits = BundleMemoryLimits(rangedMemberAboveBytes = RANGED_THRESHOLD_BYTES),
+        )
+        onSource.prefetch(paths)
+        onSource.close()
+
+        println(
+            "BundleFetchHeap rangedThreshold (${mib(RANGED_THRESHOLD_BYTES)} MiB): " +
+                "off=[peak=${mib(offPeak)} MiB, whole=$offWhole, range=$offRange] " +
+                "on=[peak=${mib(onPeak)} MiB, whole=$onWhole, range=$onRange]",
+        )
+        assertTrue(offWhole == 200 && offRange == 0, "baseline expected 200 whole / 0 range, got $offWhole / $offRange")
+        assertTrue(onWhole == 195 && onRange == 80, "ranged threshold expected 195 whole / 80 range, got $onWhole / $onRange")
+        assertTrue(
+            onPeak <= RANGED_PEAK_BYTES,
+            "ranged threshold peak retained ${mib(onPeak)} MiB exceeded ${mib(RANGED_PEAK_BYTES)} MiB",
+        )
+    }
+
     private class Project(val index: ProjectIndex, val bundleBytes: Map<String, ByteArray>, val keys: BundleKeyProvider?) {
         var inFlight = 0
         var maxInFlight = 0
@@ -87,6 +153,12 @@ class BundleFetchHeapTest {
             delay(DOWNLOAD_MILLIS)
             inFlight--
             return body
+        }
+
+        suspend fun fetchRange(url: String, offset: Long, length: Long): ByteArray {
+            val slice = bundleBytes.getValue(url).copyOfRange(offset.toInt(), (offset + length).toInt())
+            delay(DOWNLOAD_MILLIS)
+            return slice
         }
     }
 
@@ -144,6 +216,8 @@ class BundleFetchHeapTest {
         const val GC_PASSES = 3
         const val KEY_ID = "region-pack"
         const val MANY_BUNDLES_PEAK_BYTES = 40L * 1024 * 1024
+        const val RANGED_THRESHOLD_BYTES = 2L * 1024 * 1024
+        const val RANGED_PEAK_BYTES = 12L * 1024 * 1024
 
         /** 195 bundles of 0.1 to 0.5 MiB in 4 to 23 members, and five of 12 to 15.5 MiB in 16. */
         val MANY_BUNDLES: List<List<Int>> = Random(805).let { random ->

@@ -90,6 +90,128 @@ class BundleMemoryLimitsTest {
     fun limitsRefuseNonsense() {
         assertFailsWith<IllegalArgumentException> { BundleMemoryLimits(concurrentBundleFetches = 0) }
         assertFailsWith<IllegalArgumentException> { BundleMemoryLimits(stagedMemberBytes = -1) }
+        assertFailsWith<IllegalArgumentException> { BundleMemoryLimits(rangedMemberAboveBytes = -1) }
+    }
+
+    @Test
+    fun rangedThresholdSplitsPrefetchBetweenWholeAndRange() = runTest {
+        val mixedFiles = mixedSizeFiles()
+        val mixed = BundledProject(mixedFiles)
+        val smallBundle = mixed.index.bundles.single { b -> mixed.index.files.any { it.path.startsWith("small/") && it.bundle == b.sha256 } }
+        val largeBundle = mixed.index.bundles.single { b -> mixed.index.files.any { it.path.startsWith("large/") && it.bundle == b.sha256 } }
+        val threshold = smallBundle.sizeBytes
+        assertTrue(largeBundle.sizeBytes > threshold)
+
+        val wholeUrls = mutableListOf<String>()
+        val rangeUrls = mutableListOf<String>()
+        val server = mixed.server()
+        val source = IndexedAssetSource(
+            index = mixed.index,
+            fetch = { url -> server(url).also { wholeUrls += url } },
+            cache = MemoryContentCache(),
+            rangeFetch = { url, offset, length ->
+                rangeUrls += url
+                mixed.bundles.getValue(url).bytes.copyOfRange(offset.toInt(), (offset + length).toInt())
+            },
+            limits = BundleMemoryLimits(rangedMemberAboveBytes = threshold),
+        )
+
+        val progress = mutableListOf<Pair<Long, Long>>()
+        source.prefetch(mixedFiles.keys.toList()) { done, total -> progress += done to total }
+        assertEquals(listOf(smallBundle.url), wholeUrls, "small bundle should be fetched whole once")
+        assertEquals(MEMBERS, rangeUrls.size, "large bundle should be fetched member by member")
+        assertTrue(rangeUrls.all { it == largeBundle.url })
+        assertEquals(mixedFiles.values.sumOf { it.size.toLong() }, progress.last().first)
+
+        // Repeat prefetch and reads hit cache with zero extra network calls.
+        wholeUrls.clear()
+        rangeUrls.clear()
+        source.prefetch(mixedFiles.keys.toList())
+        mixedFiles.forEach { (path, expected) -> assertContentEquals(expected, source.read(AssetPath(path)).getOrThrow()) }
+        assertTrue(wholeUrls.isEmpty() && rangeUrls.isEmpty(), "cached files must not re-fetch")
+        source.close()
+    }
+
+    @Test
+    fun rangedThresholdSplitsUncachedReadsBetweenWholeAndRange() = runTest {
+        val mixedFiles = mixedSizeFiles()
+        val mixed = BundledProject(mixedFiles)
+        val smallBundle = mixed.index.bundles.single { b -> mixed.index.files.any { it.path.startsWith("small/") && it.bundle == b.sha256 } }
+        val largeBundle = mixed.index.bundles.single { b -> mixed.index.files.any { it.path.startsWith("large/") && it.bundle == b.sha256 } }
+        val wholeUrls = mutableListOf<String>()
+        val rangeUrls = mutableListOf<String>()
+        val server = mixed.server()
+        val uncached = IndexedAssetSource(
+            index = mixed.index,
+            fetch = { url -> server(url).also { wholeUrls += url } },
+            rangeFetch = { url, offset, length ->
+                rangeUrls += url
+                mixed.bundles.getValue(url).bytes.copyOfRange(offset.toInt(), (offset + length).toInt())
+            },
+            limits = BundleMemoryLimits(rangedMemberAboveBytes = smallBundle.sizeBytes),
+        )
+        mixedFiles.forEach { (path, expected) -> assertContentEquals(expected, uncached.read(AssetPath(path)).getOrThrow()) }
+        assertEquals(listOf(smallBundle.url), wholeUrls, "uncached small reads fetch whole once and stage")
+        assertEquals(MEMBERS, rangeUrls.size, "uncached large reads fetch each member by range")
+        assertTrue(rangeUrls.all { it == largeBundle.url })
+        uncached.close()
+    }
+
+    private fun mixedSizeFiles(): Map<String, ByteArray> = linkedMapOf<String, ByteArray>().apply {
+        repeat(MEMBERS) { m -> put("small/s$m.bin", ByteArray(SMALL_MEMBER_BYTES) { (m + it).toByte() }) }
+        repeat(MEMBERS) { m -> put("large/l$m.bin", ByteArray(LARGE_MEMBER_BYTES) { (m * 7 + it).toByte() }) }
+    }
+
+    @Test
+    fun rangedThresholdWorksWithSealedBundlesAndFallsBackWithoutRangeFetch() = runTest {
+        val mixedFiles = linkedMapOf<String, ByteArray>().apply {
+            repeat(MEMBERS) { m -> put("small/s$m.bin", ByteArray(SMALL_MEMBER_BYTES) { (m + it).toByte() }) }
+            repeat(MEMBERS) { m -> put("large/l$m.bin", ByteArray(LARGE_MEMBER_BYTES) { (m * 11 + it).toByte() }) }
+        }
+        val key = ByteArray(BundleEncryptionKey.KEY_BYTES) { (it * 5 + 3).toByte() }
+        val sealed = BundledProject(mixedFiles, ContentBundleWriter(encryption = BundleEncryptionKey("k1", key)))
+        val smallSize = sealed.index.bundles.minOf { it.sizeBytes }
+        val server = sealed.server()
+        var wholeCount = 0
+        var rangeCount = 0
+        val cache = MemoryContentCache()
+        val source = IndexedAssetSource(
+            index = sealed.index,
+            fetch = { url ->
+                wholeCount++
+                server(url)
+            },
+            cache = cache,
+            rangeFetch = { url, offset, length ->
+                rangeCount++
+                sealed.bundles.getValue(url).bytes.copyOfRange(offset.toInt(), (offset + length).toInt())
+            },
+            keys = { key },
+            limits = BundleMemoryLimits(rangedMemberAboveBytes = smallSize),
+        )
+        source.prefetch(mixedFiles.keys.toList())
+        assertEquals(1, wholeCount)
+        assertEquals(MEMBERS, rangeCount)
+        mixedFiles.forEach { (path, expected) ->
+            assertContentEquals(expected, source.read(AssetPath(path)).getOrThrow())
+        }
+        source.close()
+
+        // Without rangeFetch, threshold is ignored and both bundles fetch whole.
+        var fallbackWhole = 0
+        val noRange = IndexedAssetSource(
+            index = sealed.index,
+            fetch = { url ->
+                fallbackWhole++
+                server(url)
+            },
+            cache = MemoryContentCache(),
+            keys = { key },
+            limits = BundleMemoryLimits(rangedMemberAboveBytes = 0L),
+        )
+        noRange.prefetch(mixedFiles.keys.toList())
+        assertEquals(2, fallbackWhole)
+        noRange.close()
     }
 
     private fun members(folder: Int): List<ProjectIndexEntry> = project.index.files.filter { it.key.startsWith("f$folder/") }
@@ -104,5 +226,7 @@ class BundleMemoryLimitsTest {
         const val FOLDERS = 3
         const val MEMBERS = 4
         const val MEMBER_BYTES = 1_000
+        const val SMALL_MEMBER_BYTES = 200
+        const val LARGE_MEMBER_BYTES = 4_000
     }
 }

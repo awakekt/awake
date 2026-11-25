@@ -174,8 +174,9 @@ class IndexedAssetSource(
     /**
      * Reads every one of [paths] ahead of play, so the files are cached before a scene asks for them,
      * fetching and verifying up to six files at once, of which as many bundles as [limits] allows. Paths whose files share a SHA-256
-     * download once, and bundle members download as whole bundles, once per bundle, skipping a bundle
-     * whose chosen members are all cached already. As each download finishes, [onProgress] gets the
+     * download once, and bundle members download as whole bundles, once per bundle — or member by member
+     * via [rangeFetch] when [limits]' `rangedMemberAboveBytes` is set and the bundle exceeds it — skipping
+     * any file or bundle whose chosen members are all cached already. As each download finishes, [onProgress] gets the
      * bytes done of the bytes [paths] add up to. Throws before fetching anything if a path isn't in
      * the index. Otherwise throws for the first file or bundle to fail its check -- first to fail, not
      * necessarily first in [paths] -- and cancels the fetches still in flight.
@@ -188,9 +189,11 @@ class IndexedAssetSource(
         }
         val total = chosen.sumOf { it.entry.sizeBytes }
         val (bundled, loose) = chosen.partition { it.entry.bundle != null }
-        // One download per SHA-256, through the first path that has it, and one per bundle.
-        val downloads = loose.groupBy { it.entry.sha256 }.values.map { Download(it, isBundle = false) } +
-            bundled.groupBy { it.entry.bundle }.values.map { Download(it, isBundle = true) }
+        val (rangedBundled, wholeBundled) = bundled.partition { members.prefersRangeFor(it.entry.bundle!!) }
+        // One download per loose SHA-256, per ranged member cache key, and per whole bundle.
+        val downloads = loose.groupBy { it.entry.sha256 }.values.map { Download(it, DownloadKind.Loose) } +
+            rangedBundled.groupBy { index.cacheKeyOf(it.entry) }.values.map { Download(it, DownloadKind.RangedMember) } +
+            wholeBundled.groupBy { it.entry.bundle }.values.map { Download(it, DownloadKind.WholeBundle) }
         val queue = Channel<Download>(Channel.UNLIMITED)
         downloads.forEach { queue.trySend(it) }
         queue.close()
@@ -216,9 +219,15 @@ class IndexedAssetSource(
     private suspend fun download(download: Download) {
         check(!closed) { "IndexedAssetSource is closed" }
         val first = download.files.first()
-        when {
-            !download.isBundle -> readChecked(first.entry, first.label)
-            cache == null || download.files.any { storedInCache(it.entry) == null } -> members.load(first.entry.bundle!!)
+        when (download.kind) {
+            DownloadKind.Loose -> readChecked(first.entry, first.label)
+            DownloadKind.RangedMember -> if (cache == null || storedInCache(first.entry) == null) {
+                val plain = members.readRange(first.entry, first.label)
+                if (seals != null) plain.fill(0)
+            }
+            DownloadKind.WholeBundle -> if (cache == null || download.files.any { storedInCache(it.entry) == null }) {
+                members.load(first.entry.bundle!!)
+            }
         }
         check(!closed) { "IndexedAssetSource is closed" }
     }
@@ -279,8 +288,10 @@ class IndexedAssetSource(
     /** One path [prefetch] was asked for: its entry, and the path as asked, for messages. */
     private class Requested(val entry: ProjectIndexEntry, val label: String)
 
-    /** Files [prefetch] gets in one download: one loose content, or one bundle's chosen members. */
-    private class Download(val files: List<Requested>, val isBundle: Boolean)
+    private enum class DownloadKind { Loose, RangedMember, WholeBundle }
+
+    /** Files [prefetch] gets in one download: one loose file, one ranged bundle member, or one whole bundle. */
+    private class Download(val files: List<Requested>, val kind: DownloadKind)
 
     /** Factory and default path constants for [IndexedAssetSource]. */
     companion object {
