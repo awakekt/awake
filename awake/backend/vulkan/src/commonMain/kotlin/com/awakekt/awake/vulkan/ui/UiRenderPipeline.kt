@@ -484,9 +484,13 @@ class UiRenderPipeline(
             for (slot in frameSlots) {
                 if (slot.boundImageView == imageView) {
                     slot.boundImageView = 0L
+                    slot.boundSampler = 0L
                     slot.boundVersion = 0L
                 }
-                if (slot.boundDstImageView == imageView) slot.boundDstImageView = 0L
+                if (slot.boundDstImageView == imageView) {
+                    slot.boundDstImageView = 0L
+                    slot.boundDstSampler = 0L
+                }
             }
         }
     }

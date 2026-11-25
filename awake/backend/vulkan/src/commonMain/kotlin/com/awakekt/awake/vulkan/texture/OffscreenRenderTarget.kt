@@ -9,6 +9,7 @@ import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.device.allocateDeviceImageMemory
+import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.enums.VkFormat
 import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
 import com.awakekt.awake.vulkan.enums.VkImageViewType
@@ -192,14 +193,23 @@ class OffscreenRenderTarget(
     override fun destroy() {
         if (destroyed) return
         destroyed = true
-        colorFramebuffers.values.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+        val vkDevice = device
+        val framebuffersToDestroy = colorFramebuffers.values.toList()
         colorFramebuffers.clear()
-        scene?.destroy()
+        val sceneToDestroy = scene
         scene = null
-        VulkanImages.vkDestroySampler(device, sampler)
-        Vulkan.vkDestroyImageView(device, colorImageView)
-        VulkanImages.vkDestroyImage(device, colorImage)
-        VulkanBuffers.vkFreeMemory(device, colorImageMemory)
+        val samplerToDestroy = sampler
+        val imageViewToDestroy = colorImageView
+        val imageToDestroy = colorImage
+        val memoryToFree = colorImageMemory
         onDestroy?.invoke()
+        graphicsDevice.destroyOrRetire {
+            framebuffersToDestroy.forEach { Vulkan.vkDestroyFramebuffer(vkDevice, it) }
+            sceneToDestroy?.destroy()
+            VulkanImages.vkDestroySampler(vkDevice, samplerToDestroy)
+            Vulkan.vkDestroyImageView(vkDevice, imageViewToDestroy)
+            VulkanImages.vkDestroyImage(vkDevice, imageToDestroy)
+            VulkanBuffers.vkFreeMemory(vkDevice, memoryToFree)
+        }
     }
 }
