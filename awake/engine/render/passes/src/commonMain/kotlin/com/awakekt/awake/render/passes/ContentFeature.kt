@@ -73,12 +73,17 @@ import com.awakekt.awake.render.texture.TextureAsset
  * layout (such as a discard-free terrain core-ring pipeline or a Fast-tier procedural shader).
  * @property buildWithAlternate Optional builder receiving both [spec]'s pipeline and [alternateSpec]'s
  * compiled pipeline when present; defaults to delegating to [build].
+ * @property geometryKey Optional immutable key identifying shared immutable [geometry]. When
+ * non-null, a `ContentFeatureHost` may upload [geometry] once per equal key and share the
+ * resulting [ContentGeometry] across attached features using reference counting until the last
+ * feature sharing that key detaches.
  * @property build Turns the registry's output into the feature that records with it.
  *
  * Mutable textures opt into [textureUpdates]. Backends prepare regions before any depth or scene
  * pass, retain staging through submission completion, and isolate resources belonging to frames
  * still in flight. Texture shape, descriptor layout and the feature's geometry remain fixed.
  */
+@Suppress("LongParameterList") // Additive constructor parameters preserve binary compatibility.
 class ContentFeature(
     val name: String,
     val spec: PipelineSpec,
@@ -103,9 +108,50 @@ class ContentFeature(
      * (when present). Defaults to delegating to [build] when null.
      */
     val buildWithAlternate: ((PipelineHandle, PipelineHandle?, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>)?,
+    /**
+     * Optional immutable key for deduplicating immutable [geometry] uploads across attached
+     * features. Must only be supplied when [geometry] is non-null.
+     */
+    val geometryKey: Any?,
     val build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
 ) {
+    /** A feature whose geometry is not shared across attachments, kept for binary compatibility. */
+    @Suppress("LongParameterList")
+    constructor(
+        name: String,
+        spec: PipelineSpec,
+        textures: Map<Int, TextureAsset> = emptyMap(),
+        geometry: MeshGeometry? = null,
+        paint: ContentPaint = ContentPaint.BeforeGeometry,
+        samplesSceneDepth: Boolean = false,
+        depth: PipelineSpec? = null,
+        textureUpdates: ContentTextureUpdates? = null,
+        samplerTextures: Map<Int, Int> = emptyMap(),
+        samplesMask: Boolean = false,
+        images: Map<Int, GpuImageSource>,
+        alternateSpec: PipelineSpec?,
+        buildWithAlternate: ((PipelineHandle, PipelineHandle?, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>)?,
+        build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
+    ) : this(
+        name,
+        spec,
+        textures,
+        geometry,
+        paint,
+        samplesSceneDepth,
+        depth,
+        textureUpdates,
+        samplerTextures,
+        samplesMask,
+        images,
+        alternateSpec,
+        buildWithAlternate,
+        null,
+        build,
+    )
+
     /** A feature whose textures are all [TextureAsset]s, as before [images]. */
+    @Suppress("LongParameterList")
     constructor(
         name: String,
         spec: PipelineSpec,
@@ -118,9 +164,26 @@ class ContentFeature(
         samplerTextures: Map<Int, Int> = emptyMap(),
         samplesMask: Boolean = false,
         build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
-    ) : this(name, spec, textures, geometry, paint, samplesSceneDepth, depth, textureUpdates, samplerTextures, samplesMask, emptyMap(), null, null, build)
+    ) : this(
+        name,
+        spec,
+        textures,
+        geometry,
+        paint,
+        samplesSceneDepth,
+        depth,
+        textureUpdates,
+        samplerTextures,
+        samplesMask,
+        emptyMap(),
+        null,
+        null,
+        null,
+        build,
+    )
 
     /** A feature without an [alternateSpec], preserving trailing-lambda construction with [images]. */
+    @Suppress("LongParameterList")
     constructor(
         name: String,
         spec: PipelineSpec,
@@ -134,7 +197,23 @@ class ContentFeature(
         samplesMask: Boolean = false,
         images: Map<Int, GpuImageSource>,
         build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
-    ) : this(name, spec, textures, geometry, paint, samplesSceneDepth, depth, textureUpdates, samplerTextures, samplesMask, images, null, null, build)
+    ) : this(
+        name,
+        spec,
+        textures,
+        geometry,
+        paint,
+        samplesSceneDepth,
+        depth,
+        textureUpdates,
+        samplerTextures,
+        samplesMask,
+        images,
+        null,
+        null,
+        null,
+        build,
+    )
 
     /** Builds this feature using [buildWithAlternate] when provided, otherwise [build]. */
     fun buildFeature(
@@ -203,6 +282,9 @@ class ContentFeature(
             "Content feature '$name' casts through a depth pipeline whose vertex format or uniform " +
                 "layout differs from its own. The depth pass draws the same geometry with the same " +
                 "uniform block, so the two have to read them alike."
+        }
+        require(geometryKey == null || geometry != null) {
+            "Content feature '$name' declares geometryKey '$geometryKey' without geometry."
         }
         require(geometry == null || spec.vertexFormat == geometry.format) {
             "Content feature '$name' draws ${geometry?.format} geometry through a " +

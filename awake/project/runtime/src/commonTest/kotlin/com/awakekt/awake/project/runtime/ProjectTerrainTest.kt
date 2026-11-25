@@ -12,13 +12,18 @@ import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.kit.terrainlayers.TERRAIN_LAYERS_PROVIDER
+import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.physics.PhysicsBody
+import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
 import com.awakekt.awake.terrain.TerrainSurface
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +34,7 @@ import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /** A project's `terrain` draws when it is played on a renderer, with nothing wired by the host. */
@@ -36,8 +42,13 @@ class ProjectTerrainTest {
     private val input = Input()
 
     // Surfaces resolve off the test thread, as in a session, in a scope the test owns.
-    private fun TestScope.services(renderer: HostRenderer, content: SceneContent) = SceneHostServices(
+    private fun TestScope.services(
+        renderer: HostRenderer,
+        content: SceneContent,
+        physics: PhysicsWorld? = null,
+    ) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
+        physics = physics,
         renderer = renderer,
         content = content,
     ).withCoroutineScope(backgroundScope.childScope(Dispatchers.Default))
@@ -102,6 +113,43 @@ class ProjectTerrainTest {
         assertFalse(systems.frame.any { it is TerrainDrawingSystem })
     }
 
+    @Test
+    fun anInvisibleColliderTerrainUploadsNothingUntilShown() = runTest {
+        val project = loadProject(files(INVISIBLE_COLLIDER_TERRAIN), physicsWorld = ::createJoltPhysicsWorld)
+        val physics = createJoltPhysicsWorld()
+        try {
+            val renderer = HostRenderer()
+            val systems = sceneSystemsFor(project.scene, services(renderer, project.content, physics = physics))
+            val world = World().also { SceneLoader.instantiate(project.scene, it) }
+
+            repeat(3) {
+                systems.fixed.forEach { system -> system.update(world, DELTA) }
+                systems.frame.forEach { system -> system.update(world, DELTA) }
+            }
+            var entity: Entity? = null
+            var terrain: TerrainComponent? = null
+            world.queryEach<TerrainComponent> { found, component ->
+                entity = found
+                terrain = component
+            }
+            assertTrue(
+                world.has<PhysicsBody>(requireNotNull(entity)),
+                "invisible collider terrain must still build its physics heightfield body",
+            )
+            assertEquals(0, renderer.attached, "invisible collider-only terrains must not upload GPU content features")
+
+            requireNotNull(terrain).isVisible = true
+
+            repeat(2) { systems.frame.forEach { system -> system.update(world, DELTA) } }
+            assertEquals(1, renderer.attached, "flipping isVisible=true must lazily attach the terrain")
+
+            systems.close()
+            assertEquals(1, renderer.detached)
+        } finally {
+            physics.destroy()
+        }
+    }
+
     private class HostRenderer :
         NoopRenderer(),
         ContentFeatureHost {
@@ -138,6 +186,16 @@ class ProjectTerrainTest {
   { "name": "Ground", "components": [
     { "component": "terrain", "width": 2, "depth": 2, "samples": [0.0, 0.0, 0.0, 0.0],
       "surface": { "provider": "test.surface" } }
+  ] }
+] }
+"""
+
+        const val INVISIBLE_COLLIDER_TERRAIN = """
+{ "version": 1, "name": "ground", "nodes": [
+  { "name": "ColliderGround", "components": [
+    { "component": "terrain", "width": 4, "depth": 4,
+      "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      "isVisible": false, "collider": true }
   ] }
 ] }
 """

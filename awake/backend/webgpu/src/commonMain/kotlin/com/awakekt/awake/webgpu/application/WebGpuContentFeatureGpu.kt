@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.shaders.ContentGroupUpload
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.resolveBytes
+import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
@@ -36,6 +37,7 @@ import com.awakekt.awake.webgpu.texture.Texture
  * WebGPU's half of building a content feature, whether the plan declared it or it was attached
  * later. A feature's depth pipeline draws into [depthPass], or nowhere when the engine renders none.
  */
+@Suppress("TooManyFunctions") // Implements the ContentFeatureGpu contract alongside private upload helpers.
 internal class WebGpuContentFeatureGpu(
     private val graphicsDevice: GraphicsDevice,
     override val registry: PipelineRegistry<RenderPipeline>,
@@ -49,15 +51,21 @@ internal class WebGpuContentFeatureGpu(
 
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline.handle
 
-    override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
+    override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload =
+        upload(pipeline, feature, includeGeometry = true)
+
+    override fun upload(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentUpload {
         val textures = uploadTextures(feature)
         // Before anything binds the group: a GPUBindGroup is immutable once built, so unlike
         // Vulkan these have to arrive ahead of the first bind, not after.
         pipeline.writeContentTextures(textures, feature.samplerTextures)
-        return uploadGeometry(feature, textures)
+        return uploadFeatureGeometry(feature, textures, includeGeometry)
     }
 
-    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload {
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload =
+        uploadGroup(pipeline, feature, includeGeometry = true)
+
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentGroupUpload {
         val layout = checkNotNull(feature.spec.uniforms) { "Content feature '${feature.name}' declares no uniforms." }
         val textures = uploadTextures(feature)
         var built: WebGpuContentGroup? = null
@@ -67,7 +75,7 @@ internal class WebGpuContentFeatureGpu(
             if (built == null) textures.values.forEach(Texture::destroy)
         }
         val group = checkNotNull(built)
-        val upload = uploadGeometry(feature, textures)
+        val upload = uploadFeatureGeometry(feature, textures, includeGeometry)
         return ContentGroupUpload(
             group,
             ContentUpload(upload.geometry, upload.prepare) {
@@ -75,6 +83,13 @@ internal class WebGpuContentFeatureGpu(
                 upload.release()
             },
         )
+    }
+
+    override fun uploadGeometry(geometry: MeshGeometry): ContentUpload {
+        val mesh = Mesh(graphicsDevice, {}, geometry.vertices, geometry.indices, geometry.format)
+        return ContentUpload(ContentGeometry(mesh.vertexBinding, mesh.indexBinding, mesh.indexCount)) {
+            mesh.destroy()
+        }
     }
 
     // A binding written after upload keeps every level, at the size its writes are in; the rest are
@@ -90,10 +105,18 @@ internal class WebGpuContentFeatureGpu(
         } + feature.images.mapValues { (_, image) -> uploadImage(image) }
     }
 
-    /** [feature]'s geometry, and what frees it with [textures]. */
-    private fun uploadGeometry(feature: ContentFeature, textures: Map<Int, Texture>): ContentUpload {
-        val mesh = feature.geometry?.let { source ->
-            Mesh(graphicsDevice, {}, source.vertices, source.indices, source.format)
+    /** [feature]'s geometry (when [includeGeometry] is true), and what frees it with [textures]. */
+    private fun uploadFeatureGeometry(
+        feature: ContentFeature,
+        textures: Map<Int, Texture>,
+        includeGeometry: Boolean,
+    ): ContentUpload {
+        val mesh = if (includeGeometry) {
+            feature.geometry?.let { source ->
+                Mesh(graphicsDevice, {}, source.vertices, source.indices, source.format)
+            }
+        } else {
+            null
         }
         // Held on its own: the upload outlives this call, and must not keep the feature's pixels with it (#1619).
         val updates = feature.textureUpdates

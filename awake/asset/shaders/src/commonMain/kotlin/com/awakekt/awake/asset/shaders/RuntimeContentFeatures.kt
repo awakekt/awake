@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.shaders
 
+import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
@@ -90,6 +91,14 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
     fun upload(pipeline: P, feature: ContentFeature): ContentUpload
 
     /**
+     * Writes [feature]'s textures into [pipeline]'s group, uploading [feature]'s geometry only
+     * when [includeGeometry] is true. Backends that implement [uploadGeometry] override this so
+     * shared immutable geometry is not uploaded a second time per feature.
+     */
+    fun upload(pipeline: P, feature: ContentFeature, includeGeometry: Boolean): ContentUpload =
+        upload(pipeline, feature)
+
+    /**
      * Draws [source]'s draw into this backend's depth pass through a pipeline built from [depth]
      * over [pipeline]'s own group 0, so the feature's uniform block and textures bind unchanged.
      *
@@ -117,6 +126,23 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
      * feature with the same spec is refused.
      */
     fun uploadGroup(pipeline: P, feature: ContentFeature): ContentGroupUpload? = null
+
+    /**
+     * Uploads [feature] into a uniform block and texture group of its own, uploading [feature]'s
+     * geometry only when [includeGeometry] is true. Backends that implement [uploadGeometry]
+     * override this so shared immutable geometry is not uploaded a second time per feature.
+     */
+    fun uploadGroup(pipeline: P, feature: ContentFeature, includeGeometry: Boolean): ContentGroupUpload? =
+        uploadGroup(pipeline, feature)
+
+    /**
+     * Uploads immutable [geometry] on its own so [ContentFeatureAttacher] can share one uploaded
+     * vertex/index buffer pair across every attached feature declaring the same
+     * [ContentFeature.geometryKey].
+     *
+     * @return null when this backend uploads geometry only inside [upload] / [uploadGroup].
+     */
+    fun uploadGeometry(geometry: MeshGeometry): ContentUpload? = null
 
     /**
      * A depth pipeline built from [depth] over [pipeline]'s group 0, for every feature drawing
@@ -169,9 +195,10 @@ internal suspend fun gateContentFeature(
     block: UniformBlock,
     upload: ContentUpload,
     uploads: MutableList<ContentUpload>,
+    geometry: ContentGeometry? = upload.geometry,
     cast: suspend (PipelineSpec, ContentDepthSource) -> ContentUpload?,
 ): RenderFeature<RenderFrameContext> {
-    val gate = ContentFeaturePassGate(feature.buildFeature(pipeline, alternatePipeline, block, upload.geometry), upload)
+    val gate = ContentFeaturePassGate(feature.buildFeature(pipeline, alternatePipeline, block, geometry), upload)
     feature.depth?.let { depth ->
         require(gate.feature is ContentDepthSource) {
             "Content feature '${feature.name}' declares a depth pipeline, but the feature it builds " +

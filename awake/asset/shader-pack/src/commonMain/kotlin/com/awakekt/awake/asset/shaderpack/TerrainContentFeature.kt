@@ -128,10 +128,17 @@ fun terrainContentFeature(
                 uniforms = TerrainUniformLayout.Draw,
             ),
             buildWithAlternate = ::buildTerrain,
+            geometryKey = TerrainClipmapGeometryKey(config),
             build = { pipeline, uniforms, geometry -> buildTerrain(pipeline, null, uniforms, geometry) },
         )
     }
 }
+
+/**
+ * Immutable cache key identifying the merged clipmap mesh for [config], allowing attached terrain
+ * features sharing a [TerrainClipmapConfig] to reuse one reference-counted GPU mesh per renderer.
+ */
+internal data class TerrainClipmapGeometryKey(val config: TerrainClipmapConfig)
 
 /**
  * [terrainContentFeature] with the heightmap's default sampler bindings only; keeps trailing-lambda

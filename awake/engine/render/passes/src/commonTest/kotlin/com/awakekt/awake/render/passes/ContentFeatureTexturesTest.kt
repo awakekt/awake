@@ -118,4 +118,18 @@ class ContentFeatureTexturesTest {
             ) { _, _, _ -> error("not built here") }
         }
     }
+
+    @Test
+    fun geometryKeyWithoutGeometryFails() {
+        assertFailsWith<IllegalArgumentException> {
+            ContentFeature(
+                name = "sharedQuad",
+                spec = spec(null),
+                images = emptyMap(),
+                alternateSpec = null,
+                buildWithAlternate = null,
+                geometryKey = "shared-key",
+            ) { _, _, _ -> error("not built here") }
+        }
+    }
 }

@@ -60,13 +60,19 @@ public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureGp
 	public fun getSupportsSceneDepth ()Z
 	public abstract fun handle (Lcom/awakekt/awake/render/command/UniformBlockOwner;)Lcom/awakekt/awake/render/command/PipelineHandle;
 	public abstract fun upload (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
+	public fun upload (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentUpload;
+	public fun uploadGeometry (Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
 	public fun uploadGroup (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
+	public fun uploadGroup (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
 }
 
 public final class com/awakekt/awake/asset/shaders/ContentFeatureGpu$DefaultImpls {
 	public static fun createDepthCaster (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun getSupportsSceneDepth (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;)Z
+	public static fun upload (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentUpload;
+	public static fun uploadGeometry (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
 	public static fun uploadGroup (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
+	public static fun uploadGroup (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
 }
 
 public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureHost {

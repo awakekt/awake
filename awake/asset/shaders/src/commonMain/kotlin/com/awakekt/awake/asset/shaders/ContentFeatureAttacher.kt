@@ -8,6 +8,7 @@ package com.awakekt.awake.asset.shaders
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.command.UniformBlockOwner
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
@@ -23,10 +24,13 @@ import kotlinx.coroutines.sync.withLock
  * [opaqueGeometry] and [afterGeometry] in its scene pass and calls [releaseAll] after destroying its pipelines.
  *
  * Features with the same pipeline spec share one registered pipeline, and one depth pipeline per
- * depth spec, counted by the features using them: the last to detach frees them. Each feature
- * keeps its own uniform block and texture group ([ContentFeatureGpu.uploadGroup]), geometry and
- * draw, so detaching one leaves the others drawing. A backend that cannot give a feature a group
- * of its own takes one feature per spec, as before.
+ * depth spec, counted by the features using them: the last to detach frees them. Features
+ * declaring an equal [ContentFeature.geometryKey] likewise share one uploaded GPU geometry when
+ * the backend implements [ContentFeatureGpu.uploadGeometry], counted by the features using it so
+ * the last to detach releases the vertex/index buffers. Each feature keeps its own uniform block
+ * and texture group ([ContentFeatureGpu.uploadGroup]) and draw, so detaching one leaves the others
+ * drawing. A backend that cannot give a feature a group of its own takes one feature per spec, as
+ * before.
  */
 class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeatureGpu<P>) : ContentFeatureHost {
     val beforeGeometry = AttachedContentSlot()
@@ -41,6 +45,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     private val attached = mutableListOf<Attachment>()
     private val shared = HashMap<PipelineSpec, SharedPipeline>()
     private val sharedAlternates = HashMap<PipelineSpec, Int>()
+    private val sharedGeometries = HashMap<Any, SharedGeometry>()
 
     /** Attaches register and build across suspensions; one at a time, so two of one spec share. */
     private val attaching = Mutex()
@@ -59,9 +64,11 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         }
         val pipeline = acquire(feature)
         val uploads = mutableListOf<ContentUpload>()
+        var sharedGeometry: SharedGeometry? = null
         var builtWhole = false
         val built = try {
-            build(pipeline, feature, uploads).also {
+            sharedGeometry = acquireGeometry(feature)
+            build(pipeline, feature, sharedGeometry?.upload?.geometry, uploads).also {
                 require(it.pass == RenderPassSlot.Scene) {
                     "Content feature '${feature.name}' records in ${it.pass}; attached features " +
                         "record in the scene pass."
@@ -73,6 +80,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             // recorded with them yet, so no frame can be reading them.
             if (!builtWhole) {
                 release(pipeline)
+                sharedGeometry?.let(::releaseGeometry)
                 uploads.forEach(ContentUpload::release)
             }
         }
@@ -84,14 +92,16 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             ContentPaint.AfterGeometry -> afterGeometry
         }
         slot.add(built)
-        Attachment(pipeline, built, slot, uploads).also { attached += it }
+        Attachment(pipeline, sharedGeometry, built, slot, uploads).also { attached += it }
     }
 
-    /** Frees every still-attached feature's uploads and every shared depth pipeline. For engine
+    /** Frees every still-attached feature's uploads, shared geometry and shared depth pipelines. For engine
      * teardown, after the renderer destroyed its features and the registry its pipelines. */
     fun releaseAll() {
         attached.forEach { it.uploads.forEach(ContentUpload::release) }
         attached.clear()
+        sharedGeometries.values.forEach { it.upload.release() }
+        sharedGeometries.clear()
         shared.values.forEach { it.destroyDepth() }
         shared.clear()
         sharedAlternates.clear()
@@ -149,12 +159,41 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         }
     }
 
+    private fun acquireGeometry(feature: ContentFeature): SharedGeometry? {
+        val key = feature.geometryKey
+        val source = feature.geometry
+        return when {
+            key == null || source == null -> null
+            key in sharedGeometries -> sharedGeometries.getValue(key).also { it.users++ }
+            else -> gpu.uploadGeometry(source)?.let { upload ->
+                if (upload.geometry == null) {
+                    upload.release()
+                    throw IllegalArgumentException(
+                        "ContentFeatureGpu.uploadGeometry returned no ContentGeometry for '${feature.name}'.",
+                    )
+                }
+                SharedGeometry(key, upload).also { sharedGeometries[key] = it }
+            }
+        }
+    }
+
+    private fun releaseGeometry(entry: SharedGeometry) {
+        if (--entry.users > 0) return
+        sharedGeometries.remove(entry.key)
+        entry.upload.release()
+    }
+
     private suspend fun build(
         entry: SharedPipeline,
         feature: ContentFeature,
+        sharedGeometry: ContentGeometry?,
         uploads: MutableList<ContentUpload>,
     ): RenderFeature<RenderFrameContext> {
-        val group = gpu.uploadGroup(entry.pipeline, feature)
+        val group = if (sharedGeometry == null) {
+            gpu.uploadGroup(entry.pipeline, feature)
+        } else {
+            gpu.uploadGroup(entry.pipeline, feature, includeGeometry = false)
+        }
         val block: UniformBlock
         val upload: ContentUpload
         if (group != null) {
@@ -169,7 +208,11 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
                 "Content feature '${feature.name}' declares uniforms, so the factory must have " +
                     "allocated a block for its pipeline."
             }
-            upload = gpu.upload(entry.pipeline, feature)
+            upload = if (sharedGeometry == null) {
+                gpu.upload(entry.pipeline, feature)
+            } else {
+                gpu.upload(entry.pipeline, feature, includeGeometry = false)
+            }
         }
         uploads += upload
         return gateContentFeature(
@@ -179,9 +222,18 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             block,
             upload,
             uploads,
+            sharedGeometry ?: upload.geometry,
         ) { depth, gate ->
             entry.depthCaster(depth)?.cast(gate)
         }
+    }
+
+    /** Immutable uploaded GPU geometry shared across features declaring the same [key]. */
+    private class SharedGeometry(
+        val key: Any,
+        val upload: ContentUpload,
+    ) {
+        var users = 1
     }
 
     /** A registered pipeline and the depth pipelines built over it, with how many features use them. */
@@ -205,6 +257,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
 
     private inner class Attachment(
         val pipeline: SharedPipeline,
+        val sharedGeometry: SharedGeometry?,
         val built: RenderFeature<RenderFrameContext>,
         val slot: AttachedContentSlot,
         val uploads: List<ContentUpload>,
@@ -212,10 +265,11 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         override fun detach() {
             if (!attached.remove(this)) return
             slot.remove(built)
-            // Earlier frames may still be reading the pipeline and textures freed below.
+            // Earlier frames may still be reading the pipeline, geometry and textures freed below.
             gpu.awaitIdle()
             built.destroy()
             release(pipeline)
+            sharedGeometry?.let(::releaseGeometry)
             uploads.forEach(ContentUpload::release)
         }
     }
