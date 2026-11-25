@@ -73,7 +73,7 @@ class HeadlessWebGpuEngine(
      */
     fun present() {
         val webGpu = renderer as? com.awakekt.awake.webgpu.renderer.Renderer ?: return
-        if (webGpu.presentedColor == null) return
+        if (isDeviceLost || webGpu.presentedColor == null) return
         presentSurface?.invoke()
         webGpu.presentedColor = null
     }

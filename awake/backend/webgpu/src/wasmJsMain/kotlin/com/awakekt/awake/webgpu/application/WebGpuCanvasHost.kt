@@ -179,11 +179,13 @@ internal fun startWebGpuGame(
         canvas = canvas.unsafeCast<org.w3c.dom.HTMLCanvasElement>(),
         lifecycle = application,
         onResize = { _, _ ->
-            wgpuContext?.let(::configureSurface)
+            if (runtimeFailure == null && !application.isDeviceLost) {
+                wgpuContext?.let(::configureSurface)
+            }
         },
         // A device that failed asynchronously stays failed, and a lost one is not recreated:
         // stop drawing instead of repeating the failure every frame.
-        isStopped = { runtimeFailure != null || application.deviceLoss != null },
+        isStopped = { runtimeFailure != null || application.isDeviceLost },
         cursor = cursor,
         cursorImage = cursorImage,
         maxPixelRatio = maxPixelRatio,
@@ -207,8 +209,10 @@ internal fun startWebGpuGame(
                 },
             )
             wgpuContext = resolvedContext
-            configureSurface(resolvedContext)
-            application.create(resolvedContext)
+            if (!application.isDeviceLost) {
+                configureSurface(resolvedContext)
+                application.create(resolvedContext)
+            }
         },
     )
 }

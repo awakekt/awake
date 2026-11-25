@@ -20,7 +20,8 @@ enum class WebGpuDeviceLostReason {
 
     internal companion object {
         /** The reason for the spec's string [value]; a value this enum does not know is [Unknown]. */
-        fun of(value: String): WebGpuDeviceLostReason = if (value == "destroyed") Destroyed else Unknown
+        fun of(value: String): WebGpuDeviceLostReason =
+            if (value.equals("destroyed", ignoreCase = true)) Destroyed else Unknown
     }
 }
 

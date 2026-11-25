@@ -58,6 +58,7 @@ internal fun Renderer.sceneContext(
 internal class SurfaceSize(val width: Int, val height: Int)
 
 internal fun Renderer.performDrawDebugLines(lines: List<LineSegment>) {
+    if (graphicsDevice.isDeviceLost) return
     // No capacity guard: LineMesh grows to fit and enforces DebugLineLayout's ceiling itself.
     lineMesh.update(lineSegmentVertices(lines))
 }

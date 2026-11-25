@@ -8,14 +8,19 @@ package com.awakekt.awake.webgpu
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.error.AppError
 import com.awakekt.awake.engine.platform.error.AppErrorHandler
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
+import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.webgpu.application.WebGpuDeviceLost
 import com.awakekt.awake.webgpu.application.WebGpuDeviceLostException
 import com.awakekt.awake.webgpu.application.WebGpuDeviceLostReason
@@ -27,6 +32,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
 
 /**
  * A booted WebGPU engine over wgpu-native is told its device was lost, as the browser host tells it
@@ -48,12 +54,16 @@ class WebGpuDeviceLostTest {
         val reported = mutableListOf<WebGpuDeviceLost>()
         engine.onDeviceLost = { reported += it }
         try {
-            engine.boot(HeadlessSurface(SIZE, SIZE))
+            val renderer = assertIs<WebGpuRenderer>(engine.boot(HeadlessSurface(SIZE, SIZE)))
+            assertFalse(engine.isDeviceLost)
+            assertFalse(renderer.isDeviceLost)
             engine.update(FRAME)
             assertEquals(1, frames, "a ready engine plays frames")
             val loss = WebGpuDeviceLost(WebGpuDeviceLostReason.Unknown, "GPU process exited")
 
             assertTrue(engine.deviceLost(loss))
+            assertTrue(engine.isDeviceLost)
+            assertTrue(renderer.isDeviceLost)
             assertFalse(engine.deviceLost(loss.copy(message = "again")), "a second loss is not reported")
             repeat(3) { engine.update(FRAME) }
 
@@ -63,6 +73,38 @@ class WebGpuDeviceLostTest {
             assertSame(loss, assertIs<WebGpuDeviceLostException>(error.cause).loss)
             assertNull(error.retry)
             assertEquals(1, frames, "no frame runs, so the renderer submits nothing to the lost device")
+        } finally {
+            engine.destroy()
+        }
+    }
+
+    @Test
+    fun directRendererCallsNoOpCleanlyAfterDeviceLoss() = runBlocking {
+        val engine = HeadlessWebGpuEngine(plan = PLAN)
+        try {
+            val renderer = assertIs<WebGpuRenderer>(engine.boot(HeadlessSurface(SIZE, SIZE)))
+            val target = renderer.createRenderTarget(SIZE, SIZE)
+            try {
+                assertTrue(engine.deviceLost(WebGpuDeviceLost(WebGpuDeviceLostReason.Unknown, "Driver reset")))
+                assertTrue(renderer.isDeviceLost)
+
+                // Direct renderer entry points must no-op cleanly without acquiring surface textures or submitting.
+                renderer.drawUi(
+                    listOf(UiDrawPrimitive.Quad(0f, 0f, 4f, 4f, Color.White)),
+                    font = null,
+                )
+                renderer.drawDebugLines(
+                    listOf(LineSegment(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f), Color.White)),
+                )
+                renderer.draw(GpuPassInput.EMPTY)
+                renderer.renderToTexture(target, GpuPassInput.EMPTY)
+                renderer.drawUiToTexture(target, emptyList(), font = null)
+
+                assertNull(renderer.presentedColor, "draw() must not acquire or present a swapchain frame after loss")
+                assertTrue(renderer.uiRuns.isEmpty(), "drawUi() must not retain staged runs after loss")
+            } finally {
+                target.destroy()
+            }
         } finally {
             engine.destroy()
         }
@@ -80,6 +122,7 @@ class WebGpuDeviceLostTest {
         assertFalse(engine.deviceLost(destroyed), "destroying the device on dispose resolves `lost`, which is no loss")
         assertTrue(reported.isEmpty())
         assertNull(engine.deviceLoss)
+        assertFalse(engine.isDeviceLost)
     }
 
     @Test

@@ -110,6 +110,7 @@ class SwapchainManager(
      * so a canvas resize takes effect on the next frame.
      */
     fun syncSurface() {
+        if (graphicsDevice.isDeviceLost) return
         imageFormatWebGpu = renderingContext.textureFormat
         val width = renderingContext.width
         val height = renderingContext.height

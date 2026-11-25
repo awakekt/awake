@@ -1,0 +1,32 @@
+public final class com/awakekt/awake/project/transport/browser/BrowserTransportOptions {
+	public static final field Companion Lcom/awakekt/awake/project/transport/browser/BrowserTransportOptions$Companion;
+	public static final field DEFAULT_CONNECT_TIMEOUT_MS J
+	public static final field DEFAULT_MAX_ATTEMPTS I
+	public static final field DEFAULT_RETRY_BASE_DELAY_MS J
+	public static final field DEFAULT_STALL_TIMEOUT_MS J
+	public static final field DEFAULT_TOTAL_TIMEOUT_MS J
+	public fun <init> ()V
+	public fun <init> (JJJIJLkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (JJJIJLkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()I
+	public final fun component5 ()J
+	public final fun component6 ()Lkotlin/jvm/functions/Function2;
+	public final fun copy (JJJIJLkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/project/transport/browser/BrowserTransportOptions;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/transport/browser/BrowserTransportOptions;JJJIJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/project/transport/browser/BrowserTransportOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConnectTimeoutMs ()J
+	public final fun getMaxAttempts ()I
+	public final fun getOnChunk ()Lkotlin/jvm/functions/Function2;
+	public final fun getRetryBaseDelayMs ()J
+	public final fun getStallTimeoutMs ()J
+	public final fun getTotalTimeoutMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/transport/browser/BrowserTransportOptions$Companion {
+}
+

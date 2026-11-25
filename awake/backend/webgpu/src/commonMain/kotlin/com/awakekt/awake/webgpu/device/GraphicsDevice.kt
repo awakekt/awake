@@ -10,6 +10,7 @@ import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.webgpu.WebGpuHandles
 import io.ygdrasil.webgpu.GPUFeatureName
 import io.ygdrasil.webgpu.WGPUContext
+import kotlin.concurrent.Volatile
 
 /**
  * Phase 2.5 milestone 2 slice 1 (see docs/mvp-plan.md): real wgpu4k implementation.
@@ -31,6 +32,20 @@ import io.ygdrasil.webgpu.WGPUContext
  * fields need.
  */
 class GraphicsDevice {
+    /**
+     * Whether the underlying `GPUDevice` has been reported lost. Once true it stays true:
+     * subsequent surface syncs, render passes, and queue submissions become no-ops instead of
+     * issuing commands against a dead device.
+     */
+    @Volatile
+    var isDeviceLost: Boolean = false
+        private set
+
+    /** Marks this device lost so subsequent draw and submit calls no-op cleanly. Idempotent. */
+    internal fun markDeviceLost() {
+        isDeviceLost = true
+    }
+
     /**
      * Bumped each time a texture's sampler is made again for a new anisotropy (#1660): a bind group
      * built at an older value holds a replaced sampler, so it is built again before it is bound.

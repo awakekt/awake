@@ -53,5 +53,8 @@ internal suspend fun createCanvasGpuContext(
 }
 
 /** Calls [lost] with the reason and message once [device]'s `lost` promise resolves. */
-@JsFun("(device, lost) => { device.lost.then((info) => lost(String(info.reason), String(info.message))); }")
+@JsFun(
+    "(device, lost) => { if (!device || !device.lost) return; " +
+        "device.lost.then((info) => lost(String((info && info.reason) || 'unknown'), String((info && info.message) || ''))); }",
+)
 private external fun watchDeviceLost(device: WGPUDevice, lost: (String, String) -> Unit)
