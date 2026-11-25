@@ -253,6 +253,15 @@ public final class com/awakekt/awake/core/diagnostics/ErrorSampler {
 public final class com/awakekt/awake/core/diagnostics/ErrorSampler$Companion {
 }
 
+public final class com/awakekt/awake/core/diagnostics/FileCrashStorage : com/awakekt/awake/core/diagnostics/CrashStorage {
+	public fun <init> (Ljava/io/File;)V
+	public fun <init> (Ljava/nio/file/Path;)V
+	public final fun getDirectory ()Ljava/io/File;
+	public fun read (Ljava/lang/String;)Ljava/lang/String;
+	public fun remove (Ljava/lang/String;)V
+	public fun write (Ljava/lang/String;Ljava/lang/String;)V
+}
+
 public final class com/awakekt/awake/core/diagnostics/FrameBreakdown {
 	public static final field Companion Lcom/awakekt/awake/core/diagnostics/FrameBreakdown$Companion;
 	public static final field DEFAULT_CAPACITY I
@@ -466,12 +475,61 @@ public final class com/awakekt/awake/core/diagnostics/FrameUiUploadSample {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/core/diagnostics/HeapGuard {
+	public static final field CLOSE_AFTER I
+	public static final field CLOSE_AT D
+	public static final field COLLECT_AT D
+	public static final field Companion Lcom/awakekt/awake/core/diagnostics/HeapGuard$Companion;
+	public fun <init> ()V
+	public fun <init> (DDI)V
+	public synthetic fun <init> (DDIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun check (JJLkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public static synthetic fun check$default (Lcom/awakekt/awake/core/diagnostics/HeapGuard;JJLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public final fun getCloseAfter ()I
+	public final fun getCloseAt ()D
+	public final fun getCollectAt ()D
+	public final fun getConsecutiveBreaches ()I
+	public final fun reset ()V
+}
+
+public final class com/awakekt/awake/core/diagnostics/HeapGuard$Action : java/lang/Enum {
+	public static final field Close Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public static final field Collect Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public static final field None Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public static fun values ()[Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+}
+
+public final class com/awakekt/awake/core/diagnostics/HeapGuard$Companion {
+}
+
 public final class com/awakekt/awake/core/diagnostics/InMemoryCrashStorage : com/awakekt/awake/core/diagnostics/CrashStorage {
 	public fun <init> ()V
 	public final fun clear ()V
 	public fun read (Ljava/lang/String;)Ljava/lang/String;
 	public fun remove (Ljava/lang/String;)V
 	public fun write (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/core/diagnostics/PageMemoryBudget {
+	public static final field DEVICE_SHARE D
+	public static final field INSTANCE Lcom/awakekt/awake/core/diagnostics/PageMemoryBudget;
+	public final fun of (Ljava/lang/Long;Ljava/lang/Long;)Ljava/lang/Long;
+	public final fun of (Ljava/lang/Long;Ljava/lang/Long;D)Ljava/lang/Long;
+}
+
+public final class com/awakekt/awake/core/diagnostics/PageMemoryGuard {
+	public fun <init> ()V
+	public fun <init> (DDID)V
+	public synthetic fun <init> (DDIDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun check (Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;)Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public final fun getCloseAfter ()I
+	public final fun getCloseAt ()D
+	public final fun getCollectAt ()D
+	public final fun getConsecutiveBreaches ()I
+	public final fun getDeviceShare ()D
+	public final fun reset ()V
 }
 
 public final class com/awakekt/awake/core/diagnostics/RecordedError {
