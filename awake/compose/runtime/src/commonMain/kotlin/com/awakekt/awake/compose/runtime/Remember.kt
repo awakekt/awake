@@ -43,19 +43,39 @@ context(composer: Composer)
  * A shift between calls of the same type still hands the value over silently, so a branch or a
  * variable-length sequence that remembers must be keyed. A component that remembers wraps its body
  * in [rememberGroup], so its state does not depend on what its caller draws around it.
+ *
+ * [calculate] is inlined at the call site, so a steady-state cache hit allocates neither a closure
+ * nor a type-check lambda.
  */
-inline fun <reified T> remember(noinline calculate: () -> T): T =
-    composer.remember(Unkeyed, Unkeyed, { it is T }, calculate)
+inline fun <reified T> remember(calculate: () -> T): T {
+    val index = composer.claimRememberIndex()
+    val cached = composer.readRemember(index, Unkeyed, Unkeyed, Unkeyed)
+    if (cached === RememberMiss || cached !is T) {
+        val fresh = calculate()
+        composer.writeRemember(index, Unkeyed, Unkeyed, Unkeyed, fresh)
+        return fresh
+    }
+    return cached
+}
 
 context(composer: Composer)
 /**
  * Recomputes [calculate] whenever [key] changes, by `==`.
  *
  * Deliberately not a vararg: `remember(a, b)` would allocate an array on every pass, and per-frame
- * allocation is the cost this engine exists to remove. The two-key overload covers two.
+ * allocation is the cost this engine exists to remove. Fixed-arity overloads cover up to three keys.
+ * [calculate] is inlined, so an unchanged pass allocates no lambda.
  */
-inline fun <reified T> remember(key: Any?, noinline calculate: () -> T): T =
-    composer.remember(key, Unkeyed, { it is T }, calculate)
+inline fun <reified T> remember(key: Any?, calculate: () -> T): T {
+    val index = composer.claimRememberIndex()
+    val cached = composer.readRemember(index, key, Unkeyed, Unkeyed)
+    if (cached === RememberMiss || cached !is T) {
+        val fresh = calculate()
+        composer.writeRemember(index, key, Unkeyed, Unkeyed, fresh)
+        return fresh
+    }
+    return cached
+}
 
 context(composer: Composer)
 /**
@@ -65,11 +85,37 @@ context(composer: Composer)
  * theme *and* switches on a variant, so keying on either alone goes stale -- a variant change with a
  * fixed theme, or a theme change with a fixed variant, would each return the other's last value.
  *
- * Still not a vararg, for the reason stated above: the two keys are stored side by side in the slot,
- * so this allocates nothing. A vararg array -- or a `Pair` to combine them -- would, per call per pass.
+ * Still not a vararg, for the reason stated above: the keys are stored side by side in the slot,
+ * and [calculate] is inlined so an unchanged pass allocates nothing.
  */
-inline fun <reified T> remember(key1: Any?, key2: Any?, noinline calculate: () -> T): T =
-    composer.remember(key1, key2, { it is T }, calculate)
+inline fun <reified T> remember(key1: Any?, key2: Any?, calculate: () -> T): T {
+    val index = composer.claimRememberIndex()
+    val cached = composer.readRemember(index, key1, key2, Unkeyed)
+    if (cached === RememberMiss || cached !is T) {
+        val fresh = calculate()
+        composer.writeRemember(index, key1, key2, Unkeyed, fresh)
+        return fresh
+    }
+    return cached
+}
+
+context(composer: Composer)
+/**
+ * Recomputes [calculate] whenever any of [key1], [key2], or [key3] changes, by `==`.
+ *
+ * Mirrors `androidx.compose.runtime.remember(key1, key2, key3, calculation)` without allocating a
+ * vararg array or a [calculate] closure on steady-state passes.
+ */
+inline fun <reified T> remember(key1: Any?, key2: Any?, key3: Any?, calculate: () -> T): T {
+    val index = composer.claimRememberIndex()
+    val cached = composer.readRemember(index, key1, key2, key3)
+    if (cached === RememberMiss || cached !is T) {
+        val fresh = calculate()
+        composer.writeRemember(index, key1, key2, key3, fresh)
+        return fresh
+    }
+    return cached
+}
 
 context(composer: Composer)
 /**
@@ -91,11 +137,15 @@ inline fun <T> rememberGroup(key: Any, block: () -> T): T {
     }
 }
 
-/** Sentinel for the keyless overload -- never equal to anything a caller can pass. */
+/** Sentinel for unused key positions -- never equal to anything a caller can pass. */
 @PublishedApi
 internal object Unkeyed
 
-internal class RememberedSlot(var key: Any?, var key2: Any?, var value: Any?)
+/** Sentinel returned by [Composer.readRemember] on a cache miss, distinguishing misses from a cached `null`. */
+@PublishedApi
+internal object RememberMiss
+
+internal class RememberedSlot(var key: Any?, var key2: Any?, var key3: Any?, var value: Any?)
 
 /** A [key] or [rememberGroup] block's own slots, held as one slot of the node or group around it. */
 internal class RememberedGroup(val key: Any) {

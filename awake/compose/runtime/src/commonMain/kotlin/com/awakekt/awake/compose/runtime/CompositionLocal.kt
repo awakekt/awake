@@ -48,6 +48,9 @@ fun <T> compositionLocalOf(default: () -> T): CompositionLocal<T> = CompositionL
  * is a handful deep, so a scan beats a map lookup and allocates nothing.
  */
 class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList()) {
+    /** Creates an empty local table for a host to populate and update in place across passes. */
+    constructor() : this(emptyList())
+
     private val entries = ArrayList<Any?>(initialEntries)
 
     /** A copy of the providers open now, for a composition that starts here, such as a subcomposition. */
@@ -63,31 +66,60 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
         val source = from?.entries
         if (source == null) {
             entries.clear()
-        } else if (!sameAs(source)) {
+        } else if (!entries.sameEntriesAs(source)) {
             entries.clear()
-            entries.addAll(source)
+            for (i in source.indices) entries.add(source[i])
         }
     }
 
-    private fun sameAs(other: List<Any?>): Boolean {
-        var same = other.size == entries.size
-        var i = 0
-        while (same && i < entries.size) {
-            same = entries[i] == other[i]
-            i++
+    @PublishedApi
+    internal fun push(local: CompositionLocal<*>, value: Any?) {
+        entries.add(local)
+        entries.add(value)
+    }
+
+    @PublishedApi
+    internal fun pushAll(values: Array<out ProvidedValue<*>>) {
+        for (i in values.indices) {
+            entries.add(values[i].local)
+            entries.add(values[i].value)
         }
-        return same
+    }
+
+    @PublishedApi
+    internal fun pushAll(from: ProvidedLocals): Int {
+        val source = from.entries
+        val count = source.size
+        for (i in 0 until count) entries.add(source[i])
+        return count
+    }
+
+    @PublishedApi
+    internal fun popEntries(count: Int) {
+        repeat(count) { entries.removeAt(entries.lastIndex) }
+    }
+
+    /** Replaces the stored value for [local] in place if present, or appends a new binding. */
+    fun <T> set(local: CompositionLocal<T>, value: T) {
+        var i = entries.size - 2
+        while (i >= 0) {
+            if (entries[i] === local) {
+                entries[i + 1] = value
+                return
+            }
+            i -= 2
+        }
+        entries.add(local)
+        entries.add(value)
     }
 
     /** Opens [local] = [value] for [content], and closes it when [content] returns or throws. */
     fun <T> provide(local: CompositionLocal<T>, value: T, content: () -> Unit) {
-        entries.add(local)
-        entries.add(value)
+        push(local, value)
         try {
             content()
         } finally {
-            entries.removeAt(entries.lastIndex)
-            entries.removeAt(entries.lastIndex)
+            popEntries(2)
         }
     }
 
@@ -99,17 +131,11 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
      * within a single call the last one listed is the innermost.
      */
     fun provideAll(values: Array<out ProvidedValue<*>>, content: () -> Unit) {
-        for (i in values.indices) {
-            entries.add(values[i].local)
-            entries.add(values[i].value)
-        }
+        pushAll(values)
         try {
             content()
         } finally {
-            repeat(values.size) {
-                entries.removeAt(entries.lastIndex)
-                entries.removeAt(entries.lastIndex)
-            }
+            popEntries(values.size * 2)
         }
     }
 
@@ -122,12 +148,11 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
      * [from] does not provide stay readable; those it does provide are shadowed while [content] runs.
      */
     fun provideAll(from: ProvidedLocals, content: () -> Unit) {
-        val count = from.entries.size
-        entries.addAll(from.entries)
+        val count = pushAll(from)
         try {
             content()
         } finally {
-            repeat(count) { entries.removeAt(entries.lastIndex) }
+            popEntries(count)
         }
     }
 
@@ -143,6 +168,16 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
         }
         return local.defaultValue()
     }
+}
+
+private fun List<Any?>.sameEntriesAs(other: List<Any?>): Boolean {
+    var same = other.size == size
+    var i = 0
+    while (same && i < size) {
+        same = this[i] == other[i]
+        i++
+    }
+    return same
 }
 
 context(composer: Composer)
@@ -162,22 +197,47 @@ context(composer: Composer)
  * The window closes when [content] returns, including on a throw -- which is the failure mode a
  * hand-written push/pop pair has and this does not.
  */
-fun <T> CompositionLocalProvider(
+inline fun <T> CompositionLocalProvider(
     local: CompositionLocal<T>,
     value: T,
     content: context(Composer) () -> Unit,
 ) {
-    composer.locals.provide(local, value) { content(composer) }
+    composer.locals.push(local, value)
+    try {
+        content(composer)
+    } finally {
+        composer.locals.popEntries(2)
+    }
 }
 
 /** One local bound to one value, as produced by [provides]. */
 class ProvidedValue<T> internal constructor(
+    @PublishedApi
     internal val local: CompositionLocal<T>,
+    @PublishedApi
     internal val value: T,
 )
 
 /** `LocalDensity provides 2f` -- Compose's own spelling. */
 infix fun <T> CompositionLocal<T>.provides(value: T): ProvidedValue<T> = ProvidedValue(this, value)
+
+context(composer: Composer)
+/**
+ * Provides a single [value] bound with [provides] to [content] without allocating a vararg array.
+ *
+ * Mirrors `androidx.compose.runtime.CompositionLocalProvider(value: ProvidedValue<*>, content)`.
+ */
+inline fun CompositionLocalProvider(
+    value: ProvidedValue<*>,
+    content: context(Composer) () -> Unit,
+) {
+    composer.locals.push(value.local, value.value)
+    try {
+        content(composer)
+    } finally {
+        composer.locals.popEntries(2)
+    }
+}
 
 context(composer: Composer)
 /**
@@ -187,11 +247,16 @@ context(composer: Composer)
  * per local puts the reader's eye three indents deep to learn that three unrelated values were set
  * together, and it grows a level every time a new local appears.
  */
-fun CompositionLocalProvider(
+inline fun CompositionLocalProvider(
     vararg values: ProvidedValue<*>,
     content: context(Composer) () -> Unit,
 ) {
-    composer.locals.provideAll(values) { content(composer) }
+    composer.locals.pushAll(values)
+    try {
+        content(composer)
+    } finally {
+        composer.locals.popEntries(values.size * 2)
+    }
 }
 
 context(composer: Composer)
@@ -203,9 +268,14 @@ context(composer: Composer)
  * composed, so the content reads the locals of the place it was written, over this composition's
  * own. Within one composition, the [ProvidedValue] overloads are the ones to use.
  */
-fun CompositionLocalProvider(
+inline fun CompositionLocalProvider(
     locals: ProvidedLocals,
     content: context(Composer) () -> Unit,
 ) {
-    composer.locals.provideAll(locals) { content(composer) }
+    val count = composer.locals.pushAll(locals)
+    try {
+        content(composer)
+    } finally {
+        composer.locals.popEntries(count)
+    }
 }

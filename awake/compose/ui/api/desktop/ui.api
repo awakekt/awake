@@ -864,6 +864,7 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/vector/Vec
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/vector/VectorPainter {
+	public final fun draw (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;)V
 	public final fun draw (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/core/math2d/Rectangle;Lcom/awakekt/awake/core/color/Color;)V
 }
 
@@ -1865,6 +1866,7 @@ public final class com/awakekt/awake/compose/ui/semantics/SemanticsProperties {
 }
 
 public final class com/awakekt/awake/compose/ui/semantics/SemanticsPropertiesKt {
+	public static final fun appendSemantics (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/semantics/SemanticsConfiguration;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun clearAndSetSemantics (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun semantics (Lcom/awakekt/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun semantics$default (Lcom/awakekt/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;

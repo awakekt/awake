@@ -17,12 +17,12 @@ import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
-import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.layout.Layout
+import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.node.PointerInputNode
 import com.awakekt.awake.compose.ui.node.TextInputNode
 import com.awakekt.awake.compose.ui.platform.FrameClock
@@ -36,6 +36,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
 import com.awakekt.awake.core.text.unicode.WordBoundaries
@@ -71,6 +72,7 @@ private const val LAST_TYPED_REVEAL_SECONDS = 1.5f
 // builder merges into a fresh one), so one instance serves every masked field with no allocation.
 private val PasswordSemantics: Modifier = Modifier.semantics { this[SemanticsProperties.Password] = true }
 private val DisabledSemantics: Modifier = Modifier.semantics { this[SemanticsProperties.Disabled] = true }
+private val NoOpClickable: Modifier = Modifier.clickable {}
 
 context(_: Composer)
 /**
@@ -136,65 +138,31 @@ fun BasicTextField(
     rememberGroup(BasicTextFieldGroup) {
         // A newline in a password could only draw as one more mask, so the field never breaks lines.
         val oneLine = singleLine || mask != null
-        val resolved = LocalTextStyle.current then style
-        val font = resolved.resolveFont(LocalFont.current)
-        val source = interactionSource ?: remember { InteractionSource() }
-        val density = LocalDensity.current
-        val clock = LocalFrameClock.current
-        val horizontalOffset = remember { ScrollState() }
-        val reveal = remember(state) { LastTypedReveal() }
-        val textState = remember { TextNodeState() }
-        // Measure and paint the placeholder through the same run as real text. That keeps baselines,
-        // clipping, and the empty-field minimum line height identical instead of treating a placeholder
-        // as a decoration with its own layout rules.
-        //
-        // Read through a lambda, not captured: the string this resolves to must be this frame's, and
-        // composition is a phase too early for that. See TextMeasurePolicy.text.
-        //
-        // The mask is applied here, to the same string the caret, selection and hit-test geometry are
-        // read from, so all of them see the masked glyphs.
-        val displayedText = { fieldText(state, mask, reveal, clock, singleLine).ifEmpty { placeholder ?: " " } }
-        val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = oneLine)
-        policy.cache = textState.cache
-        textState.motion.clock = clock
-        policy.motion = textState.motion
-        // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
-        val color = { resolveFieldColor(state, resolved.color, placeholder, placeholderColor) }
-        val inputModifier = if (enabled) {
-            TextFieldInputElement(
-                state, oneLine, mask, reveal.takeIf { revealLastTyped }, clock,
-                policy, density, horizontalOffset, onClick, onSubmit, passThroughKeys,
-            ).clickable { }
-        } else {
-            DisabledSemantics
-        }
+        val fieldState = remember { BasicTextFieldNodeState() }
+        val source = fieldState.interactionSourceFor(interactionSource)
+        val policy = fieldState.sync(
+            state = state,
+            ambientStyle = LocalTextStyle.current,
+            style = style,
+            ambientFont = LocalFont.current,
+            density = LocalDensity.current,
+            clock = LocalFrameClock.current,
+            source = source,
+            placeholder = placeholder,
+            placeholderColor = placeholderColor,
+            singleLine = singleLine,
+            oneLine = oneLine,
+            mask = mask,
+            revealLastTyped = revealLastTyped,
+            onClick = onClick,
+            onSubmit = onSubmit,
+            passThroughKeys = passThroughKeys,
+            enabled = enabled,
+        )
 
         Layout(
             nodeType = TextFieldNodeType,
-            modifier = modifier
-                .focusable(enabled = enabled, interactionSource = source)
-                .then(if (mask != null) PasswordSemantics else Modifier)
-                .then(inputModifier)
-                .drawBehind {
-                    val paintColor = color()
-                    val run = policy.runFor(density, policy.measuredFontScale)
-                    val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
-                    val caret = TextRunOf(state, policy, density).position()
-                    val focused = enabled && source.isFocused
-                    val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
-                    clipFieldText(horizontalOffset.takeIf { oneLine }) {
-                        if (enabled) drawSelectionSegments(run, state, textOffsetX, textOffsetY, paintColor.withAlpha(0.35f))
-                        run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY, motion = textState.motion)
-                        if (shouldDrawCaret(focused, clock.totalSeconds)) {
-                            drawFieldCaret(
-                                x = caret.x + textOffsetX,
-                                y = if (oneLine) textOffsetY else caret.y,
-                                height = run.lineHeightPx,
-                                color = paintColor,
-                            )
-                        }
-                    }
-                },
+            modifier = fieldState.modifierFor(modifier, enabled, source, mask != null),
             measurePolicy = policy,
         )
     }
@@ -382,54 +350,230 @@ private fun shouldDrawCaret(focused: Boolean, totalSeconds: Float): Boolean =
     focused && (totalSeconds % CARET_BLINK_PERIOD_SECONDS) < CARET_BLINK_PERIOD_SECONDS / 2f
 
 /**
- * Caret x from the same run geometry the glyphs are painted with.
- *
- * Computing it separately is how a caret ends up a pixel off per character -- invisible at the
- * start of a line and obviously wrong at the end.
+ * Retained per-node state for [BasicTextField]: keeps its layout cache, motion state, scroll
+ * offset, reveal tracker, measure policy, input element, draw element, and modifier chain across
+ * frames so an unchanged field allocates nothing on steady-state passes.
  */
-private class TextRunOf(
-    private val state: TextFieldState,
-    private val policy: TextMeasurePolicy,
-    private val density: Float,
-) {
-    fun position(): CaretPosition {
-        val run = policy.runFor(density, policy.measuredFontScale)
-        val position = run.caretPositionAt(state.displayedCursor)
-        return CaretPosition(position.x, position.y)
+private class BasicTextFieldNodeState {
+    val textState = TextNodeState()
+    val horizontalOffset = ScrollState()
+    val reveal = LastTypedReveal()
+
+    private var ownedSource: InteractionSource? = null
+    private var hasState = false
+    lateinit var state: TextFieldState
+    var singleLine: Boolean = false
+    var oneLine: Boolean = false
+    var mask: Char? = null
+    var revealLastTyped: Boolean = false
+    var placeholder: String? = null
+    var placeholderColor: Color? = null
+    var resolvedColor: Color? = null
+    var density: Float = 1f
+    lateinit var clock: FrameClock
+    var enabled: Boolean = true
+    lateinit var source: InteractionSource
+    var onClick: (() -> Unit)? = null
+    var onSubmit: (() -> Unit)? = null
+    var passThroughKeys: Set<Key> = emptySet()
+
+    private var resolvedForFont: TextStyle? = null
+    private var ambientFont: UiFont? = null
+    private var font: UiFont? = null
+    private var policyStyle: TextStyle? = null
+    private var policyFont: UiFont? = null
+    private var policyOneLine: Boolean = false
+    private var cachedPolicy: TextMeasurePolicy? = null
+    lateinit var policy: TextMeasurePolicy
+
+    private var hasChain = false
+    private var lastModifier: Modifier? = null
+    private var lastEnabled = false
+    private var lastSource: InteractionSource? = null
+    private var lastHasMask = false
+    private var chain: Modifier = Modifier
+
+    // Measure and paint the placeholder through the same run as real text. Read through one
+    // retained lambda so composition stays allocation-free while measure sees live edits.
+    private val displayedText: () -> String = {
+        fieldText(state, mask, reveal, clock, singleLine).ifEmpty { placeholder ?: " " }
+    }
+    private val inputModifier: Modifier = TextFieldInputElement(this).then(NoOpClickable)
+    private val drawElement: BasicTextFieldDrawElement = BasicTextFieldDrawElement(this)
+
+    fun interactionSourceFor(caller: InteractionSource?): InteractionSource =
+        caller ?: ownedSource ?: InteractionSource().also { ownedSource = it }
+
+    @Suppress("LongParameterList")
+    fun sync(
+        state: TextFieldState,
+        ambientStyle: TextStyle,
+        style: TextStyle,
+        ambientFont: UiFont,
+        density: Float,
+        clock: FrameClock,
+        source: InteractionSource,
+        placeholder: String?,
+        placeholderColor: Color?,
+        singleLine: Boolean,
+        oneLine: Boolean,
+        mask: Char?,
+        revealLastTyped: Boolean,
+        onClick: (() -> Unit)?,
+        onSubmit: (() -> Unit)?,
+        passThroughKeys: Set<Key>,
+        enabled: Boolean,
+    ): TextMeasurePolicy {
+        if (!hasState || this.state !== state) {
+            hasState = true
+            this.state = state
+            reveal.clear()
+        }
+        this.singleLine = singleLine
+        this.oneLine = oneLine
+        this.mask = mask
+        this.revealLastTyped = revealLastTyped
+        this.placeholder = placeholder
+        this.placeholderColor = placeholderColor
+        this.density = density
+        this.clock = clock
+        this.enabled = enabled
+        this.source = source
+        this.onClick = onClick
+        this.onSubmit = onSubmit
+        this.passThroughKeys = passThroughKeys
+
+        val resolved = textState.resolve(ambientStyle, style)
+        resolvedColor = resolved.color
+        textState.motion.clock = clock
+        val resolvedFont = fontFor(resolved, ambientFont)
+        val existing = cachedPolicy
+        val samePolicyInputs = policyStyle === resolved && policyFont === resolvedFont && policyOneLine == oneLine
+        val nextPolicy = if (existing != null && samePolicyInputs) {
+            existing
+        } else {
+            policyStyle = resolved
+            policyFont = resolvedFont
+            policyOneLine = oneLine
+            TextMeasurePolicy(displayedText, resolved, resolvedFont, singleLine = oneLine).also {
+                it.cache = textState.cache
+                it.motion = textState.motion
+                cachedPolicy = it
+            }
+        }
+        policy = nextPolicy
+        return nextPolicy
+    }
+
+    fun modifierFor(
+        modifier: Modifier,
+        enabled: Boolean,
+        source: InteractionSource,
+        hasMask: Boolean,
+    ): Modifier {
+        val sameInputs = modifier == lastModifier && enabled == lastEnabled && source === lastSource
+        if (!hasChain || !sameInputs || hasMask != lastHasMask) {
+            hasChain = true
+            lastModifier = modifier
+            lastEnabled = enabled
+            lastSource = source
+            lastHasMask = hasMask
+            chain = modifier
+                .focusable(enabled = enabled, interactionSource = source)
+                .then(if (hasMask) PasswordSemantics else Modifier)
+                .then(if (enabled) inputModifier else DisabledSemantics)
+                .then(drawElement)
+        }
+        return chain
+    }
+
+    private fun fontFor(resolved: TextStyle, ambient: UiFont): UiFont {
+        val cached = font
+        if (cached != null && resolved === resolvedForFont && ambient === ambientFont) return cached
+        resolvedForFont = resolved
+        ambientFont = ambient
+        return resolved.resolveFont(ambient).also { font = it }
     }
 }
 
-private data class CaretPosition(val x: Float, val y: Float)
+private class BasicTextFieldDrawElement(
+    private val fieldState: BasicTextFieldNodeState,
+) : ModifierNodeElement<BasicTextFieldDrawNode>() {
+    override fun create(): BasicTextFieldDrawNode = BasicTextFieldDrawNode(fieldState)
 
-// One field per thing the node reads; grouping them would only move the list into another class.
-@Suppress("LongParameterList")
+    override fun update(node: BasicTextFieldDrawNode) {
+        node.fieldState = fieldState
+    }
+
+    override fun toString(): String = "basicTextFieldDraw()"
+}
+
+private class BasicTextFieldDrawNode(
+    var fieldState: BasicTextFieldNodeState,
+) : Modifier.Node(),
+    DrawModifierNode {
+    // Reused across draw passes so clippedWithMargin allocates no capturing lambda per frame.
+    private var activeScope: DrawScope? = null
+    private var activeRun: TextRun? = null
+    private var activeColor: Color = DefaultTextColor
+    private var activeOffsetX: Float = 0f
+    private var activeOffsetY: Float = 0f
+    private var activeDrawCaret: Boolean = false
+    private var activeCaretX: Float = 0f
+    private var activeCaretY: Float = 0f
+    private val drawClippedBody: () -> Unit = {
+        val scope = activeScope!!
+        val run = activeRun!!
+        val paintColor = activeColor
+        if (fieldState.enabled && fieldState.state.hasSelection) {
+            scope.drawSelectionSegments(run, fieldState.state, activeOffsetX, activeOffsetY, paintColor.withAlpha(0.35f))
+        }
+        run.paintDecorated(scope, paintColor, offsetX = activeOffsetX, offsetY = activeOffsetY, motion = fieldState.textState.motion)
+        if (activeDrawCaret) {
+            scope.drawFieldCaret(
+                x = activeCaretX + activeOffsetX,
+                y = activeCaretY,
+                height = run.lineHeightPx,
+                color = paintColor,
+            )
+        }
+    }
+
+    override fun DrawScope.draw(drawContent: () -> Unit) {
+        val paintColor = resolveFieldColor(fieldState.state, fieldState.resolvedColor, fieldState.placeholder, fieldState.placeholderColor)
+        val policy = fieldState.policy
+        val run = policy.runFor(fieldState.density, policy.measuredFontScale)
+        val oneLine = fieldState.oneLine
+        val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
+        val focused = fieldState.enabled && fieldState.source.isFocused
+        val caretLine = if (focused) run.caretLineIndex(fieldState.state.displayedCursor) else 0
+        val caretX = if (focused) run.caretXAt(fieldState.state.displayedCursor, caretLine) else 0f
+        val textOffsetX = if (oneLine) fieldState.horizontalOffset.followCaret(caretX, focused, run, policy, width) else 0f
+        activeScope = this
+        activeRun = run
+        activeColor = paintColor
+        activeOffsetX = textOffsetX
+        activeOffsetY = textOffsetY
+        activeDrawCaret = shouldDrawCaret(focused, fieldState.clock.totalSeconds)
+        activeCaretX = caretX
+        activeCaretY = if (oneLine) textOffsetY else caretLine * run.lineHeightPx
+        clipFieldText(if (oneLine) fieldState.horizontalOffset else null, drawClippedBody)
+        activeScope = null
+        activeRun = null
+        drawContent()
+    }
+
+    override fun toString(): String = "basicTextFieldDraw()"
+}
+
 private class TextFieldInputElement(
-    private val state: TextFieldState,
-    private val singleLine: Boolean,
-    private val mask: Char?,
-    private val reveal: LastTypedReveal?,
-    private val clock: FrameClock,
-    private val policy: TextMeasurePolicy,
-    private val density: Float,
-    private val horizontalOffset: ScrollState,
-    private val onClick: (() -> Unit)?,
-    private val onSubmit: (() -> Unit)?,
-    private val passThroughKeys: Set<Key>,
+    private val fieldState: BasicTextFieldNodeState,
 ) : ModifierNodeElement<TextFieldInputNode>() {
-    override fun create(): TextFieldInputNode = TextFieldInputNode(state)
+    override fun create(): TextFieldInputNode = TextFieldInputNode(fieldState)
 
     override fun update(node: TextFieldInputNode) {
-        node.state = state
-        node.singleLine = singleLine
-        node.mask = mask
-        node.reveal = reveal
-        node.clock = clock
-        node.policy = policy
-        node.density = density
-        node.horizontalOffset = horizontalOffset
-        node.onClick = onClick
-        node.onSubmit = onSubmit
-        node.passThroughKeys = passThroughKeys
+        node.fieldState = fieldState
+        node.syncState()
     }
 }
 
@@ -528,30 +672,35 @@ private class DoubleClickTracker {
 }
 
 private class TextFieldInputNode(
-    initialState: TextFieldState,
+    var fieldState: BasicTextFieldNodeState,
 ) : Modifier.Node(),
     TextInputNode,
     PointerInputNode {
     private val clicks = DoubleClickTracker()
+    private var lastState: TextFieldState = fieldState.state
 
-    var state: TextFieldState = initialState
-        set(value) {
-            if (field !== value) clicks.reset()
-            field = value
-        }
-    var singleLine: Boolean = false
-    var mask: Char? = null
-    var reveal: LastTypedReveal? = null
-    lateinit var clock: FrameClock
-    lateinit var policy: TextMeasurePolicy
-    var density: Float = 0f
-    lateinit var horizontalOffset: ScrollState
-    var onClick: (() -> Unit)? = null
-    var onSubmit: (() -> Unit)? = null
-    override var passThroughKeys: Set<Key> = emptySet()
+    private val state: TextFieldState get() = fieldState.state
+    private val singleLine: Boolean get() = fieldState.oneLine
+    private val mask: Char? get() = fieldState.mask
+    private val reveal: LastTypedReveal? get() = if (fieldState.revealLastTyped) fieldState.reveal else null
+    private val clock: FrameClock get() = fieldState.clock
+    private val policy: TextMeasurePolicy get() = fieldState.policy
+    private val density: Float get() = fieldState.density
+    private val horizontalOffset: ScrollState get() = fieldState.horizontalOffset
+    private val onClick: (() -> Unit)? get() = fieldState.onClick
+    private val onSubmit: (() -> Unit)? get() = fieldState.onSubmit
+    override val passThroughKeys: Set<Key> get() = fieldState.passThroughKeys
 
     override val isPassword: Boolean get() = mask != null
     override val isSingleLine: Boolean get() = singleLine
+
+    fun syncState() {
+        val current = fieldState.state
+        if (lastState !== current) {
+            clicks.reset()
+            lastState = current
+        }
+    }
 
     override fun onDetach() {
         clicks.reset()
@@ -592,6 +741,7 @@ private class TextFieldInputNode(
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main || event.isConsumed) return
+        syncState()
         when (event.type) {
             PointerEventType.Press -> {
                 clicks.onPress(state, mask, event, hitIndexAt(event), clock.totalSeconds)

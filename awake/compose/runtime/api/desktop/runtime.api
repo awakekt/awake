@@ -12,16 +12,25 @@ public abstract interface class com/awakekt/awake/compose/runtime/Applier {
 
 public final class com/awakekt/awake/compose/runtime/Composer {
 	public static final field INITIAL_DEPTH I
+	public final fun claimRememberIndex ()I
+	public final fun endEmptyNode ()V
 	public final fun endGroup ()V
+	public final fun endKey (Ljava/lang/Object;)V
 	public final fun endNode (Lkotlin/jvm/functions/Function0;)V
+	public final fun enterNode ()Ljava/lang/Object;
+	public final fun exitNode (Lcom/awakekt/awake/compose/runtime/Slot;Ljava/lang/Object;)V
 	public final fun getEmittedNodes ()I
+	public final fun getLocals ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
 	public final fun getLocalsSnapshot ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
 	public final fun key (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public final fun node (Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
 	public static synthetic fun node$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public final fun readRemember (ILjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun remember (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public final fun startGroup (Ljava/lang/Object;)V
+	public final fun startKey (Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun startNode (Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;)Ljava/lang/Object;
+	public final fun writeRemember (ILjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/runtime/ComposerKt {
@@ -55,6 +64,7 @@ public final class com/awakekt/awake/compose/runtime/CompositionLocal {
 public final class com/awakekt/awake/compose/runtime/CompositionLocalKt {
 	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
 	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;Lkotlin/jvm/functions/Function1;)V
+	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function1;)V
 	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;[Lcom/awakekt/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function1;)V
 	public static final fun compositionLocalOf (Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/runtime/CompositionLocal;
 	public static final fun getCurrent (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
@@ -112,14 +122,21 @@ public abstract class com/awakekt/awake/compose/runtime/PolledState : com/awakek
 
 public final class com/awakekt/awake/compose/runtime/ProvidedLocals {
 	public fun <init> ()V
+	public final fun popEntries (I)V
 	public final fun provide (Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)V
 	public final fun provideAll (Lcom/awakekt/awake/compose/runtime/ProvidedLocals;Lkotlin/jvm/functions/Function0;)V
 	public final fun provideAll ([Lcom/awakekt/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function0;)V
+	public final fun push (Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;)V
+	public final fun pushAll (Lcom/awakekt/awake/compose/runtime/ProvidedLocals;)I
+	public final fun pushAll ([Lcom/awakekt/awake/compose/runtime/ProvidedValue;)V
 	public final fun read (Lcom/awakekt/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
+	public final fun set (Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;)V
 	public final fun snapshot ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
 }
 
 public final class com/awakekt/awake/compose/runtime/ProvidedValue {
+	public final fun getLocal ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public final fun getValue ()Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/compose/runtime/ReadOwner {
@@ -139,6 +156,10 @@ public abstract interface class com/awakekt/awake/compose/runtime/RememberHolder
 
 public final class com/awakekt/awake/compose/runtime/RememberKt {
 	public static final fun rememberGroup (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/compose/runtime/RememberMiss {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/runtime/RememberMiss;
 }
 
 public abstract interface class com/awakekt/awake/compose/runtime/RememberObserver {

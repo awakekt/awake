@@ -274,6 +274,56 @@ class RememberTest {
         assertEquals(1, computed, "the single-key overload recomputed after delegating")
     }
 
+    @Test
+    fun threeKeysRecomputeWhenAnyOneChanges() {
+        val root = FakeNode()
+        var computed = 0
+        var a = "light"
+        var b = "default"
+        var c = "md"
+        val content: context(Composer)
+        () -> Unit = { remember<Int>(a, b, c) { computed++ } }
+
+        pass(root, content)
+        pass(root, content)
+        assertEquals(1, computed, "unchanged three-key remember recomputed")
+
+        c = "sm"
+        pass(root, content)
+        assertEquals(2, computed, "third key change was missed")
+
+        b = "outline"
+        pass(root, content)
+        assertEquals(3, computed, "second key change was missed")
+
+        a = "dark"
+        pass(root, content)
+        assertEquals(4, computed, "first key change was missed")
+
+        assertEquals(1, root.rememberSlots.size, "a recompute allocated a second slot")
+    }
+
+    @Test
+    fun rememberingNullSurvivesWithoutRecomputing() {
+        val root = FakeNode()
+        var computed = 0
+        val seen = mutableListOf<String?>()
+        val content: context(Composer)
+        () -> Unit = {
+            seen += remember<String?> {
+                computed++
+                null
+            }
+        }
+
+        pass(root, content)
+        pass(root, content)
+        pass(root, content)
+
+        assertEquals(1, computed, "a cached null value was recomputed")
+        assertEquals(listOf<String?>(null, null, null), seen)
+    }
+
     private fun pass(root: FakeNode, content: context(Composer) () -> Unit) {
         reconcile(FakeApplier(root), root, content)
     }

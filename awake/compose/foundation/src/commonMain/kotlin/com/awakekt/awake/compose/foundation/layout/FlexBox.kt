@@ -8,17 +8,18 @@
 package com.awakekt.awake.compose.foundation.layout
 
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.Slot
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.layout.AlignmentLine
 import com.awakekt.awake.compose.ui.layout.FirstBaseline
 import com.awakekt.awake.compose.ui.layout.IntrinsicMeasurable
-import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.layout.Placeable
+import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.node.ParentDataModifierNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
@@ -258,24 +259,39 @@ interface FlexBoxScope
 
 private object FlexBoxScopeInstance : FlexBoxScope
 private object FlexBoxNodeType
+private val DefaultFlexItemData = FlexItemData()
+
+@PublishedApi
+internal fun flexBoxScopeInstance(): FlexBoxScope = FlexBoxScopeInstance
+
+@PublishedApi
+context(composer: Composer)
+internal fun openFlexBoxNode(modifier: Modifier, config: FlexBoxConfig): Any? {
+    val node = composer.startNode(FlexBoxNodeType, Slot.Children) as LayoutNode
+    val previous = node.measurePolicy as? FlexBoxMeasurePolicy
+    val policy = if (previous != null && sameLayoutValue(previous.config, config)) {
+        previous
+    } else {
+        FlexBoxMeasurePolicy(config)
+    }
+    configureLayoutNode(node, modifier, policy)
+    return composer.enterNode()
+}
 
 context(composer: Composer)
 /**
  * CSS-shaped multi-line layout. The public API follows Compose's experimental FlexBox surface;
  * this implementation uses Awake intrinsics to plan every final child constraint before the one
- * permitted measure call.
+ * permitted measure call. Inlined so steady-state callers allocate no capturing lambda.
  */
-fun FlexBox(
+inline fun FlexBox(
     modifier: Modifier = Modifier,
     config: FlexBoxConfig = FlexBoxConfig,
-    content: context(Composer) FlexBoxScope.() -> Unit,
+    crossinline content: context(Composer) FlexBoxScope.() -> Unit,
 ) {
-    Layout(
-        nodeType = FlexBoxNodeType,
-        modifier = modifier,
-        measurePolicy = FlexBoxMeasurePolicy(config),
-        content = { content(composer, FlexBoxScopeInstance) },
-    )
+    val enclosingKey = openFlexBoxNode(modifier, config)
+    content(composer, flexBoxScopeInstance())
+    composer.exitNode(Slot.Children, enclosingKey)
 }
 
 internal data class FlexItemData(
@@ -312,10 +328,10 @@ private class MutableFlexItemConfig : FlexItemConfig {
     fun toData() = FlexItemData(basis, grow, shrink, alignSelf, order)
 }
 
-private class FlexItemElement(private val data: FlexItemData) : ModifierNodeElement<FlexItemNode>() {
+private data class FlexItemElement(private val data: FlexItemData) : ModifierNodeElement<FlexItemNode>() {
     override fun create() = FlexItemNode(data)
     override fun update(node: FlexItemNode) {
-        node.data = data
+        if (node.data != data) node.data = data
     }
 }
 
@@ -365,7 +381,7 @@ private data class FlexChild(
     var placeable: Placeable? = null,
 )
 
-private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasurePolicy {
+private class FlexBoxMeasurePolicy(val config: FlexBoxConfig) : MeasurePolicy {
     private val resolved = ResolvedFlexConfig()
     private val planner = FlexLinePlanner(resolved)
 
@@ -663,7 +679,8 @@ private class FlexLinePlanner(private val resolved: ResolvedFlexConfig) {
     }
 }
 
-private fun IntrinsicMeasurable.flexItem(): FlexItemData = (parentData as? RowColumnParentData)?.flex ?: FlexItemData()
+private fun IntrinsicMeasurable.flexItem(): FlexItemData =
+    (parentData as? RowColumnParentData)?.flex ?: DefaultFlexItemData
 
 private data class FlexDistribution(val before: Int, val between: Int, val stretch: Int = 0, val stretchRemainder: Int = 0)
 

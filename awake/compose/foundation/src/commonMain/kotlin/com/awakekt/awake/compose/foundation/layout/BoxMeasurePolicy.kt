@@ -24,7 +24,7 @@ import com.awakekt.awake.compose.ui.unit.LayoutDirection
  * `FillMax`, a divergence from Compose this engine did not carry forward.
  */
 class BoxMeasurePolicy(
-    private val alignment: Alignment = Alignment.TopStart,
+    internal val alignment: Alignment = Alignment.TopStart,
 ) : MeasurePolicy {
 
     constructor(
@@ -96,7 +96,10 @@ private val PlaceNothing: PlacementScope.() -> Unit = {}
  * SAM constructor, which Kotlin/Wasm wraps in a generic function that boxes its `IntSize` arguments
  * and `IntOffset` result on every child placed (#1512).
  */
-internal class AxisAlignment(private val horizontal: Alignment.Horizontal, private val vertical: Alignment.Vertical) : Alignment {
+internal data class AxisAlignment(
+    val horizontal: Alignment.Horizontal,
+    val vertical: Alignment.Vertical,
+) : Alignment {
     override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset =
         IntOffset(horizontal.align(size.width, space.width, layoutDirection), vertical.align(size.height, space.height))
 }

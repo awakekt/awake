@@ -32,7 +32,11 @@ import com.awakekt.awake.core.math2d.Rectangle
  * about what tessellating it saves -- measured, 20.2 ms fell only to 8.5 ms keyed by value.
  */
 class VectorPainter internal constructor(private val image: ImageVector) {
-    private var slot: Rectangle? = null
+    private var hasSlot = false
+    private var slotX = 0f
+    private var slotY = 0f
+    private var slotWidth = 0f
+    private var slotHeight = 0f
     private var tint: Color? = null
     private var mesh: ColoredTriangleMesh? = null
     private var retainedGeometryKey: Any = Any()
@@ -44,16 +48,33 @@ class VectorPainter internal constructor(private val image: ImageVector) {
      * other path takes this.
      */
     fun draw(scope: DrawScope, slot: Rectangle, tint: Color) {
-        val mesh = meshFor(slot, tint)
+        draw(scope, slot.x, slot.y, slot.width, slot.height, tint)
+    }
+
+    /**
+     * Draws [image] into the rectangle `([x], [y], [width], [height])` without allocating a
+     * [Rectangle] on steady-state passes.
+     */
+    fun draw(scope: DrawScope, x: Float, y: Float, width: Float, height: Float, tint: Color) {
+        val mesh = meshFor(x, y, width, height, tint)
         scope.drawRetainedMesh(mesh, retainedGeometryKey)
     }
 
-    private fun meshFor(slot: Rectangle, tint: Color): ColoredTriangleMesh {
+    private fun matchesCachedSlot(x: Float, y: Float, width: Float, height: Float, tint: Color): Boolean {
+        val sameOrigin = slotX == x && slotY == y
+        val sameSize = slotWidth == width && slotHeight == height
+        return hasSlot && sameOrigin && sameSize && this.tint == tint
+    }
+
+    private fun meshFor(x: Float, y: Float, width: Float, height: Float, tint: Color): ColoredTriangleMesh {
         val cached = mesh
-        if (cached != null && this.slot == slot && this.tint == tint) return cached
+        if (cached != null && matchesCachedSlot(x, y, width, height, tint)) {
+            return cached
+        }
         // fitTo scales the vector into the slot and snaps the centering offset to whole pixels --
         // an odd (slot - scaled) difference otherwise lands the glyph on a half-pixel and blurs
         // every edge, which shipped once as icons "not pixel perfect".
+        val slot = Rectangle(x, y, width, height)
         val built = image.fitTo(slot).flatMap { vectorPath ->
             buildList {
                 // SVG's default fill is `currentColor`. A path with an explicit stroke and no fill
@@ -68,7 +89,11 @@ class VectorPainter internal constructor(private val image: ImageVector) {
                 }
             }
         }.merge()
-        this.slot = slot
+        hasSlot = true
+        slotX = x
+        slotY = y
+        slotWidth = width
+        slotHeight = height
         this.tint = tint
         mesh = built
         retainedGeometryKey = Any()

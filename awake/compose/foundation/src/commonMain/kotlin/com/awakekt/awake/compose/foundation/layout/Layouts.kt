@@ -8,9 +8,10 @@
 package com.awakekt.awake.compose.foundation.layout
 
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.Slot
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
-import com.awakekt.awake.compose.ui.layout.Layout
+import com.awakekt.awake.compose.ui.node.LayoutNode
 
 // PascalCase composables: Compose's own convention, and this is public API surface -- the same
 // reason Constraints.Infinity keeps its casing. See 11-refinements.md rule 1.
@@ -19,61 +20,97 @@ private object ColumnNodeType
 
 private object RowNodeType
 
-private object BoxNodeType
+@PublishedApi
+context(composer: Composer)
+internal fun openColumnNode(
+    modifier: Modifier,
+    verticalArrangement: Arrangement.Vertical,
+    horizontalAlignment: Alignment.Horizontal,
+): Any? {
+    val node = composer.startNode(ColumnNodeType, Slot.Children) as LayoutNode
+    val previous = node.measurePolicy as? ColumnMeasurePolicy
+    val policy = if (previous != null &&
+        sameLayoutValue(previous.verticalArrangement, verticalArrangement) &&
+        sameLayoutValue(previous.horizontalAlignment, horizontalAlignment)
+    ) {
+        previous
+    } else {
+        StandardLayoutPolicies.column(verticalArrangement, horizontalAlignment)
+            ?: ColumnMeasurePolicy(verticalArrangement, horizontalAlignment)
+    }
+    configureLayoutNode(node, modifier, policy)
+    return composer.enterNode()
+}
 
-// A policy is immutable and depends only on its arrangement and alignment, but the composable
-// rebuilt one -- plus the RowColumnMeasurePolicy it delegates to -- on every node on every frame.
-// Caching the default shape covers the overwhelmingly common call. Stage 2's `remember` replaces
-// this with the general answer; until then a non-default arrangement still allocates.
-private val defaultColumnPolicy = ColumnMeasurePolicy()
+@PublishedApi
+internal fun columnScopeInstance(): ColumnScope = ColumnScopeInstance
 
-private val defaultRowPolicy = RowMeasurePolicy()
+@PublishedApi
+context(composer: Composer)
+internal fun openRowNode(
+    modifier: Modifier,
+    horizontalArrangement: Arrangement.Horizontal,
+    verticalAlignment: Alignment.Vertical,
+): Any? {
+    val node = composer.startNode(RowNodeType, Slot.Children) as LayoutNode
+    val previous = node.measurePolicy as? RowMeasurePolicy
+    val policy = if (previous != null &&
+        sameLayoutValue(previous.horizontalArrangement, horizontalArrangement) &&
+        sameLayoutValue(previous.verticalAlignment, verticalAlignment)
+    ) {
+        previous
+    } else {
+        StandardLayoutPolicies.row(horizontalArrangement, verticalAlignment)
+            ?: RowMeasurePolicy(horizontalArrangement, verticalAlignment)
+    }
+    configureLayoutNode(node, modifier, policy)
+    return composer.enterNode()
+}
 
-private val defaultBoxPolicy = BoxMeasurePolicy()
+@PublishedApi
+internal fun rowScopeInstance(): RowScope = RowScopeInstance
 
 context(composer: Composer)
 /**
  * Stacks children vertically.
  *
  * [content] runs with [ColumnScope] as its receiver, which is what makes `weight()` available here
- * and a compile error anywhere else.
+ * and a compile error anywhere else. Inlined so steady-state callers allocate no capturing lambda.
  */
-fun Column(
+inline fun Column(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
-    content: context(Composer) ColumnScope.() -> Unit,
+    crossinline content: context(Composer) ColumnScope.() -> Unit,
 ) {
-    Layout(
-        nodeType = ColumnNodeType,
-        modifier = modifier,
-        measurePolicy = if (verticalArrangement === Arrangement.Top && horizontalAlignment === Alignment.Start) {
-            defaultColumnPolicy
-        } else {
-            ColumnMeasurePolicy(verticalArrangement, horizontalAlignment)
-        },
-        content = { content(composer, ColumnScopeInstance) },
-    )
+    val enclosingKey = openColumnNode(modifier, verticalArrangement, horizontalAlignment)
+    content(composer, columnScopeInstance())
+    composer.exitNode(Slot.Children, enclosingKey)
 }
 
 context(composer: Composer)
-/** Stacks children horizontally. See [Column] for why the scope is a receiver. */
-fun Row(
+/**
+ * Stacks children horizontally. See [Column] for why the scope is a receiver and why [content] is
+ * inlined.
+ */
+inline fun Row(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     verticalAlignment: Alignment.Vertical = Alignment.Top,
-    content: context(Composer) RowScope.() -> Unit,
+    crossinline content: context(Composer) RowScope.() -> Unit,
 ) {
-    Layout(
-        nodeType = RowNodeType,
-        modifier = modifier,
-        measurePolicy = if (horizontalArrangement === Arrangement.Start && verticalAlignment === Alignment.Top) {
-            defaultRowPolicy
-        } else {
-            RowMeasurePolicy(horizontalArrangement, verticalAlignment)
-        },
-        content = { content(composer, RowScopeInstance) },
-    )
+    val enclosingKey = openRowNode(modifier, horizontalArrangement, verticalAlignment)
+    content(composer, rowScopeInstance())
+    composer.exitNode(Slot.Children, enclosingKey)
+}
+
+context(composer: Composer)
+/**
+ * An empty box that carries [modifier] (for example a background, border, or fixed size) without
+ * children.
+ */
+fun Box(modifier: Modifier = Modifier) {
+    emitEmptyBoxNode(modifier)
 }
 
 context(composer: Composer)
@@ -81,49 +118,35 @@ context(composer: Composer)
  * Stacks children on top of each other, sized to the largest.
  *
  * Shrink-wraps to content, matching Compose. The removed `ui-core`'s `box()` filled instead,
- * a divergence from Compose this engine did not carry forward.
+ * a divergence from Compose this engine did not carry forward. Inlined so steady-state callers
+ * allocate no capturing lambda.
  */
-fun Box(
+inline fun Box(
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.TopStart,
-    content: (
-        context(Composer)
-        BoxScope.() -> Unit
-    )? = null,
+    crossinline content: context(Composer) BoxScope.() -> Unit,
 ) {
-    Layout(
-        nodeType = BoxNodeType,
-        modifier = modifier,
-        measurePolicy = if (contentAlignment === Alignment.TopStart) {
-            defaultBoxPolicy
-        } else {
-            BoxMeasurePolicy(contentAlignment)
-        },
-        // The scope is a receiver for the same reason Column's is: it makes matchParentSize()
-        // available here and a compile error anywhere it would silently do nothing.
-        content = content?.let { body -> { body(composer, BoxScopeInstance) } },
-    )
+    // The scope is a receiver for the same reason Column's is: it makes matchParentSize()
+    // available here and a compile error anywhere it would silently do nothing.
+    val enclosingKey = openBoxNode(modifier, contentAlignment)
+    content(composer, boxScopeInstance())
+    composer.exitNode(Slot.Children, enclosingKey)
 }
 
-context(_: Composer)
+context(composer: Composer)
 /**
  * Stacks children on top of each other, aligned by a separate [horizontalAlignment] and
  * [verticalAlignment] instead of one [Alignment].
  *
  * Otherwise the same as the overload that takes a single content alignment.
  */
-fun Box(
+inline fun Box(
     modifier: Modifier = Modifier,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     verticalAlignment: Alignment.Vertical = Alignment.Top,
-    content: (
-        context(Composer)
-        BoxScope.() -> Unit
-    )? = null,
+    crossinline content: context(Composer) BoxScope.() -> Unit,
 ) {
-    Box(
-        modifier = modifier,
-        contentAlignment = AxisAlignment(horizontalAlignment, verticalAlignment),
-        content = content,
-    )
+    val enclosingKey = openAxisBoxNode(modifier, horizontalAlignment, verticalAlignment)
+    content(composer, boxScopeInstance())
+    composer.exitNode(Slot.Children, enclosingKey)
 }

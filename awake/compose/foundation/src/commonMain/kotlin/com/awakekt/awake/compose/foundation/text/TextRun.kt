@@ -105,16 +105,28 @@ internal class TextRun(
 
     /** The line box the caret occupies, including soft wrapping. */
     fun caretPositionAt(index: Int): TextCaretPosition {
+        val lineIndex = caretLineIndex(index)
+        return TextCaretPosition(caretXAt(index, lineIndex), lineIndex * lineHeightPx)
+    }
+
+    /** Zero-allocation caret line index for [index]. */
+    internal fun caretLineIndex(index: Int): Int {
         val bounded = index.coerceIn(0, text.length)
-        val lineIndex = lineLayouts.indexOfFirst { bounded <= it.endExclusive }
-            .let { if (it >= 0) it else lineLayouts.lastIndex }
+        for (i in lineLayouts.indices) {
+            if (bounded <= lineLayouts[i].endExclusive) return i
+        }
+        return lineLayouts.lastIndex
+    }
+
+    /** Zero-allocation horizontal caret offset on [lineIndex] for [index]. */
+    internal fun caretXAt(index: Int, lineIndex: Int): Float {
+        val bounded = index.coerceIn(0, text.length)
         val line = lineLayouts[lineIndex]
-        val x = widthBetween(text, line.start, bounded.coerceIn(line.start, line.endExclusive), line.endExclusive)
-        return TextCaretPosition(x, lineIndex * lineHeightPx)
+        return widthBetween(text, line.start, bounded.coerceIn(line.start, line.endExclusive), line.endExclusive)
     }
 
     /** Horizontal caret position within the visual line containing [index]. */
-    fun offsetAtLine(index: Int): Float = caretPositionAt(index).x
+    fun offsetAtLine(index: Int): Float = caretXAt(index, caretLineIndex(index))
 
     /**
      * The cluster boundary nearest ([x], [y]), so a click never lands inside a character.
