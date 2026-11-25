@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FLOAT
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
@@ -21,7 +22,6 @@ import java.awt.Font
 import java.awt.font.FontRenderContext
 import java.awt.image.BufferedImage
 import java.io.File
-import java.util.Base64
 import javax.imageio.ImageIO
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -74,9 +74,9 @@ private const val OUT_DIR = "../../core/text/src/commonMain/kotlin"
  * a weight difference here is only a weight difference. WeightedUiFont combines these slices into
  * one renderer atlas after generation.
  */
-private data class Face(val fileName: String, val objectName: String, val displayName: String)
+internal data class Face(val fileName: String, val objectName: String, val displayName: String)
 
-private val FACES = listOf(
+internal val FACES = listOf(
     Face("Roboto-Thin.ttf", "RobotoThinUiFontData", "Roboto Thin"),
     Face("Roboto-Light.ttf", "RobotoLightUiFontData", "Roboto Light"),
     Face("Roboto-Regular.ttf", "RobotoRegularUiFontData", "Roboto Regular"),
@@ -116,8 +116,8 @@ private const val ALPHA_BYTE = 3
  * measured one -- a quarter of the em, big enough to be obviously wrong if ever sampled. */
 private const val BLANK_GLYPH_DIVISOR = 4
 
-/** Wrap the base64 payload so the generated Kotlin stays diffable. */
-private const val BASE64_LINE_WIDTH = 120
+/** Chunk size for base64 string literals, keeping each literal well below the JVM 65,535-byte UTF-8 limit. */
+private const val BASE64_CHUNK_SIZE = 16_384
 
 /** Distance-field spread in ATLAS TEXELS, passed to msdfgen as `-pxrange` and shipped as
  * `distanceFieldRangePx` so the glyph shader recovers the same range.
@@ -146,17 +146,25 @@ fun main() {
     val outDir = File(OUT_DIR)
     FACES.forEach { face ->
         val atlas = generateAtlas(File(FONT_DIR, face.fileName))
-        buildFileSpec(atlas, face).writeTo(outDir)
-        val written = outDir.resolve(FONT_PACKAGE.replace('.', '/')).resolve("${face.objectName}.kt")
-        val generated = written.readText()
-        written.writeText(
-            markRobotoSnippet(
-                generated
-                    .replaceFirst("// /*\n//  * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n//  *\n//  * SPDX-License-Identifier: Apache-2.0\n//  */\n//\n", "/*\n * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n *\n * SPDX-License-Identifier: Apache-2.0\n */\n"),
-            ),
-        )
+        val written = writeAtlasFile(outDir, atlas, face)
         println("Wrote $written")
     }
+}
+
+internal fun writeAtlasFile(outDir: File, atlas: AtlasResult, face: Face): File {
+    buildFileSpec(atlas, face).writeTo(outDir)
+    val written = outDir.resolve(FONT_PACKAGE.replace('.', '/')).resolve("${face.objectName}.kt")
+    val generated = written.readText()
+    written.writeText(
+        markRobotoSnippet(
+            generated
+                .replaceFirst(
+                    "// /*\n//  * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n//  *\n//  * SPDX-License-Identifier: Apache-2.0\n//  */\n//\n",
+                    "/*\n * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n *\n * SPDX-License-Identifier: Apache-2.0\n */\n",
+                ),
+        ),
+    )
+    return written
 }
 
 /** One glyph's metrics, all normalized to a fraction of [LOGICAL_CELL] -- the "em" reference
@@ -174,7 +182,7 @@ internal data class GlyphMetrics(
     val isBlank: Boolean get() = widthEm <= 0f || heightEm <= 0f
 }
 
-private class AtlasResult(
+internal class AtlasResult(
     val lineHeightEm: Float,
     val atlasWidth: Int,
     val atlasHeight: Int,
@@ -284,7 +292,7 @@ private fun generateAtlas(fontFile: File): AtlasResult {
         quadMetricsEm = quadMetricsEm.toFloatArray(),
         inkMetricsEm = inkMetricsEm.toFloatArray(),
         advancesEm = advancesEm.toFloatArray(),
-        encodedAtlasBase64 = Base64.getEncoder().encodeToString(rgbaBytes(atlasImage)),
+        encodedAtlasBase64 = encodeAtlasPngBase64(rgbaBytes(atlasImage), packing.width, packing.height),
         effect = generateEffectField(
             fontFile,
             ATLAS_GLYPHS,
@@ -451,7 +459,7 @@ private fun rgbaBytes(image: BufferedImage): ByteArray {
     return bytes
 }
 
-private fun buildFileSpec(atlas: AtlasResult, face: Face): FileSpec {
+internal fun buildFileSpec(atlas: AtlasResult, face: Face): FileSpec {
     val dataInterface = ClassName(FONT_PACKAGE, "PackedUiFontData")
     val samplingModeType = ClassName(FONT_PACKAGE, "UiFontSamplingMode")
 
@@ -528,11 +536,18 @@ private fun floatArrayProperty(name: String, values: FloatArray): PropertySpec =
         .build()
 
 private fun base64Property(name: String, base64: String): PropertySpec {
-    val block = CodeBlock.builder().add("\"\"\"\n")
-    base64.chunked(BASE64_LINE_WIDTH).forEach { line -> block.add("%L\n", line) }
-    block.add("\"\"\"")
+    val chunks = base64.chunked(BASE64_CHUNK_SIZE)
+    val block = CodeBlock.builder()
+    if (chunks.isEmpty()) {
+        block.add("%S", "")
+    } else {
+        chunks.forEachIndexed { index, chunk ->
+            if (index > 0) block.add(" +\n")
+            block.add("%S", chunk)
+        }
+    }
     return PropertySpec.builder(name, STRING)
         .addModifiers(KModifier.OVERRIDE)
-        .initializer(block.build())
+        .getter(FunSpec.getterBuilder().addStatement("return %L", block.build()).build())
         .build()
 }
