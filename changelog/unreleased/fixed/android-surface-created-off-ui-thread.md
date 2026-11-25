@@ -1,1 +1,0 @@
-- **No Android UI-thread ANR during cold Vulkan shader compilation.** `AwakeSurfaceView` now runs `WindowLifecycle.create`, `restoreSurface`, display-metric/inset updates, `resize`, `releaseSurface`, and `dispose` exclusively on its dedicated `AwakeSurfaceView-Render` thread instead of synchronously inside `surfaceCreated` on Android's UI thread.
