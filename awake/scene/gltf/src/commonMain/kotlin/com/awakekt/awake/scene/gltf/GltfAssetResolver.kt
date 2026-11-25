@@ -19,6 +19,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.host.readResourceBytes
+import com.awakekt.awake.core.image.DecodedImage
 import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
@@ -78,6 +79,9 @@ class GltfAssetResolver(
 
     /** Each textured skinned part's PBR maps (metallic-roughness, normal, occlusion, emissive), when present. */
     private val skinnedPartPbr = mutableMapOf<String, PbrImageSet>()
+
+    /** Content-addressed dedup key for each textured glTF material slot; cleared by [forget]. */
+    private val materialContentKeys = mutableMapOf<String, String>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
     private val loadedCullModes = mutableMapOf<String, CullMode>()
@@ -123,8 +127,15 @@ class GltfAssetResolver(
 
     // decodeImage, not createBitmap: nothing here reads the pixels, so a browser keeps them for the GPU.
     // Anywhere else the pixels go once a material is made from them, and are decoded again for the next.
-    private suspend fun decodeTexture(bytes: ByteArray): GpuImageSource =
-        imageDecoder?.invoke(bytes) ?: decodeImage(bytes).asReleasingGpuImageSource(bytes)
+    private suspend fun decodeTexture(
+        bytes: ByteArray,
+        digest: String,
+        decodedCache: MutableMap<String, DecodedImage>,
+    ): GpuImageSource {
+        imageDecoder?.invoke(bytes)?.let { return it }
+        val decoded = decodedCache.getOrPut(digest) { decodeImage(bytes) }
+        return decoded.asReleasingGpuImageSource(bytes)
+    }
 
     /**
      * Preloads a glTF or GLB asset and its external dependencies using the configured asset source.
@@ -217,6 +228,7 @@ class GltfAssetResolver(
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
         skinnedPartPbr.keys.removeAll { it.startsWith("$path#") }
+        materialContentKeys.keys.removeAll { it == path || it.startsWith("$path#") }
         releases.forget(path)
     }
 
@@ -268,6 +280,7 @@ class GltfAssetResolver(
             from.loadedMaterials[key]?.let { loadedMaterials[key] = it }
             from.skinnedPartTextures[key]?.let { skinnedPartTextures[key] = it }
             from.skinnedPartPbr[key]?.let { skinnedPartPbr[key] = it }
+            from.materialContentKeys[key]?.let { materialContentKeys[key] = it }
             releases.releasedMaterials -= key
         }
         releases.release(path)
@@ -304,6 +317,7 @@ class GltfAssetResolver(
         untexturedMaterials.adoptModel(from.untexturedMaterials, path)
         skinnedPartTextures.adoptModel(from.skinnedPartTextures, path)
         skinnedPartPbr.adoptModel(from.skinnedPartPbr, path)
+        materialContentKeys.adoptModel(from.materialContentKeys, path)
         from.loadedCullModes.forEach { (key, mode) ->
             if (isModelCullKey(key, path)) loadedCullModes.getOrPut(key) { mode }
         }
@@ -380,10 +394,11 @@ class GltfAssetResolver(
         val primitives = scene.meshes.flatMap { it.primitives }
         if (primitives.isEmpty()) return
 
+        val decodedCache = HashMap<String, DecodedImage>()
         val slots = mutableListOf<GltfMaterialSlot>()
         primitives.forEachIndexed { index, primitive ->
             val materialKey = if (primitives.size == 1) path else "$path#$index"
-            val material = primitive.toLoadedMaterial(::decodeTexture)
+            val material = primitive.toLoadedMaterial { imageBytes, digest -> decodeTexture(imageBytes, digest, decodedCache) }
             registerMaterial(materialKey, material, primitive)
             val meshKey = if (primitives.size == 1) path else "$PRIMITIVE_MESH_PREFIX$path#$index"
             loadedStaticMeshes[meshKey] = listOf(primitive).toStaticGeometry(textured = material != null)
@@ -405,7 +420,12 @@ class GltfAssetResolver(
      * `gltf-material:<key>` resolves either way: glTF allows a material with no textures (#1409).
      */
     private fun registerMaterial(key: String, material: LoadedGltfMaterial?, primitive: LoadedPrimitive) {
-        if (material != null) loadedMaterials[key] = material else untexturedMaterials[key] = primitive.toMaterialParameters()
+        if (material != null) {
+            loadedMaterials[key] = material
+            materialContentKeys[key] = material.contentKey
+        } else {
+            untexturedMaterials[key] = primitive.toMaterialParameters()
+        }
     }
 
     /** The model's `MSFT_lod` levels, for each mesh its slots name and for the whole model, when it has any. */
@@ -416,21 +436,13 @@ class GltfAssetResolver(
     }
 
     private suspend fun preloadSkinnedParts(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
+        val decodedCache = HashMap<String, DecodedImage>()
         loadedMaterialSlots[path] = parts(path).orEmpty().mapIndexed { index, part ->
             val key = "$path#$index"
             when (part) {
                 is GltfPart.Skinned -> {
                     val mesh = part.mesh
-                    mesh.baseColorImageBytes?.takeIf { mesh.isTextured }?.let { skinnedPartTextures[key] = decodeTexture(it) }
-                    if (mesh.isTextured) {
-                        val pbrImages = PbrImageSet(
-                            metallicRoughness = mesh.metallicRoughnessImageBytes?.let { decodeTexture(it) },
-                            normal = mesh.normalImageBytes?.let { decodeTexture(it) },
-                            occlusion = mesh.occlusionImageBytes?.let { decodeTexture(it) },
-                            emissive = mesh.emissiveImageBytes?.let { decodeTexture(it) },
-                        )
-                        pbrImages.takeUnless { it.isEmpty }?.let { skinnedPartPbr[key] = it }
-                    }
+                    preloadSkinnedPartTextures(key, mesh, decodedCache)
                     val meshKey = "$PRIMITIVE_MESH_PREFIX$key"
                     loadedCullModes[meshKey] = mesh.doubleSided.toCullMode()
                     GltfMaterialSlot(
@@ -442,7 +454,7 @@ class GltfAssetResolver(
                 }
                 // Drawn and textured as a static model's primitive is, so it takes the same slot.
                 is GltfPart.Static -> {
-                    val material = part.primitive.toLoadedMaterial(::decodeTexture)
+                    val material = part.primitive.toLoadedMaterial { imageBytes, digest -> decodeTexture(imageBytes, digest, decodedCache) }
                     registerMaterial(key, material, part.primitive)
                     val meshKey = "$PRIMITIVE_MESH_PREFIX$key"
                     loadedCullModes[meshKey] = part.primitive.doubleSided.toCullMode()
@@ -457,6 +469,36 @@ class GltfAssetResolver(
         }
         loadedScenes[path]?.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
         preloadPartLevels(path, bytes, external)
+    }
+
+    private suspend fun preloadSkinnedPartTextures(
+        key: String,
+        mesh: GltfMesh,
+        decodedCache: MutableMap<String, DecodedImage>,
+    ) {
+        val baseBytes = mesh.baseColorImageBytes?.takeIf { mesh.isTextured } ?: return
+        val baseDigest = imageDigest(baseBytes)
+        skinnedPartTextures[key] = decodeTexture(baseBytes, baseDigest, decodedCache)
+        val mrDigest = mesh.metallicRoughnessImageBytes?.let(::imageDigest)
+        val normalDigest = mesh.normalImageBytes?.let(::imageDigest)
+        val occDigest = mesh.occlusionImageBytes?.let(::imageDigest)
+        val emissiveDigest = mesh.emissiveImageBytes?.let(::imageDigest)
+        val pbrImages = PbrImageSet(
+            metallicRoughness = mesh.metallicRoughnessImageBytes?.let { decodeTexture(it, checkNotNull(mrDigest), decodedCache) },
+            normal = mesh.normalImageBytes?.let { decodeTexture(it, checkNotNull(normalDigest), decodedCache) },
+            occlusion = mesh.occlusionImageBytes?.let { decodeTexture(it, checkNotNull(occDigest), decodedCache) },
+            emissive = mesh.emissiveImageBytes?.let { decodeTexture(it, checkNotNull(emissiveDigest), decodedCache) },
+        )
+        pbrImages.takeUnless { it.isEmpty }?.let { skinnedPartPbr[key] = it }
+        materialContentKeys[key] = gltfMaterialContentKey(
+            uniformFloatCount = SkinnedUniformLayout.total,
+            filtering = TextureFiltering.Linear,
+            baseColorDigest = baseDigest,
+            metallicRoughnessDigest = mrDigest,
+            normalDigest = normalDigest,
+            occlusionDigest = occDigest,
+            emissiveDigest = emissiveDigest,
+        )
     }
 
     /** A skinned model's `MSFT_lod` levels, part by part, when it has any. Its parts keep their vertices. */
@@ -627,6 +669,16 @@ class GltfAssetResolver(
 
     override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = createMaterial(runtime.renderer, name)
 
+    override fun sharedMaterialKey(name: String): String? {
+        if (!name.startsWith("gltf-material:")) return null
+        val key = name.removePrefix("gltf-material:")
+        return materialContentKeys[key] ?: if (key in untexturedMaterials) gltfUntexturedMaterialKey(LitShadowUniformLayout.total) else null
+    }
+
+    override fun onMaterialReused(name: String) {
+        releaseUploadedImages(name)
+    }
+
     /**
      * The material [name] resolves to, made through [renderer]: what [createMaterial] does with a scene
      * runtime's renderer. Its textures go through `createImageMaterial`, so a browser's WebGPU copies them
@@ -695,6 +747,8 @@ class GltfAssetResolver(
     private fun Renderer.imageMaterialOrPlain(name: String, uniformFloatCount: Int, image: Renderer.() -> Material): Material = try {
         image()
     } catch (failure: Exception) {
+        // Do not let a plain-white fallback share a cache slot with valid materials of the same digest.
+        if (name.startsWith("gltf-material:")) materialContentKeys.remove(name.removePrefix("gltf-material:"))
         log.warn { "Drawing '$name' untextured: its image failed to upload (${failure.message})" }
         createMaterial(texture = PLAIN_TEXTURE, uniformFloatCount = uniformFloatCount)
     }
@@ -835,20 +889,37 @@ private data class LoadedGltfMaterial(
     val texture: GpuImageSource,
     val pbrImages: PbrImageSet?,
     val parameters: GltfMaterialParameters,
+    val contentKey: String,
 )
 
-private suspend fun LoadedPrimitive.toLoadedMaterial(decodeTexture: suspend (ByteArray) -> GpuImageSource): LoadedGltfMaterial? {
+private suspend fun LoadedPrimitive.toLoadedMaterial(
+    decodeTexture: suspend (ByteArray, String) -> GpuImageSource,
+): LoadedGltfMaterial? {
     val baseColorBytes = baseColorImageBytes ?: return null
+    val baseColorDigest = imageDigest(baseColorBytes)
+    val mrDigest = metallicRoughnessImageBytes?.let(::imageDigest)
+    val normalDigest = normalImageBytes?.let(::imageDigest)
+    val occlusionDigest = occlusionImageBytes?.let(::imageDigest)
+    val emissiveDigest = emissiveImageBytes?.let(::imageDigest)
     val pbrImages = PbrImageSet(
-        metallicRoughness = metallicRoughnessImageBytes?.let { decodeTexture(it) },
-        normal = normalImageBytes?.let { decodeTexture(it) },
-        occlusion = occlusionImageBytes?.let { decodeTexture(it) },
-        emissive = emissiveImageBytes?.let { decodeTexture(it) },
+        metallicRoughness = metallicRoughnessImageBytes?.let { decodeTexture(it, checkNotNull(mrDigest)) },
+        normal = normalImageBytes?.let { decodeTexture(it, checkNotNull(normalDigest)) },
+        occlusion = occlusionImageBytes?.let { decodeTexture(it, checkNotNull(occlusionDigest)) },
+        emissive = emissiveImageBytes?.let { decodeTexture(it, checkNotNull(emissiveDigest)) },
     )
     return LoadedGltfMaterial(
-        texture = decodeTexture(baseColorBytes),
+        texture = decodeTexture(baseColorBytes, baseColorDigest),
         pbrImages = pbrImages.takeUnless { it.isEmpty },
         parameters = toMaterialParameters(),
+        contentKey = gltfMaterialContentKey(
+            uniformFloatCount = TexturedUniformLayout.total,
+            filtering = TextureFiltering.Linear,
+            baseColorDigest = baseColorDigest,
+            metallicRoughnessDigest = mrDigest,
+            normalDigest = normalDigest,
+            occlusionDigest = occlusionDigest,
+            emissiveDigest = emissiveDigest,
+        ),
     )
 }
 

@@ -211,6 +211,7 @@ abstract class GraphicsEngine(
     final override fun restoreSurface(surface: Any) {
         if (!surfaceReleased) return
         restoreBackendSurface(surface)
+        textureSettings?.applyTo(renderer)
         surfaceReleased = false
         appLifecycle.resume()
     }
@@ -321,6 +322,8 @@ abstract class GraphicsEngine(
         density = backend.density
         renderQuality = appLifecycle.service(RenderQualitySettings::class)
         textureSettings = appLifecycle.service(TextureSettings::class)
+        // Apply before ready() so startup texture uploads honor configured mipSkip and anisotropy.
+        textureSettings?.applyTo(renderer)
 
         appLifecycle.ready(renderer)
 

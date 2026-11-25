@@ -62,6 +62,32 @@ interface SceneAssetResolver {
     fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = null
 
     /**
+     * Optional content-addressed deduplication key for the GPU [Material] built for [name], or
+     * `null` to key it solely by [name].
+     *
+     * Two material names returning the same non-null key share a single GPU [Material] inside
+     * [SceneAssetLibrary], which reference-counts that shared handle and destroys it only when the
+     * last referencing material name is released. Each material name keeps its own
+     * [materialDefaults], [defaultCullMode], and per-name holder count.
+     *
+     * @param name The descriptive name or URI of the requested material asset.
+     * @return A stable content key identifying the uploaded texture set, filtering, and uniform
+     *   layout, or `null` if this material is not deduplicated across names.
+     */
+    fun sharedMaterialKey(name: String): String? = null
+
+    /**
+     * Called by [SceneAssetLibrary] when [name] reuses an already-uploaded shared GPU [Material]
+     * matched by [sharedMaterialKey] instead of invoking [createMaterial].
+     *
+     * A resolver that drops CPU image copies once uploaded uses this hook to release [name]'s
+     * source image data just as it would after [createMaterial].
+     *
+     * @param name The material name whose source data was satisfied by an existing GPU material.
+     */
+    fun onMaterialReused(name: String) {}
+
+    /**
      * The factors material [name] was authored with (a glTF file's metallic, roughness, colours and
      * alpha mode), drawn for an entity that has no [PbrMaterial] of its own; null when it has none.
      *

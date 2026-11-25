@@ -545,6 +545,7 @@ internal class ProjectSceneRunner(
 }
 
 /** The glTF models of whichever scene plays, for the app's asset library, which outlives a switch. */
+@Suppress("TooManyFunctions") // Delegates each SceneAssetResolver hook to the active scene's resolver.
 internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver {
     override fun canResolveMesh(name: String): Boolean = target.canResolveMesh(name)
 
@@ -553,6 +554,10 @@ internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver
     override fun canResolveMaterial(name: String): Boolean = target.canResolveMaterial(name)
 
     override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = target.createMaterial(runtime, name)
+
+    override fun sharedMaterialKey(name: String): String? = target.sharedMaterialKey(name)
+
+    override fun onMaterialReused(name: String) = target.onMaterialReused(name)
 
     override fun materialDefaults(name: String): PbrMaterial? = target.materialDefaults(name)
 

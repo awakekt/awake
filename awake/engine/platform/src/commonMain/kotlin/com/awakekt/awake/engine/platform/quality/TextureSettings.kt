@@ -73,8 +73,9 @@ interface TextureSettingsPersistence {
 
 /**
  * One app's texture settings, next to [RenderQualitySettings]: session scoped, registered as a
- * service, and applied by `GraphicsEngine` before every frame. An app that registers none renders
- * exactly as before: [Renderer.maxAnisotropy] stays 1 and [Renderer.textureMipSkip] 0.
+ * service, and applied by `GraphicsEngine` before `ready()`, before `resume()` on surface restore,
+ * and before every frame. An app that registers none renders exactly as before:
+ * [Renderer.maxAnisotropy] stays 1 and [Renderer.textureMipSkip] 0.
  *
  * @param persistence Loads the saved values and saves each change; `null` keeps them in memory only.
  * @param initialQuality The quality when nothing is saved.

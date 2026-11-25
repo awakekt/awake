@@ -6,12 +6,18 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.testing.NoopRenderer
+import kotlinx.coroutines.test.runTest
+import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -150,5 +156,99 @@ class SceneAssetLibraryRefCountTest {
         assertFalse(library.releaseMaterial("stone"))
         assertTrue(library.releaseMaterial("stone"))
         assertEquals(0, library.materialHolderCount("stone"))
+    }
+
+    @Test
+    fun sharedMaterialsDeduplicateAcrossNamesAndDestroyOnlyOnLastRelease() = runTest {
+        val built = mutableListOf<FakeMaterial>()
+        val reused = mutableListOf<String>()
+        val resolver = object : SceneAssetResolver {
+            override fun canResolveMaterial(name: String): Boolean = name.startsWith("shared:")
+            override fun sharedMaterialKey(name: String): String = "digest:common"
+            override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material = FakeMaterial().also { built += it }
+            override fun onMaterialReused(name: String) {
+                reused += name
+            }
+        }
+        val renderer = object : NoopRenderer() {
+            override var textureMipSkip: Int = 0
+        }
+        val activeRuntime = readyRuntime(renderer)
+        val library = SceneAssetLibrary(emptyMap(), emptyMap(), emptyMap(), dynamicResolvers = listOf(resolver))
+
+        val first = library.requireMaterial(activeRuntime, "shared:a")
+        val second = library.requireMaterial(activeRuntime, "shared:b")
+        assertSame(first, second, "material names with the same content key share one GPU material")
+        assertEquals(1, built.size, "only one GPU material created")
+        assertEquals(listOf("shared:b"), reused, "reusing notifies the resolver to drop CPU source copies")
+
+        assertFalse(library.releaseMaterial("shared:a"), "releasing first name keeps shared material alive")
+        assertEquals(0, built.single().destroyCount)
+        assertFalse(library.isMaterialBuilt("shared:a"))
+        assertTrue(library.isMaterialBuilt("shared:b"))
+
+        assertTrue(library.releaseMaterial("shared:b"), "releasing the last name destroys the shared material")
+        assertEquals(1, built.single().destroyCount)
+        assertFalse(library.isMaterialBuilt("shared:b"))
+
+        // Re-acquiring after full release creates a fresh GPU material rather than handing back the destroyed one.
+        val rebuilt = library.requireMaterial(activeRuntime, "shared:a")
+        assertNotSame(first, rebuilt)
+        assertEquals(2, built.size)
+
+        // Dispose destroys the live shared material once even when multiple names reference it.
+        library.requireMaterial(activeRuntime, "shared:b")
+        library.dispose()
+        assertEquals(1, built[1].destroyCount, "dispose destroys shared GPU material once")
+        activeRuntime.dispose()
+    }
+
+    @Test
+    fun sharedMaterialsRespectTextureMipSkipChanges() = runTest {
+        val built = mutableListOf<FakeMaterial>()
+        val resolver = object : SceneAssetResolver {
+            override fun canResolveMaterial(name: String): Boolean = name.startsWith("shared:")
+            override fun sharedMaterialKey(name: String): String = "digest:common"
+            override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material = FakeMaterial().also { built += it }
+        }
+        val renderer = object : NoopRenderer() {
+            override var textureMipSkip: Int = 0
+        }
+        val activeRuntime = readyRuntime(renderer)
+        val library = SceneAssetLibrary(emptyMap(), emptyMap(), emptyMap(), dynamicResolvers = listOf(resolver))
+
+        val fullRes = library.requireMaterial(activeRuntime, "shared:full")
+        renderer.textureMipSkip = 1
+        val halfRes = library.requireMaterial(activeRuntime, "shared:half")
+        assertNotSame(fullRes, halfRes, "a different textureMipSkip uploads a separate material")
+        assertEquals(2, built.size)
+
+        library.dispose()
+        assertEquals(1, built[0].destroyCount)
+        assertEquals(1, built[1].destroyCount)
+        activeRuntime.dispose()
+    }
+
+    private suspend fun readyRuntime(renderer: NoopRenderer): SceneAppLifecycleRuntime = SceneAppLifecycleRuntime(
+        SceneAppSpec(
+            sceneName = null,
+            systems = emptyList(),
+            scenePopulationBlock = {},
+            renderableFactory = { error("no renderable requested in this test") },
+            assetLibraryFactory = null,
+            updateBlock = { _, _ -> },
+            ui = null,
+            onReadyBlock = {},
+            onDisposeBlock = {},
+            serviceRegistrations = emptyList(),
+            infrastructureSystemsFactory = { emptyList() },
+        ),
+    ).also {
+        it.initialize(NoServices)
+        it.ready(renderer)
+    }
+
+    private object NoServices : AppServiceLookup {
+        override fun <T : Any> service(type: KClass<T>): T? = null
     }
 }
