@@ -167,10 +167,14 @@ class GraphicsDevice {
     internal var sharedPipelineCache: Long = 0L
         private set
 
+    /** True when [sharedPipelineCache] was seeded from a validated [initialPipelineCacheData] blob. */
+    internal var pipelineCacheSeededFromInitialData: Boolean = false
+        private set
+
     /**
      * Optional serialized `VkPipelineCache` bytes loaded from disk before [create] or
      * [createHeadless] to seed [sharedPipelineCache]. Incompatible or stale driver blobs are
-     * safely ignored by Vulkan.
+     * safely ignored before or during `vkCreatePipelineCache`.
      */
     var initialPipelineCacheData: ByteArray? = null
 
@@ -473,7 +477,9 @@ class GraphicsDevice {
             modernFeaturesMask = enabledModernFeatures,
         )
         swapchainExtensionEnabled = SWAPCHAIN_EXTENSION in requiredDeviceExtensions
-        sharedPipelineCache = VulkanCommands.vkCreatePipelineCacheFromBytes(device, initialPipelineCacheData)
+        sharedPipelineCache = createValidatedPipelineCache(device, initialPipelineCacheData, physicalDeviceProperties) {
+            pipelineCacheSeededFromInitialData = it
+        }
 
         graphicsQueue = Vulkan.vkGetDeviceQueue(device, indices.graphicsFamily!!, 0)
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
@@ -517,6 +523,7 @@ class GraphicsDevice {
             Vulkan.vkDestroyPipelineCache(device, sharedPipelineCache)
             sharedPipelineCache = 0L
         }
+        pipelineCacheSeededFromInitialData = false
         if (device != 0L) swapchainPacer?.deviceDestroying()
         if (device != 0L) Vulkan.vkDestroyDevice(device)
         if (debugUtilsMessenger != 0L) Vulkan.vkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessenger)
@@ -718,3 +725,27 @@ internal fun selectEnabledDeviceFeatures(supported: VkPhysicalDeviceFeatures): V
         textureCompressionASTC_LDR = supported.textureCompressionASTC_LDR,
         textureCompressionBC = supported.textureCompressionBC,
     )
+
+private inline fun createValidatedPipelineCache(
+    logicalDevice: Long,
+    initialData: ByteArray?,
+    properties: VkPhysicalDeviceProperties,
+    onSeeded: (Boolean) -> Unit,
+): Long {
+    val compatible = initialData != null && isCompatiblePipelineCacheBlob(initialData, properties)
+    if (compatible) {
+        try {
+            return VulkanCommands.vkCreatePipelineCacheFromBytes(logicalDevice, initialData).also { onSeeded(true) }
+        } catch (e: VkResultException) {
+            pipelineCacheLogger.warn {
+                "Vulkan driver rejected initial pipeline cache blob; falling back to empty cache: ${e.message}"
+            }
+        }
+    } else if (initialData != null && initialData.isNotEmpty()) {
+        pipelineCacheLogger.info {
+            "Ignoring incompatible Vulkan pipeline cache blob for device ${properties.vendorID}:${properties.deviceID}; rebuilding cache"
+        }
+    }
+    onSeeded(false)
+    return VulkanCommands.vkCreatePipelineCacheFromBytes(logicalDevice, null)
+}

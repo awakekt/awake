@@ -203,6 +203,9 @@ class Renderer internal constructor(
     /** Where [attachContentFeature] goes, set by the engine that built this renderer. */
     internal var contentFeatureHost: ContentFeatureHost? = null
 
+    /** One-shot hook invoked once after the first submitted frame, used to persist warmed pipeline caches. */
+    internal var onFirstFrameSubmitted: (() -> Unit)? = null
+
     override val supportsSceneDepth: Boolean
         get() = contentFeatureHost?.supportsSceneDepth == true
 

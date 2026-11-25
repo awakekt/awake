@@ -45,7 +45,11 @@ import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.VulkanPipelineCacheStore
+import com.awakekt.awake.vulkan.device.defaultPlatformPipelineCacheStore
+import com.awakekt.awake.vulkan.device.flushDevicePipelineCache
 import com.awakekt.awake.vulkan.device.framebufferSampleCounts
+import com.awakekt.awake.vulkan.device.loadInitialPipelineCacheData
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
@@ -99,6 +103,18 @@ open class VulkanEngine(
 ) : GraphicsEngine(appLifecycle) {
 
     /**
+     * Creates a [VulkanEngine] with an explicit [pipelineCacheStore], or `null` to disable disk
+     * persistence even on platforms that enable it by default.
+     */
+    constructor(
+        appLifecycle: AwakeAppLifecycle,
+        plan: RenderPlan,
+        pipelineCacheStore: VulkanPipelineCacheStore?,
+    ) : this(appLifecycle, plan) {
+        this.pipelineCacheStore = pipelineCacheStore
+    }
+
+    /**
      * The depth format of the shadow maps (#1698): [ShadowDepthFormat.Depth32Float] by default,
      * [ShadowDepthFormat.Depth16Unorm] to halve their memory on a mobile tier. Read once, when the
      * engine builds its GPU resources: set it before the engine starts. An app's
@@ -106,6 +122,40 @@ open class VulkanEngine(
      * [com.awakekt.awake.render.renderer.ShadowBudget.mapSize], which may change at any time.
      */
     var shadowDepthFormat: ShadowDepthFormat = ShadowDepthFormat.Default
+
+    private var pipelineCacheStoreConfigured = false
+    private var activePipelineCacheStore: VulkanPipelineCacheStore? = null
+
+    /**
+     * Persistence store for this engine's device-wide `VkPipelineCache`.
+     *
+     * Read once during [createBackendResources]. When left unset, non-headless Android sessions
+     * automatically persist to a file in the application cache directory so cold launches reuse
+     * compiled shader pipelines; desktop and headless sessions leave persistence disabled until
+     * assigned. Assigning `null` or [VulkanPipelineCacheStore.None] explicitly disables
+     * persistence on every platform.
+     */
+    var pipelineCacheStore: VulkanPipelineCacheStore? = null
+        set(value) {
+            field = value
+            pipelineCacheStoreConfigured = true
+        }
+
+    /** True when the active device seeded its `VkPipelineCache` from persisted startup bytes. */
+    internal val pipelineCacheSeededFromInitialData: Boolean
+        get() = ::graphicsDevice.isInitialized && graphicsDevice.pipelineCacheSeededFromInitialData
+
+    /**
+     * Exports the active device's `VkPipelineCache` and saves it to the active [pipelineCacheStore].
+     *
+     * Safe to call at any point in the engine lifecycle: calls before startup, after disposal,
+     * after device loss, or without an active store are no-ops.
+     */
+    fun flushPipelineCache() {
+        val store = activePipelineCacheStore ?: return
+        if (!::graphicsDevice.isInitialized || deviceLoss != null) return
+        flushDevicePipelineCache(graphicsDevice, store)
+    }
 
     /** [primary]'s own format -- the key `Renderer` resolves a mesh's pipeline by. */
     private val vertexFormat: VertexFormat get() = plan.primary.vertexFormat
@@ -525,7 +575,16 @@ open class VulkanEngine(
         var renderFeatures: List<RenderFeature<VulkanRenderFrameContext>> = emptyList()
         try {
             val headless = window as? HeadlessSurface
-            graphicsDevice = GraphicsDevice()
+            val cacheStore = resolvePipelineCacheStore(
+                window = window,
+                isHeadless = headless != null,
+                explicitlyConfigured = pipelineCacheStoreConfigured,
+                configuredStore = pipelineCacheStore,
+            )
+            activePipelineCacheStore = cacheStore
+            graphicsDevice = GraphicsDevice().apply {
+                initialPipelineCacheData = loadInitialPipelineCacheData(cacheStore)
+            }
             if (headless == null) {
                 // Swappy on Android when the app picks it (#1699); nothing elsewhere.
                 graphicsDevice.swapchainPacer = platformSwapchainPacer(window) { appLifecycle.windowConfig.frameRateMode }
@@ -533,6 +592,8 @@ open class VulkanEngine(
             } else {
                 graphicsDevice.createHeadless()
             }
+            // Release loaded startup blob once Vulkan has seeded sharedPipelineCache.
+            graphicsDevice.initialPipelineCacheData = null
             val antiAliasing = sceneAntiAliasing(plan.multisample, graphicsDevice.framebufferSampleCounts()) {
                 println("Awake/Vulkan: $it")
             }
@@ -631,11 +692,15 @@ open class VulkanEngine(
                     loadShaderPair(replacementResolver, vertex, fragment)
                 }
                 bindDepthPlaceholder(renderer)
+                renderer.onFirstFrameSubmitted = ::flushPipelineCache
             }
             createdRenderer = renderer
             vulkanRenderer = renderer
             swapchainManager.createSyncObjects()
             syncObjectsCreated = true
+            // Persist eagerly compiled 3D/depth/content pipelines immediately after warmup so even
+            // an early OS process kill preserves compiled shaders for the next launch.
+            flushPipelineCache()
 
             return BackendResources(
                 renderer = renderer,
@@ -669,6 +734,7 @@ open class VulkanEngine(
     }
 
     override fun releaseBackendSurface() {
+        flushPipelineCache()
         vulkanRenderer.releaseSwapchainResources()
         graphicsDevice.replaceSurface(null)
     }
@@ -696,6 +762,9 @@ open class VulkanEngine(
         if (graphicsDevice.device != 0L) {
             VulkanBuffers.vkDeviceWaitIdle(graphicsDevice.device)
         }
+        // Flush strictly before graphicsDevice.destroy() tears down sharedPipelineCache / VkDevice.
+        flushPipelineCache()
+        activePipelineCacheStore = null
         renderer.destroy()
         swapchainManager.destroy()
         if (syncObjectsCreated) swapchainManager.destroySyncObjects()
@@ -719,6 +788,8 @@ open class VulkanEngine(
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, it.handle)
         }
         emptyDescriptorSetLayout = null
+        depthPrePassPlaceholder?.destroy()
+        depthPrePassPlaceholder = null
         // The depth target, the debug-line pipeline and every content feature's own pipelines are
         // NOT destroyed here: renderer.destroy() above tears down every RenderFeature (and the
         // DepthPrePassFeature) it was handed, which owns them. Destroying them again is a double-free
@@ -796,12 +867,24 @@ open class VulkanEngine(
         }
         emptyDescriptorSetLayout = null
         if (sceneRenderPass != 0L) Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)
+        activePipelineCacheStore = null
         graphicsDevice.destroy()
     }
 
     private companion object {
         const val MAX_FRAMES_IN_FLIGHT = 2
     }
+}
+
+private fun resolvePipelineCacheStore(
+    window: Any,
+    isHeadless: Boolean,
+    explicitlyConfigured: Boolean,
+    configuredStore: VulkanPipelineCacheStore?,
+): VulkanPipelineCacheStore? = when {
+    explicitlyConfigured -> configuredStore
+    isHeadless -> null
+    else -> defaultPlatformPipelineCacheStore(window)
 }
 
 /**
