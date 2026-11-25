@@ -154,6 +154,8 @@ private fun RenderDrawCommand.fillScalars(out: FloatArray, materialUniformFloatC
     out[11] = fadeOpacity
     out[12] = if (alphaToCoverage) 1f else 0f
     out[13] = kind.toFloat()
+    out[14] = surfaceDepositScale
+    out[15] = surfaceDepositSeed
 }
 
 /** The clock the textured packer writes for these extras: the time only when their animation moves. */
@@ -187,5 +189,5 @@ private const val FRAME_SCALARS = 16
 private const val CASCADE_SCALARS = 4
 
 /** See [fillScalars]. */
-private const val DRAW_SCALARS = 14
+private const val DRAW_SCALARS = 16
 private const val NO_FRAME = -1

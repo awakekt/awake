@@ -76,13 +76,18 @@ internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand, tints: Bo
         extrasAlike(other, tints) &&
         vertexAnimation.sameAnimation(other.vertexAnimation) &&
         timeSeconds == other.timeSeconds &&
-        alphaMode == other.alphaMode &&
+        sameRenderState(other, tints)
+
+private fun RenderDrawCommand.sameRenderState(other: RenderDrawCommand, tints: Boolean): Boolean =
+    alphaMode == other.alphaMode &&
         alphaCutoff == other.alphaCutoff &&
         shadowsOnly == other.shadowsOnly &&
         castsShadows == other.castsShadows &&
         maskLayer == other.maskLayer &&
         exemptFromCoverings == other.exemptFromCoverings &&
         (tints || fadeOpacity == other.fadeOpacity) &&
+        surfaceDepositScale == other.surfaceDepositScale &&
+        surfaceDepositSeed == other.surfaceDepositSeed &&
         cullMode == other.cullMode
 
 /**

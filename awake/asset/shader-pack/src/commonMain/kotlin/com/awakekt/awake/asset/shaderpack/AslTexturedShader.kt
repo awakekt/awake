@@ -127,6 +127,8 @@ private fun textured(
         val textureScroll = handles.value("textureScroll")
         val fogColor = frame.value("fogColor")
         val fogRange = frame.value("fogRange")
+        val surfaceDeposit = surfaceDepositUniforms(frame)
+        val drawFade = handles.value("drawFade")
         val debugView = frame.value("debugView")
         val exposure = exposureAndFade(frame, handles)
         val cascadeInputs = CascadeShadowInputs(
@@ -278,11 +280,12 @@ private fun textured(
                 iff(materialUnlit) {
                     val stored = let("unlitStored", baseColorFactor.rgb * baseColorSample.rgb * color)
                     val unlitRgb = variable("unlitRgb", stored)
+                    val unlitN = let("unlitN", normalize(normal))
                     iff(emissiveFactor.w gt 0.001f.lit) {
-                        val unlitN = let("unlitN", normalize(normal))
                         val unlitV = let("unlitV", normalize(cameraPosition.xyz - worldPos))
                         assign(unlitRgb, unlitSignedChrome(stored, unlitN, unlitV, emissiveFactor.w))
                     }
+                    applyUnlitSurfaceDeposit(unlitRgb, unlitN, worldPos, cameraPosition, surfaceDeposit, drawFade)
                     assign(fastRgb, displayTransform.unlit(unlitRgb))
                 }
                 iff(addsUnlit) {
@@ -294,19 +297,20 @@ private fun textured(
                 assign(finalColor, vec4(fastRgb, sourceAlpha))
             }
             iff(needsLit) {
-                val albedo = let("albedo", srgbToLinear(baseColorSample.rgb) * color * baseColorFactor.rgb)
+                val albedo = variable("albedo", srgbToLinear(baseColorSample.rgb) * color * baseColorFactor.rgb)
                 // glTF convention: G = roughness, B = metalness; factor * texture channel.
                 val metallicRoughness =
                     let("metallicRoughness", textureSampleGrad(metallicRoughnessTexture, baseColorSampler, sampleUv, uvDx, uvDy))
-                val metallic = let("metallic", clamp(metallicRoughness.b * pbrFactors.x, 0f.lit, 1f.lit))
-                val roughness = let("roughness", clamp(metallicRoughness.g * pbrFactors.y, minRoughness, 1f.lit))
+                val metallic = variable("metallic", clamp(metallicRoughness.b * pbrFactors.x, 0f.lit, 1f.lit))
+                val roughness = variable("roughness", clamp(metallicRoughness.g * pbrFactors.y, minRoughness, 1f.lit))
                 val occlusion = let("occlusion", textureSampleGrad(occlusionTexture, baseColorSampler, sampleUv, uvDx, uvDy).r)
                 val emissive =
                     let("emissive", srgbToLinear(textureSampleGrad(emissiveTexture, baseColorSampler, sampleUv, uvDx, uvDy).rgb) * emissiveFactor.rgb)
                 val tangentNormal =
                     let("tangentNormal", textureSampleGrad(normalTexture, baseColorSampler, sampleUv, uvDx, uvDy).xyz * 2f.lit - vec3(1f.lit))
 
-                val n = let("n", perturbNormal(normalize(normal), dPosDx, dPosDy, dSurfaceUvDx, dSurfaceUvDy, tangentNormal))
+                val n = variable("n", perturbNormal(normalize(normal), dPosDx, dPosDy, dSurfaceUvDx, dSurfaceUvDy, tangentNormal))
+                applyLitSurfaceDeposit(albedo, metallic, roughness, n, worldPos, cameraPosition, surfaceDeposit, drawFade)
                 val l = let("l", normalize(lightDirection.xyz))
                 val v = let("v", normalize(cameraPosition.xyz - worldPos))
                 val h = let("h", normalize(v + l))
@@ -365,7 +369,8 @@ private fun textured(
                 val shadedRgb = variable("shadedRgb", litShaded)
                 iff(materialUnlit) {
                     val stored = let("debugUnlitStored", baseColorFactor.rgb * baseColorSample.rgb * color)
-                    val unlitReflected = unlitSignedChrome(stored, n, v, emissiveFactor.w)
+                    val unlitReflected = variable("debugUnlitRgb", unlitSignedChrome(stored, n, v, emissiveFactor.w))
+                    applyUnlitSurfaceDeposit(unlitReflected, n, worldPos, cameraPosition, surfaceDeposit, drawFade)
                     assign(shadedRgb, displayTransform.unlit(unlitReflected))
                 }
                 val shaded = vec4(shadedRgb, sourceAlpha)

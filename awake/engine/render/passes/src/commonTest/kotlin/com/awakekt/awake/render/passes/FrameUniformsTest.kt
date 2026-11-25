@@ -41,6 +41,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /**
  * The frame block and a draw's own block hold, between them, what the single block held: every
@@ -120,14 +121,60 @@ class FrameUniformsTest {
     }
 
     @Test
-    fun aLinearFogsRangeIsPackedLastAndExponentialFogLeavesItZero() {
+    fun aLinearFogsRangeIsPackedAtFixedOffsetAndSurfaceDepositFollowsLast() {
         val range = MaterialUniformLayouts.Frame.offsetOf(UniformFields.FogRange)
-        assertEquals(MaterialUniformLayouts.Frame.total - 4, range, "fogRange is the frame block's last field")
+        val depositColor = MaterialUniformLayouts.Frame.offsetOf(UniformFields.SurfaceDepositColor)
+        val depositParams = MaterialUniformLayouts.Frame.offsetOf(UniformFields.SurfaceDepositParams)
+        val depositDetail = MaterialUniformLayouts.Frame.offsetOf(UniformFields.SurfaceDepositDetail)
+        val depositSeed = MaterialUniformLayouts.Frame.offsetOf(UniformFields.SurfaceDepositSeed)
+        assertEquals(range + 4, depositColor, "surfaceDepositColor follows fogRange so earlier offsets stay intact")
+        assertEquals(depositColor + 4, depositParams)
+        assertEquals(depositParams + 4, depositDetail)
+        assertEquals(MaterialUniformLayouts.Frame.total - 4, depositSeed, "surfaceDepositSeed is the frame block's last field")
         val block = FrameUniformBlock()
-        val linear = block.pack(VIEW_PROJECTION, EYE, FORWARD, LIGHT, CASCADES, FOG, FOG_DENSITY, GpuDebugView.Off, EXPOSURE, fogStart = 5f, fogEnd = 80f)
+        val linear = block.pack(
+            VIEW_PROJECTION, EYE, FORWARD, LIGHT, CASCADES, FOG, FOG_DENSITY, GpuDebugView.Off, EXPOSURE,
+            fogStart = 5f, fogEnd = 80f,
+            surfaceDepositColor = Color(0.92f, 0.96f, 1.0f, 1f),
+            surfaceDepositAmount = 0.75f,
+            surfaceDepositSlope = 0.55f,
+            surfaceDepositSoftness = 0.25f,
+            surfaceDepositRoughness = 0.90f,
+            surfaceDepositNoiseScale = 2.0f,
+            surfaceDepositSecondaryColor = Color(0.68f, 0.78f, 0.92f, 1f),
+            surfaceDepositGlint = 0.35f,
+            surfaceDepositGrain = 0.70f,
+            surfaceDepositSeed = 17.5f,
+        )
         assertContentEquals(floatArrayOf(5f, 80f, 1f, 0f), linear.copyOfRange(range, range + 4))
-        val exponential = block.pack(VIEW_PROJECTION, EYE, FORWARD, LIGHT, CASCADES, FOG, FOG_DENSITY, GpuDebugView.Off, EXPOSURE)
-        assertContentEquals(FloatArray(4), exponential.copyOfRange(range, range + 4), "a refilled block clears the range")
+        assertContentEquals(floatArrayOf(0.92f, 0.96f, 1.0f, 0.75f), linear.copyOfRange(depositColor, depositColor + 4))
+        assertContentEquals(floatArrayOf(0.55f, 0.25f, 0.90f, 2.0f), linear.copyOfRange(depositParams, depositParams + 4))
+        assertContentEquals(floatArrayOf(0.68f, 0.78f, 0.92f, 0.35f), linear.copyOfRange(depositDetail, depositDetail + 4))
+        assertEquals(0.70f, linear[depositSeed + 3], "grainStrength packed in SurfaceDepositSeed.w")
+        assertTrue(linear[depositSeed] != 0f || linear[depositSeed + 1] != 0f, "non-zero seed shifts noise offset")
+        val cleared = block.pack(VIEW_PROJECTION, EYE, FORWARD, LIGHT, CASCADES, FOG, FOG_DENSITY, GpuDebugView.Off, EXPOSURE)
+        assertContentEquals(FloatArray(4), cleared.copyOfRange(range, range + 4), "a refilled block clears the range")
+        assertContentEquals(FloatArray(4), cleared.copyOfRange(depositColor, depositColor + 4), "inactive deposit zeroes color/amount")
+        assertContentEquals(FloatArray(4), cleared.copyOfRange(depositParams, depositParams + 4), "inactive deposit zeroes params")
+        assertContentEquals(FloatArray(4), cleared.copyOfRange(depositDetail, depositDetail + 4), "inactive deposit zeroes detail")
+        assertContentEquals(FloatArray(4), cleared.copyOfRange(depositSeed, depositSeed + 4), "inactive deposit zeroes seed")
+    }
+
+    @Test
+    fun drawFadeCarriesSurfaceDepositScaleAndSeedModifiers() {
+        val exempt = textured(fade = 0f).apply {
+            surfaceDepositScale = 0f
+            surfaceDepositSeed = 13.25f
+        }
+        val own = exempt.drawBlockFloats(MaterialUniformLayouts.PbrTexturedDraw.total, alphaToCoverageEnabled = false)
+        val drawFadeAt = MaterialUniformLayouts.PbrTexturedDraw.offsetOf(UniformFields.DrawFade)
+        assertEquals(1f, own[drawFadeAt + 1])
+        assertEquals(13.25f, own[drawFadeAt + 2])
+
+        val defaultDraw = textured(fade = 0f)
+        val defaultOwn = defaultDraw.drawBlockFloats(MaterialUniformLayouts.PbrTexturedDraw.total, alphaToCoverageEnabled = false)
+        assertEquals(0f, defaultOwn[drawFadeAt + 1])
+        assertEquals(0f, defaultOwn[drawFadeAt + 2])
     }
 
     @Test

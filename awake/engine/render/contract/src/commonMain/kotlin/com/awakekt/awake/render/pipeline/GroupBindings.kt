@@ -206,8 +206,8 @@ data class GroupBindings(
                     binding = FRAME_UNIFORM_BINDING,
                     kind = ResourceKind.UniformBuffer,
                     stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
-                    // `MaterialUniformLayouts.Frame`, 160 floats; the same test holds these equal too.
-                    minBindingSize = 640L,
+                    // `MaterialUniformLayouts.Frame`, 176 floats; the same test holds these equal too.
+                    minBindingSize = 704L,
                 ),
             ),
         )
@@ -228,8 +228,8 @@ data class GroupBindings(
                     binding = FRAME_UNIFORM_BINDING,
                     kind = ResourceKind.UniformBuffer,
                     stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
-                    // `MaterialUniformLayouts.Frame`, 160 floats.
-                    minBindingSize = 640L,
+                    // `MaterialUniformLayouts.Frame`, 176 floats.
+                    minBindingSize = 704L,
                 ),
             ),
         )

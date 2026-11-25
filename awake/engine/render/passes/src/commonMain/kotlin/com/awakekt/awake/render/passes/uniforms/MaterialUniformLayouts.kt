@@ -130,6 +130,10 @@ object MaterialUniformLayouts {
         UniformFields.Exposure,
         // Last, so every field before it keeps its offset (#1807).
         UniformFields.FogRange,
+        UniformFields.SurfaceDepositColor,
+        UniformFields.SurfaceDepositParams,
+        UniformFields.SurfaceDepositDetail,
+        UniformFields.SurfaceDepositSeed,
     )
 
     /**

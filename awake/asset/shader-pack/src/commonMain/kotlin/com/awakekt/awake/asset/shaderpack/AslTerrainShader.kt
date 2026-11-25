@@ -168,6 +168,10 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  * @property terrainOrigin The block's [TerrainUniformLayout.TerrainOrigin]: where this terrain lies.
  * @param exportedFogColor The frame block's `UniformFields.FogColor`, or null in the depth form; read through [fogColor].
  * @param exportedFogRange The frame block's `UniformFields.FogRange`, or null in the depth form; read through [fogRange].
+ * @param exportedSurfaceDepositColor The frame block's `UniformFields.SurfaceDepositColor`, or null in the depth form; read through [surfaceDepositColor].
+ * @param exportedSurfaceDepositParams The frame block's `UniformFields.SurfaceDepositParams`, or null in the depth form; read through [surfaceDepositParams].
+ * @param exportedSurfaceDepositDetail The frame block's `UniformFields.SurfaceDepositDetail`, or null in the depth form; read through [surfaceDepositDetail].
+ * @param exportedSurfaceDepositSeed The frame block's `UniformFields.SurfaceDepositSeed`, or null in the depth form; read through [surfaceDepositSeed].
  */
 @Suppress("LongParameterList") // Pure aggregation of the stage's derived handles.
 class TerrainClipmapOutputs internal constructor(
@@ -185,6 +189,10 @@ class TerrainClipmapOutputs internal constructor(
     val terrainOrigin: AslExpr,
     private val exportedFogColor: AslExpr? = null,
     private val exportedFogRange: AslExpr? = null,
+    private val exportedSurfaceDepositColor: AslExpr? = null,
+    private val exportedSurfaceDepositParams: AslExpr? = null,
+    private val exportedSurfaceDepositDetail: AslExpr? = null,
+    private val exportedSurfaceDepositSeed: AslExpr? = null,
 ) {
     /** `xyz` toward the light, `w` the ambient term. */
     val sunDirection: AslExpr
@@ -220,6 +228,30 @@ class TerrainClipmapOutputs internal constructor(
     val fogRange: AslExpr
         get() = exportedFogRange ?: throw AslDefinitionException(
             "fogRange is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.SurfaceDepositColor` (`rgb` colour, `w` coverage amount). */
+    val surfaceDepositColor: AslExpr
+        get() = exportedSurfaceDepositColor ?: throw AslDefinitionException(
+            "surfaceDepositColor is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.SurfaceDepositParams` (`x` slope, `y` softness, `z` roughness, `w` noise scale). */
+    val surfaceDepositParams: AslExpr
+        get() = exportedSurfaceDepositParams ?: throw AslDefinitionException(
+            "surfaceDepositParams is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.SurfaceDepositDetail` (`rgb` secondary colour, `w` glint strength). */
+    val surfaceDepositDetail: AslExpr
+        get() = exportedSurfaceDepositDetail ?: throw AslDefinitionException(
+            "surfaceDepositDetail is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.SurfaceDepositSeed` (`xy` storm offset, `z` wind angle, `w` grain strength). */
+    val surfaceDepositSeed: AslExpr
+        get() = exportedSurfaceDepositSeed ?: throw AslDefinitionException(
+            "surfaceDepositSeed is not exported by the cascade-depth stage, which shades nothing.",
         )
 
     /** Heightmap normal, interpolated; normalise before use. */
@@ -412,6 +444,10 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(
         origin,
         frame?.value("fogColor"),
         frame?.value("fogRange"),
+        frame?.value("surfaceDepositColor"),
+        frame?.value("surfaceDepositParams"),
+        frame?.value("surfaceDepositDetail"),
+        frame?.value("surfaceDepositSeed"),
     )
 }
 
@@ -600,7 +636,9 @@ private fun terrainShader(clipSpace: ClipSpace, paged: Boolean, allowDiscard: Bo
 
         fragment {
             if (allowDiscard) terrainClipmapDiscardUnderFinerRing(terrain)
-            val normal = let("normal", normalize(terrain.worldNormal))
+            val normal = variable("normal", normalize(terrain.worldNormal))
+            val base = let("base", terrain.terrainParams.z)
+            val baseAlbedo = applyTerrainSurfaceDeposit(vec3(base, base, base), normal, terrain.worldPosition, terrain)
             // Not negated: SceneLight.direction already points TOWARD the light, which is how every
             // other lit shader in the pack reads it.
             val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
@@ -608,17 +646,16 @@ private fun terrainShader(clipSpace: ClipSpace, paged: Boolean, allowDiscard: Bo
             val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))
             val shadow = let("shadow", shadows.sampleShadow(terrain.worldPosition, normal, nDotL))
             val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
-            val base = let("base", terrain.terrainParams.z)
             val surface = DebugSurface(
                 normal = normal,
                 worldPosition = terrain.worldPosition,
-                albedo = vec3(base, base, base),
+                albedo = baseAlbedo,
                 shadow = shadow,
                 shadowCascade = shadows.shadowCascade(terrain.worldPosition),
                 // Terrain's sun has no colour of its own: what the ambient leaves, as it lights.
                 clay = displayTransform.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
             )
-            val mapped = displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x)
+            val mapped = displayTransform.displayReferred(baseAlbedo * lighting, terrain.exposure.x)
             val shaded = vec4(applyTerrainFog(mapped, terrain), 1f.lit)
             colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
         }

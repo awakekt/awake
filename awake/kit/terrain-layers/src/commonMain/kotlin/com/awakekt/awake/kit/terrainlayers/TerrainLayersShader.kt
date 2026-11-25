@@ -51,6 +51,7 @@ import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.TerrainPageSampling
 import com.awakekt.awake.asset.shaderpack.applyTerrainFog
+import com.awakekt.awake.asset.shaderpack.applyTerrainSurfaceDeposit
 import com.awakekt.awake.asset.shaderpack.clayRadiance
 import com.awakekt.awake.asset.shaderpack.debugLayerColor
 import com.awakekt.awake.asset.shaderpack.debugViewColor
@@ -171,8 +172,9 @@ internal fun terrainLayersShader(
         val merged = mergeControlTaps(slots, local, terrain.terrainSampling, controlIndices, controlWeights, layerSampler, terrain.pages, fallbackIndices, fallbackWeights)
         // Anchor palette repeats to the fixed index footprint, so floating-origin shifts preserve UVs.
         val surfacePosition = terrain.pages?.let { pages -> vec4(terrain.worldPosition.x - pages.grid.x, terrain.worldPosition.y, terrain.worldPosition.z - pages.grid.y, 1f.lit).xyz } ?: terrain.worldPosition
-        val albedo = blendLayers(merged, surfacePosition, albedoLayers, layerParams, layerSampler)
-        val normal = let("normal", normalize(terrain.worldNormal))
+        val baseAlbedo = blendLayers(merged, surfacePosition, albedoLayers, layerParams, layerSampler)
+        val normal = variable("normal", normalize(terrain.worldNormal))
+        val albedo = applyTerrainSurfaceDeposit(baseAlbedo, normal, surfacePosition, terrain)
         val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
         val ambient = let("ambient", terrain.sunDirection.w)
         val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))

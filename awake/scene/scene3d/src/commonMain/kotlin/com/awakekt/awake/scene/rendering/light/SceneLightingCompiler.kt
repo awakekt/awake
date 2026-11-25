@@ -29,6 +29,7 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.WorldDebugSettings
 import com.awakekt.awake.scene.rendering.debug.debugSettingsOrNull
+import com.awakekt.awake.scene.rendering.deposit.SurfaceDeposit
 import com.awakekt.awake.scene.rendering.fog.Fog
 import com.awakekt.awake.scene.rendering.fog.FogMode
 import com.awakekt.awake.scene.rendering.fog.requireFogRange
@@ -240,7 +241,6 @@ internal class SceneLightingCompiler(
     fun environmentUniforms(world: World): EnvironmentUniforms {
         val skybox = world.singleOrNull<Skybox>() ?: world.firstOrNull<Skybox>()
         val fog = world.singleOrNull<Fog>() ?: world.firstOrNull<Fog>()
-
         val debug = world.debugSettingsOrNull()
 
         val showSky = skybox?.enabled ?: EnvironmentUniforms.Default.showSky
@@ -261,7 +261,7 @@ internal class SceneLightingCompiler(
         val shadows = debug?.shadowsEnabledOverride
             ?: castsShadows
 
-        return EnvironmentUniforms(
+        val base = EnvironmentUniforms(
             showSky = showSky,
             horizonColor = horizon,
             zenithColor = zenith,
@@ -272,7 +272,8 @@ internal class SceneLightingCompiler(
             skyBodies = skybox?.drawsCelestials != true,
             fogStart = fog.linearStart(debug),
             fogEnd = fog.linearEnd(debug),
-        ).withDebugView(debug)
+        )
+        return applyWorldSurfaceDeposit(world, base).withDebugView(debug)
     }
 
     private fun lightHasShadowReach(light: Light): Boolean = when (light.type) {
@@ -303,6 +304,27 @@ internal class SceneLightingCompiler(
         } else {
             copy(debugView = debug.renderDebugView, debugLayer = debug.renderDebugLayer, wireframe = debug.showWireframe)
         }
+}
+
+private fun applyWorldSurfaceDeposit(world: World, env: EnvironmentUniforms): EnvironmentUniforms {
+    val deposit = world.singleOrNull<SurfaceDeposit>() ?: world.firstOrNull<SurfaceDeposit>()
+    val clamped = if (deposit != null && deposit.enabled) deposit.amount.coerceIn(0f, 1f) else 0f
+    return if (deposit != null && clamped > 0f) {
+        env.copy(
+            surfaceDepositColor = deposit.color,
+            surfaceDepositAmount = clamped,
+            surfaceDepositSlope = deposit.slopeThreshold,
+            surfaceDepositSoftness = deposit.softness,
+            surfaceDepositRoughness = deposit.roughness,
+            surfaceDepositNoiseScale = deposit.noiseScale,
+            surfaceDepositSecondaryColor = deposit.secondaryColor,
+            surfaceDepositGlint = deposit.glint,
+            surfaceDepositGrain = deposit.grainStrength,
+            surfaceDepositSeed = deposit.seed,
+        )
+    } else {
+        env
+    }
 }
 
 private const val POINT_SHADOW_NEAR = 0.05f

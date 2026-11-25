@@ -851,6 +851,54 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/deposit/SurfaceDeposit {
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFF)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component10 ()F
+	public final fun component11 ()F
+	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component9 ()F
+	public final fun copy (ZLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFF)Lcom/awakekt/awake/scene/rendering/deposit/SurfaceDeposit;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/deposit/SurfaceDeposit;ZLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/deposit/SurfaceDeposit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()F
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getEnabled ()Z
+	public final fun getGlint ()F
+	public final fun getGrainStrength ()F
+	public final fun getNoiseScale ()F
+	public final fun getRoughness ()F
+	public final fun getSecondaryColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSeed ()F
+	public final fun getSlopeThreshold ()F
+	public final fun getSoftness ()F
+	public fun hashCode ()I
+	public final fun setAmount (F)V
+	public final fun setColor (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setEnabled (Z)V
+	public final fun setGlint (F)V
+	public final fun setGrainStrength (F)V
+	public final fun setNoiseScale (F)V
+	public final fun setRoughness (F)V
+	public final fun setSecondaryColor (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setSeed (F)V
+	public final fun setSlopeThreshold (F)V
+	public final fun setSoftness (F)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/rendering/deposit/SurfaceDepositKt {
+	public static final fun getDefaultSurfaceDepositColor ()Lcom/awakekt/awake/core/color/Color;
+}
+
 public final class com/awakekt/awake/scene/rendering/fog/Fog {
 	public fun <init> ()V
 	public synthetic fun <init> (ZFLcom/awakekt/awake/core/color/Color;)V
@@ -1835,6 +1883,16 @@ public final class com/awakekt/awake/scene/rendering/mesh/SkinnedInstance {
 	public final fun getTransform ()Lcom/awakekt/awake/core/math/Mat4;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/rendering/mesh/SurfaceDepositMask {
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getScale ()F
+	public final fun getSeed ()F
+	public final fun setScale (F)V
+	public final fun setSeed (F)V
 }
 
 public final class com/awakekt/awake/scene/rendering/mesh/TextureAnimationBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {

@@ -427,8 +427,22 @@ private fun litShadow(
     }
 
     fragment {
-        val rgb = if (skinned) color.xyz else color
-        val n = let("n", normalize(normal))
+        val rgb = variable("baseRgb", if (skinned) color.xyz else color)
+        val n = variable("n", normalize(normal))
+        val metallic = variable("metallic", clamp(u.material!!.x, 0f.lit, 1f.lit))
+        // Floored roughness: perfectly smooth GGX aliases into a single-pixel highlight.
+        val roughness = variable("roughness", clamp(u.material.y, minRoughness, 1f.lit))
+        applyLitSurfaceDeposit(
+            rgb,
+            metallic,
+            roughness,
+            n,
+            worldPos,
+            u.cameraPosition!!,
+            u.surfaceDepositUniforms(),
+            u.drawFade!!,
+            characterScale = skinned,
+        )
         val directionalLength = let("directionalLength", length(u.lightDirection.xyz))
         val directionalEnabled = let("directionalEnabled", directionalLength gt epsilon)
         val l = let(
@@ -440,9 +454,6 @@ private fun litShadow(
         val nDotL = let("nDotL", select(0f.lit, max(dot(n, l), 0f.lit), directionalEnabled))
         val nDotV = let("nDotV", max(dot(n, v), epsilon))
         val nDotH = let("nDotH", max(dot(n, h), 0f.lit))
-        val metallic = let("metallic", clamp(u.material!!.x, 0f.lit, 1f.lit))
-        // Floored roughness: perfectly smooth GGX aliases into a single-pixel highlight.
-        val roughness = let("roughness", clamp(u.material.y, minRoughness, 1f.lit))
         val f0 = let("f0", mix(vec3(dielectricF0), rgb, metallic))
         val fresnel = let("fresnel", fresnelSchlick(max(dot(h, v), 0f.lit), f0))
         val specular = let(

@@ -50,7 +50,73 @@ data class GpuEnvironmentState(
     val fogStart: Float = 0f,
     /** Where linear fog reaches [fogColor], in metres from the eye; see [fogStart]. */
     val fogEnd: Float = 0f,
+    /** Primary highlight/crest colour of dynamic upward-facing surface coating (e.g. snow, ash, dust). */
+    val surfaceDepositColor: Color = Color.White,
+    /** Dynamic surface coating coverage in `[0, 1]`; `0` disables surface deposit shading. */
+    val surfaceDepositAmount: Float = 0f,
+    /** Minimum world-up normal component `dot(N, +Y)` where surface coating settles. */
+    val surfaceDepositSlope: Float = DEFAULT_SURFACE_DEPOSIT_SLOPE,
+    /** Edge feathering and organic breakup width for surface coating transitions. */
+    val surfaceDepositSoftness: Float = DEFAULT_SURFACE_DEPOSIT_SOFTNESS,
+    /** Surface roughness applied to coated PBR fragments (`0` glossy wet, `1` matte powder). */
+    val surfaceDepositRoughness: Float = DEFAULT_SURFACE_DEPOSIT_ROUGHNESS,
+    /** World-space frequency for procedural organic breakup of surface coating. */
+    val surfaceDepositNoiseScale: Float = DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+    /** Optional crevice/hollow contrast colour (`null` auto-derives a cool darker shade from [surfaceDepositColor]). */
+    val surfaceDepositSecondaryColor: Color? = null,
+    /** Micro-sparkle glint intensity in `[0, 1]` (`0` for matte ash/dust, positive for snow/frost). */
+    val surfaceDepositGlint: Float = 0f,
+    /** Procedural micro-texture and micro-bump grain contrast in `[0, 1]`. */
+    val surfaceDepositGrain: Float = DEFAULT_SURFACE_DEPOSIT_GRAIN,
+    /** Per-storm spatial randomization seed shifting drift placement and wind-stretch angle. */
+    val surfaceDepositSeed: Float = 0f,
 ) {
+    /** The constructor as released before [surfaceDepositColor], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with surfaceDeposit fields.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        showSky: Boolean = false,
+        horizonColor: Color = Color.Black,
+        zenithColor: Color = Color.Black,
+        fogDensity: Float = 0f,
+        fogColor: Color = Color.Black,
+        shadowsEnabled: Boolean = true,
+        debugView: GpuDebugView = GpuDebugView.Off,
+        exposure: Float = 1f,
+        contentFeatures: Boolean = true,
+        clearColor: Color? = null,
+        skyBodies: Boolean = true,
+        fogStart: Float = 0f,
+        fogEnd: Float = 0f,
+    ) : this(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
+        clearColor, skyBodies, fogStart, fogEnd, Color.White, 0f, DEFAULT_SURFACE_DEPOSIT_SLOPE,
+        DEFAULT_SURFACE_DEPOSIT_SOFTNESS, DEFAULT_SURFACE_DEPOSIT_ROUGHNESS, DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        null, 0f, DEFAULT_SURFACE_DEPOSIT_GRAIN, 0f,
+    )
+
+    /** [copy] as released before [surfaceDepositColor]. */
+    @Deprecated("Use copy with surfaceDeposit fields.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        showSky: Boolean = this.showSky,
+        horizonColor: Color = this.horizonColor,
+        zenithColor: Color = this.zenithColor,
+        fogDensity: Float = this.fogDensity,
+        fogColor: Color = this.fogColor,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        debugView: GpuDebugView = this.debugView,
+        exposure: Float = this.exposure,
+        contentFeatures: Boolean = this.contentFeatures,
+        clearColor: Color? = this.clearColor,
+        skyBodies: Boolean = this.skyBodies,
+        fogStart: Float = this.fogStart,
+        fogEnd: Float = this.fogEnd,
+    ): GpuEnvironmentState = copy(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
+        clearColor, skyBodies, fogStart, fogEnd, surfaceDepositColor, surfaceDepositAmount, surfaceDepositSlope,
+        surfaceDepositSoftness, surfaceDepositRoughness, surfaceDepositNoiseScale, surfaceDepositSecondaryColor,
+        surfaceDepositGlint, surfaceDepositGrain, surfaceDepositSeed,
+    )
+
     /** The constructor as released before [fogStart], kept so compiled callers still link. */
     @Deprecated("Use the constructor with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -67,7 +133,9 @@ data class GpuEnvironmentState(
         skyBodies: Boolean = true,
     ) : this(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
-        clearColor, skyBodies, 0f, 0f,
+        clearColor, skyBodies, 0f, 0f, Color.White, 0f, DEFAULT_SURFACE_DEPOSIT_SLOPE,
+        DEFAULT_SURFACE_DEPOSIT_SOFTNESS, DEFAULT_SURFACE_DEPOSIT_ROUGHNESS, DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        null, 0f, DEFAULT_SURFACE_DEPOSIT_GRAIN, 0f,
     )
 
     /** [copy] as released before [fogStart]. */
@@ -86,7 +154,9 @@ data class GpuEnvironmentState(
         skyBodies: Boolean = this.skyBodies,
     ): GpuEnvironmentState = copy(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
-        clearColor, skyBodies, fogStart, fogEnd,
+        clearColor, skyBodies, fogStart, fogEnd, surfaceDepositColor, surfaceDepositAmount, surfaceDepositSlope,
+        surfaceDepositSoftness, surfaceDepositRoughness, surfaceDepositNoiseScale, surfaceDepositSecondaryColor,
+        surfaceDepositGlint, surfaceDepositGrain, surfaceDepositSeed,
     )
 
     /** The constructor as released before [skyBodies], kept so compiled callers still link. */
@@ -104,7 +174,9 @@ data class GpuEnvironmentState(
         clearColor: Color? = null,
     ) : this(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
-        clearColor, true, 0f, 0f,
+        clearColor, true, 0f, 0f, Color.White, 0f, DEFAULT_SURFACE_DEPOSIT_SLOPE,
+        DEFAULT_SURFACE_DEPOSIT_SOFTNESS, DEFAULT_SURFACE_DEPOSIT_ROUGHNESS, DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE,
+        null, 0f, DEFAULT_SURFACE_DEPOSIT_GRAIN, 0f,
     )
 
     /** [copy] as released before [skyBodies]. */
@@ -122,7 +194,9 @@ data class GpuEnvironmentState(
         clearColor: Color? = this.clearColor,
     ): GpuEnvironmentState = copy(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
-        clearColor, skyBodies, fogStart, fogEnd,
+        clearColor, skyBodies, fogStart, fogEnd, surfaceDepositColor, surfaceDepositAmount, surfaceDepositSlope,
+        surfaceDepositSoftness, surfaceDepositRoughness, surfaceDepositNoiseScale, surfaceDepositSecondaryColor,
+        surfaceDepositGlint, surfaceDepositGrain, surfaceDepositSeed,
     )
 
     /** Whether this pass fogs linearly, from [fogStart] to [fogEnd]. */
@@ -133,6 +207,21 @@ data class GpuEnvironmentState(
 
     /** Predefined environment state constants. */
     companion object {
+        /** Default upward-normal threshold for dynamic surface coating. */
+        const val DEFAULT_SURFACE_DEPOSIT_SLOPE: Float = 0.52f
+
+        /** Default transition softness and organic breakup width for dynamic surface coating. */
+        const val DEFAULT_SURFACE_DEPOSIT_SOFTNESS: Float = 0.24f
+
+        /** Default PBR roughness applied where surface coating accumulates. */
+        const val DEFAULT_SURFACE_DEPOSIT_ROUGHNESS: Float = 0.92f
+
+        /** Default world-space organic noise frequency for dynamic surface coating. */
+        const val DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE: Float = 1.6f
+
+        /** Default procedural micro-texture and micro-bump grain strength. */
+        const val DEFAULT_SURFACE_DEPOSIT_GRAIN: Float = 0.55f
+
         /** Default environment state with sky disabled, no fog, and shadows enabled. */
         val Default = GpuEnvironmentState()
     }

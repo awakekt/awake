@@ -281,6 +281,8 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun getShadowsOnly ()Z
 	public final fun getSortLayer ()I
 	public final fun getSortOrder ()I
+	public final fun getSurfaceDepositScale ()F
+	public final fun getSurfaceDepositSeed ()F
 	public final fun getTimeSeconds ()F
 	public final fun getTransparent ()Z
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -310,6 +312,8 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun setShadowsOnly (Z)V
 	public final fun setSortLayer (I)V
 	public final fun setSortOrder (I)V
+	public final fun setSurfaceDepositScale (F)V
+	public final fun setSurfaceDepositSeed (F)V
 	public final fun setTimeSeconds (F)V
 	public final fun setTransparent (Z)V
 	public final fun setVertexAnimation (Lcom/awakekt/awake/core/math/Vec3f;)V
@@ -326,12 +330,19 @@ public final class com/awakekt/awake/render/command/GpuDrawRequestKt {
 
 public final class com/awakekt/awake/render/command/GpuEnvironmentState {
 	public static final field Companion Lcom/awakekt/awake/render/command/GpuEnvironmentState$Companion;
+	public static final field DEFAULT_SURFACE_DEPOSIT_GRAIN F
+	public static final field DEFAULT_SURFACE_DEPOSIT_NOISE_SCALE F
+	public static final field DEFAULT_SURFACE_DEPOSIT_ROUGHNESS F
+	public static final field DEFAULT_SURFACE_DEPOSIT_SLOPE F
+	public static final field DEFAULT_SURFACE_DEPOSIT_SOFTNESS F
 	public fun <init> ()V
 	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;)V
 	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;Z)V
-	public fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFF)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFF)V
 	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFF)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun clearColorOr (Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/core/color/Color;
 	public final fun component1 ()Z
@@ -339,7 +350,17 @@ public final class com/awakekt/awake/render/command/GpuEnvironmentState {
 	public final fun component11 ()Z
 	public final fun component12 ()F
 	public final fun component13 ()F
+	public final fun component14 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component15 ()F
+	public final fun component16 ()F
+	public final fun component17 ()F
+	public final fun component18 ()F
+	public final fun component19 ()F
 	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component20 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component21 ()F
+	public final fun component22 ()F
+	public final fun component23 ()F
 	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component4 ()F
 	public final fun component5 ()Lcom/awakekt/awake/core/color/Color;
@@ -349,9 +370,11 @@ public final class com/awakekt/awake/render/command/GpuEnvironmentState {
 	public final fun component9 ()Z
 	public final synthetic fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public final synthetic fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;Z)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
-	public final fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFF)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
+	public final synthetic fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFF)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
+	public final fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFF)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuEnvironmentState;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuEnvironmentState;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFFILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuEnvironmentState;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/color/Color;FFFILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuEnvironmentState;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/command/GpuDebugView;FZLcom/awakekt/awake/core/color/Color;ZILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
@@ -367,6 +390,16 @@ public final class com/awakekt/awake/render/command/GpuEnvironmentState {
 	public final fun getShadowsEnabled ()Z
 	public final fun getShowSky ()Z
 	public final fun getSkyBodies ()Z
+	public final fun getSurfaceDepositAmount ()F
+	public final fun getSurfaceDepositColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSurfaceDepositGlint ()F
+	public final fun getSurfaceDepositGrain ()F
+	public final fun getSurfaceDepositNoiseScale ()F
+	public final fun getSurfaceDepositRoughness ()F
+	public final fun getSurfaceDepositSecondaryColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSurfaceDepositSeed ()F
+	public final fun getSurfaceDepositSlope ()F
+	public final fun getSurfaceDepositSoftness ()F
 	public final fun getZenithColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -2734,6 +2767,10 @@ public final class com/awakekt/awake/render/renderer/UniformFields {
 	public final fun getPbrFactors ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getPointLightColors ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getPointLightPositions ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSurfaceDepositColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSurfaceDepositDetail ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSurfaceDepositParams ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSurfaceDepositSeed ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getTextureFrames ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getTextureScroll ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/render/renderer/UniformField;

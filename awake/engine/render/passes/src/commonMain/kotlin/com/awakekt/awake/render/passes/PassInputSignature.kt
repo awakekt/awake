@@ -101,6 +101,8 @@ internal class PassInputSignature {
         ref(draw.alphaMode)
         float(draw.alphaCutoff)
         float(draw.fadeOpacity)
+        float(draw.surfaceDepositScale)
+        float(draw.surfaceDepositSeed)
         float(draw.sortOrder.toFloat())
         float(draw.maskLayer.toFloat())
         float(draw.sortLayer.toFloat())
@@ -145,7 +147,7 @@ internal class PassInputSignature {
         const val MATRIX_FLOATS = 18
 
         /** Every float [draw] writes besides its extras and instance models: model, clocks, state and bounds. */
-        const val DRAW_FLOATS = 48
+        const val DRAW_FLOATS = 50
         const val DRAW_REFS = 4
     }
 }
