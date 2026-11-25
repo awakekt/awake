@@ -61,8 +61,7 @@ class FocusAudioPlayer private constructor(
                 music?.let { delegate.playMusic(it.clip, it.volume, it.loop) }
             } else {
                 delegate.stopMusic()
-                sounds.forEach { it.stop() }
-                sounds.clear()
+                stopAndClearSounds()
             }
         }
 
@@ -81,7 +80,7 @@ class FocusAudioPlayer private constructor(
     ): SoundHandle? {
         syncFocus()
         if (!focused || disposed) return null
-        sounds.removeAll { !it.isPlaying }
+        pruneStoppedSounds()
         return delegate.playSound(clip, volume, pan, loop)?.also { sounds += it }
     }
 
@@ -119,7 +118,27 @@ class FocusAudioPlayer private constructor(
         if (disposed) return
         disposed = true
         music = null
-        sounds.clear()
+        stopAndClearSounds()
         delegate.dispose()
+    }
+
+    private fun pruneStoppedSounds() {
+        var index = 0
+        while (index < sounds.size) {
+            val handle = sounds[index]
+            if (!handle.isPlaying) {
+                sounds.removeAt(index)
+                handle.stop()
+            } else {
+                index++
+            }
+        }
+    }
+
+    private fun stopAndClearSounds() {
+        for (i in sounds.indices) {
+            sounds[i].stop()
+        }
+        sounds.clear()
     }
 }

@@ -7,6 +7,7 @@ package com.awakekt.awake.core.audio
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
@@ -117,5 +118,20 @@ internal class AndroidAudioPlayerTest {
         player.dispose()
         // Subsequent calls after disposal must safely return null without throwing
         assertNull(player.playSound(clip))
+    }
+
+    @Test
+    fun customMaxConcurrentOneShotsIsValidatedAndOneShotPathSafelyExecutes() {
+        assertFailsWith<IllegalArgumentException> {
+            AndroidAudioPlayer(maxConcurrentOneShots = 0)
+        }
+
+        val player = AndroidAudioPlayer(maxConcurrentOneShots = 4)
+        val clip = SoundSynthesizer.tone("oneshot_tone", "OneShot", 440f, 0.05f)
+        val handle = player.playSound(clip, volume = 0.8f, pan = 0f, loop = false)
+        handle?.stop()
+        player.stopMusic()
+        player.dispose()
+        assertNull(player.playSound(clip, loop = false))
     }
 }
