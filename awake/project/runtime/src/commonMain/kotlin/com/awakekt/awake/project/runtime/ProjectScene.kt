@@ -39,6 +39,8 @@ internal class ProjectScene(
 ) : AutoCloseable {
     var document: SceneDocument = document
         private set
+    var documentReleased: Boolean = false
+        private set
     var models: GltfAssetResolver = models
         private set
     var physics: PhysicsWorld? = physics
@@ -71,12 +73,27 @@ internal class ProjectScene(
     }
 
     /**
+     * Releases the decoded [SceneDocument.nodes] and [SceneDocument.extensions] trees once this
+     * scene has been planned and instantiated into a [World], retaining only the lightweight header
+     * (`version` and `name`) so callers reading `LoadedProject.scene.name` still observe the active
+     * scene while terrain sample arrays and node ASTs become eligible for garbage collection.
+     * Calling twice is harmless.
+     */
+    fun releaseDocumentAfterInstantiation() {
+        if (documentReleased) return
+        documentReleased = true
+        if (document.nodes.isEmpty() && document.extensions.isEmpty()) return
+        document = SceneDocument(version = document.version, name = document.name)
+    }
+
+    /**
      * Destroys the physics world, if the scene had one, stops loading models, and releases retained
      * scene document, model resolver, and feature content references. Closing twice is harmless.
      */
     override fun close() {
         if (closed) return
         closed = true
+        documentReleased = true
         physics?.destroy()
         physics = null
         spawnedModels.close()
