@@ -72,7 +72,13 @@ class OutlineRenderFeature(
             put(OutlineFields.Viewport, width, height, 0f, 0f)
             put(OutlineFields.Color0, styles[0]?.color ?: NO_COLOR)
             put(OutlineFields.Color1, styles[1]?.color ?: NO_COLOR)
-            put(OutlineFields.Widths, styles[0]?.widthPixels ?: 0f, styles[1]?.widthPixels ?: 0f, 0f, 0f)
+            put(
+                OutlineFields.Widths,
+                styles[0]?.widthPixels ?: 0f,
+                styles[1]?.widthPixels ?: 0f,
+                styles[0]?.softness ?: 0f,
+                styles[1]?.softness ?: 0f,
+            )
         }
         val recorder: CommandRecorder = context.recorder
         recorder.bindPipeline(pipeline)

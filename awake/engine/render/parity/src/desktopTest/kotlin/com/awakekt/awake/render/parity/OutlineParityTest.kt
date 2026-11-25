@@ -107,6 +107,7 @@ class OutlineParityTest {
                 assertTrue(hovered.blue > RING_PIXELS && hovered.red == 0, "$backend: set 1 in its own colour: $hovered")
 
                 verifyWideTarget(backend, renderer, mesh, material, lens)
+                verifySoftGlow(backend, renderer, target, mesh, material, lens)
             } finally {
                 renderer.waitIdle()
                 mesh.destroy()
@@ -155,6 +156,52 @@ class OutlineParityTest {
             renderer.waitIdle()
             wideTarget.destroy()
         }
+    }
+
+    /** Softness > 0 renders a smooth, monotonically fading screen-space Gaussian glow without tinting inside or clipping at the scissor. */
+    private suspend fun verifySoftGlow(
+        backend: HeadlessUiBackend,
+        renderer: Renderer,
+        target: com.awakekt.awake.render.texture.RenderTarget,
+        mesh: com.awakekt.awake.render.mesh.Mesh,
+        material: com.awakekt.awake.render.material.Material,
+        lens: Lens,
+    ) {
+        val half = CUBE / 2
+        val bounds = Aabb(Vec3f(-half, -half, -half), Vec3f(half, half, half))
+        suspend fun renderSoft(worldBounds: Aabb?): ByteArray {
+            renderer.renderToTexture(
+                target,
+                ScenePassCompiler.compile(
+                    lens = lens,
+                    drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0, worldBounds = worldBounds)),
+                    light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
+                    clipSpace = renderer.clipSpace,
+                    aspect = 1f,
+                    drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                    maskLayers = listOf(SOFT_SELECTED.packed(), HOVERED.packed()),
+                ),
+            )
+            return renderer.readPixels(target).data
+        }
+        val pixels = renderSoft(worldBounds = bounds)
+        val row = SIZE / 2
+        val squareLeft = SIZE / 2 - SQUARE / 2
+        val nearRed = pixels.channel(row * SIZE + (squareLeft - 1), 0)
+        val midRed = pixels.channel(row * SIZE + (squareLeft - 5), 0)
+        val farRed = pixels.channel(row * SIZE + (squareLeft - 12), 0)
+        val insideRed = pixels.channel(row * SIZE + (squareLeft + 4), 0)
+        val insideBlue = pixels.channel(row * SIZE + (squareLeft + 4), 2)
+        println("$backend soft outline: nearRed=$nearRed midRed=$midRed farRed=$farRed inside=($insideRed,$insideBlue)")
+        assertTrue(nearRed > STRONG, "$backend: soft glow near edge must be bright, got $nearRed")
+        assertTrue(
+            midRed in (farRed + 20) until (nearRed - 20),
+            "$backend: soft glow must smoothly fade (far=$farRed < mid=$midRed < near=$nearRed)",
+        )
+        assertTrue(
+            kotlin.math.abs(insideRed - insideBlue) < 10,
+            "$backend: soft glow must not bleed into the white silhouette interior: R=$insideRed B=$insideBlue",
+        )
     }
 
     private suspend fun open(backend: HeadlessUiBackend): HeadlessRenderSession {
@@ -219,6 +266,7 @@ class OutlineParityTest {
         const val STRONG = 180
         const val WEAK = 90
         val SELECTED = OutlineStyle(Color(1f, 0f, 0f, 1f), WIDTH.toFloat())
+        val SOFT_SELECTED = OutlineStyle(Color(1f, 0f, 0f, 1f), widthPixels = 10f, softness = 1f)
         val HOVERED = OutlineStyle(Color(0f, 0f, 1f, 1f), WIDTH.toFloat())
     }
 }

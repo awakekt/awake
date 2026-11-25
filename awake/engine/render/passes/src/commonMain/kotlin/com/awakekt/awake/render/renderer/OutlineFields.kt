@@ -24,7 +24,10 @@ object OutlineFields {
     /** Mask layer 1's outline colour. */
     val Color1 = UniformField("color1", GpuDataShape.Vec4)
 
-    /** X and Y: mask layers 0 and 1's outline widths in pixels; a width under half a pixel draws none. */
+    /**
+     * X and Y: mask layers 0 and 1's outline widths in pixels; a width under half a pixel draws none.
+     * Z and W: mask layers 0 and 1's edge softness (`0` for a crisp outline, `0..1` for a screen-space blurred glow).
+     */
     val Widths = UniformField("widths", GpuDataShape.Vec4)
 
     init {
@@ -45,12 +48,26 @@ const val OUTLINE_MIN_WIDTH_PIXELS: Float = 0.5f
 
 /**
  * How one mask layer's outline is drawn: in [color], [widthPixels] wide around the silhouette of
- * what the layer masks. A mask sub-pass carries it as its pass uniforms, [packed], and the outline
- * overlay reads it back with [unpack].
+ * what the layer masks, with [softness] controlling edge falloff (`0f` for a crisp hard border,
+ * up to `1f` for a smooth screen-space Gaussian glow). A mask sub-pass carries it as its pass
+ * uniforms, [packed], and the outline overlay reads it back with [unpack].
  */
-data class OutlineStyle(val color: Color, val widthPixels: Float) {
+data class OutlineStyle(
+    val color: Color,
+    val widthPixels: Float,
+    val softness: Float = 0f,
+) {
+    /** The constructor as released before [softness], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with softness.", level = DeprecationLevel.HIDDEN)
+    constructor(color: Color, widthPixels: Float) : this(color, widthPixels, softness = 0f)
+
+    /** [copy] as released before [softness]. */
+    @Deprecated("Use copy with softness.", level = DeprecationLevel.HIDDEN)
+    fun copy(color: Color = this.color, widthPixels: Float = this.widthPixels): OutlineStyle =
+        copy(color, widthPixels, softness)
+
     /** This style as a mask sub-pass's pass uniforms. */
-    fun packed(): FloatArray = floatArrayOf(color.r, color.g, color.b, color.a, widthPixels)
+    fun packed(): FloatArray = floatArrayOf(color.r, color.g, color.b, color.a, widthPixels, softness.coerceIn(0f, 1f))
 
     /**
      * Whether this style draws anything: at least [OUTLINE_MIN_WIDTH_PIXELS] wide, and not fully
@@ -61,10 +78,16 @@ data class OutlineStyle(val color: Color, val widthPixels: Float) {
 
     /** Reading a style back from a mask sub-pass. */
     companion object {
-        private const val PACKED_SIZE = 5
+        private const val MIN_PACKED_SIZE = 5
+        private const val SOFTNESS_INDEX = 5
 
         /** The style [floats] hold, as [packed] wrote them, or null when they hold none. */
         fun unpack(floats: FloatArray): OutlineStyle? =
-            if (floats.size < PACKED_SIZE) null else OutlineStyle(Color(floats[0], floats[1], floats[2], floats[3]), floats[4])
+            if (floats.size < MIN_PACKED_SIZE) {
+                null
+            } else {
+                val softness = if (floats.size > SOFTNESS_INDEX) floats[SOFTNESS_INDEX].coerceIn(0f, 1f) else 0f
+                OutlineStyle(Color(floats[0], floats[1], floats[2], floats[3]), floats[4], softness)
+            }
     }
 }
