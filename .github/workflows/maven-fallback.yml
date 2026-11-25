@@ -1,13 +1,14 @@
 name: Maven fallback
 
 # Serves recent Core and Vulkan releases as a static Maven repository on GitHub Pages,
-# https://awakekt.github.io/awake/, for a release Maven Central refuses under its publishing limits:
-# the newest CORE_RELEASES Core and VULKAN_RELEASES Vulkan releases, plus every release their POMs
-# name (#1694). A Vulkan release imports the Core BOM, and depends on Core artifacts, of the Core
-# release it was built against, so that release is kept for as long as the Vulkan release is. It also serves the io.ygdrasil (wgpu4k) snapshot builds the WebGPU
-# backend pins, from the mirror-io.ygdrasil-* releases, once Central's snapshot cleanup removes them.
-# The files are the ones the release job signed and staged for Central and attached to each GitHub
-# Release, so they keep Central's coordinates and a build adds this repository after mavenCentral().
+# https://awakekt.github.io/awake/, and additively mirrors them to Cloudflare R2
+# (https://maven.awakekt.com/, bucket `awake-maven`) for releases Maven Central refuses under its
+# publishing limits:
+# - GitHub Pages serves the newest CORE_RELEASES Core and VULKAN_RELEASES Vulkan releases, plus
+#   every release their POMs name (#1694), and the io.ygdrasil (wgpu4k) snapshot builds the WebGPU
+#   backend pins from mirror-io.ygdrasil-*.
+# - Cloudflare R2 syncs additively (without deleting older versions) so consumers pinned to older
+#   Core or Vulkan releases never hit 404 when newer releases rotate out of GitHub Pages' 1 GB cap.
 #
 # It runs once a Publish run finishes, from the default branch: workflow_run always does, and the
 # github-pages environment deploys only from there, whatever tag the release ran on. A Publish run
@@ -18,6 +19,12 @@ on:
     workflows: [Publish]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      backfill_r2:
+        description: 'Backfill the newest 20 Core and 20 Vulkan releases into Cloudflare R2 (awake-maven)'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: maven-fallback
@@ -26,21 +33,20 @@ concurrency:
 permissions:
   contents: read
 
-# What the site keeps, in one place. A deploy publishes the site whole, replacing the one before, so
-# these decide what stays served. GitHub Pages caps a site at 1 GB. Served whole, a Core release is
-# 144 MB unpacked and a Vulkan release 56 MB, plus filesystem block overhead across thousands of small
-# checksum/signature files: 4 Core + 3 Vulkan measured 963 MB on disk (`du -sm`, run 44878804169),
-# exceeding ASSEMBLE_LIMIT_MB (900 MB). Of the Core releases the Vulkan releases name, only the
-# artifacts they name are served, 77 MB each (#1694). Three Core releases + 3 Vulkan fit around
-# 780 MB assembled and 800 MB on the site, leaving room for the wgpu4k mirror while still keeping
-# two releases behind whole (#1592).
-# ASSEMBLE_LIMIT_MB stops the build, with each release's size, leaving room for the mirror;
-# SITE_LIMIT_MB stops a deploy before Pages would refuse it.
+# What the GitHub Pages site keeps, in one place. A deploy publishes the site whole, replacing the
+# one before, so these decide what stays served on awakekt.github.io/awake. GitHub Pages caps a
+# site at 1 GB. After bundle trimming, each Core release is ~75 MB unpacked (~91 MB on disk) and
+# each Vulkan release ~50 MB unpacked (~52 MB on disk): 3 Core + 3 Vulkan + 42 MB partial Core +
+# wgpu4k measured 501 MB total (`du -sm`, run 45509264986). Keeping 6 Core + 4 Vulkan + wgpu4k fits
+# around ~770 MB on disk — safely below ASSEMBLE_LIMIT_MB (900 MB) and SITE_LIMIT_MB (950 MB) while
+# keeping consumers several releases behind working during Central quota windows.
 env:
-  CORE_RELEASES: 3
-  VULKAN_RELEASES: 3
+  CORE_RELEASES: 6
+  VULKAN_RELEASES: 4
   ASSEMBLE_LIMIT_MB: 900
   SITE_LIMIT_MB: 950
+  R2_BUCKET: awake-maven
+  R2_PUBLIC_URL: https://maven.awakekt.com/
 
 jobs:
   deploy:
@@ -150,3 +156,42 @@ jobs:
             echo "$missing"
             exit 1
           fi
+
+      # Additive mirror into Cloudflare R2 (https://maven.awakekt.com/): never deletes older versions,
+      # so consumers pinned to older releases never break when GitHub Pages rotates past its 1 GB cap.
+      - name: Mirror to Cloudflare R2 (maven.awakekt.com)
+        if: steps.bundles.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_KEY }}
+          AWS_DEFAULT_REGION: auto
+          BACKFILL_R2: ${{ inputs.backfill_r2 == true }}
+        run: |
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "::notice::Skipping Cloudflare R2 mirror (${R2_PUBLIC_URL}): set CLOUDFLARE_R2_ID and CLOUDFLARE_R2_KEY secrets on this repository to enable zero-eviction R2 mirroring."
+            exit 0
+          fi
+
+          r2_src="build/maven-fallback"
+          if [ "$BACKFILL_R2" = "true" ]; then
+            echo "Assembling expanded backfill bundle (20 Core + 20 Vulkan) for R2..."
+            MAVEN_FALLBACK_URL="$R2_PUBLIC_URL" scripts/maven-fallback-assemble.sh build/maven-r2 20 20
+            for zip in build/mirrors/*.zip; do
+              [ -e "$zip" ] || continue
+              unzip -q -o "$zip" -d build/maven-r2
+            done
+            r2_src="build/maven-r2"
+          fi
+
+          endpoint="https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          aws --endpoint-url "$endpoint" s3 sync "$r2_src/" "s3://${R2_BUCKET}/" \
+            --size-only --no-progress \
+            --exclude "index.html" --exclude "*/maven-metadata.xml*" \
+            --cache-control "public, max-age=31536000, immutable"
+          aws --endpoint-url "$endpoint" s3 sync "$r2_src/" "s3://${R2_BUCKET}/" \
+            --no-progress \
+            --exclude "*" --include "index.html" --include "*/maven-metadata.xml*" \
+            --cache-control "public, max-age=60"
+          echo "Mirrored Maven fallback additively to ${R2_PUBLIC_URL} (bucket ${R2_BUCKET})."
