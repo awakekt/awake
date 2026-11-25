@@ -62,6 +62,9 @@ class Material(
     internal var onDestroy: (() -> Unit)? = null
     private var destroyed = false
 
+    /** Whether [destroy] has already retired this material's Vulkan resources. */
+    internal val isDestroyed: Boolean get() = destroyed
+
     val descriptorSetLayout: DescriptorSetLayoutHandle
 
     /**
@@ -103,12 +106,13 @@ class Material(
     private val slotBlocks = mutableListOf<SlotBlock>()
     private var slotsInLastBlock = SLOTS_PER_BLOCK
 
-    /** The sampler/image view this material was built with -- exposed (read-only) so
-     * `UiTextureRenderPipeline` can bind the SAME sampled image into its own (screen-space
-     * quad) descriptor set for on-screen compositing, without re-deriving them from whatever
-     * [Texture]/`OffscreenRenderTarget` this material was created from. */
-    var samplerHandle: Long = 0
-        private set
+    private var fallbackSamplerHandle: Long = 0
+
+    /** The live sampler this material binds -- reads [Texture.sampler] when backed by a [Texture]
+     * so `Renderer.maxAnisotropy` resampling updates UI texture draws without binding a retired
+     * sampler, falling back to the render-target sampler passed to [createResourcesFromRenderTarget]. */
+    val samplerHandle: Long
+        get() = texture?.sampler?.handle ?: fallbackSamplerHandle
 
     /**
      * The image view bound together with [samplerHandle]; 0 until [createResources] or
@@ -160,7 +164,7 @@ class Material(
         private set
 
     private fun createResources(sampler: Long, imageView: Long, pbr: PbrImageViews) {
-        samplerHandle = sampler
+        fallbackSamplerHandle = sampler
         imageViewHandle = imageView
         pbrImageViews = pbr
         textureDescriptorVersion = graphicsDevice.allocateTextureDescriptorVersion()

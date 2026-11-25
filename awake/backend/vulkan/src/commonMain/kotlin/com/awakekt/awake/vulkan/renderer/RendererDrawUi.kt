@@ -102,13 +102,32 @@ private fun Renderer.ensureGlyphRunAtlases(): Boolean {
  * descriptor set.
  */
 internal fun Renderer.dropStagedUiSampling(target: OffscreenRenderTarget) {
-    uiTextureRenderPipelines.values.forEach { it.invalidateImageView(target.colorImageView) }
-    offscreenTextureRenderPipelines.values.forEach { it.invalidateImageView(target.colorImageView) }
-    uiTargetCompositePipeline?.invalidateImageView(target.colorImageView)
-    imagePassExecutor.invalidateImageView(target.colorImageView)
-    uiRuns = uiRuns.map { run ->
-        if (run !is DrawRun.TextureRun) return@map run
-        DrawRun.TextureRun(run.primitives.filterNot { (it.texture as? Material)?.imageViewHandle == target.colorImageView })
+    dropStagedUiSampling(imageViewHandle = target.colorImageView, material = null)
+}
+
+/**
+ * Removes staged UI textures that sample [material], which is being destroyed. Prevents a scene
+ * switch or idle texture eviction between `drawUi` and the next `draw` from recording descriptors
+ * pointing at a retired material or its owned textures.
+ */
+internal fun Renderer.dropStagedUiSampling(material: Material) {
+    dropStagedUiSampling(imageViewHandle = material.imageViewHandle, material = material)
+}
+
+private fun Renderer.dropStagedUiSampling(imageViewHandle: Long, material: Material?) {
+    if (imageViewHandle != 0L) {
+        uiTextureRenderPipelines.values.forEach { it.invalidateImageView(imageViewHandle) }
+        offscreenTextureRenderPipelines.values.forEach { it.invalidateImageView(imageViewHandle) }
+        uiTargetCompositePipeline?.invalidateImageView(imageViewHandle)
+        imagePassExecutor.invalidateImageView(imageViewHandle)
+    }
+    uiRuns = uiRuns.mapNotNull { run ->
+        if (run !is DrawRun.TextureRun) return@mapNotNull run
+        val kept = run.primitives.filterNot { primitive ->
+            val tex = primitive.texture as? Material ?: return@filterNot false
+            (material != null && tex === material) || (imageViewHandle != 0L && tex.imageViewHandle == imageViewHandle)
+        }
+        if (kept.isEmpty()) null else DrawRun.TextureRun(kept)
     }
 }
 

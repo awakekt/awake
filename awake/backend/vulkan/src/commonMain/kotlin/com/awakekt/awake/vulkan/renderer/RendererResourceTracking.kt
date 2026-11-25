@@ -33,6 +33,7 @@ internal fun Renderer.trackMaterial(material: Material, releaseTextures: (() -> 
     liveMaterialCount += 1
     material.onDestroy = {
         liveMaterialCount -= 1
+        dropStagedUiSampling(material)
         releaseTextures?.invoke()
     }
     return material

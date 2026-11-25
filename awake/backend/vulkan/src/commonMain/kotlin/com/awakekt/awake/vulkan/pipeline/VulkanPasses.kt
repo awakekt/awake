@@ -138,6 +138,7 @@ internal class VulkanUiRunRecorder(
     override fun drawTexturePrimitive(primitive: TexturedPrimitiveRun, slotIndex: Int) {
         val pipeline = pipelines.textures[primitive.compositeMode] ?: return
         val material = primitive.texture as Material
+        if (material.isDestroyed || !material.hasTexture) return
         val mesh = textureMeshForPrimitive(slotIndex)
         if (boundPipeline !== pipeline) {
             pipeline.bindPipelineOnly(commandBuffer)
