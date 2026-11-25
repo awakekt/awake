@@ -15,6 +15,38 @@ public final class com/awakekt/awake/core/host/DesktopFrameLoop : com/awakekt/aw
 	public fun tick (Lkotlin/jvm/functions/Function1;)V
 }
 
+public final class com/awakekt/awake/core/host/DesktopMemoryKt {
+	public static final fun runtimeHeapLimitBytes ()J
+	public static final fun runtimeHeapUsedBytes ()J
+}
+
+public final class com/awakekt/awake/core/host/DeviceProfile {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Long;Ljava/lang/Integer;Lcom/awakekt/awake/core/host/ThermalState;Ljava/lang/Float;ZZ)V
+	public synthetic fun <init> (Ljava/lang/Long;Ljava/lang/Integer;Lcom/awakekt/awake/core/host/ThermalState;Ljava/lang/Float;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Long;
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun component3 ()Lcom/awakekt/awake/core/host/ThermalState;
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun copy (Ljava/lang/Long;Ljava/lang/Integer;Lcom/awakekt/awake/core/host/ThermalState;Ljava/lang/Float;ZZ)Lcom/awakekt/awake/core/host/DeviceProfile;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/host/DeviceProfile;Ljava/lang/Long;Ljava/lang/Integer;Lcom/awakekt/awake/core/host/ThermalState;Ljava/lang/Float;ZZILjava/lang/Object;)Lcom/awakekt/awake/core/host/DeviceProfile;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBatteryLevel ()Ljava/lang/Float;
+	public final fun getDisplayRefreshHz ()Ljava/lang/Integer;
+	public final fun getLowPowerMode ()Z
+	public final fun getThermalState ()Lcom/awakekt/awake/core/host/ThermalState;
+	public final fun getTotalMemoryBytes ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public final fun isTouchPrimary ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/host/DeviceProfileKt {
+	public static final fun readDeviceProfile ()Lcom/awakekt/awake/core/host/DeviceProfile;
+}
+
 public abstract interface class com/awakekt/awake/core/host/FixedStepReport {
 	public abstract fun addTimeDroppedListener (Lcom/awakekt/awake/core/host/TimeDroppedListener;)V
 	public abstract fun getDroppedSeconds ()F
@@ -119,6 +151,23 @@ public final class com/awakekt/awake/core/host/FrameRateMode$Unlimited : com/awa
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/core/host/MemoryPressure {
+	public static final field INSTANCE Lcom/awakekt/awake/core/host/MemoryPressure;
+	public final fun getVersion ()I
+	public final fun subscribe (Lkotlin/jvm/functions/Function1;)Ljava/lang/AutoCloseable;
+	public final fun trim (Lcom/awakekt/awake/core/host/MemoryPressureLevel;)V
+	public static synthetic fun trim$default (Lcom/awakekt/awake/core/host/MemoryPressure;Lcom/awakekt/awake/core/host/MemoryPressureLevel;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/host/MemoryPressureLevel : java/lang/Enum {
+	public static final field Critical Lcom/awakekt/awake/core/host/MemoryPressureLevel;
+	public static final field Low Lcom/awakekt/awake/core/host/MemoryPressureLevel;
+	public static final field Moderate Lcom/awakekt/awake/core/host/MemoryPressureLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/host/MemoryPressureLevel;
+	public static fun values ()[Lcom/awakekt/awake/core/host/MemoryPressureLevel;
+}
+
 public final class com/awakekt/awake/core/host/NativeLibrary {
 	public static final field INSTANCE Lcom/awakekt/awake/core/host/NativeLibrary;
 	public final fun load (Ljava/lang/String;Ljava/lang/Class;)V
@@ -202,7 +251,24 @@ public final class com/awakekt/awake/core/host/SteadyRateReason : java/lang/Enum
 	public static fun values ()[Lcom/awakekt/awake/core/host/SteadyRateReason;
 }
 
+public final class com/awakekt/awake/core/host/ThermalState : java/lang/Enum {
+	public static final field Critical Lcom/awakekt/awake/core/host/ThermalState;
+	public static final field Fair Lcom/awakekt/awake/core/host/ThermalState;
+	public static final field Nominal Lcom/awakekt/awake/core/host/ThermalState;
+	public static final field Serious Lcom/awakekt/awake/core/host/ThermalState;
+	public static final field Unknown Lcom/awakekt/awake/core/host/ThermalState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/host/ThermalState;
+	public static fun values ()[Lcom/awakekt/awake/core/host/ThermalState;
+}
+
 public abstract interface class com/awakekt/awake/core/host/TimeDroppedListener {
 	public abstract fun onTimeDropped (FI)V
+}
+
+public final class com/awakekt/awake/core/host/WeakRef {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun clear ()V
+	public final fun get ()Ljava/lang/Object;
 }
 
