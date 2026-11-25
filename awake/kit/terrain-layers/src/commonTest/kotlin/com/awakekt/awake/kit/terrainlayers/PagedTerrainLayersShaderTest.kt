@@ -45,4 +45,11 @@ class PagedTerrainLayersShaderTest {
         assertTrue("ctrlSingleLayer" in core, "4-slot paged control map must share one page-table lookup inside a single cell")
         assertTrue("0.998" in core, "4-slot control merge must include uniform single-layer patch fast path")
     }
+
+    @Test fun lightmapLookupsClampToOuterTexelCentresAgainstRepeatingSamplerWrap() {
+        val flat = terrainLayersShader(ClipSpace.Vulkan).emitWgsl()
+        assertTrue("lightmapHalfTexel" in flat && "clamp(" in flat, "non-paged lightmap must clamp UVs to outer texel centres")
+        val paged = terrainLayersShader(ClipSpace.Vulkan, 4, paged = true).emitWgsl()
+        assertTrue("fallbackLightHalfTexel" in paged, "paged fallback lightmap must clamp UVs to outer texel centres")
+    }
 }

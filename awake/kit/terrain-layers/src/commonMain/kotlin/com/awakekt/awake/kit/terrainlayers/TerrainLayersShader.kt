@@ -186,7 +186,7 @@ internal fun terrainLayersShader(
             if (pages != null && fallbackLightmap != null) {
                 samplePagedLight(pages, lightmap, fallbackLightmap, vec2(local.x - pages.grid.x, local.z - pages.grid.y))
             } else {
-                textureSampleLevel(lightmap, layerSampler, vec2(local.x / sampling.x + 0.5f.lit, local.z / sampling.y + 0.5f.lit), 0f.lit)
+                sampleClampedLinear(lightmap, layerSampler, vec2(local.x / sampling.x + 0.5f.lit, local.z / sampling.y + 0.5f.lit), "lightmap")
             },
         )
         // 128 in the lightmap is x1; its alpha hands lighting over from the sun to the bake.
@@ -241,7 +241,7 @@ private fun AslBlockBuilder.samplePagedLight(pages: TerrainPageSampling, image: 
             assign(result, textureSampleArrayLevel(image, pages.sampler, uv, toU32(layer), 0f.lit))
         }
         iff(layer le (-0.5f).lit) {
-            assign(result, textureSampleLevel(fallback, pages.sampler, relative / (dims * pages.grid.z), 0f.lit))
+            assign(result, sampleClampedLinear(fallback, pages.sampler, relative / (dims * pages.grid.z), "fallbackLight"))
         }
     }
     iff(crossCell) {
@@ -252,6 +252,17 @@ private fun AslBlockBuilder.samplePagedLight(pages: TerrainPageSampling, image: 
         assign(result, mix(mix(taps[0], taps[1], fraction.x), mix(taps[2], taps[3], fraction.x), fraction.y))
     }
     return result
+}
+
+/**
+ * Samples [texture] at level 0 with [uv] clamped to its outer texel centres (`[0.5/size, 1 - 0.5/size]`),
+ * so bilinear filtering through a repeating shared sampler never wraps across the opposite edge of a terrain.
+ */
+private fun AslBlockBuilder.sampleClampedLinear(texture: AslExpr, sampler: AslExpr, uv: AslExpr, prefix: String): AslExpr {
+    val dims = let("${prefix}Dims", textureDimensions(texture))
+    val halfTexel = let("${prefix}HalfTexel", vec2(0.5f.lit, 0.5f.lit) / vec2(toF32(dims.x), toF32(dims.y)))
+    val clamped = let("${prefix}Uv", clamp(uv, halfTexel, vec2(1f.lit, 1f.lit) - halfTexel))
+    return textureSampleLevel(texture, sampler, clamped, 0f.lit)
 }
 
 /** Each slot's layer colour, mixed by its share. Expressions only, so only a debug view pays for them. */
