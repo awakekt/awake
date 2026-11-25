@@ -99,7 +99,8 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
         val load = if (library.hasCustomRenderer(key)) {
             null
         } else {
-            library.loadMesh(key.mesh, prewarm.scope) ?: library.loadMaterial(key.material, prewarm.scope)
+            library.loadMesh(key.mesh, prewarm.scope)
+                ?: library.loadMaterial(key.material, prewarm.scope) { prewarm.runtime.renderer.textureMipSkip }
         }
         if (load != null) prewarm.loadingModels += key to load
         return load != null

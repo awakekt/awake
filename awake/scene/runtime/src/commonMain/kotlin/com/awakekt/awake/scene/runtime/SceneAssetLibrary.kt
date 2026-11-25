@@ -93,6 +93,15 @@ class SceneAssetLibrary(
     private val meshHolders = mutableMapOf<String, Int>()
     private val materialHolders = mutableMapOf<String, Int>()
 
+    /**
+     * Shared GPU materials keyed by resolver content key and active mip-skip, reference-counted by
+     * distinct live material names in [materials] so identical texture sets upload once and stay
+     * alive until the last referencing material name is released.
+     */
+    private val sharedMaterials = linkedMapOf<SharedMaterialKey, Material>()
+    private val sharedMaterialHolders = mutableMapOf<SharedMaterialKey, Int>()
+    private val materialSharedKeys = mutableMapOf<String, SharedMaterialKey>()
+
     /** Released meshes kept for reuse, eldest first -- `LinkedHashMap` iteration order IS the
      * eviction order, so re-inserting on release is what makes this least-recently-released. */
     private val retainedMeshes = linkedMapOf<String, Mesh>()
@@ -296,15 +305,17 @@ class SceneAssetLibrary(
 
     /**
      * The load material [name] needs before it can be made without blocking the frame, started in
-     * [scope]; null when it can be made now: one registered or already made, or one its resolver has
-     * nothing to load for.
+     * [scope]; null when it can be made now: one registered or already made, one whose shared GPU
+     * material is already live at [mipSkip], or one its resolver has nothing to load for.
      */
-    internal fun loadMaterial(name: String, scope: CoroutineScope): SceneMeshLoad? =
-        if (name in materialFactories || name in materials) {
-            null
-        } else {
-            dynamicResolvers.firstOrNull { it.canResolveMaterial(name) }?.loadMaterial(name, scope)
+    internal fun loadMaterial(name: String, scope: CoroutineScope, mipSkip: () -> Int = { 0 }): SceneMeshLoad? = when {
+        name in materialFactories || name in materials -> null
+        else -> dynamicResolvers.firstOrNull { it.canResolveMaterial(name) }?.let { resolver ->
+            val hasShared = sharedMaterials.isNotEmpty() &&
+                resolver.sharedMaterialKey(name)?.let { SharedMaterialKey(it, mipSkip()) in sharedMaterials } == true
+            if (hasShared) null else resolver.loadMaterial(name, scope)
         }
+    }
 
     /** Whether [key] draws through a renderer factory of its own, so it holds nothing to prewarm. */
     internal fun hasCustomRenderer(key: SceneRenderableKey): Boolean = key in rendererFactories
@@ -346,19 +357,44 @@ class SceneAssetLibrary(
     /** Builds [name] on first use and takes a reference to it; see [releaseMaterial]. */
     fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material {
         frameThread.check("SceneAssetLibrary.requireMaterial")
-        val material = materials.getOrPut(name) {
-            val factory = materialFactories[name]
-            if (factory != null) return@getOrPut runtime.factory()
-            for (resolver in dynamicResolvers) {
-                if (resolver.canResolveMaterial(name)) {
-                    val resolved = resolver.createMaterial(runtime, name)
-                    if (resolved != null) return@getOrPut resolved
-                }
-            }
-            error("No scene material named '$name' is registered or could be resolved by installed plugins.")
-        }
+        val material = materials.getOrPut(name) { resolveMaterial(runtime, name) }
         materialHolders[name] = (materialHolders[name] ?: 0) + 1
         return material
+    }
+
+    private fun resolveMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material =
+        materialFactories[name]?.invoke(runtime)
+            ?: dynamicResolvers.firstNotNullOfOrNull { resolver -> resolveMaterialFromResolver(resolver, runtime, name) }
+            ?: error("No scene material named '$name' is registered or could be resolved by installed plugins.")
+
+    private fun resolveMaterialFromResolver(
+        resolver: SceneAssetResolver,
+        runtime: SceneAppLifecycleRuntime,
+        name: String,
+    ): Material? {
+        if (!resolver.canResolveMaterial(name)) return null
+        val contentKey = resolver.sharedMaterialKey(name)
+        val existing = contentKey?.let { key ->
+            val sharedKey = SharedMaterialKey(key, runtime.renderer.textureMipSkip)
+            sharedMaterials[sharedKey]?.also {
+                sharedMaterialHolders[sharedKey] = (sharedMaterialHolders[sharedKey] ?: 0) + 1
+                materialSharedKeys[name] = sharedKey
+                resolver.onMaterialReused(name)
+            }
+        }
+        return existing ?: resolver.createMaterial(runtime, name)?.also { resolved ->
+            // Re-query after creation so a fallback upload (e.g. plain white after a decode error)
+            // is never cached under the original content key.
+            val createdContentKey = resolver.sharedMaterialKey(name)
+            if (createdContentKey != null) {
+                val createdKey = SharedMaterialKey(createdContentKey, runtime.renderer.textureMipSkip)
+                if (createdKey !in sharedMaterials) {
+                    sharedMaterials[createdKey] = resolved
+                    sharedMaterialHolders[createdKey] = 1
+                    materialSharedKeys[name] = createdKey
+                }
+            }
+        }
     }
 
     /**
@@ -412,9 +448,44 @@ class SceneAssetLibrary(
     /** Whether material [name] is built now, held by a renderer, so a renderer can take it with nothing read first. */
     fun isMaterialBuilt(name: String): Boolean = name in materials
 
-    /** [releaseMesh] for materials. */
-    fun releaseMaterial(name: String): Boolean =
-        release(name, materialHolders, materials) { it.destroy() }
+    /**
+     * Drops one reference to [name], destroying the underlying GPU material when no material name
+     * still holds it (see [SceneAssetResolver.sharedMaterialKey]).
+     *
+     * @return true when this call destroyed the underlying GPU material.
+     */
+    fun releaseMaterial(name: String): Boolean {
+        val count = checkNotNull(materialHolders[name]) {
+            "Released '$name', which nothing is holding. An unbalanced release is how a live GPU " +
+                "resource gets destroyed while something still draws it."
+        }
+        if (count > 1) {
+            materialHolders[name] = count - 1
+            return false
+        }
+        materialHolders.remove(name)
+        val material = materials.remove(name)
+        return material != null && releaseUnderlyingMaterial(name, material)
+    }
+
+    private fun releaseUnderlyingMaterial(name: String, material: Material): Boolean {
+        val sharedKey = materialSharedKeys.remove(name)
+        val shouldDestroy = if (sharedKey == null) {
+            true
+        } else {
+            val sharedCount = sharedMaterialHolders[sharedKey] ?: 0
+            if (sharedCount > 1) {
+                sharedMaterialHolders[sharedKey] = sharedCount - 1
+                false
+            } else {
+                sharedMaterialHolders.remove(sharedKey)
+                sharedMaterials.remove(sharedKey)
+                true
+            }
+        }
+        if (shouldDestroy) material.destroy()
+        return shouldDestroy
+    }
 
     /** How many holders [name] has, for a test or a diagnostic. Zero when it is not loaded. */
     fun meshHolderCount(name: String): Int = meshHolders[name] ?: 0
@@ -552,16 +623,25 @@ class SceneAssetLibrary(
         prewarms.dispose()
         meshes.values.forEach { mesh -> mesh.destroy() }
         retainedMeshes.values.forEach { mesh -> mesh.destroy() }
-        materials.values.forEach { material -> material.destroy() }
+        for ((name, material) in materials) {
+            if (name !in materialSharedKeys) material.destroy()
+        }
+        sharedMaterials.values.forEach { material -> material.destroy() }
         meshes.clear()
         retainedMeshes.clear()
         retainedBytes = 0
         materials.clear()
+        sharedMaterials.clear()
+        sharedMaterialHolders.clear()
+        materialSharedKeys.clear()
         meshHolders.clear()
         materialHolders.clear()
         resolvedRequests.clear()
     }
 }
+
+/** Immutable cache key for a shared GPU material: content digest key plus upload mip-skip. */
+private data class SharedMaterialKey(val key: String, val mipSkip: Int)
 
 /** Textures asked to be forgotten, by name, or all of them; replaced whole, never changed in place. */
 private class ForgetRequests(val names: Set<String>, val all: Boolean)

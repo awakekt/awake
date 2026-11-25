@@ -18,6 +18,58 @@ import kotlin.test.assertEquals
 /** [TextureSettings] reaching a renderer through `GraphicsEngine`, and [TextureSampling]'s rules (#1660). */
 class TextureSettingsTest {
     @Test
+    fun theEngineAppliesTheSelectionBeforeReady() {
+        val settings = TextureSettings(
+            initialQuality = TextureQuality.Medium,
+            initialAnisotropy = TextureAnisotropy.X4,
+        )
+        val renderer = TextureRenderer(supported = 16)
+        var seenInReady: Pair<Int, Int>? = null
+        val lifecycle = AppSpecBuilder().apply {
+            service(TextureSettings::class, settings)
+            ready { readyRenderer ->
+                seenInReady = readyRenderer.maxAnisotropy to readyRenderer.textureMipSkip
+            }
+        }.build().createLifecycle()
+
+        engineFor(lifecycle, renderer)
+
+        assertEquals(
+            4 to 1,
+            seenInReady,
+            "startup uploads inside ready() must see configured anisotropy and mipSkip before the first frame",
+        )
+    }
+
+    @Test
+    fun theEngineAppliesChangedSelectionBeforeResumeOnSurfaceRestore() {
+        val settings = TextureSettings(
+            initialQuality = TextureQuality.Medium,
+            initialAnisotropy = TextureAnisotropy.X4,
+        )
+        val renderer = TextureRenderer(supported = 16)
+        var seenInResume: Pair<Int, Int>? = null
+        val lifecycle = AppSpecBuilder().apply {
+            service(TextureSettings::class, settings)
+            resume {
+                seenInResume = renderer.maxAnisotropy to renderer.textureMipSkip
+            }
+        }.build().createLifecycle()
+        val engine = engineFor(lifecycle, renderer)
+
+        engine.releaseSurface()
+        settings.select(TextureQuality.Low)
+        settings.select(TextureAnisotropy.X2)
+        engine.restoreSurface("surface-2")
+
+        assertEquals(
+            2 to 2,
+            seenInResume,
+            "post-restore uploads inside resume() must see updated anisotropy and mipSkip before the next frame",
+        )
+    }
+
+    @Test
     fun theEngineAppliesTheSelectionBeforeEveryFrame() {
         val settings = TextureSettings()
         val renderer = TextureRenderer(supported = 16)
@@ -101,6 +153,10 @@ class TextureSettingsTest {
 
     private class FakeEngine(app: AwakeAppLifecycle, private val textures: TextureRenderer) : GraphicsEngine(app) {
         override suspend fun createBackendResources(window: Any) = BackendResources(renderer = textures, viewportSize = { 640f to 360f })
+
+        override fun releaseBackendSurface() = Unit
+
+        override fun restoreBackendSurface(window: Any) = Unit
 
         override fun destroyBackend() = Unit
     }
