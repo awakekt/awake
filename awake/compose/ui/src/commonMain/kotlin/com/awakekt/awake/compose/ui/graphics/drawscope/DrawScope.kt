@@ -558,7 +558,11 @@ internal class PaintScope :
 
     private val transform = DrawTransformState()
 
-    private val decorationCache = DecoratedGlyphCache()
+    private val colorCache = DimmedColorCache()
+
+    private val decorationCache = DecoratedGlyphCache(colorCache)
+
+    private fun dimmed(color: Color): Color = colorCache.dim(color, alpha)
 
     fun primitives(): List<UiDrawPrimitive> = output
 
@@ -583,6 +587,7 @@ internal class PaintScope :
         nextLayerId = 0
         alpha = 1f
         transform.reset()
+        colorCache.beginPaint()
         decorationCache.beginPaint()
     }
 
@@ -763,7 +768,7 @@ internal class PaintScope :
             blurRadiusY = blurRadius,
             effectInsetX = inset,
             effectInsetY = inset,
-            primitives = listOf(UiDrawPrimitive.FilledPath(path, color.dimmedBy(alpha))),
+            primitives = listOf(UiDrawPrimitive.FilledPath(path, dimmed(color))),
             renderEffect = RenderEffect.createBlurEffect(blurRadius, blurRadius, TileMode.Decal),
             tileMode = TileMode.Decal,
         )
@@ -837,7 +842,7 @@ internal class PaintScope :
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Quad(px, py, pw, ph, color.dimmedBy(alpha))
+        output += UiDrawPrimitive.Quad(px, py, pw, ph, dimmed(color))
     }
 
     override fun drawTexture(
@@ -932,7 +937,7 @@ internal class PaintScope :
             py,
             pw,
             ph,
-            color.dimmedBy(alpha),
+            dimmed(color),
             // Scaled by the smaller axis: a radius is a single number, and taking the larger would
             // let a corner arc exceed the shorter side and invert.
             radius * minOf(transform.scaleX, transform.scaleY),
@@ -961,7 +966,7 @@ internal class PaintScope :
             py,
             pw,
             ph,
-            color.dimmedBy(alpha),
+            dimmed(color),
             radius = radius.coerceAtLeast(0f) * scale,
             strokeWidth = snapBorderStroke(strokeWidth * scale),
         )
@@ -992,7 +997,7 @@ internal class PaintScope :
             offsetY = offsetY * transform.scaleY,
             blurRadius = blurRadius * scalarScale,
             spread = spread * scalarScale,
-            color = color.dimmedBy(alpha),
+            color = dimmed(color),
             gradient = gradient?.dimmedBy(alpha),
         )
     }
@@ -1061,7 +1066,7 @@ internal class PaintScope :
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha), font = font, page = page)
+        output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, dimmed(color), font = font, page = page)
     }
 
     override fun drawDecoratedGlyph(
@@ -1087,7 +1092,7 @@ internal class PaintScope :
         if (isFullyOutsideActiveClip(px - reach, py - reach, pw + 2 * reach, ph + 2 * reach)) return
         val mapped = decorationCache.map(decoration, transform.scaleX, transform.scaleY, alpha)
         output += UiDrawPrimitive.Glyph(
-            px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha),
+            px, py, pw, ph, u0, v0, u1, v1, dimmed(color),
             font = font,
             page = page,
             decoration = mapped,
@@ -1140,7 +1145,7 @@ internal class PaintScope :
             translateX = transform.mapX(originX),
             translateY = transform.mapY(originY),
         )
-        output += UiDrawPrimitive.FilledPath(placed, color.dimmedBy(alpha))
+        output += UiDrawPrimitive.FilledPath(placed, dimmed(color))
     }
 
     override fun drawMesh(mesh: ColoredTriangleMesh) {
@@ -1174,7 +1179,7 @@ internal class PaintScope :
             translateY = transform.mapY(originY),
         )
         val scaledStroke = stroke.copy(width = stroke.width * minOf(transform.scaleX, transform.scaleY))
-        output += UiDrawPrimitive.StrokedPath(placed, scaledStroke, color.dimmedBy(alpha))
+        output += UiDrawPrimitive.StrokedPath(placed, scaledStroke, dimmed(color))
     }
 
     override fun clippedPath(path: DrawPath, safeInteriorRect: Rectangle?, block: () -> Unit) {
@@ -1281,13 +1286,135 @@ private fun scaledReach(decoration: GlyphDecoration, scaleX: Float, scaleY: Floa
 }
 
 /**
+ * Fixed-size cache of dimmed [Color] instances per [PaintScope], evicted on [beginPaint] so
+ * unused colours never stay retained. Avoids allocating a fresh [Color] per glyph/quad when a
+ * subtree paints under `alpha < 1f`.
+ */
+private class DimmedColorCache {
+    private var generation = 1
+    private val rs = FloatArray(CACHE_SLOTS)
+    private val gs = FloatArray(CACHE_SLOTS)
+    private val bs = FloatArray(CACHE_SLOTS)
+    private val alphasSrc = FloatArray(CACHE_SLOTS)
+    private val alphas = FloatArray(CACHE_SLOTS)
+    private val values = arrayOfNulls<Color>(CACHE_SLOTS)
+    private val touchedGeneration = IntArray(CACHE_SLOTS)
+    private var hasEntries = false
+
+    // Hot single-entry fast path for consecutive glyphs sharing one colour and alpha.
+    private var lastValue: Color? = null
+    private var lastR = 0f
+    private var lastG = 0f
+    private var lastB = 0f
+    private var lastA = 0f
+    private var lastAlpha = 1f
+
+    fun beginPaint() {
+        lastValue = null
+        if (!hasEntries) return
+        val prev = generation
+        var remaining = false
+        for (i in 0 until CACHE_SLOTS) {
+            if (values[i] != null) {
+                if (touchedGeneration[i] != prev) {
+                    values[i] = null
+                } else {
+                    remaining = true
+                }
+            }
+        }
+        hasEntries = remaining
+        generation = prev + 1
+    }
+
+    fun dim(color: Color, alpha: Float): Color {
+        if (alpha >= 1f || color.a == 0f) return color
+        val fast = lastValue
+        return if (fast != null && matchesLast(color, alpha)) {
+            fast
+        } else {
+            probeOrStore(color, alpha)
+        }
+    }
+
+    private fun probeOrStore(color: Color, alpha: Float): Color {
+        val base = slotOf(color, alpha)
+        var freeSlot = -1
+        for (probe in 0 until PROBE_LIMIT) {
+            val slot = (base + probe) and CACHE_MASK
+            val cached = values[slot]
+            if (cached != null && matchesSlot(slot, color, alpha)) {
+                touchedGeneration[slot] = generation
+                rememberLast(color, alpha, cached)
+                return cached
+            }
+            if (freeSlot < 0 && (cached == null || touchedGeneration[slot] != generation)) {
+                freeSlot = slot
+            }
+        }
+        return store(if (freeSlot >= 0) freeSlot else base, color, alpha)
+    }
+
+    private fun store(target: Int, color: Color, alpha: Float): Color {
+        val built = Color(color.r, color.g, color.b, color.a * alpha)
+        rs[target] = color.r
+        gs[target] = color.g
+        bs[target] = color.b
+        alphasSrc[target] = color.a
+        alphas[target] = alpha
+        values[target] = built
+        touchedGeneration[target] = generation
+        hasEntries = true
+        rememberLast(color, alpha, built)
+        return built
+    }
+
+    private fun matchesLast(color: Color, alpha: Float): Boolean {
+        val sameRgb = lastR == color.r && lastG == color.g && lastB == color.b
+        return sameRgb && lastA == color.a && lastAlpha == alpha
+    }
+
+    private fun rememberLast(color: Color, alpha: Float, built: Color) {
+        lastR = color.r
+        lastG = color.g
+        lastB = color.b
+        lastA = color.a
+        lastAlpha = alpha
+        lastValue = built
+    }
+
+    private fun matchesSlot(slot: Int, color: Color, alpha: Float): Boolean {
+        val sameRgb = rs[slot] == color.r && gs[slot] == color.g && bs[slot] == color.b
+        return sameRgb && alphasSrc[slot] == color.a && alphas[slot] == alpha
+    }
+
+    private fun slotOf(color: Color, alpha: Float): Int {
+        var h = color.r.toBits()
+        h = h * HASH_MULT + color.g.toBits()
+        h = h * HASH_MULT + color.b.toBits()
+        h = h * HASH_MULT + color.a.toBits()
+        h = h * HASH_MULT + alpha.toBits()
+        h = h xor (h ushr HASH_SHIFT)
+        return h and CACHE_MASK
+    }
+
+    private companion object {
+        const val CACHE_SLOTS = 64
+        const val CACHE_MASK = CACHE_SLOTS - 1
+        const val PROBE_LIMIT = 4
+        const val HASH_MULT = 31
+        const val HASH_SHIFT = 16
+    }
+}
+
+/**
  * Fixed-size identity cache of scaled/dimmed [GlyphDecoration] instances per [PaintScope].
  *
  * Avoids allocating two intermediate [GlyphDecoration]s and two [Color]s per glyph when decorated
  * text draws under `alpha < 1f` or `scale != 1f` (#1742). Entries not touched during the just-ended
  * paint are cleared in [beginPaint] so disposed labels never stay retained.
  */
-private class DecoratedGlyphCache {
+private class DecoratedGlyphCache(private val colorCache: DimmedColorCache) {
     private var generation = 1
     private val sourceKeys = arrayOfNulls<GlyphDecoration>(CACHE_SLOTS)
     private val mappedValues = arrayOfNulls<GlyphDecoration>(CACHE_SLOTS)
@@ -1318,15 +1445,33 @@ private class DecoratedGlyphCache {
     fun map(source: GlyphDecoration, scaleX: Float, scaleY: Float, alpha: Float): GlyphDecoration {
         val scaled = scaleX != 1f || scaleY != 1f
         val dimmed = alpha < 1f && (source.outlineColor.a != 0f || source.shadowColor.a != 0f)
-        if (!scaled && !dimmed) return source
-        val slot = slotOf(source, scaleX, scaleY, alpha)
-        val cached = mappedValues[slot]
-        return if (cached != null && matchesSlot(slot, source, scaleX, scaleY, alpha)) {
-            touchedGeneration[slot] = generation
-            cached
-        } else {
-            storeMapped(slot, source, scaleX, scaleY, alpha, scaled, dimmed)
+        return if (!scaled && !dimmed) source else probeOrStore(source, scaleX, scaleY, alpha, scaled, dimmed)
+    }
+
+    @Suppress("LongParameterList")
+    private fun probeOrStore(
+        source: GlyphDecoration,
+        scaleX: Float,
+        scaleY: Float,
+        alpha: Float,
+        scaled: Boolean,
+        dimmed: Boolean,
+    ): GlyphDecoration {
+        val base = slotOf(source, scaleX, scaleY, alpha)
+        var freeSlot = -1
+        for (probe in 0 until PROBE_LIMIT) {
+            val slot = (base + probe) and CACHE_MASK
+            val cached = mappedValues[slot]
+            if (cached != null && matchesSlot(slot, source, scaleX, scaleY, alpha)) {
+                touchedGeneration[slot] = generation
+                return cached
+            }
+            if (freeSlot < 0 && (cached == null || touchedGeneration[slot] != generation)) {
+                freeSlot = slot
+            }
         }
+        val target = if (freeSlot >= 0) freeSlot else base
+        return storeMapped(target, source, scaleX, scaleY, alpha, scaled, dimmed)
     }
 
     private fun matchesSlot(slot: Int, source: GlyphDecoration, scaleX: Float, scaleY: Float, alpha: Float): Boolean {
@@ -1344,8 +1489,8 @@ private class DecoratedGlyphCache {
         scaled: Boolean,
         dimmed: Boolean,
     ): GlyphDecoration {
-        val outlineColor = if (dimmed) source.outlineColor.dimmedBy(alpha) else source.outlineColor
-        val shadowColor = if (dimmed) source.shadowColor.dimmedBy(alpha) else source.shadowColor
+        val outlineColor = if (dimmed) colorCache.dim(source.outlineColor, alpha) else source.outlineColor
+        val shadowColor = if (dimmed) colorCache.dim(source.shadowColor, alpha) else source.shadowColor
         val built = if (scaled) {
             GlyphDecoration(
                 fieldOffsetX = source.fieldOffsetX * scaleX,
@@ -1387,8 +1532,9 @@ private class DecoratedGlyphCache {
     }
 
     private companion object {
-        const val CACHE_SLOTS = 256
+        const val CACHE_SLOTS = 512
         const val CACHE_MASK = CACHE_SLOTS - 1
+        const val PROBE_LIMIT = 4
         const val HASH_MULT = 31
         const val HASH_SHIFT = 16
     }

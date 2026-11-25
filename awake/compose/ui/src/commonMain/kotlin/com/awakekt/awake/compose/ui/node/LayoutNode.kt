@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.layout.Placeable
+import com.awakekt.awake.compose.ui.layout.PlacementBuffer
 import com.awakekt.awake.compose.ui.layout.PlacementScope
 import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.unit.Constraints
@@ -574,6 +575,8 @@ class LayoutNode(
     internal fun dispose() {
         if (subcomposedChildren) children.clearWithoutDispose() else children.clear()
         layers.clear()
+        contentScope.clearPlacements()
+        for (link in links) link.clearPlacements()
         for (entry in retainedModifierNodes) entry?.node?.detach()
         retainedModifierNodes.clear()
         appliedModifier = Modifier
@@ -591,6 +594,10 @@ class LayoutNode(
     ) : Measurable {
         val placeable = ModifierPlaceable()
         private val scope = NodeMeasureScope()
+
+        fun clearPlacements() {
+            scope.clearPlacements()
+        }
 
         override val parentData: Any? get() = this@LayoutNode.parentData
 
@@ -631,6 +638,37 @@ class LayoutNode(
         // Reused across passes -- `layout()` is called once per scope per pass, and a fresh result
         // object each time would be one allocation per link per node per frame.
         private val result = MutableMeasureResult()
+        private var buffer: PlacementBuffer? = null
+        private var single: SinglePlacer? = null
+
+        override fun placementBuffer(count: Int): PlacementBuffer {
+            val existing = buffer ?: PlacementBuffer().also { buffer = it }
+            existing.prepare(count)
+            return existing
+        }
+
+        @Suppress("LongParameterList")
+        override fun layoutSingle(
+            width: Int,
+            height: Int,
+            placeable: Placeable,
+            x: Int,
+            y: Int,
+            relative: Boolean,
+            alignmentLines: Map<AlignmentLine, Int>,
+        ): MeasureResult {
+            val placer = single ?: SinglePlacer().also { single = it }
+            placer.placeable = placeable
+            placer.x = x
+            placer.y = y
+            placer.relative = relative
+            return layout(width, height, alignmentLines, placer.block)
+        }
+
+        fun clearPlacements() {
+            buffer?.clear()
+            single?.placeable = null
+        }
 
         override fun layout(
             width: Int,
@@ -643,6 +681,19 @@ class LayoutNode(
             this.alignmentLines = alignmentLines
             this.place = place
             this.scope = this@NodeMeasureScope
+        }
+    }
+
+    private class SinglePlacer {
+        var placeable: Placeable? = null
+        var x: Int = 0
+        var y: Int = 0
+        var relative: Boolean = false
+        val block: PlacementScope.() -> Unit = {
+            val target = placeable
+            if (target != null) {
+                if (relative) target.placeRelativeAt(x, y) else target.placeAbsoluteAt(x, y)
+            }
         }
     }
 

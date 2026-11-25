@@ -1190,13 +1190,23 @@ public final class com/awakekt/awake/compose/ui/layout/MeasureResult$DefaultImpl
 
 public abstract interface class com/awakekt/awake/compose/ui/layout/MeasureScope : com/awakekt/awake/compose/ui/unit/Density {
 	public fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
+	public fun layout (IILcom/awakekt/awake/compose/ui/layout/PlacementBuffer;Ljava/util/Map;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
 	public abstract fun layout (IILjava/util/Map;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static synthetic fun layout$default (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILcom/awakekt/awake/compose/ui/layout/PlacementBuffer;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
 	public static synthetic fun layout$default (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILjava/util/Map;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public fun layoutSingle (IILcom/awakekt/awake/compose/ui/layout/Placeable;IIZLjava/util/Map;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static synthetic fun layoutSingle$default (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILcom/awakekt/awake/compose/ui/layout/Placeable;IIZLjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public fun placementBuffer (I)Lcom/awakekt/awake/compose/ui/layout/PlacementBuffer;
 }
 
 public final class com/awakekt/awake/compose/ui/layout/MeasureScope$DefaultImpls {
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
+	public static fun layout (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILcom/awakekt/awake/compose/ui/layout/PlacementBuffer;Ljava/util/Map;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static synthetic fun layout$default (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILcom/awakekt/awake/compose/ui/layout/PlacementBuffer;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
 	public static synthetic fun layout$default (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILjava/util/Map;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static fun layoutSingle (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILcom/awakekt/awake/compose/ui/layout/Placeable;IIZLjava/util/Map;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static synthetic fun layoutSingle$default (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;IILcom/awakekt/awake/compose/ui/layout/Placeable;IIZLjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static fun placementBuffer (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;I)Lcom/awakekt/awake/compose/ui/layout/PlacementBuffer;
 	public static fun roundToPx-Jha-xPg (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;F)I
 	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;F)F
 	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;I)F
@@ -1225,6 +1235,18 @@ public abstract class com/awakekt/awake/compose/ui/layout/Placeable {
 	protected final fun setHeight (I)V
 	protected final fun setMeasuredSize (II)V
 	protected final fun setWidth (I)V
+}
+
+public final class com/awakekt/awake/compose/ui/layout/PlacementBuffer {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun getSize ()I
+	public final fun placeableAt (I)Lcom/awakekt/awake/compose/ui/layout/Placeable;
+	public final fun prepare (I)V
+	public final fun scratchInts ()[I
+	public final fun setAbsolute (III)V
+	public final fun setPlaceable (ILcom/awakekt/awake/compose/ui/layout/Placeable;)V
+	public final fun setRelative (III)V
 }
 
 public abstract interface class com/awakekt/awake/compose/ui/layout/PlacementScope {
@@ -1263,6 +1285,9 @@ public abstract interface class com/awakekt/awake/compose/ui/layout/SubcomposeMe
 
 public final class com/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope$DefaultImpls {
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
+	public static fun layout (Lcom/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope;IILcom/awakekt/awake/compose/ui/layout/PlacementBuffer;Ljava/util/Map;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static fun layoutSingle (Lcom/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope;IILcom/awakekt/awake/compose/ui/layout/Placeable;IIZLjava/util/Map;)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public static fun placementBuffer (Lcom/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope;I)Lcom/awakekt/awake/compose/ui/layout/PlacementBuffer;
 	public static fun roundToPx-Jha-xPg (Lcom/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope;F)I
 	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope;F)F
 	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/ui/layout/SubcomposeMeasureScope;I)F

@@ -10,7 +10,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.FilterQuality
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.image.createBitmap
-import com.awakekt.awake.core.math2d.Rectangle
 
 /**
  * Decoded pixels a UI can draw: [width]x[height], straight (not premultiplied) RGBA8, top row first.
@@ -98,6 +97,19 @@ fun DrawScope.drawImage(
     tint: Color = Color.White,
     filterQuality: FilterQuality = FilterQuality.Low,
 ) {
-    val region = TextureRegion.ofTexels(Rectangle(srcX.toFloat(), srcY.toFloat(), srcWidth.toFloat(), srcHeight.toFloat()), image.width, image.height)
+    val atOrigin = srcX == 0 && srcY == 0
+    val region = if (atOrigin && srcWidth == image.width && srcHeight == image.height) {
+        TextureRegion.Whole
+    } else {
+        require(image.width > 0 && image.height > 0) { "A texture is at least 1 x 1; was ${image.width} x ${image.height}." }
+        val invW = 1f / image.width
+        val invH = 1f / image.height
+        TextureRegion(
+            srcX * invW,
+            srcY * invH,
+            (srcX + srcWidth) * invW,
+            (srcY + srcHeight) * invH,
+        )
+    }
     drawTexture(image, x, y, width, height, region, tint, filterQuality)
 }

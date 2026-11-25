@@ -37,10 +37,10 @@ fun Modifier.padding(
 ): Modifier = this then PaddingElement(start, top, end, bottom)
 
 /** Requests a fixed [width], still clamped to what the parent allows. */
-fun Modifier.width(width: Dp): Modifier = this then SizeElement(width, null)
+fun Modifier.width(width: Dp): Modifier = this then SizeElement(width, Dp.Unspecified)
 
 /** Requests a fixed [height], still clamped to what the parent allows. */
-fun Modifier.height(height: Dp): Modifier = this then SizeElement(null, height)
+fun Modifier.height(height: Dp): Modifier = this then SizeElement(Dp.Unspecified, height)
 
 /** Requests a fixed [width] and [height], each still clamped to what the parent allows. */
 fun Modifier.size(width: Dp, height: Dp): Modifier = this then SizeElement(width, height)
@@ -48,8 +48,8 @@ fun Modifier.size(width: Dp, height: Dp): Modifier = this then SizeElement(width
 /** Requests a fixed square of [all] on each side, still clamped to what the parent allows. */
 fun Modifier.size(all: Dp): Modifier = this then SizeElement(all, all)
 
-private val FillMaxWidthFull = FillElement(widthFraction = 1f, heightFraction = null)
-private val FillMaxHeightFull = FillElement(widthFraction = null, heightFraction = 1f)
+private val FillMaxWidthFull = FillElement(widthFraction = 1f, heightFraction = Float.NaN)
+private val FillMaxHeightFull = FillElement(widthFraction = Float.NaN, heightFraction = 1f)
 private val FillMaxSizeFull = FillElement(widthFraction = 1f, heightFraction = 1f)
 
 /** Occupies [fraction] of a bounded parent width; an unbounded width remains untouched. */
@@ -57,7 +57,7 @@ fun Modifier.fillMaxWidth(fraction: Float = 1f): Modifier =
     this then if (fraction == 1f) {
         FillMaxWidthFull
     } else {
-        FillElement(widthFraction = fraction.validFillFraction(), heightFraction = null)
+        FillElement(widthFraction = fraction.validFillFraction(), heightFraction = Float.NaN)
     }
 
 /** Occupies [fraction] of a bounded parent height; an unbounded height remains untouched. */
@@ -65,7 +65,7 @@ fun Modifier.fillMaxHeight(fraction: Float = 1f): Modifier =
     this then if (fraction == 1f) {
         FillMaxHeightFull
     } else {
-        FillElement(widthFraction = null, heightFraction = fraction.validFillFraction())
+        FillElement(widthFraction = Float.NaN, heightFraction = fraction.validFillFraction())
     }
 
 /** Occupies [fraction] of each bounded parent axis. */
@@ -203,22 +203,22 @@ private class PaddingNode :
 }
 
 private class SizeElement(
-    private val width: Dp?,
-    private val height: Dp?,
+    private val width: Dp,
+    private val height: Dp,
 ) : ModifierNodeElement<SizeNode>() {
     override fun create(): SizeNode = SizeNode()
     override fun update(node: SizeNode) {
         node.width = width
         node.height = height
     }
-    override fun toString(): String = "size($width, $height)"
+    override fun toString(): String = "size(${width.orNullString()}, ${height.orNullString()})"
 }
 
 private class SizeNode :
     Modifier.Node(),
     LayoutModifierNode {
-    var width: Dp? = null
-    var height: Dp? = null
+    var width: Dp = Dp.Unspecified
+    var height: Dp = Dp.Unspecified
     private val place = PlaceAtOrigin()
 
     override fun MeasureScope.measure(
@@ -226,13 +226,13 @@ private class SizeNode :
         constraints: Constraints,
     ): MeasureResult {
         // A requested size is still bounded by what the parent offers -- asking for 500dp inside a
-        // 100px parent yields 100, not an overflow. Plain ints, not `Int?`, which boxes a size over 127.
+        // 100px parent yields 100, not an overflow. Plain unboxed Dp + Int avoid boxing on every call.
         val width = width
         val height = height
-        val hasWidth = width != null
-        val hasHeight = height != null
-        val w = if (width != null) width.roundToPx().coerceIn(constraints.minWidth, constraints.maxWidth) else 0
-        val h = if (height != null) height.roundToPx().coerceIn(constraints.minHeight, constraints.maxHeight) else 0
+        val hasWidth = width.isSpecified
+        val hasHeight = height.isSpecified
+        val w = if (hasWidth) width.roundToPx().coerceIn(constraints.minWidth, constraints.maxWidth) else 0
+        val h = if (hasHeight) height.roundToPx().coerceIn(constraints.minHeight, constraints.maxHeight) else 0
         val placeable = measurable.measure(
             Constraints.of(
                 minWidth = if (hasWidth) w else constraints.minWidth,
@@ -247,19 +247,21 @@ private class SizeNode :
 
     // A fixed size is the answer, whatever the content would have wanted.
     override fun Density.minIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int =
-        width?.roundToPx() ?: measurable.minIntrinsicWidth(height)
+        if (width.isSpecified) width.roundToPx() else measurable.minIntrinsicWidth(height)
 
     override fun Density.maxIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int =
-        width?.roundToPx() ?: measurable.maxIntrinsicWidth(height)
+        if (width.isSpecified) width.roundToPx() else measurable.maxIntrinsicWidth(height)
 
     override fun Density.minIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int =
-        height?.roundToPx() ?: measurable.minIntrinsicHeight(width)
+        if (height.isSpecified) height.roundToPx() else measurable.minIntrinsicHeight(width)
 
     override fun Density.maxIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int =
-        height?.roundToPx() ?: measurable.maxIntrinsicHeight(width)
+        if (height.isSpecified) height.roundToPx() else measurable.maxIntrinsicHeight(width)
 
-    override fun toString(): String = "size($width, $height)"
+    override fun toString(): String = "size(${width.orNullString()}, ${height.orNullString()})"
 }
+
+private fun Dp.orNullString(): String = if (isSpecified) toString() else "null"
 
 private fun Float.validFillFraction(): Float {
     require(this in 0f..1f) { "fill fraction must be between 0 and 1, was $this" }
@@ -267,22 +269,23 @@ private fun Float.validFillFraction(): Float {
 }
 
 private class FillElement(
-    private val widthFraction: Float?,
-    private val heightFraction: Float?,
+    private val widthFraction: Float,
+    private val heightFraction: Float,
 ) : ModifierNodeElement<FillNode>() {
     override fun create(): FillNode = FillNode()
     override fun update(node: FillNode) {
         node.widthFraction = widthFraction
         node.heightFraction = heightFraction
     }
-    override fun toString(): String = "fillMax(width=$widthFraction, height=$heightFraction)"
+    override fun toString(): String =
+        "fillMax(width=${widthFraction.orNullString()}, height=${heightFraction.orNullString()})"
 }
 
 private class FillNode :
     Modifier.Node(),
     LayoutModifierNode {
-    var widthFraction: Float? = null
-    var heightFraction: Float? = null
+    var widthFraction: Float = Float.NaN
+    var heightFraction: Float = Float.NaN
     private val place = PlaceAtOrigin()
 
     override fun MeasureScope.measure(
@@ -291,13 +294,13 @@ private class FillNode :
     ): MeasureResult {
         // Compose's rule: filling an unbounded axis is a no-op. Without it the child would adopt
         // whatever sentinel stands in for "no bound" as a real size -- the bug class `ui-core`'s
-        // UNBOUNDED_MAIN_AXIS produced. Plain ints, not `Int?`, which boxes a size over 127.
+        // UNBOUNDED_MAIN_AXIS produced. Plain unboxed Float + Int avoid boxing on every call.
         val widthFraction = widthFraction
         val heightFraction = heightFraction
-        val fillsWidth = widthFraction != null && constraints.hasBoundedWidth
-        val fillsHeight = heightFraction != null && constraints.hasBoundedHeight
-        val targetWidth = if (fillsWidth) constraints.constrainWidth((constraints.maxWidth * widthFraction!!).roundToInt()) else 0
-        val targetHeight = if (fillsHeight) constraints.constrainHeight((constraints.maxHeight * heightFraction!!).roundToInt()) else 0
+        val fillsWidth = !widthFraction.isNaN() && constraints.hasBoundedWidth
+        val fillsHeight = !heightFraction.isNaN() && constraints.hasBoundedHeight
+        val targetWidth = if (fillsWidth) constraints.constrainWidth((constraints.maxWidth * widthFraction).roundToInt()) else 0
+        val targetHeight = if (fillsHeight) constraints.constrainHeight((constraints.maxHeight * heightFraction).roundToInt()) else 0
         val placeable = measurable.measure(
             constraints.copy(
                 minWidth = if (fillsWidth) targetWidth else constraints.minWidth,
@@ -310,8 +313,11 @@ private class FillNode :
         return layout(placeable.width, placeable.height, place = place.block)
     }
 
-    override fun toString(): String = "fillMax(width=$widthFraction, height=$heightFraction)"
+    override fun toString(): String =
+        "fillMax(width=${widthFraction.orNullString()}, height=${heightFraction.orNullString()})"
 }
+
+private fun Float.orNullString(): String = if (isNaN()) "null" else toString()
 
 private class WrapContentElement(
     private val wrapWidth: Boolean = false,
@@ -352,12 +358,9 @@ private class WrapContentNode :
         val placeable = measurable.measure(childConstraints)
         val width = constraints.constrainWidth(placeable.width)
         val height = constraints.constrainHeight(placeable.height)
-        return layout(width, height) {
-            placeable.placeAt(
-                if (wrapWidth) horizontalAlignment.align(placeable.width, width) else 0,
-                if (wrapHeight) verticalAlignment.align(placeable.height, height) else 0,
-            )
-        }
+        val x = if (wrapWidth) horizontalAlignment.align(placeable.width, width) else 0
+        val y = if (wrapHeight) verticalAlignment.align(placeable.height, height) else 0
+        return layoutSingle(width, height, placeable, x, y, relative = false)
     }
 }
 
