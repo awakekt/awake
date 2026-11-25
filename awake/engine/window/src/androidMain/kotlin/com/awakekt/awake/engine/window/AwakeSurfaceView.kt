@@ -18,7 +18,6 @@ import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import com.awakekt.awake.core.host.AndroidFrameLoop
-import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.core.input.AndroidSoftKeyboardBridge
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.TextEditAction
@@ -51,16 +50,19 @@ class AwakeSurfaceView(
 ) : SurfaceView(context),
     SurfaceHolder.Callback2 {
 
-    @Volatile
-    private var running = false
-
-    /** The engine outlives any one surface: backgrounding releases the surface, not the app. */
-    private var engineCreated = false
-    private var renderThread: Thread? = null
-
     private val input: Input get() = lifecycle.input
 
     private val softKeyboardBridge by lazy { AndroidSoftKeyboardBridge(this, input) }
+
+    private val renderLoop = AndroidSurfaceRenderLoop(
+        lifecycle = lifecycle,
+        onFrameRendered = {
+            post {
+                softKeyboardBridge.syncSoftKeyboardVisibility()
+                softKeyboardBridge.syncClipboard()
+            }
+        },
+    )
 
     // A controller unplugged with a button held never sends the key-up.
     private val controllerRemoved = object : InputManager.InputDeviceListener {
@@ -91,37 +93,21 @@ class AwakeSurfaceView(
         createAwakeInputConnection(outAttrs, input)
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        if (engineCreated) {
-            lifecycle.restoreSurface(holder.surface)
-        } else {
-            lifecycle.create(holder.surface)
-            engineCreated = true
-        }
         // A steady rate (#1699) is asked of the surface the frames show on.
         AndroidFrameLoop.pacingSurface = WeakReference(holder.surface)
-        running = true
-        renderThread = Thread({
-            while (running) {
-                // Read every frame: AndroidFrameLoop.frameRateOverride may change it live, as on desktop.
-                val mode = lifecycle.windowConfig?.frameRateMode ?: FrameRateMode.Auto
-                AndroidFrameLoop.tick(mode) { deltaTime ->
-                    lifecycle.update(deltaTime.toFloat())
-                    post {
-                        softKeyboardBridge.syncSoftKeyboardVisibility()
-                        softKeyboardBridge.syncClipboard()
-                    }
-                }
-            }
-        }, "AwakeSurfaceView-Render").apply { start() }
+        renderLoop.onSurfaceCreated(holder.surface)
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         // Read here, not once: a fold or a DeX move changes the density without a new view.
         val metrics = resources.displayMetrics
-        lifecycle.setDensity(metrics.density)
-        lifecycle.setDpi((metrics.xdpi + metrics.ydpi) / 2f)
         rootWindowInsets?.let(::reportSafeArea)
-        lifecycle.resize(0, 0, width, height)
+        renderLoop.onSurfaceChanged(
+            density = metrics.density,
+            dpi = (metrics.xdpi + metrics.ydpi) / 2f,
+            width = width,
+            height = height,
+        )
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
@@ -147,19 +133,18 @@ class AwakeSurfaceView(
             (window.width - at[0] - width) / density,
             (window.height - at[1] - height) / density,
         )
-        lifecycle.setSafeArea(DisplayInsets(covered.left / density, covered.top / density, covered.right / density, covered.bottom / density).inView(margins))
-        lifecycle.setSystemGestureInsets(DisplayInsets(gestures.left / density, gestures.top / density, gestures.right / density, gestures.bottom / density).inView(margins))
-        lifecycle.setImeInsets(DisplayInsets(keyboard.left / density, keyboard.top / density, keyboard.right / density, keyboard.bottom / density).inView(margins))
+        renderLoop.onInsetsChanged(
+            safeArea = DisplayInsets(covered.left / density, covered.top / density, covered.right / density, covered.bottom / density).inView(margins),
+            systemGestures = DisplayInsets(gestures.left / density, gestures.top / density, gestures.right / density, gestures.bottom / density).inView(margins),
+            ime = DisplayInsets(keyboard.left / density, keyboard.top / density, keyboard.right / density, keyboard.bottom / density).inView(margins),
+        )
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        running = false
-        renderThread?.join()
-        renderThread = null
+        renderLoop.onSurfaceDestroyed()
         AndroidFrameLoop.pacingSurface = null
         input.clearKeys()
         input.releaseGamepadButtons()
-        lifecycle.releaseSurface()
     }
 
     override fun onAttachedToWindow() {
@@ -170,10 +155,7 @@ class AwakeSurfaceView(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         context.getSystemService(InputManager::class.java)?.unregisterInputDeviceListener(controllerRemoved)
-        if (engineCreated) {
-            lifecycle.dispose()
-            engineCreated = false
-        }
+        renderLoop.onDetachedFromWindow()
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean = event.syncAwakePointerInput(input) || super.onTouchEvent(event)
