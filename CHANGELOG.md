@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.75.0] - 2026-11-25
+
+### Changed
+
+- **Compose steady-state composition allocations eliminated across runtime, layout containers, modifiers, and leaf widgets.** Made 0/1/2-key `remember`, new 3-key `remember(key1, key2, key3)`, `key`, all `CompositionLocalProvider` overloads (plus a single-value `ProvidedValue` overload and reusable `ProvidedLocals()` / `set`), `Modifier.semantics` / `clearAndSetSemantics`, and layout containers (`Box`, `Row`, `Column`, `FlowRow`, `FlowColumn`, `FlexBox`, plus an empty `Box(modifier)` overload) `inline` with retained `MeasurePolicy` reuse and pre-allocated policy/spacing tables (`Arrangement.spacedBy*` 0..32.dp); added a `LayoutNode.modifier` identity fast path, reused `ComposeHost` locals/viewport/wrapper, primitive `VectorPainter.draw(x, y, width, height, tint)`, lambda-free `ImageFill`/skin modifier elements, and `rememberGroup`-scoped state/chain reuse in `Image`, `BasicTextField`, and `ShadcnIcon`, cutting `ComposeFrameProbe` reconcile allocations by 75.7% (3,592 -> 873 B) and locking 0 B/pass steady-state composition with desktop allocation tests.
+
+### Fixed
+
+- **Fixed Vulkan UI sampler resampling, staged UI material invalidation, and mid-frame offscreen render-target retirement.** `Material.samplerHandle` now reads the live `Texture.sampler` handle so `Renderer.maxAnisotropy` resampling no longer leaves UI texture descriptors bound to retired samplers (`VUID-vkDestroySampler-sampler-01082`); `OffscreenRenderTarget.destroy()` now defers framebuffer, image, view, memory, and sampler teardown through `DeferredResourceReaper` (`VUID-vkDestroyFramebuffer-framebuffer-00892` / `VUID-vkDestroyImage-image-01000`); and `Material.destroy()` drops staged UI runs and invalidates cached UI descriptor slots before releasing owned textures.
+- **Keep more Core and Vulkan releases on the Maven fallback and mirror additively to Cloudflare R2.** Raised GitHub Pages fallback retention from 3 Core / 3 Vulkan (which only used 501 MB of the 950 MB budget and evicted Core `0.72.0` after three rapid releases) to 6 Core / 4 Vulkan, and added an additive Cloudflare R2 mirror step (`https://maven.awakekt.com/`, bucket `awake-maven`) that never deletes older published versions when `CLOUDFLARE_R2_ID` and `CLOUDFLARE_R2_KEY` are configured.
+- Fixed WebGPU release pin snapshot read-back verification (`tools/publish_webgpu_pin.sh` and `.github/workflows/webgpu-pin.yml`) to inspect the root `com.awakekt.awake.backend:webgpu` module (supporting inline `KOTLIN_ARCHIVE` `wasmJs` variants as well as legacy `available-at` redirects to `webgpu-wasm-js`), preventing false HTTP 404 failures after publishing `0.74.0-SNAPSHOT` and newer release pins.
+
 ## [0.74.0] - 2026-11-25
 
 ### Added
