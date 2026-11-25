@@ -6,7 +6,8 @@
 package com.awakekt.awake.compose.ui.semantics
 
 private val EMPTY = arrayOfNulls<Any?>(0)
-private const val INITIAL_PAIRS = 2
+private const val INITIAL_OVERFLOW_PAIRS = 2
+private const val INLINE_SLOTS = 3
 
 /**
  * The properties one node declares.
@@ -16,9 +17,16 @@ private const val INITIAL_PAIRS = 2
  * `ui-headless` control has that shape, so the decision had to land before any of them are ported.
  */
 class SemanticsConfiguration {
-    // Keys and values side by side, in the order they were set: a node declares one to three, so a
-    // scan beats a hash map, and composing one allocates a single small array (#1742).
-    private var entries: Array<Any?> = EMPTY
+    // First three properties sit inline on the configuration itself: nearly every node declares one
+    // to three (TestTag, Role, Label, Selected), so composing it allocates zero backing arrays.
+    // Any fourth property and beyond spill into [overflow] as key/value pairs.
+    private var key0: SemanticsPropertyKey<*>? = null
+    private var val0: Any? = null
+    private var key1: SemanticsPropertyKey<*>? = null
+    private var val1: Any? = null
+    private var key2: SemanticsPropertyKey<*>? = null
+    private var val2: Any? = null
+    private var overflow: Array<Any?> = EMPTY
     private var count = 0
 
     var isMergingDescendants: Boolean = false
@@ -44,7 +52,8 @@ class SemanticsConfiguration {
 
     @Suppress("UNCHECKED_CAST")
     /** Returns the value stored under [key], or `null` when none has been set. */
-    operator fun <T> get(key: SemanticsPropertyKey<T>): T? = indexOf(key).let { if (it < 0) null else entries[it * 2 + 1] as T? }
+    operator fun <T> get(key: SemanticsPropertyKey<T>): T? =
+        indexOf(key).let { if (it < 0) null else valueAt(it) as T? }
 
     /** Whether a value has been set for [key]. */
     operator fun contains(key: SemanticsPropertyKey<*>): Boolean = indexOf(key) >= 0
@@ -58,13 +67,13 @@ class SemanticsConfiguration {
     fun mergeFrom(other: SemanticsConfiguration) {
         for (i in 0 until other.count) {
             val key = other.keyAt(i)
-            if (key !in this) put(key, other.entries[i * 2 + 1])
+            if (key !in this) put(key, other.valueAt(i))
         }
     }
 
     /** Whether this declares nothing but [value] under [key]: no other property and neither flag. */
     internal fun holdsOnly(key: SemanticsPropertyKey<*>, value: Any?): Boolean =
-        !isMergingDescendants && !isClearingDescendants && count == 1 && entries[0] === key && entries[1] == value
+        !isMergingDescendants && !isClearingDescendants && count == 1 && key0 === key && val0 == value
 
     /** Whether [other] declares the same flags and the same values under the same keys. */
     internal fun sameAs(other: SemanticsConfiguration): Boolean =
@@ -74,27 +83,86 @@ class SemanticsConfiguration {
     private fun holdsAllOf(other: SemanticsConfiguration): Boolean {
         for (i in 0 until other.count) {
             val at = indexOf(other.keyAt(i))
-            if (at < 0 || entries[at * 2 + 1] != other.entries[i * 2 + 1]) return false
+            if (at < 0 || valueAt(at) != other.valueAt(i)) return false
         }
         return true
     }
 
-    private fun keyAt(index: Int): SemanticsPropertyKey<*> = entries[index * 2] as SemanticsPropertyKey<*>
+    private fun keyAt(index: Int): SemanticsPropertyKey<*> = when (index) {
+        0 -> key0!!
+        1 -> key1!!
+        2 -> key2!!
+        else -> overflow[(index - INLINE_SLOTS) * 2] as SemanticsPropertyKey<*>
+    }
+
+    private fun valueAt(index: Int): Any? = when (index) {
+        0 -> val0
+        1 -> val1
+        2 -> val2
+        else -> overflow[(index - INLINE_SLOTS) * 2 + 1]
+    }
 
     private fun indexOf(key: SemanticsPropertyKey<*>): Int {
-        for (i in 0 until count) if (entries[i * 2] === key) return i
-        return -1
+        var found = when {
+            count > 0 && key0 === key -> 0
+            count > 1 && key1 === key -> 1
+            count > 2 && key2 === key -> 2
+            else -> -1
+        }
+        if (found < 0 && count > INLINE_SLOTS) {
+            val extra = count - INLINE_SLOTS
+            for (i in 0 until extra) {
+                if (overflow[i * 2] === key) {
+                    found = INLINE_SLOTS + i
+                    break
+                }
+            }
+        }
+        return found
     }
 
     private fun put(key: SemanticsPropertyKey<*>, value: Any?) {
         val at = indexOf(key)
         if (at >= 0) {
-            entries[at * 2 + 1] = value
+            when (at) {
+                0 -> val0 = value
+                1 -> val1 = value
+                2 -> val2 = value
+                else -> overflow[(at - INLINE_SLOTS) * 2 + 1] = value
+            }
             return
         }
-        if (count * 2 == entries.size) entries = entries.copyOf(maxOf(INITIAL_PAIRS, count * 2) * 2)
-        entries[count * 2] = key
-        entries[count * 2 + 1] = value
+        when (count) {
+            0 -> {
+                key0 = key
+                val0 = value
+            }
+            1 -> {
+                key1 = key
+                val1 = value
+            }
+            2 -> {
+                key2 = key
+                val2 = value
+            }
+            else -> overflow = appendSemanticsOverflow(overflow, count - INLINE_SLOTS, key, value)
+        }
         count++
     }
+}
+
+private fun appendSemanticsOverflow(
+    overflow: Array<Any?>,
+    extra: Int,
+    key: SemanticsPropertyKey<*>,
+    value: Any?,
+): Array<Any?> {
+    val target = if (extra * 2 == overflow.size) {
+        overflow.copyOf(maxOf(INITIAL_OVERFLOW_PAIRS, extra * 2) * 2)
+    } else {
+        overflow
+    }
+    target[extra * 2] = key
+    target[extra * 2 + 1] = value
+    return target
 }

@@ -70,10 +70,10 @@ fun Modifier.sizeIn(
  * point: an icon asked for 24 dp is 24 dp even in a 16 dp slot, because a silently shrunk icon looks
  * like a rendering bug rather than a layout one.
  */
-fun Modifier.requiredWidth(width: Dp): Modifier = this then RequiredSizeElement(width, null)
+fun Modifier.requiredWidth(width: Dp): Modifier = this then RequiredSizeElement(width, Dp.Unspecified)
 
 /** Like [requiredWidth], for the height. */
-fun Modifier.requiredHeight(height: Dp): Modifier = this then RequiredSizeElement(null, height)
+fun Modifier.requiredHeight(height: Dp): Modifier = this then RequiredSizeElement(Dp.Unspecified, height)
 
 /** Like [requiredWidth], for a square of [size] on each side. */
 fun Modifier.requiredSize(size: Dp): Modifier = this then RequiredSizeElement(size, size)
@@ -120,9 +120,7 @@ private class OffsetNode :
         measuredPxY = y.toPx()
         placedX = x.roundToPx()
         placedY = y.roundToPx()
-        return layout(placeable.width, placeable.height) {
-            placeable.placeRelativeAt(placedX, placedY)
-        }
+        return layoutSingle(placeable.width, placeable.height, placeable, placedX, placedY, relative = true)
     }
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
@@ -173,9 +171,7 @@ private class AbsoluteOffsetNode :
         measuredPxY = y.toPx()
         placedX = x.roundToPx()
         placedY = y.roundToPx()
-        return layout(placeable.width, placeable.height) {
-            placeable.placeAbsoluteAt(placedX, placedY)
-        }
+        return layoutSingle(placeable.width, placeable.height, placeable, placedX, placedY, relative = false)
     }
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
@@ -206,24 +202,21 @@ private class AspectRatioNode :
     LayoutModifierNode {
     var ratio: Float = 1f
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
-        val size = resolve(constraints)
-        val placeable = measurable.measure(
-            if (size == null) constraints else Constraints.of(size.first, size.first, size.second, size.second),
-        )
-        return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }
-    }
-
-    /** Null when neither axis is bounded -- there is no ratio to apply to an unbounded box. */
-    private fun resolve(constraints: Constraints): Pair<Int, Int>? = when {
-        constraints.hasBoundedWidth -> {
-            val w = constraints.maxWidth
-            w to (w / ratio).roundToInt().coerceIn(constraints.minHeight, constraints.maxHeight)
+        val childConstraints = when {
+            constraints.hasBoundedWidth -> {
+                val w = constraints.maxWidth
+                val h = (w / ratio).roundToInt().coerceIn(constraints.minHeight, constraints.maxHeight)
+                Constraints.of(w, w, h, h)
+            }
+            constraints.hasBoundedHeight -> {
+                val h = constraints.maxHeight
+                val w = (h * ratio).roundToInt().coerceIn(constraints.minWidth, constraints.maxWidth)
+                Constraints.of(w, w, h, h)
+            }
+            else -> constraints
         }
-        constraints.hasBoundedHeight -> {
-            val h = constraints.maxHeight
-            (h * ratio).roundToInt().coerceIn(constraints.minWidth, constraints.maxWidth) to h
-        }
-        else -> null
+        val placeable = measurable.measure(childConstraints)
+        return layoutSingle(placeable.width, placeable.height, placeable, 0, 0, relative = false)
     }
 
     override fun Density.minIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int =
@@ -271,7 +264,7 @@ private class SizeInNode :
         val lowH = minHeight.orElse(constraints.minHeight).coerceIn(constraints.minHeight, constraints.maxHeight)
         val highH = maxHeight.orElse(constraints.maxHeight).coerceIn(lowH, constraints.maxHeight)
         val placeable = measurable.measure(Constraints.of(lowW, highW, lowH, highH))
-        return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }
+        return layoutSingle(placeable.width, placeable.height, placeable, 0, 0, relative = false)
     }
 
     context(density: Density)
@@ -303,8 +296,8 @@ private class SizeInNode :
 }
 
 private class RequiredSizeElement(
-    private val width: Dp?,
-    private val height: Dp?,
+    private val width: Dp,
+    private val height: Dp,
 ) : ModifierNodeElement<RequiredSizeNode>() {
     override fun create(): RequiredSizeNode = RequiredSizeNode()
     override fun update(node: RequiredSizeNode) {
@@ -316,35 +309,37 @@ private class RequiredSizeElement(
 private class RequiredSizeNode :
     Modifier.Node(),
     LayoutModifierNode {
-    var width: Dp? = null
-    var height: Dp? = null
+    var width: Dp = Dp.Unspecified
+    var height: Dp = Dp.Unspecified
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
-        val w = width?.roundToPx()
-        val h = height?.roundToPx()
+        val hasW = width.isSpecified
+        val hasH = height.isSpecified
+        val w = if (hasW) width.roundToPx() else 0
+        val h = if (hasH) height.roundToPx() else 0
         val placeable = measurable.measure(
             Constraints.of(
-                minWidth = w ?: constraints.minWidth,
-                maxWidth = w ?: constraints.maxWidth,
-                minHeight = h ?: constraints.minHeight,
-                maxHeight = h ?: constraints.maxHeight,
+                minWidth = if (hasW) w else constraints.minWidth,
+                maxWidth = if (hasW) w else constraints.maxWidth,
+                minHeight = if (hasH) h else constraints.minHeight,
+                maxHeight = if (hasH) h else constraints.maxHeight,
             ),
         )
         // Reported unclamped, which is the difference from `size`. The parent sees the real size and
         // can overflow rather than the content being silently shrunk into the slot.
-        return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }
+        return layoutSingle(placeable.width, placeable.height, placeable, 0, 0, relative = false)
     }
 
     override fun Density.minIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int =
-        width?.roundToPx() ?: measurable.minIntrinsicWidth(height)
+        if (width.isSpecified) width.roundToPx() else measurable.minIntrinsicWidth(height)
 
     override fun Density.maxIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int =
-        width?.roundToPx() ?: measurable.maxIntrinsicWidth(height)
+        if (width.isSpecified) width.roundToPx() else measurable.maxIntrinsicWidth(height)
 
     override fun Density.minIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int =
-        height?.roundToPx() ?: measurable.minIntrinsicHeight(width)
+        if (height.isSpecified) height.roundToPx() else measurable.minIntrinsicHeight(width)
 
     override fun Density.maxIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int =
-        height?.roundToPx() ?: measurable.maxIntrinsicHeight(width)
+        if (height.isSpecified) height.roundToPx() else measurable.maxIntrinsicHeight(width)
 
     override fun toString(): String = "requiredSize($width, $height)"
 }
@@ -379,7 +374,7 @@ private class DefaultMinSizeNode :
             constraints.minHeight
         }
         val placeable = measurable.measure(constraints.copy(minWidth = minW, minHeight = minH))
-        return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }
+        return layoutSingle(placeable.width, placeable.height, placeable, 0, 0, relative = false)
     }
 
     override fun toString(): String = "defaultMinSize($minWidth, $minHeight)"

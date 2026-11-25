@@ -18,6 +18,8 @@ import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.layout.Placeable
+import com.awakekt.awake.compose.ui.layout.PlacementBuffer
+import com.awakekt.awake.compose.ui.layout.PlacementScope
 import com.awakekt.awake.compose.ui.layout.VerticalAlignmentLine
 import com.awakekt.awake.compose.ui.node.ParentDataModifierNode
 import com.awakekt.awake.compose.ui.unit.Constraints
@@ -244,14 +246,15 @@ internal class RowColumnMeasurePolicy(
         constraints: Constraints,
     ): MeasureResult {
         val count = measurables.size
-        val placeables = arrayOfNulls<Placeable>(count)
+        if (count == 0) return layout(constraints.minWidth, constraints.minHeight, place = PlaceNothingRowColumn)
+        val placements = placementBuffer(count)
         val gap = spacing.roundToPx()
         val totalGap = gap * (count - 1).coerceAtLeast(0)
 
-        val unweightedMain = measureUnweighted(measurables, placeables, constraints, gap)
+        val unweightedMain = measureUnweighted(measurables, placements, constraints, gap)
         val totalWeight = totalWeightOf(measurables)
         val weightedMain = if (totalWeight > 0f) {
-            measureWeighted(measurables, placeables, constraints, unweightedMain + totalGap, totalWeight)
+            measureWeighted(measurables, placements, constraints, unweightedMain + totalGap, totalWeight)
         } else {
             0
         }
@@ -261,8 +264,8 @@ internal class RowColumnMeasurePolicy(
         var maxBeforeLine = 0
         var maxAfterLine = 0
         var maxNonAlignedCross = 0
-        for (i in measurables.indices) {
-            val placeable = placeables[i] ?: continue
+        for (i in 0 until count) {
+            val placeable = placements.placeableAt(i) ?: continue
             val data = measurables[i].rowColumnParentData()
             val line = data?.alignmentLine
             val linePos = if (line != null) placeable[line] else AlignmentLine.Unspecified
@@ -291,30 +294,28 @@ internal class RowColumnMeasurePolicy(
             emptyMap()
         }
 
-        // A `val` for the block: a captured `var` is boxed in a `Ref.IntRef` on every measure.
         val baseline = maxBeforeLine
-        return layout(width, height, alignmentLines) {
-            var cursor = leading.of(free, count)
-            for (i in placeables.indices) {
-                val placeable = placeables[i] ?: continue
-                val data = measurables[i].rowColumnParentData()
-                val line = data?.alignmentLine
-                val linePos = if (line != null) placeable[line] else AlignmentLine.Unspecified
-                val crossOffset = if (linePos != AlignmentLine.Unspecified) {
-                    baseline - linePos
-                } else if (data?.crossAxisAlign != null) {
-                    data.crossAxisAlign!!.align(orientation.crossAxisSize(placeable), crossSpace)
-                } else {
-                    crossAxisAlign.align(orientation.crossAxisSize(placeable), crossSpace)
-                }
-                if (isVertical) {
-                    placeable.placeRelativeAt(crossOffset, cursor)
-                } else {
-                    placeable.placeRelativeAt(cursor, crossOffset)
-                }
-                cursor += orientation.mainAxisSize(placeable) + gap + extra
+        var cursor = leading.of(free, count)
+        for (i in 0 until count) {
+            val placeable = placements.placeableAt(i) ?: continue
+            val data = measurables[i].rowColumnParentData()
+            val line = data?.alignmentLine
+            val linePos = if (line != null) placeable[line] else AlignmentLine.Unspecified
+            val crossOffset = if (linePos != AlignmentLine.Unspecified) {
+                baseline - linePos
+            } else if (data?.crossAxisAlign != null) {
+                data.crossAxisAlign!!.align(orientation.crossAxisSize(placeable), crossSpace)
+            } else {
+                crossAxisAlign.align(orientation.crossAxisSize(placeable), crossSpace)
             }
+            if (isVertical) {
+                placements.setRelative(i, crossOffset, cursor)
+            } else {
+                placements.setRelative(i, cursor, crossOffset)
+            }
+            cursor += orientation.mainAxisSize(placeable) + gap + extra
         }
+        return layout(width, height, placements, alignmentLines)
     }
 
     // The main axis sums; the cross axis maxes. The inherited Box-shaped defaults would max both,
@@ -350,7 +351,7 @@ internal class RowColumnMeasurePolicy(
     /** Measures every unweighted child against a loosened main axis, returning their total. */
     private fun measureUnweighted(
         measurables: List<Measurable>,
-        placeables: Array<Placeable?>,
+        placements: PlacementBuffer,
         constraints: Constraints,
         gap: Int,
     ): Int {
@@ -361,7 +362,7 @@ internal class RowColumnMeasurePolicy(
             // Space already committed before this child: what its predecessors took, plus the i gaps
             // that sit in front of it. Weighted siblings count as zero -- they take the leftovers.
             val placeable = measurables[i].measure(looseMainAxis(constraints, used = total + gap * i))
-            placeables[i] = placeable
+            placements.setPlaceable(i, placeable)
             total += orientation.mainAxisSize(placeable)
         }
         return total
@@ -376,13 +377,13 @@ internal class RowColumnMeasurePolicy(
      */
     private fun measureWeighted(
         measurables: List<Measurable>,
-        placeables: Array<Placeable?>,
+        placements: PlacementBuffer,
         constraints: Constraints,
         occupied: Int,
         totalWeight: Float,
     ): Int {
         val shares = if (orientation.hasBoundedMainAxis(constraints)) {
-            weightedShares(measurables, constraints, occupied, totalWeight)
+            weightedShares(measurables, placements.scratchInts(), constraints, occupied, totalWeight)
         } else {
             null
         }
@@ -401,7 +402,7 @@ internal class RowColumnMeasurePolicy(
                 )
             }
             val placeable = measurables[i].measure(childConstraints)
-            placeables[i] = placeable
+            placements.setPlaceable(i, placeable)
             total += orientation.mainAxisSize(placeable)
         }
         return total
@@ -417,15 +418,16 @@ internal class RowColumnMeasurePolicy(
      */
     private fun weightedShares(
         measurables: List<Measurable>,
+        shares: IntArray,
         constraints: Constraints,
         occupied: Int,
         totalWeight: Float,
     ): IntArray {
-        val shares = IntArray(measurables.size)
+        val count = measurables.size
         val slack = (orientation.mainAxisMax(constraints) - occupied).coerceAtLeast(0)
         val perWeight = slack.toFloat() / totalWeight
         var remainder = slack
-        for (i in shares.indices) {
+        for (i in 0 until count) {
             val weight = measurables[i].rowColumnParentData()?.weight ?: 0f
             if (weight <= 0f) continue
             val share = (perWeight * weight).roundToInt()
@@ -436,7 +438,7 @@ internal class RowColumnMeasurePolicy(
         val step = if (remainder > 0) 1 else -1
         var left = abs(remainder)
         var index = 0
-        while (left > 0 && index < shares.size) {
+        while (left > 0 && index < count) {
             val weighted = (measurables[index].rowColumnParentData()?.weight ?: 0f) > 0f
             if (weighted && shares[index] + step >= 0) {
                 shares[index] += step
@@ -485,3 +487,5 @@ private fun totalWeightOf(measurables: List<Measurable>): Float {
     }
     return total
 }
+
+private val PlaceNothingRowColumn: PlacementScope.() -> Unit = {}

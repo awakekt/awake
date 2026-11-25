@@ -197,6 +197,39 @@ class PaintAllocationTest {
         assertNotSame(frame1.decoration, frameAfterEviction.decoration, "unused cache entry should be evicted after idle frame")
     }
 
+    @Test
+    fun dimmedColorCacheReusesDimmedColorAcrossDrawsAndEvictsUnusedEntries() {
+        val scope = PaintScope()
+        val node = LayoutNode(ColumnMeasurePolicy()).also { it.layoutTree(Constraints.fixed(WIDTH, HEIGHT)) }
+        val ink = Color(0.9f, 0.7f, 0.3f, 0.8f)
+
+        fun paintTwoQuads(draw: Boolean): Pair<Color, Color>? {
+            scope.reset()
+            scope.enter(node)
+            if (draw) {
+                scope.withAlpha(0.5f) {
+                    scope.drawRect(0f, 0f, 10f, 10f, ink)
+                    scope.drawRect(20f, 0f, 10f, 10f, ink)
+                }
+            }
+            val prims = scope.primitives()
+            if (prims.size < 2) return null
+            return (prims[0] as UiDrawPrimitive.Quad).color to (prims[1] as UiDrawPrimitive.Quad).color
+        }
+
+        val frame1 = assertNotNull(paintTwoQuads(draw = true))
+        assertSame(frame1.first, frame1.second, "repeated dimmed quads in one frame share one cached Color")
+        assertEquals(0.4f, frame1.first.a, 1e-5f)
+
+        val frame2 = assertNotNull(paintTwoQuads(draw = true))
+        assertSame(frame1.first, frame2.first, "steady-state frames reuse the cached dimmed Color")
+
+        paintTwoQuads(draw = false)
+        paintTwoQuads(draw = false)
+        val afterEviction = assertNotNull(paintTwoQuads(draw = true))
+        assertNotSame(frame1.first, afterEviction.first, "unused dimmed Color entry should be evicted after idle frames")
+    }
+
     private fun sampleDecoration(): GlyphDecoration = GlyphDecoration(
         fieldOffsetX = -2f,
         fieldOffsetY = -2f,

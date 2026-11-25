@@ -136,6 +136,41 @@ interface MeasureScope : Density {
         alignmentLines: Map<AlignmentLine, Int> = emptyMap(),
         place: PlacementScope.() -> Unit,
     ): MeasureResult
+
+    /**
+     * Returns a node-owned [PlacementBuffer] prepared for [count] child slots, reused across
+     * layout passes on the same node so multi-child policies allocate neither `Array<Placeable?>`
+     * nor a placement closure.
+     */
+    fun placementBuffer(count: Int): PlacementBuffer = PlacementBuffer().apply { prepare(count) }
+
+    /**
+     * Reports [width] by [height] and places every entry recorded in [placements] without
+     * allocating a capturing placement block.
+     */
+    fun layout(
+        width: Int,
+        height: Int,
+        placements: PlacementBuffer,
+        alignmentLines: Map<AlignmentLine, Int> = emptyMap(),
+    ): MeasureResult = layout(width, height, alignmentLines, placements.placeBlock)
+
+    /**
+     * Reports [width] by [height] and places a single [placeable] at ([x], [y]) without allocating
+     * a placement block or buffer array.
+     */
+    @Suppress("LongParameterList")
+    fun layoutSingle(
+        width: Int,
+        height: Int,
+        placeable: Placeable,
+        x: Int,
+        y: Int,
+        relative: Boolean = false,
+        alignmentLines: Map<AlignmentLine, Int> = emptyMap(),
+    ): MeasureResult = layout(width, height, alignmentLines) {
+        if (relative) placeable.placeRelativeAt(x, y) else placeable.placeAbsoluteAt(x, y)
+    }
 }
 
 /**

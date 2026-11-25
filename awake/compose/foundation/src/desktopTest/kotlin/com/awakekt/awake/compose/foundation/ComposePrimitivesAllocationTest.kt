@@ -15,7 +15,17 @@ import com.awakekt.awake.compose.foundation.layout.FlexWrap
 import com.awakekt.awake.compose.foundation.layout.FlowColumn
 import com.awakekt.awake.compose.foundation.layout.FlowRow
 import com.awakekt.awake.compose.foundation.layout.Row
+import com.awakekt.awake.compose.foundation.layout.absoluteOffset
+import com.awakekt.awake.compose.foundation.layout.aspectRatio
+import com.awakekt.awake.compose.foundation.layout.defaultMinSize
+import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
+import com.awakekt.awake.compose.foundation.layout.height
+import com.awakekt.awake.compose.foundation.layout.offset
+import com.awakekt.awake.compose.foundation.layout.requiredSize
 import com.awakekt.awake.compose.foundation.layout.size
+import com.awakekt.awake.compose.foundation.layout.sizeIn
+import com.awakekt.awake.compose.foundation.layout.width
+import com.awakekt.awake.compose.foundation.layout.wrapContentSize
 import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
@@ -23,7 +33,9 @@ import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.layout.LayoutComposition
+import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
+import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
@@ -135,6 +147,39 @@ class ComposePrimitivesAllocationTest {
         }
         println("ComposePrimitivesAllocationTest (BasicTextField x$COUNT): $perPass B/pass")
         assertEquals(0L, perPass, "steady-state BasicTextField allocated $perPass B/pass")
+    }
+
+    @Test
+    fun layoutPassAndModifiersAllocateNothingInSteadyState() {
+        val root = LayoutNode(ColumnMeasurePolicy())
+        val composition = LayoutComposition(root)
+        composition.compose {
+            Column(Modifier.width(400.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                for (i in 0 until COUNT) {
+                    Row(
+                        Modifier.fillMaxWidth().height(32.dp),
+                        horizontalArrangement = Arrangement.spacedByHorizontal(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+                            Box(Modifier.matchParentSize())
+                            Box(Modifier.size(16.dp).align(Alignment.BottomEnd))
+                        }
+                        Box(Modifier.weight(1f).defaultMinSize(40.dp, 16.dp).wrapContentSize()) {
+                            Box(Modifier.sizeIn(minWidth = 20.dp, maxWidth = 80.dp).offset(2.dp, 1.dp))
+                        }
+                        Box(Modifier.requiredSize(24.dp).absoluteOffset(1.dp, 0.dp)) {
+                            Box(Modifier.aspectRatio(1f))
+                        }
+                    }
+                }
+            }
+        }
+        val constraints = Constraints.fixed(400, 800)
+        repeat(WARMUP) { root.layoutTree(constraints) }
+        val perPass = readAllocation(MEASURED) { repeat(MEASURED) { root.layoutTree(constraints) } }.perUnit
+        println("ComposePrimitivesAllocationTest (layout pass x$COUNT): $perPass B/pass")
+        assertEquals(0L, perPass, "steady-state layout pass allocated $perPass B/pass")
     }
 
     private fun steadyStateBytes(content: context(Composer) () -> Unit): Long {

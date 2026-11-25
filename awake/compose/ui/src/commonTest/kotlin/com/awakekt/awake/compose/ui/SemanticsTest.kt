@@ -15,8 +15,10 @@ import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.composeInto
 import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
+import com.awakekt.awake.compose.ui.semantics.SemanticsConfiguration
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
+import com.awakekt.awake.compose.ui.semantics.SemanticsPropertyKey
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.SemanticsTreeBuilder
 import com.awakekt.awake.compose.ui.semantics.semantics
@@ -208,5 +210,50 @@ class SemanticsTest {
 
         assertNull(nodes[0].config[SemanticsProperties.Indeterminate])
         assertNull(nodes[0].role)
+    }
+
+    @Test
+    fun configurationHandlesInlineAndOverflowProperties() {
+        val extra1 = SemanticsPropertyKey<String>("Extra1")
+        val extra2 = SemanticsPropertyKey<Int>("Extra2")
+        val extra3 = SemanticsPropertyKey<Boolean>("Extra3")
+
+        val config = SemanticsConfiguration().apply {
+            this[SemanticsProperties.TestTag] = "btn"
+            this[SemanticsProperties.Role] = SemanticsRole.Button
+            this[SemanticsProperties.Label] = "Old"
+            this[SemanticsProperties.Label] = "Play"
+            this[extra1] = "one"
+            this[extra2] = 2
+            this[extra3] = true
+            this[extra2] = 22
+        }
+
+        assertEquals("btn", config[SemanticsProperties.TestTag])
+        assertEquals(SemanticsRole.Button, config[SemanticsProperties.Role])
+        assertEquals("Play", config[SemanticsProperties.Label])
+        assertEquals("one", config[extra1])
+        assertEquals(22, config[extra2])
+        assertEquals(true, config[extra3])
+        assertEquals(
+            setOf(
+                SemanticsProperties.TestTag,
+                SemanticsProperties.Role,
+                SemanticsProperties.Label,
+                extra1,
+                extra2,
+                extra3,
+            ),
+            config.keys,
+        )
+
+        val merged = SemanticsConfiguration().apply {
+            this[SemanticsProperties.Label] = "Winner"
+            mergeFrom(config)
+        }
+        assertEquals("Winner", merged[SemanticsProperties.Label])
+        assertEquals("one", merged[extra1])
+        assertEquals(22, merged[extra2])
+        assertEquals(true, merged[extra3])
     }
 }
