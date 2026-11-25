@@ -133,36 +133,69 @@ jobs:
           core="${TAG#v}"
           central_pom="https://repo.maven.apache.org/maven2/com/awakekt/awake/core/math/$core/math-$core.pom"
           fallback_pom="https://awakekt.github.io/awake/com/awakekt/awake/core/math/$core/math-$core.pom"
-          if curl -fsSI "$central_pom" > /dev/null 2>&1 \
-            || grep -q 'awakekt.github.io/awake' build-logic/src/main/kotlin/com/awakekt/awake/build/tasks/WaitForVulkanCentralTask.kt 2> /dev/null; then
+          has_fallback_wait=false
+          if grep -q 'awakekt.github.io/awake' build-logic/src/main/kotlin/com/awakekt/awake/build/tasks/WaitForVulkanCentralTask.kt 2> /dev/null; then
+            has_fallback_wait=true
+          fi
+          stale_wasm_check=false
+          if grep -q 'kotlin\.publicationFormat=KOTLIN_ARCHIVE' gradle.properties 2> /dev/null \
+            && grep -q 'backend/webgpu-wasm-js/' tools/publish_webgpu_pin.sh 2> /dev/null; then
+            stale_wasm_check=true
+          fi
+          if [[ "$stale_wasm_check" == false ]] \
+            && { curl -fsSI "$central_pom" > /dev/null 2>&1 || [[ "$has_fallback_wait" == true ]]; }; then
             bash tools/publish_webgpu_pin.sh
-          elif curl -fsSI "$fallback_pom" > /dev/null 2>&1; then
-            echo "Core $core is served by Maven fallback; building and verifying the pin locally before uploading to Central snapshots."
+          elif curl -fsSI "$central_pom" > /dev/null 2>&1 || curl -fsSI "$fallback_pom" > /dev/null 2>&1; then
+            echo "Building and verifying WebGPU $core-SNAPSHOT locally before uploading to Central snapshots (stale_wasm_check=$stale_wasm_check)."
             bash tools/publish_webgpu_pin.sh --local
             ./gradlew :awake:backend:webgpu:publishAllPublicationsToMavenCentralRepository \
               -Pawake.publishFamily=webgpu -PisMainHost=true --no-configuration-cache --max-workers=4
-            snapshots="https://central.sonatype.com/repository/maven-snapshots/com/awakekt/awake/backend/webgpu-wasm-js/$core-SNAPSHOT"
-            metadata="$(curl -fsS --retry 5 --retry-all-errors "$snapshots/maven-metadata.xml")"
-            timestamp="$(sed -n 's:.*<timestamp>\(.*\)</timestamp>.*:\1:p' <<< "$metadata")"
-            build_number="$(sed -n 's:.*<buildNumber>\(.*\)</buildNumber>.*:\1:p' <<< "$metadata")"
-            if [[ -z "$timestamp" || -z "$build_number" ]]; then
-              echo "The snapshot repository lists no build of webgpu-wasm-js $core-SNAPSHOT." >&2
+            base="https://central.sonatype.com/repository/maven-snapshots/com/awakekt/awake/backend"
+            work="$(mktemp -d)"
+            trap 'rm -rf "$work"' EXIT
+            fetch_latest_module() {
+              local artifact="$1" out_file="$2" url="$base/$1/$core-SNAPSHOT" meta ts bn b
+              meta="$(curl -fsS --retry 5 --retry-all-errors "$url/maven-metadata.xml")"
+              ts="$(sed -n 's:.*<timestamp>\(.*\)</timestamp>.*:\1:p' <<< "$meta" | tr -d '\r' | head -n 1)"
+              bn="$(sed -n 's:.*<buildNumber>\(.*\)</buildNumber>.*:\1:p' <<< "$meta" | tr -d '\r' | head -n 1)"
+              if [[ -z "$ts" || -z "$bn" ]]; then
+                echo "The snapshot repository lists no build of $artifact $core-SNAPSHOT." >&2
+                return 1
+              fi
+              b="$core-$ts-$bn"
+              curl -fsS --retry 5 --retry-all-errors "$url/$artifact-$b.module" > "$out_file"
+              printf '%s\n' "$b"
+            }
+            root_module="$work/webgpu.module"
+            root_build="$(fetch_latest_module webgpu "$root_module")"
+            if ! jq -e '.variants | any(.name == "wasmJsRuntimeElements-published")' "$root_module" > /dev/null; then
+              echo "webgpu $root_build on the snapshot repository has no wasmJsRuntimeElements-published variant." >&2
               exit 1
             fi
-            build="$core-$timestamp-$build_number"
-            if ! curl -fsS --retry 5 --retry-all-errors "$snapshots/webgpu-wasm-js-$build.module" | jq -e --arg core "$core" '
+            wasm_redirect="$(jq -r '[.variants[] | select(.name == "wasmJsRuntimeElements-published") | ."available-at".module // ""] | first // ""' "$root_module" | tr -d '\r')"
+            target_module="$root_module"
+            target_artifact="webgpu"
+            target_build="$root_build"
+            if [[ -n "$wasm_redirect" ]]; then
+              target_artifact="$wasm_redirect"
+              target_module="$work/$target_artifact.module"
+              target_build="$(fetch_latest_module "$target_artifact" "$target_module")"
+            fi
+            if ! jq -e --arg core "$core" '
               def awake: .group | test("^com\\.awakekt\\.awake(\\.|$)");
-              [.variants[] | .dependencies[]? | select(awake and (.module | startswith("webgpu") | not))] as $deps
-              | [.variants[] | .dependencyConstraints[]? | select(awake)] as $constraints
-              | ($deps | length) > 0
-                and ($deps | all(.version.requires == $core))
-                and ($constraints | all(.version.strictly == $core))
-                and (([$deps[] | "\(.group):\(.module)"] - [$constraints[] | "\(.group):\(.module)"]) | length) == 0
-            ' > /dev/null; then
-              echo "webgpu-wasm-js $build on the snapshot repository does not hold every Core module strictly at $core." >&2
+              ([.variants[] | select(.name == "wasmJsRuntimeElements-published") | .dependencies[]? | select(awake and (.module | startswith("webgpu") | not))] | length) > 0
+              and ([.variants[] |
+                ([.dependencies[]? | select(awake and (.module | startswith("webgpu") | not))] as $deps |
+                 [.dependencyConstraints[]? | select(awake)] as $constraints |
+                 ($deps | all(.version.requires == $core))
+                 and ($constraints | all(.version.strictly == $core))
+                 and (([$deps[] | "\(.group):\(.module)"] - [$constraints[] | "\(.group):\(.module)"]) | length) == 0)
+              ] | all)
+            ' "$target_module" > /dev/null; then
+              echo "$target_artifact $target_build on the snapshot repository does not hold every Core module strictly at $core." >&2
               exit 1
             fi
-            echo "::notice::WebGPU $core-SNAPSHOT (build $build) pins Core $core (served by Maven fallback)"
+            echo "::notice::WebGPU $core-SNAPSHOT (build $target_build via $target_artifact) pins Core $core"
           else
             bash tools/publish_webgpu_pin.sh
           fi
