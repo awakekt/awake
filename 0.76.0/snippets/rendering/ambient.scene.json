@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "sun",
+      "components": [
+        {
+          "component": "light",
+          "type": "Directional",
+          "ambient": 0.35
+        }
+      ]
+    }
+  ]
+}
