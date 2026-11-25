@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.76.0] - 2026-11-25
+
+### Added
+
+- **Size-threshold ranged bundle fetches for lower mobile peak heap (`BundleMemoryLimits.rangedMemberAboveBytes`).** Added optional `rangedMemberAboveBytes` (off by default, `null`) to `BundleMemoryLimits` (#1619): when set alongside a host `rangeFetch`, bundles larger than the threshold are fetched member by member on both `read` and `prefetch` instead of holding multi-megabyte bundle bodies whole on the heap, while smaller bundles continue to fetch whole in a single request.
+
+### Changed
+
+- **Compose steady-state layout, modifier, semantics, and paint allocations cut.** Added a node-owned `PlacementBuffer` and `MeasureScope.placementBuffer` / `layoutSingle` fast paths so `Box`, `Row`, and `Column` (plus `wrapContent*`, `offset`, `absoluteOffset`, `aspectRatio`, `sizeIn`, `requiredSize`, and `defaultMinSize`) perform steady-state measure and placement with 0 B allocations (`ComposeFrameProbe` layout 0 B, total 9,863 -> 7,933 B/frame); unboxed `Dp`/`Float` fields in `SizeElement`, `RequiredSizeElement`, and `FillElement`; stored the first three `SemanticsConfiguration` entries inline without allocating a backing array; eliminated `Rectangle` allocation in `DrawScope.drawImage`; and added a frame-evicting `DimmedColorCache` and 4-way probed 512-slot `DecoratedGlyphCache` in `PaintScope`.
+
+### Fixed
+
+- Clamp terrain lightmap and paged coarse fallback linear UVs to outer texel centres (`[0.5/size, 1 - 0.5/size]`) so repeating shared layer samplers no longer wrap far-edge baked lighting across adjoining terrain borders.
+
 ## [0.75.0] - 2026-11-25
 
 ### Changed

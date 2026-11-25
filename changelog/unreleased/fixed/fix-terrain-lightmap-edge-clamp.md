@@ -1,1 +1,0 @@
-- Clamp terrain lightmap and paged coarse fallback linear UVs to outer texel centres (`[0.5/size, 1 - 0.5/size]`) so repeating shared layer samplers no longer wrap far-edge baked lighting across adjoining terrain borders.
