@@ -53,7 +53,13 @@ fun Layout(
     node.density = density
     node.fontScale = fontScale
     node.layoutDirection = layoutDirection
-    composer.endNode(content?.let { { it(composer) } })
+    if (content != null) {
+        val enclosingKey = composer.enterNode()
+        content(composer)
+        composer.exitNode(Slot.Children, enclosingKey)
+    } else {
+        composer.endEmptyNode()
+    }
 }
 
 context(composer: Composer)
@@ -85,21 +91,21 @@ fun Layer(
         () -> Unit
     )? = null,
 ) {
-    composer.node(
-        type = kind,
-        slot = Slot.Layers,
-        update = { node ->
-            node as LayoutNode
-            node.measurePolicy = measurePolicy
-            node.modifier = modifier
-            node.isModal = modal
-            node.dismissOnOutsideClick = dismissOnOutsideClick
-            node.dismissOnEscape = dismissOnEscape
-            node.onDismissRequest = onDismissRequest
-            node.layerPositionProvider = positionProvider
-        },
-        content = content?.let { { it(composer) } },
-    )
+    val node = composer.startNode(kind, Slot.Layers) as LayoutNode
+    node.measurePolicy = measurePolicy
+    node.modifier = modifier
+    node.isModal = modal
+    node.dismissOnOutsideClick = dismissOnOutsideClick
+    node.dismissOnEscape = dismissOnEscape
+    node.onDismissRequest = onDismissRequest
+    node.layerPositionProvider = positionProvider
+    if (content != null) {
+        val enclosingKey = composer.enterNode()
+        content(composer)
+        composer.exitNode(Slot.Layers, enclosingKey)
+    } else {
+        composer.endEmptyNode()
+    }
 }
 
 /** Paint and hit-test order. Within a kind, ordering is the order layers were declared. */

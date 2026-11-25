@@ -8,15 +8,16 @@
 package com.awakekt.awake.compose.foundation.layout
 
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.Slot
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.layout.AlignmentLine
-import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.layout.Placeable
+import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -146,6 +147,82 @@ private fun weightedShares(items: List<FlowItem>, space: Int, totalWeight: Float
     return shares
 }
 
+@PublishedApi
+context(composer: Composer)
+internal fun openFlowRowNode(
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    itemVerticalAlignment: Alignment.Vertical = Alignment.Top,
+    maxItemsInEachRow: Int = Int.MAX_VALUE,
+    maxLines: Int = Int.MAX_VALUE,
+): Any? {
+    require(maxItemsInEachRow > 0) { "maxItemsInEachRow must be > 0, was $maxItemsInEachRow" }
+    require(maxLines > 0) { "maxLines must be > 0, was $maxLines" }
+    val node = composer.startNode(FlowRowNodeType, Slot.Children) as LayoutNode
+    val previous = node.measurePolicy as? FlowRowMeasurePolicy
+    val policy = if (previous != null &&
+        previous.matches(
+            horizontalArrangement,
+            verticalArrangement,
+            maxItemsInEachRow,
+            maxLines,
+            itemVerticalAlignment,
+        )
+    ) {
+        previous
+    } else {
+        FlowRowMeasurePolicy(
+            horizontalArrangement,
+            verticalArrangement,
+            maxItemsInEachRow,
+            maxLines,
+            itemVerticalAlignment,
+            VerticalCrossAxisAlign(itemVerticalAlignment),
+        )
+    }
+    configureLayoutNode(node, modifier, policy)
+    return composer.enterNode()
+}
+
+@PublishedApi
+context(composer: Composer)
+internal fun openFlowColumnNode(
+    modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    itemHorizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    maxItemsInEachColumn: Int = Int.MAX_VALUE,
+    maxLines: Int = Int.MAX_VALUE,
+): Any? {
+    require(maxItemsInEachColumn > 0) { "maxItemsInEachColumn must be > 0, was $maxItemsInEachColumn" }
+    require(maxLines > 0) { "maxLines must be > 0, was $maxLines" }
+    val node = composer.startNode(FlowColumnNodeType, Slot.Children) as LayoutNode
+    val previous = node.measurePolicy as? FlowColumnMeasurePolicy
+    val policy = if (previous != null &&
+        previous.matches(
+            verticalArrangement,
+            horizontalArrangement,
+            maxItemsInEachColumn,
+            maxLines,
+            itemHorizontalAlignment,
+        )
+    ) {
+        previous
+    } else {
+        FlowColumnMeasurePolicy(
+            verticalArrangement,
+            horizontalArrangement,
+            maxItemsInEachColumn,
+            maxLines,
+            itemHorizontalAlignment,
+            HorizontalCrossAxisAlign(itemHorizontalAlignment),
+        )
+    }
+    configureLayoutNode(node, modifier, policy)
+    return composer.enterNode()
+}
+
 context(composer: Composer)
 /**
  * Places children left-to-right and wraps to a new line when a bounded width is exhausted.
@@ -156,31 +233,28 @@ context(composer: Composer)
  * [maxItemsInEachRow] supplies an explicit cap. [maxLines] clips later lines.
  *
  * We intentionally do not expose Compose's deprecated overflow-indicator API. A caller that needs
- * an expand control owns that state and renders it alongside this layout.
+ * an expand control owns that state and renders it alongside this layout. Inlined so steady-state
+ * callers allocate no capturing lambda.
  */
-fun FlowRow(
+inline fun FlowRow(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     itemVerticalAlignment: Alignment.Vertical = Alignment.Top,
     maxItemsInEachRow: Int = Int.MAX_VALUE,
     maxLines: Int = Int.MAX_VALUE,
-    content: context(Composer) RowScope.() -> Unit,
+    crossinline content: context(Composer) RowScope.() -> Unit,
 ) {
-    require(maxItemsInEachRow > 0) { "maxItemsInEachRow must be > 0, was $maxItemsInEachRow" }
-    require(maxLines > 0) { "maxLines must be > 0, was $maxLines" }
-    Layout(
-        nodeType = FlowRowNodeType,
-        modifier = modifier,
-        measurePolicy = FlowRowMeasurePolicy(
-            horizontalArrangement,
-            verticalArrangement,
-            maxItemsInEachRow,
-            maxLines,
-            VerticalCrossAxisAlign(itemVerticalAlignment),
-        ),
-        content = { content(composer, RowScopeInstance) },
+    val enclosingKey = openFlowRowNode(
+        modifier,
+        horizontalArrangement,
+        verticalArrangement,
+        itemVerticalAlignment,
+        maxItemsInEachRow,
+        maxLines,
     )
+    content(composer, rowScopeInstance())
+    composer.exitNode(Slot.Children, enclosingKey)
 }
 
 context(composer: Composer)
@@ -193,31 +267,28 @@ context(composer: Composer)
  * column unless [maxItemsInEachColumn] supplies an explicit cap. [maxLines] clips later columns.
  *
  * We intentionally do not expose Compose's deprecated overflow-indicator API. A caller that needs
- * an expand control owns that state and renders it alongside this layout.
+ * an expand control owns that state and renders it alongside this layout. Inlined so steady-state
+ * callers allocate no capturing lambda.
  */
-fun FlowColumn(
+inline fun FlowColumn(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     itemHorizontalAlignment: Alignment.Horizontal = Alignment.Start,
     maxItemsInEachColumn: Int = Int.MAX_VALUE,
     maxLines: Int = Int.MAX_VALUE,
-    content: context(Composer) ColumnScope.() -> Unit,
+    crossinline content: context(Composer) ColumnScope.() -> Unit,
 ) {
-    require(maxItemsInEachColumn > 0) { "maxItemsInEachColumn must be > 0, was $maxItemsInEachColumn" }
-    require(maxLines > 0) { "maxLines must be > 0, was $maxLines" }
-    Layout(
-        nodeType = FlowColumnNodeType,
-        modifier = modifier,
-        measurePolicy = FlowColumnMeasurePolicy(
-            verticalArrangement,
-            horizontalArrangement,
-            maxItemsInEachColumn,
-            maxLines,
-            HorizontalCrossAxisAlign(itemHorizontalAlignment),
-        ),
-        content = { content(composer, ColumnScopeInstance) },
+    val enclosingKey = openFlowColumnNode(
+        modifier,
+        verticalArrangement,
+        horizontalArrangement,
+        itemHorizontalAlignment,
+        maxItemsInEachColumn,
+        maxLines,
     )
+    content(composer, columnScopeInstance())
+    composer.exitNode(Slot.Children, enclosingKey)
 }
 
 private class FlowRowMeasurePolicy(
@@ -225,8 +296,23 @@ private class FlowRowMeasurePolicy(
     private val verticalArrangement: Arrangement.Vertical,
     private val maxItemsInEachRow: Int,
     private val maxLines: Int,
+    private val rawItemVerticalAlignment: Alignment.Vertical,
     private val itemVerticalAlignment: CrossAxisAlign,
 ) : MeasurePolicy {
+    fun matches(
+        horizontalArrangement: Arrangement.Horizontal,
+        verticalArrangement: Arrangement.Vertical,
+        maxItemsInEachRow: Int,
+        maxLines: Int,
+        itemVerticalAlignment: Alignment.Vertical,
+    ): Boolean {
+        val limitsMatch = maxItemsInEachRow == this.maxItemsInEachRow && maxLines == this.maxLines
+        val alignmentsMatch = sameLayoutValue(rawItemVerticalAlignment, itemVerticalAlignment) &&
+            sameLayoutValue(this.horizontalArrangement, horizontalArrangement) &&
+            sameLayoutValue(this.verticalArrangement, verticalArrangement)
+        return limitsMatch && alignmentsMatch
+    }
+
     @Suppress("LongMethod") // Grouping and placing are one measure transaction; splitting would hide shared bounds.
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
         val horizontalGap = horizontalArrangement.spacing.roundToPx()
@@ -308,8 +394,23 @@ private class FlowColumnMeasurePolicy(
     private val horizontalArrangement: Arrangement.Horizontal,
     private val maxItemsInEachColumn: Int,
     private val maxLines: Int,
+    private val rawItemHorizontalAlignment: Alignment.Horizontal,
     private val itemHorizontalAlignment: CrossAxisAlign,
 ) : MeasurePolicy {
+    fun matches(
+        verticalArrangement: Arrangement.Vertical,
+        horizontalArrangement: Arrangement.Horizontal,
+        maxItemsInEachColumn: Int,
+        maxLines: Int,
+        itemHorizontalAlignment: Alignment.Horizontal,
+    ): Boolean {
+        val limitsMatch = maxItemsInEachColumn == this.maxItemsInEachColumn && maxLines == this.maxLines
+        val alignmentsMatch = sameLayoutValue(rawItemHorizontalAlignment, itemHorizontalAlignment) &&
+            sameLayoutValue(this.verticalArrangement, verticalArrangement) &&
+            sameLayoutValue(this.horizontalArrangement, horizontalArrangement)
+        return limitsMatch && alignmentsMatch
+    }
+
     @Suppress("LongMethod") // Grouping and placing are one measure transaction; splitting would hide shared bounds.
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
         val verticalGap = verticalArrangement.spacing.roundToPx()

@@ -117,15 +117,19 @@ object SemanticsProperties {
 }
 
 /** Declares semantics for this node, optionally absorbing everything beneath it into one node. */
-fun Modifier.semantics(
+inline fun Modifier.semantics(
     mergeDescendants: Boolean = false,
     properties: SemanticsConfiguration.() -> Unit,
 ): Modifier {
     val config = SemanticsConfiguration()
     config.isMergingDescendants = mergeDescendants
     config.properties()
-    return this then SemanticsNodeElement(config)
+    return appendSemantics(config)
 }
+
+@PublishedApi
+internal fun Modifier.appendSemantics(config: SemanticsConfiguration): Modifier =
+    this then SemanticsNodeElement(config)
 
 /** The handle a test uses to find this node. */
 fun Modifier.testTag(tag: String): Modifier = this then TestTagElement(tag)
@@ -177,10 +181,10 @@ private class SemanticsModifierNodeImpl :
  * discards them instead, which is what a decorative container of already-labelled parts needs: a
  * chart made of a hundred labelled bars should report "revenue by month", not a hundred bars.
  */
-fun Modifier.clearAndSetSemantics(properties: SemanticsConfiguration.() -> Unit): Modifier {
+inline fun Modifier.clearAndSetSemantics(properties: SemanticsConfiguration.() -> Unit): Modifier {
     val config = SemanticsConfiguration()
     config.isMergingDescendants = true
     config.isClearingDescendants = true
     config.properties()
-    return this then SemanticsNodeElement(config)
+    return appendSemantics(config)
 }

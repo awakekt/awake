@@ -40,7 +40,8 @@ class Composer internal constructor(
     private val slotOwners = ArrayList<Any?>().apply { add(root) }
     private var slotCursors = IntArray(INITIAL_DEPTH)
 
-    internal val locals = parentLocals?.snapshot() ?: ProvidedLocals()
+    @PublishedApi
+    internal val locals: ProvidedLocals = parentLocals?.snapshot() ?: ProvidedLocals()
 
     /**
      * A copy of the composition locals open at this point in the pass, for a composition that starts
@@ -97,30 +98,45 @@ class Composer internal constructor(
         return instance
     }
 
-    /** Ends the node [startNode] opened, composing [content] into it, or emptying it when there is none. */
-    fun endNode(content: (() -> Unit)?) {
-        val instance = checkNotNull(openInstance) { "endNode without a startNode" }
+    /**
+     * Descends into the node [startNode] opened so callers can compose children directly without
+     * allocating a wrapper lambda, then close it with [exitNode].
+     */
+    fun enterNode(): Any? {
+        val instance = checkNotNull(openInstance) { "enterNode without a startNode" }
+        val slot = openSlot
+        val index = openIndex
+        openInstance = null
+        applier.down(slot, index)
+        openSlots(instance)
+        pushDepth()
+        // Descendants get their own identity from their own position. An enclosing key applies
+        // to the siblings it wraps, not to everything underneath them.
+        val enclosingKey = pendingKey
+        pendingKey = null
+        return enclosingKey
+    }
+
+    /** Closes the node [enterNode] opened, dropping any children or slots this pass stopped declaring. */
+    fun exitNode(slot: Slot, enclosingKey: Any?) {
+        pendingKey = enclosingKey
+        // Whatever this pass stopped declaring is gone; anything left is stale.
+        dropFrom(Slot.Children, cursor(Slot.Children))
+        dropFrom(Slot.Layers, cursor(Slot.Layers))
+        closeSlots()
+        popDepth()
+        applier.up()
+        advance(slot)
+    }
+
+    /** Ends a childless node [startNode] opened, dropping any stale children, layers, and slots it held. */
+    fun endEmptyNode() {
+        val instance = checkNotNull(openInstance) { "endEmptyNode without a startNode" }
         val slot = openSlot
         val index = openIndex
         val existing = openExisting
         openInstance = null
-        if (content != null) {
-            applier.down(slot, index)
-            openSlots(instance)
-            pushDepth()
-            // Descendants get their own identity from their own position. An enclosing key applies
-            // to the siblings it wraps, not to everything underneath them.
-            val enclosingKey = pendingKey
-            pendingKey = null
-            content()
-            pendingKey = enclosingKey
-            // Whatever this pass stopped declaring is gone; anything left is stale.
-            dropFrom(Slot.Children, cursor(Slot.Children))
-            dropFrom(Slot.Layers, cursor(Slot.Layers))
-            closeSlots()
-            popDepth()
-            applier.up()
-        } else if (existing >= 0) {
+        if (existing >= 0) {
             applier.down(slot, index)
             try {
                 dropFrom(Slot.Children, 0)
@@ -133,6 +149,18 @@ class Composer internal constructor(
         advance(slot)
     }
 
+    /** Ends the node [startNode] opened, composing [content] into it, or emptying it when there is none. */
+    fun endNode(content: (() -> Unit)?) {
+        if (content != null) {
+            val slot = openSlot
+            val enclosingKey = enterNode()
+            content()
+            exitNode(slot, enclosingKey)
+        } else {
+            endEmptyNode()
+        }
+    }
+
     /**
      * Gives everything declared inside [block] an identity tied to [value] rather than its position:
      * the nodes it declares, and the values it remembers, which get a slot group of their own.
@@ -140,16 +168,27 @@ class Composer internal constructor(
      * Needed whenever a list can reorder or a branch can come and go: without it the node at index 3
      * stays the node at index 3, and its state follows the slot instead of the item.
      */
-    fun <T> key(value: Any, block: () -> T): T {
-        val previous = pendingKey
-        pendingKey = value
-        startGroup(value)
+    inline fun <T> key(value: Any, block: () -> T): T {
+        val previous = startKey(value)
         try {
             return block()
         } finally {
-            endGroup()
-            pendingKey = previous
+            endKey(previous)
         }
+    }
+
+    @PublishedApi
+    internal fun startKey(value: Any): Any? {
+        val previous = pendingKey
+        pendingKey = value
+        startGroup(value)
+        return previous
+    }
+
+    @PublishedApi
+    internal fun endKey(previous: Any?) {
+        endGroup()
+        pendingKey = previous
     }
 
     /**
@@ -199,43 +238,60 @@ class Composer internal constructor(
         return found
     }
 
-    /**
-     * The value held in the next slot of the current node or group, computed on the pass that first
-     * reached it, and again whenever a key changes or the slot holds something [isT] refuses.
-     *
-     * Slots belong to the enclosing node, so they survive exactly as long as it does. A node with no
-     * store -- a test double, say -- cannot remember, and says so rather than silently recomputing.
-     *
-     * Two keys are stored side by side rather than combined into one. Combining them -- a `Pair`, a
-     * vararg array -- would allocate per call per pass, and `remember` runs in the per-frame path
-     * this engine exists to keep allocation-free. Two fields cost nothing.
-     */
     @PublishedApi
-    internal fun <T> remember(key1: Any?, key2: Any?, isT: (Any?) -> Boolean, calculate: () -> T): T {
+    internal fun claimRememberIndex(): Int {
         val top = slotOwners.lastIndex
         val slots = slotsOf(slotOwners[top])
             ?: error("remember() needs an enclosing node that implements RememberHolder")
         val index = slotCursors[top]
         slotCursors[top] = index + 1
-        val slot = slots.getOrNull(index) as? RememberedSlot ?: claimSlot(slots, index)
-        if (slot == null) {
-            val fresh = RememberedSlot(key1, key2, calculate())
-            slots.add(index, fresh)
-            @Suppress("UNCHECKED_CAST")
-            return fresh.value as T
+        val existing = slots.getOrNull(index) as? RememberedSlot ?: claimSlot(slots, index)
+        if (existing == null) {
+            slots.add(index, RememberedSlot(Unkeyed, Unkeyed, Unkeyed, RememberMiss))
         }
-        // A value of another type is another call's: the calls before this one changed. Recompute
-        // rather than hand it over and fail with a ClassCastException at the caller.
-        if (slot.key != key1 || slot.key2 != key2 || !isT(slot.value)) {
-            val previous = slot.value
-            slot.key = key1
-            slot.key2 = key2
-            slot.value = calculate()
-            if (previous !== slot.value) forgetValue(previous)
+        return index
+    }
+
+    @PublishedApi
+    internal fun readRemember(index: Int, key1: Any?, key2: Any?, key3: Any?): Any? {
+        val slots = slotsOf(slotOwners[slotOwners.lastIndex])!!
+        val slot = slots[index] as RememberedSlot
+        val value = slot.value
+        val keysMatch = sameKey(slot.key, key1) && sameKey(slot.key2, key2) && sameKey(slot.key3, key3)
+        return if (value === RememberMiss || !keysMatch) RememberMiss else value
+    }
+
+    @PublishedApi
+    internal fun writeRemember(index: Int, key1: Any?, key2: Any?, key3: Any?, value: Any?) {
+        val slots = slotsOf(slotOwners[slotOwners.lastIndex])!!
+        val slot = slots[index] as RememberedSlot
+        val previous = slot.value
+        slot.key = key1
+        slot.key2 = key2
+        slot.key3 = key3
+        slot.value = value
+        if (previous !== RememberMiss && previous !== value) forgetValue(previous)
+    }
+
+    /**
+     * Binary-compatible entry point for callers compiled against earlier inline `remember` overloads.
+     * Current inline `remember` calls [claimRememberIndex], [readRemember], and [writeRemember] so
+     * steady-state hits allocate neither a [calculate] closure nor an [isT] predicate.
+     */
+    @PublishedApi
+    internal fun <T> remember(key1: Any?, key2: Any?, isT: (Any?) -> Boolean, calculate: () -> T): T {
+        val index = claimRememberIndex()
+        val cached = readRemember(index, key1, key2, Unkeyed)
+        if (cached === RememberMiss || !isT(cached)) {
+            val fresh = calculate()
+            writeRemember(index, key1, key2, Unkeyed, fresh)
+            return fresh
         }
         @Suppress("UNCHECKED_CAST")
-        return slot.value as T
+        return cached as T
     }
+
+    private fun sameKey(a: Any?, b: Any?): Boolean = a === b || a == b
 
     internal fun finishRoot() {
         dropFrom(Slot.Children, cursor(Slot.Children))
@@ -319,7 +375,7 @@ class Composer internal constructor(
 
 context(composer: Composer)
 /** Declares [block]'s nodes under [value]'s identity rather than their position. */
-fun <T> key(value: Any, block: () -> T): T = composer.key(value, block)
+inline fun <T> key(value: Any, block: () -> T): T = composer.key(value, block)
 
 context(composer: Composer)
 /**
@@ -338,7 +394,14 @@ fun node(
         () -> Unit
     )? = null,
 ) {
-    composer.node(type, slot, update, content?.let { { it(composer) } })
+    update(composer.startNode(type, slot))
+    if (content != null) {
+        val enclosingKey = composer.enterNode()
+        content(composer)
+        composer.exitNode(slot, enclosingKey)
+    } else {
+        composer.endEmptyNode()
+    }
 }
 
 /**

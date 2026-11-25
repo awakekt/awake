@@ -48,44 +48,92 @@ fun Modifier.size(width: Dp, height: Dp): Modifier = this then SizeElement(width
 /** Requests a fixed square of [all] on each side, still clamped to what the parent allows. */
 fun Modifier.size(all: Dp): Modifier = this then SizeElement(all, all)
 
+private val FillMaxWidthFull = FillElement(widthFraction = 1f, heightFraction = null)
+private val FillMaxHeightFull = FillElement(widthFraction = null, heightFraction = 1f)
+private val FillMaxSizeFull = FillElement(widthFraction = 1f, heightFraction = 1f)
+
 /** Occupies [fraction] of a bounded parent width; an unbounded width remains untouched. */
 fun Modifier.fillMaxWidth(fraction: Float = 1f): Modifier =
-    this then FillElement(widthFraction = fraction.validFillFraction(), heightFraction = null)
+    this then if (fraction == 1f) {
+        FillMaxWidthFull
+    } else {
+        FillElement(widthFraction = fraction.validFillFraction(), heightFraction = null)
+    }
 
 /** Occupies [fraction] of a bounded parent height; an unbounded height remains untouched. */
 fun Modifier.fillMaxHeight(fraction: Float = 1f): Modifier =
-    this then FillElement(widthFraction = null, heightFraction = fraction.validFillFraction())
+    this then if (fraction == 1f) {
+        FillMaxHeightFull
+    } else {
+        FillElement(widthFraction = null, heightFraction = fraction.validFillFraction())
+    }
 
 /** Occupies [fraction] of each bounded parent axis. */
-fun Modifier.fillMaxSize(fraction: Float = 1f): Modifier = this then FillElement(
-    widthFraction = fraction.validFillFraction(),
-    heightFraction = fraction.validFillFraction(),
+fun Modifier.fillMaxSize(fraction: Float = 1f): Modifier =
+    this then if (fraction == 1f) {
+        FillMaxSizeFull
+    } else {
+        val valid = fraction.validFillFraction()
+        FillElement(widthFraction = valid, heightFraction = valid)
+    }
+
+private val WrapContentWidthCenter = WrapContentElement(
+    wrapWidth = true,
+    horizontalAlignment = Alignment.CenterHorizontally,
+    unbounded = false,
+)
+private val WrapContentHeightCenter = WrapContentElement(
+    wrapHeight = true,
+    verticalAlignment = Alignment.CenterVertically,
+    unbounded = false,
+)
+private val WrapContentSizeCenter = WrapContentElement(
+    wrapWidth = true,
+    wrapHeight = true,
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalAlignment = Alignment.CenterVertically,
+    unbounded = false,
 )
 
 /** Lets content measure below the incoming minimum width and aligns it in the reported width. */
 fun Modifier.wrapContentWidth(
     align: Alignment.Horizontal = Alignment.CenterHorizontally,
     unbounded: Boolean = false,
-): Modifier = this then WrapContentElement(wrapWidth = true, horizontalAlignment = align, unbounded = unbounded)
+): Modifier = this then if (align === Alignment.CenterHorizontally && !unbounded) {
+    WrapContentWidthCenter
+} else {
+    WrapContentElement(wrapWidth = true, horizontalAlignment = align, unbounded = unbounded)
+}
 
 /** Lets content measure below the incoming minimum height and aligns it in the reported height. */
 fun Modifier.wrapContentHeight(
     align: Alignment.Vertical = Alignment.CenterVertically,
     unbounded: Boolean = false,
-): Modifier = this then WrapContentElement(wrapHeight = true, verticalAlignment = align, unbounded = unbounded)
+): Modifier = this then if (align === Alignment.CenterVertically && !unbounded) {
+    WrapContentHeightCenter
+} else {
+    WrapContentElement(wrapHeight = true, verticalAlignment = align, unbounded = unbounded)
+}
 
 /** Lets content measure below both incoming minimums and aligns it in the reported size. */
 fun Modifier.wrapContentSize(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     unbounded: Boolean = false,
-): Modifier = this then WrapContentElement(
-    wrapWidth = true,
-    wrapHeight = true,
-    horizontalAlignment = horizontalAlignment,
-    verticalAlignment = verticalAlignment,
-    unbounded = unbounded,
-)
+): Modifier = this then if (horizontalAlignment === Alignment.CenterHorizontally &&
+    verticalAlignment === Alignment.CenterVertically &&
+    !unbounded
+) {
+    WrapContentSizeCenter
+} else {
+    WrapContentElement(
+        wrapWidth = true,
+        wrapHeight = true,
+        horizontalAlignment = horizontalAlignment,
+        verticalAlignment = verticalAlignment,
+        unbounded = unbounded,
+    )
+}
 
 private class PaddingElement(
     private val start: Dp,

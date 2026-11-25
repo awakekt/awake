@@ -446,6 +446,8 @@ public final class com/awakekt/awake/compose/foundation/layout/FlexBoxKt {
 	public static final fun FlexBox (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfig;Lkotlin/jvm/functions/Function2;)V
 	public static synthetic fun FlexBox$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfig;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static final fun flex (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun flexBoxScopeInstance ()Lcom/awakekt/awake/compose/foundation/layout/FlexBoxScope;
+	public static final fun openFlexBoxNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfig;)Ljava/lang/Object;
 }
 
 public abstract interface class com/awakekt/awake/compose/foundation/layout/FlexBoxScope {
@@ -502,6 +504,10 @@ public final class com/awakekt/awake/compose/foundation/layout/FlowKt {
 	public static synthetic fun FlowColumn$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static final fun FlowRow (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;IILkotlin/jvm/functions/Function2;)V
 	public static synthetic fun FlowRow$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun openFlowColumnNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;II)Ljava/lang/Object;
+	public static synthetic fun openFlowColumnNode$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;IIILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun openFlowRowNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;II)Ljava/lang/Object;
+	public static synthetic fun openFlowRowNode$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;IIILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/compose/foundation/layout/IntrinsicSize : java/lang/Enum {
@@ -545,14 +551,20 @@ public abstract interface annotation class com/awakekt/awake/compose/foundation/
 }
 
 public final class com/awakekt/awake/compose/foundation/layout/LayoutsKt {
+	public static final fun Box (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;)V
 	public static final fun Box (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;)V
 	public static final fun Box (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun Box$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 	public static synthetic fun Box$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun Box$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static final fun Column (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lkotlin/jvm/functions/Function2;)V
 	public static synthetic fun Column$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static final fun Row (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;)V
 	public static synthetic fun Row$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun columnScopeInstance ()Lcom/awakekt/awake/compose/foundation/layout/ColumnScope;
+	public static final fun openColumnNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;)Ljava/lang/Object;
+	public static final fun openRowNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;)Ljava/lang/Object;
+	public static final fun rowScopeInstance ()Lcom/awakekt/awake/compose/foundation/layout/RowScope;
 }
 
 public final class com/awakekt/awake/compose/foundation/layout/OffsetAndSizingKt {
@@ -606,6 +618,12 @@ public final class com/awakekt/awake/compose/foundation/layout/RowScope$DefaultI
 public final class com/awakekt/awake/compose/foundation/layout/SpacerKt {
 	public static final fun Spacer (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;)V
 	public static synthetic fun Spacer$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/compose/foundation/layout/StandardLayoutPoliciesKt {
+	public static final fun boxScopeInstance ()Lcom/awakekt/awake/compose/foundation/layout/BoxScope;
+	public static final fun openAxisBoxNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;)Ljava/lang/Object;
+	public static final fun openBoxNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/compose/foundation/layout/WindowInsetsPaddingKt {

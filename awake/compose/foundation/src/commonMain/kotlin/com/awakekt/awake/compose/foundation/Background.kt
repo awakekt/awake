@@ -7,7 +7,6 @@ package com.awakekt.awake.compose.foundation
 
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
-import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.graphics.Brush
 import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RectangleShape
@@ -49,7 +48,7 @@ fun Modifier.background(color: Color, cornerRadius: Dp): Modifier =
     background(color, RoundedCornerShape(cornerRadius))
 
 /** Fills the node behind its content with [fill]: an image, or a frame cut into nine. */
-fun Modifier.background(fill: ImageFill): Modifier = drawBehind { drawImageFill(fill) }
+fun Modifier.background(fill: ImageFill): Modifier = this then ImageFillBackgroundElement(fill)
 
 /** Fills the node behind its content with [brush] in [shape]: a flat colour, or a gradient. */
 fun Modifier.background(brush: Brush, shape: Shape = RectangleShape): Modifier = when (brush) {
@@ -112,6 +111,27 @@ data class BorderSides(
         /** No edge painted, so the border draws nothing. */
         val None = BorderSides(false, false, false, false)
     }
+}
+
+private class ImageFillBackgroundElement(
+    private val fill: ImageFill,
+) : ModifierNodeElement<ImageFillBackgroundNode>() {
+    override fun create(): ImageFillBackgroundNode = ImageFillBackgroundNode()
+    override fun update(node: ImageFillBackgroundNode) {
+        node.fill = fill
+    }
+    override fun toString(): String = "background(imageFill)"
+}
+
+private class ImageFillBackgroundNode :
+    Modifier.Node(),
+    DrawModifierNode {
+    lateinit var fill: ImageFill
+    override fun DrawScope.draw(drawContent: () -> Unit) {
+        drawImageFill(fill)
+        drawContent()
+    }
+    override fun toString(): String = "background(imageFill)"
 }
 
 private class BackgroundElement(

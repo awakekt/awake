@@ -5,19 +5,29 @@
  */
 package com.awakekt.awake.ui.shadcn.components
 
-import com.awakekt.awake.compose.foundation.Canvas
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.ModifierNodeElement
+import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
+import com.awakekt.awake.compose.ui.graphics.vector.VectorPainter
 import com.awakekt.awake.compose.ui.graphics.vector.rememberVectorPainter
+import com.awakekt.awake.compose.ui.layout.Layout
+import com.awakekt.awake.compose.ui.layout.Measurable
+import com.awakekt.awake.compose.ui.layout.MeasurePolicy
+import com.awakekt.awake.compose.ui.layout.MeasureResult
+import com.awakekt.awake.compose.ui.layout.MeasureScope
+import com.awakekt.awake.compose.ui.layout.PlacementScope
+import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
+import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -46,10 +56,80 @@ fun ShadcnIcon(
     rememberGroup(ShadcnIconGroup) {
         val color = tint ?: LocalTextStyle.current.color ?: shadcnTheme.palette.foreground
         val painter = rememberVectorPainter(icon)
-        Canvas(modifier.size(size)) {
-            painter.draw(this, Rectangle(0f, 0f, width.toFloat(), height.toFloat()), color)
-        }
+        val state = remember { ShadcnIconNodeState() }
+        Layout(
+            nodeType = ShadcnIconNodeType,
+            modifier = state.modifierFor(modifier, size, painter, color),
+            measurePolicy = IconMeasurePolicy,
+        )
     }
+}
+
+private object ShadcnIconNodeType
+
+private val PlaceNothing: PlacementScope.() -> Unit = {}
+
+private object IconMeasurePolicy : MeasurePolicy {
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult =
+        layout(constraints.minWidth, constraints.minHeight, place = PlaceNothing)
+}
+
+private class ShadcnIconNodeState {
+    private var lastModifier: Modifier? = null
+    private var hasSize = false
+    private var lastSize: Dp = 0.dp
+    private var lastPainter: VectorPainter? = null
+    private var lastColor: Color = Color.Transparent
+    private var drawElement: ShadcnIconDrawElement? = null
+    private var chain: Modifier = Modifier
+
+    fun modifierFor(modifier: Modifier, size: Dp, painter: VectorPainter, color: Color): Modifier {
+        val prevDraw = drawElement
+        val drawChanged = prevDraw == null || lastPainter !== painter || lastColor != color
+        val currentDraw = if (!drawChanged) {
+            prevDraw
+        } else {
+            lastPainter = painter
+            lastColor = color
+            ShadcnIconDrawElement(painter, color).also { drawElement = it }
+        }
+        val layoutChanged = !hasSize || size != lastSize || modifier != lastModifier
+        if (drawChanged || layoutChanged) {
+            hasSize = true
+            lastModifier = modifier
+            lastSize = size
+            chain = modifier.size(size).then(currentDraw)
+        }
+        return chain
+    }
+}
+
+private class ShadcnIconDrawElement(
+    private val painter: VectorPainter,
+    private val color: Color,
+) : ModifierNodeElement<ShadcnIconDrawNode>() {
+    override fun create(): ShadcnIconDrawNode = ShadcnIconDrawNode()
+
+    override fun update(node: ShadcnIconDrawNode) {
+        node.painter = painter
+        node.color = color
+    }
+
+    override fun toString(): String = "shadcnIconDraw()"
+}
+
+private class ShadcnIconDrawNode :
+    Modifier.Node(),
+    DrawModifierNode {
+    lateinit var painter: VectorPainter
+    var color: Color = Color.White
+
+    override fun DrawScope.draw(drawContent: () -> Unit) {
+        painter.draw(this, 0f, 0f, width.toFloat(), height.toFloat(), color)
+        drawContent()
+    }
+
+    override fun toString(): String = "shadcnIconDraw()"
 }
 
 /** shadcn's `size-4` for an icon inside a control. */

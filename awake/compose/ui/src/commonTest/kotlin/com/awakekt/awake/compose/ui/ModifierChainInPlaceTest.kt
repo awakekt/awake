@@ -66,4 +66,25 @@ class ModifierChainInPlaceTest {
         assertEquals(rebuilds + 1, node.chainRebuilds)
         assertEquals(3f, node.zIndex)
     }
+
+    @Test
+    fun settingEmptyModifierOnEmptyNodeDoesNotRebuildTheChain() {
+        val node = LayoutNode(ColumnMeasurePolicy())
+        node.modifier = Modifier
+        node.modifier = Modifier
+
+        assertEquals(0, node.chainRebuilds)
+    }
+
+    @Test
+    fun reapplyingTheSameModifierInstanceDoesNotRebuildTheChain() {
+        val node = LayoutNode(ColumnMeasurePolicy())
+        val shared = marked(1, 1f, "shared", PointerCursor.Default)
+        node.modifier = shared
+        val rebuilds = node.chainRebuilds
+
+        node.modifier = shared
+
+        assertEquals(rebuilds, node.chainRebuilds)
+    }
 }

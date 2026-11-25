@@ -42,7 +42,30 @@ interface BoxScope {
 internal object BoxScopeInstance : BoxScope {
     override fun Modifier.matchParentSize(): Modifier = this then MatchParentSizeElement
 
-    override fun Modifier.align(alignment: Alignment): Modifier = this then BoxChildAlignElement(alignment)
+    override fun Modifier.align(alignment: Alignment): Modifier = this then boxChildAlignElement(alignment)
+}
+
+private val BoxAlignTopStart = BoxChildAlignElement(Alignment.TopStart)
+private val BoxAlignTopCenter = BoxChildAlignElement(Alignment.TopCenter)
+private val BoxAlignTopEnd = BoxChildAlignElement(Alignment.TopEnd)
+private val BoxAlignCenterStart = BoxChildAlignElement(Alignment.CenterStart)
+private val BoxAlignCenter = BoxChildAlignElement(Alignment.Center)
+private val BoxAlignCenterEnd = BoxChildAlignElement(Alignment.CenterEnd)
+private val BoxAlignBottomStart = BoxChildAlignElement(Alignment.BottomStart)
+private val BoxAlignBottomCenter = BoxChildAlignElement(Alignment.BottomCenter)
+private val BoxAlignBottomEnd = BoxChildAlignElement(Alignment.BottomEnd)
+
+private fun boxChildAlignElement(alignment: Alignment): BoxChildAlignElement = when {
+    alignment === Alignment.TopStart -> BoxAlignTopStart
+    alignment === Alignment.TopCenter -> BoxAlignTopCenter
+    alignment === Alignment.TopEnd -> BoxAlignTopEnd
+    alignment === Alignment.CenterStart -> BoxAlignCenterStart
+    alignment === Alignment.Center -> BoxAlignCenter
+    alignment === Alignment.CenterEnd -> BoxAlignCenterEnd
+    alignment === Alignment.BottomStart -> BoxAlignBottomStart
+    alignment === Alignment.BottomCenter -> BoxAlignBottomCenter
+    alignment === Alignment.BottomEnd -> BoxAlignBottomEnd
+    else -> BoxChildAlignElement(alignment)
 }
 
 /**
@@ -77,15 +100,25 @@ internal data class BoxChildAlignment(val alignment: Alignment)
 private data class BoxChildAlignElement(val alignment: Alignment) : ModifierNodeElement<BoxChildAlignNode>() {
     override fun create(): BoxChildAlignNode = BoxChildAlignNode(alignment)
     override fun update(node: BoxChildAlignNode) {
-        node.alignment = alignment
+        node.updateAlignment(alignment)
     }
 
     override fun toString(): String = "align($alignment)"
 }
 
-private class BoxChildAlignNode(var alignment: Alignment) :
+private class BoxChildAlignNode(initialAlignment: Alignment) :
     Modifier.Node(),
     ParentDataModifierNode {
-    override fun modifyParentData(current: Any?): Any = BoxChildAlignment(alignment)
+    private var alignment: Alignment = initialAlignment
+    private var cachedParentData: BoxChildAlignment = BoxChildAlignment(initialAlignment)
+
+    fun updateAlignment(next: Alignment) {
+        if (alignment !== next) {
+            alignment = next
+            cachedParentData = BoxChildAlignment(next)
+        }
+    }
+
+    override fun modifyParentData(current: Any?): Any = cachedParentData
     override fun toString(): String = "align($alignment)"
 }

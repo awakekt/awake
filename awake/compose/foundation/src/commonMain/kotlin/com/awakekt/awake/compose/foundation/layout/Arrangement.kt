@@ -44,11 +44,15 @@ object Arrangement {
         fun between(free: Int, count: Int): Int = 0
     }
 
+    private const val MAX_CACHED_SPACE_DP = 32
+    private val cachedVerticalPacked: Array<Vertical> = Array(MAX_CACHED_SPACE_DP + 1) { Packed(it.dp) }
+    private val cachedHorizontalPacked: Array<Horizontal> = Array(MAX_CACHED_SPACE_DP + 1) { PackedHorizontal(it.dp) }
+
     /** Packs at the top with no gap: the leftover all goes behind. */
-    val Top: Vertical = Packed(0.dp)
+    val Top: Vertical = cachedVerticalPacked[0]
 
     /** Packs at the start with no gap: the leftover all goes behind. */
-    val Start: Horizontal = PackedHorizontal(0.dp)
+    val Start: Horizontal = cachedHorizontalPacked[0]
 
     /** Packs at the far end: the leftover all goes in front. */
     val Bottom: Vertical = object : Vertical {
@@ -87,12 +91,22 @@ object Arrangement {
     }
 
     /** Packs at the top with a fixed gap of [space] between neighbouring children. */
-    fun spacedBy(space: Dp): Vertical = Packed(space)
+    fun spacedBy(space: Dp): Vertical {
+        val raw = space.value
+        val intDp = raw.toInt()
+        if (intDp in 0..MAX_CACHED_SPACE_DP && intDp.toFloat() == raw) return cachedVerticalPacked[intDp]
+        return Packed(space)
+    }
 
     /** Packs at the start with a fixed gap of [space] between neighbouring children. */
-    fun spacedByHorizontal(space: Dp): Horizontal = PackedHorizontal(space)
+    fun spacedByHorizontal(space: Dp): Horizontal {
+        val raw = space.value
+        val intDp = raw.toInt()
+        if (intDp in 0..MAX_CACHED_SPACE_DP && intDp.toFloat() == raw) return cachedHorizontalPacked[intDp]
+        return PackedHorizontal(space)
+    }
 
-    private class Packed(override val spacing: Dp) : Vertical
+    private data class Packed(override val spacing: Dp) : Vertical
 
-    private class PackedHorizontal(override val spacing: Dp) : Horizontal
+    private data class PackedHorizontal(override val spacing: Dp) : Horizontal
 }

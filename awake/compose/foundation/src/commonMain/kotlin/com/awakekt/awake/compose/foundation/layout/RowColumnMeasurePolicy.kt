@@ -106,22 +106,63 @@ internal class LayoutWeightNode(
     override fun toString(): String = "weight($weight, fill=$fill)"
 }
 
+private val WeightOneFill = LayoutWeightElement(1f, fill = true)
+private val WeightOneLoose = LayoutWeightElement(1f, fill = false)
+
+internal fun weightElement(weight: Float, fill: Boolean): LayoutWeightElement = when {
+    weight == 1f && fill -> WeightOneFill
+    weight == 1f -> WeightOneLoose
+    else -> LayoutWeightElement(weight, fill)
+}
+
+private val AlignTopElement = VerticalAlignElement(Alignment.Top)
+private val AlignCenterVerticallyElement = VerticalAlignElement(Alignment.CenterVertically)
+private val AlignBottomElement = VerticalAlignElement(Alignment.Bottom)
+
+internal fun verticalAlignElement(alignment: Alignment.Vertical): VerticalAlignElement = when {
+    alignment === Alignment.Top -> AlignTopElement
+    alignment === Alignment.CenterVertically -> AlignCenterVerticallyElement
+    alignment === Alignment.Bottom -> AlignBottomElement
+    else -> VerticalAlignElement(alignment)
+}
+
+private val AlignStartElement = HorizontalAlignElement(Alignment.Start)
+private val AlignCenterHorizontallyElement = HorizontalAlignElement(Alignment.CenterHorizontally)
+private val AlignEndElement = HorizontalAlignElement(Alignment.End)
+
+internal fun horizontalAlignElement(alignment: Alignment.Horizontal): HorizontalAlignElement = when {
+    alignment === Alignment.Start -> AlignStartElement
+    alignment === Alignment.CenterHorizontally -> AlignCenterHorizontallyElement
+    alignment === Alignment.End -> AlignEndElement
+    else -> HorizontalAlignElement(alignment)
+}
+
 internal class VerticalAlignElement(
     private val alignment: Alignment.Vertical,
 ) : ModifierNodeElement<VerticalAlignNode>() {
     override fun create(): VerticalAlignNode = VerticalAlignNode(alignment)
     override fun update(node: VerticalAlignNode) {
-        node.alignment = alignment
+        node.updateAlignment(alignment)
     }
 }
 
 internal class VerticalAlignNode(
-    var alignment: Alignment.Vertical,
+    initialAlignment: Alignment.Vertical,
 ) : Modifier.Node(),
     ParentDataModifierNode {
+    private var alignment: Alignment.Vertical = initialAlignment
+    private var cachedCrossAxisAlign: CrossAxisAlign = VerticalCrossAxisAlign(initialAlignment)
+
+    fun updateAlignment(next: Alignment.Vertical) {
+        if (alignment !== next) {
+            alignment = next
+            cachedCrossAxisAlign = VerticalCrossAxisAlign(next)
+        }
+    }
+
     override fun modifyParentData(current: Any?): Any =
         ((current as? RowColumnParentData) ?: RowColumnParentData()).also {
-            it.crossAxisAlign = VerticalCrossAxisAlign(alignment)
+            it.crossAxisAlign = cachedCrossAxisAlign
         }
 }
 
@@ -130,17 +171,27 @@ internal class HorizontalAlignElement(
 ) : ModifierNodeElement<HorizontalAlignNode>() {
     override fun create(): HorizontalAlignNode = HorizontalAlignNode(alignment)
     override fun update(node: HorizontalAlignNode) {
-        node.alignment = alignment
+        node.updateAlignment(alignment)
     }
 }
 
 internal class HorizontalAlignNode(
-    var alignment: Alignment.Horizontal,
+    initialAlignment: Alignment.Horizontal,
 ) : Modifier.Node(),
     ParentDataModifierNode {
+    private var alignment: Alignment.Horizontal = initialAlignment
+    private var cachedCrossAxisAlign: CrossAxisAlign = HorizontalCrossAxisAlign(initialAlignment)
+
+    fun updateAlignment(next: Alignment.Horizontal) {
+        if (alignment !== next) {
+            alignment = next
+            cachedCrossAxisAlign = HorizontalCrossAxisAlign(next)
+        }
+    }
+
     override fun modifyParentData(current: Any?): Any =
         ((current as? RowColumnParentData) ?: RowColumnParentData()).also {
-            it.crossAxisAlign = HorizontalCrossAxisAlign(alignment)
+            it.crossAxisAlign = cachedCrossAxisAlign
         }
 }
 
@@ -305,7 +356,8 @@ internal class RowColumnMeasurePolicy(
     ): Int {
         var total = 0
         for (i in measurables.indices) {
-            if (measurables[i].rowColumnParentData()?.weight?.let { it > 0f } == true) continue
+            val data = measurables[i].rowColumnParentData()
+            if (data != null && data.weight > 0f) continue
             // Space already committed before this child: what its predecessors took, plus the i gaps
             // that sit in front of it. Weighted siblings count as zero -- they take the leftovers.
             val placeable = measurables[i].measure(looseMainAxis(constraints, used = total + gap * i))

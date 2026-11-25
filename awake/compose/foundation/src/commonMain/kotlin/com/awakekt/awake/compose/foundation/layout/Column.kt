@@ -28,11 +28,11 @@ interface ColumnScope {
 internal object ColumnScopeInstance : ColumnScope {
     override fun Modifier.weight(weight: Float, fill: Boolean): Modifier {
         require(weight > 0f) { "weight must be > 0, was $weight" }
-        return this then LayoutWeightElement(weight, fill)
+        return this then weightElement(weight, fill)
     }
 
     override fun Modifier.align(alignment: Alignment.Horizontal): Modifier =
-        this then HorizontalAlignElement(alignment)
+        this then horizontalAlignElement(alignment)
 
     override fun Modifier.alignBy(alignmentLine: VerticalAlignmentLine): Modifier =
         this then AlignmentLineElement(alignmentLine)
@@ -40,8 +40,8 @@ internal object ColumnScopeInstance : ColumnScope {
 
 /** Stacks children vertically. See [RowColumnMeasurePolicy] for the shared implementation. */
 class ColumnMeasurePolicy(
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    internal val verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    internal val horizontalAlignment: Alignment.Horizontal = Alignment.Start,
 ) : MeasurePolicy by RowColumnMeasurePolicy(
     LayoutOrientation.Vertical,
     verticalArrangement.spacing,

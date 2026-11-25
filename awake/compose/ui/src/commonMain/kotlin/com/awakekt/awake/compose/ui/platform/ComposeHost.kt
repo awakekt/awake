@@ -8,7 +8,7 @@ package com.awakekt.awake.compose.ui.platform
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.PhaseReadCause
-import com.awakekt.awake.compose.runtime.provides
+import com.awakekt.awake.compose.runtime.ProvidedLocals
 import com.awakekt.awake.compose.ui.focus.FocusOwner
 import com.awakekt.awake.compose.ui.focus.applyPendingFocusRequests
 import com.awakekt.awake.compose.ui.graphics.Painter
@@ -24,6 +24,7 @@ import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
+import com.awakekt.awake.compose.ui.layout.PlacementScope
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.node.activeEscapeDismissLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
@@ -537,22 +538,65 @@ class ComposeHost(
         }
     }
 
-    private fun composeContent(content: context(Composer) () -> Unit, input: FrameInput): Composer =
-        composition.compose {
-            // The constructor's density reaches the *root* node directly, but every other node reads
-            // it from the local -- so without this the whole tree below the root laid out at 1x and
-            // a HiDPI display rendered half-size, silently.
-            CompositionLocalProvider(
-                LocalDensity provides density,
-                LocalFontScale provides fontScale,
-                LocalFrameClock provides frameClock,
-                LocalViewportSize provides ViewportSize(input.viewportWidth, input.viewportHeight),
-                LocalWindowInsets provides windowInsets,
-                LocalPointerModifiers provides input.pointerModifiers,
-                com.awakekt.awake.compose.ui.unit.LocalLayoutDirection provides layoutDirection,
-                content = content,
-            )
+    private var hostDensity: Float = Float.NaN
+    private var hostViewportWidth: Int = -1
+    private var hostViewportHeight: Int = -1
+    private var hostViewportSize: ViewportSize = ViewportSize(0, 0)
+    private var hostWindowInsets: WindowInsets? = null
+    private var hostPointerModifiers: PointerModifiers? = null
+    private var hostLayoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection? = null
+    private val hostLocals: ProvidedLocals = ProvidedLocals().apply {
+        set(LocalDensity, density)
+        set(LocalFontScale, fontScale)
+        set(LocalFrameClock, frameClock)
+        set(LocalViewportSize, hostViewportSize)
+        set(LocalWindowInsets, windowInsets)
+        set(LocalPointerModifiers, PointerModifiers.None)
+        set(com.awakekt.awake.compose.ui.unit.LocalLayoutDirection, layoutDirection)
+    }
+    private var activeComposeContent: (
+        context(Composer)
+        () -> Unit
+    )? = null
+    private val hostComposeWrapper: context(Composer)
+    () -> Unit = {
+        CompositionLocalProvider(hostLocals, activeComposeContent!!)
+    }
+
+    private fun composeContent(content: context(Composer) () -> Unit, input: FrameInput): Composer {
+        // The constructor's density reaches the *root* node directly, but every other node reads
+        // it from the local -- so without this the whole tree below the root laid out at 1x and
+        // a HiDPI display rendered half-size, silently. Entries are updated only when changed so a
+        // steady-state composition allocates nothing for the host's ambient locals.
+        if (hostDensity != density) {
+            hostDensity = density
+            hostLocals.set(LocalDensity, density)
         }
+        if (hostViewportWidth != input.viewportWidth || hostViewportHeight != input.viewportHeight) {
+            hostViewportWidth = input.viewportWidth
+            hostViewportHeight = input.viewportHeight
+            hostViewportSize = ViewportSize(input.viewportWidth, input.viewportHeight)
+            hostLocals.set(LocalViewportSize, hostViewportSize)
+        }
+        if (hostWindowInsets != windowInsets) {
+            hostWindowInsets = windowInsets
+            hostLocals.set(LocalWindowInsets, windowInsets)
+        }
+        if (hostPointerModifiers != input.pointerModifiers) {
+            hostPointerModifiers = input.pointerModifiers
+            hostLocals.set(LocalPointerModifiers, input.pointerModifiers)
+        }
+        if (hostLayoutDirection != layoutDirection) {
+            hostLayoutDirection = layoutDirection
+            hostLocals.set(com.awakekt.awake.compose.ui.unit.LocalLayoutDirection, layoutDirection)
+        }
+        activeComposeContent = content
+        return try {
+            composition.compose(hostComposeWrapper)
+        } finally {
+            activeComposeContent = null
+        }
+    }
 
     /**
      * Hands this frame's typing to the focused node, and to nothing else.
@@ -659,6 +703,7 @@ class ComposeHost(
 
     /** Routes every active touch independently; the mouse remains pointer id zero. */
     private fun dispatchTouchInput(input: FrameInput) {
+        if (input.pointers.isEmpty() && touchPointers.isEmpty()) return
         val mods = input.pointerModifiers
         seenTouchPointers.clear()
         for (touch in input.pointers) {
@@ -708,15 +753,27 @@ class ComposeHost(
  * The root is the one node whose size is dictated rather than measured -- it is the window. Children
  * get the viewport's constraints loosened, so a child may be smaller but never has to be.
  */
+private val PlaceNothing: PlacementScope.() -> Unit = {}
+
 private object RootMeasurePolicy : MeasurePolicy {
     override fun MeasureScope.measure(
         measurables: List<Measurable>,
         constraints: Constraints,
     ): MeasureResult {
+        val count = measurables.size
         val childConstraints = Constraints.of(0, constraints.maxWidth, 0, constraints.maxHeight)
-        val placeables = measurables.map { it.measure(childConstraints) }
-        return layout(constraints.maxWidth, constraints.maxHeight) {
-            placeables.forEach { it.placeAt(0, 0) }
+        return when (count) {
+            0 -> layout(constraints.maxWidth, constraints.maxHeight, place = PlaceNothing)
+            1 -> {
+                val single = measurables[0].measure(childConstraints)
+                layout(constraints.maxWidth, constraints.maxHeight) { single.placeAt(0, 0) }
+            }
+            else -> {
+                val placeables = Array(count) { measurables[it].measure(childConstraints) }
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    for (i in placeables.indices) placeables[i].placeAt(0, 0)
+                }
+            }
         }
     }
 }

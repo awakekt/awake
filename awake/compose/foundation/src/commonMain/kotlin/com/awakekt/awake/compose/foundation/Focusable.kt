@@ -11,6 +11,9 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.node.FocusTargetNode
 
+private val FocusableEnabled = FocusableElement(enabled = true, source = null)
+private val FocusableDisabled = FocusableElement(enabled = false, source = null)
+
 /**
  * Puts this node in the focus ring, and records focus into [interactionSource].
  *
@@ -21,7 +24,11 @@ import com.awakekt.awake.compose.ui.node.FocusTargetNode
 fun Modifier.focusable(
     enabled: Boolean = true,
     interactionSource: InteractionSource? = null,
-): Modifier = this then FocusableElement(enabled, interactionSource)
+): Modifier = this then if (interactionSource == null) {
+    if (enabled) FocusableEnabled else FocusableDisabled
+} else {
+    FocusableElement(enabled, interactionSource)
+}
 
 private class FocusableElement(
     private val enabled: Boolean,

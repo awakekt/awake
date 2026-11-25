@@ -114,9 +114,13 @@ class LayoutNode(
     var nodeKey: Any? = null
         internal set
 
-    var modifier: Modifier = Modifier
+    private var appliedModifier: Modifier = Modifier
+
+    var modifier: Modifier
+        get() = appliedModifier
         set(value) {
-            field = value
+            if (value === appliedModifier) return
+            appliedModifier = value
             if (!chainInPlace.update(value)) rebuildChain()
         }
 
@@ -572,6 +576,7 @@ class LayoutNode(
         layers.clear()
         for (entry in retainedModifierNodes) entry?.node?.detach()
         retainedModifierNodes.clear()
+        appliedModifier = Modifier
     }
 
     /**
