@@ -66,25 +66,5 @@ fi
 
 # Read back what the web build resolves. The latest build of the version is the one consumers get,
 # so this also fails if anything else uploaded the same version after this one.
-snapshots="https://central.sonatype.com/repository/maven-snapshots/com/awakekt/awake/backend/webgpu-wasm-js/$version"
-metadata="$(curl -fsS --retry 5 --retry-all-errors "$snapshots/maven-metadata.xml")"
-timestamp="$(sed -n 's:.*<timestamp>\(.*\)</timestamp>.*:\1:p' <<< "$metadata")"
-build_number="$(sed -n 's:.*<buildNumber>\(.*\)</buildNumber>.*:\1:p' <<< "$metadata")"
-if [[ -z "$timestamp" || -z "$build_number" ]]; then
-  echo "The snapshot repository lists no build of webgpu-wasm-js $version." >&2
-  exit 1
-fi
-build="$core-$timestamp-$build_number"
-if ! curl -fsS --retry 5 --retry-all-errors "$snapshots/webgpu-wasm-js-$build.module" | jq -e --arg core "$core" '
-  def awake: .group | test("^com\\.awakekt\\.awake(\\.|$)");
-  [.variants[] | .dependencies[]? | select(awake and (.module | startswith("webgpu") | not))] as $deps
-  | [.variants[] | .dependencyConstraints[]? | select(awake)] as $constraints
-  | ($deps | length) > 0
-    and ($deps | all(.version.requires == $core))
-    and ($constraints | all(.version.strictly == $core))
-    and (([$deps[] | "\(.group):\(.module)"] - [$constraints[] | "\(.group):\(.module)"]) | length) == 0
-' > /dev/null; then
-  echo "webgpu-wasm-js $build on the snapshot repository does not hold every Core module strictly at $core." >&2
-  exit 1
-fi
-echo "::notice::WebGPU $version (build $build) pins Core $core"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+bash "$repo_root/scripts/verify-webgpu-pin-snapshot.sh" "$core"
