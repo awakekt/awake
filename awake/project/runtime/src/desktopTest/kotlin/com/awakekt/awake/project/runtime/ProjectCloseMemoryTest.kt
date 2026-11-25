@@ -8,11 +8,20 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.ioDispatcher
+import com.awakekt.awake.engine.bootstrap.dsl.app
+import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
+import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
+import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlinx.coroutines.runBlocking
 import java.lang.ref.WeakReference
 import java.util.Base64
@@ -61,6 +70,44 @@ class ProjectCloseMemoryTest {
     }
 
     @Test
+    fun runProjectReleasesHeavyTerrainSamplesAndDocumentAstWhileSceneRuns() = runBlocking {
+        val project = loadProject(heavyTerrainProjectFiles(), hasRenderer = false)
+        val (weakDoc, weakSamples) = captureTerrainDocumentRefs(project)
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(TestRenderer())
+        try {
+            assertEquals("terrain-world", project.scene.name)
+            assertTrue(project.scene.nodes.isEmpty(), "scene AST must be released immediately after instantiation")
+
+            val runtime = game.requireService<SceneAppLifecycleRuntime>()
+            var liveHeight: Float? = null
+            runtime.world.queryEach<TerrainComponent> { _, terrain ->
+                liveHeight = terrain.heightmap.heightAtWorld(0f, 0f)
+            }
+            assertEquals(TERRAIN_HEIGHT, assertNotNull(liveHeight), 0.01f, "instantiated terrain heightmap stays live")
+
+            var collected = false
+            for (attempt in 0 until GC_ATTEMPTS) {
+                if (weakDoc.get() == null && weakSamples.get() == null) {
+                    collected = true
+                    break
+                }
+                @Suppress("ExplicitGarbageCollectionCall") // Required to verify WeakReference collection after instantiation.
+                System.gc()
+                Thread.sleep(GC_WAIT_MS)
+            }
+            assertTrue(
+                collected,
+                "runProject() must release heavy SceneDocument (${weakDoc.get() != null}) " +
+                    "and SceneTerrain.samples (${weakSamples.get() != null}) while playing",
+            )
+        } finally {
+            game.dispose()
+            project.close()
+        }
+    }
+
+    @Test
     fun loadCollisionMeshesReadsEachReferencedModelOnceWhenInterleaved() = runBlocking {
         val reads = HashMap<String, Int>()
         val gltfBytes = minimalTriangleGltf().encodeToByteArray()
@@ -106,6 +153,46 @@ class ProjectCloseMemoryTest {
         WeakReference(checkNotNull(project.content[markerKey])),
     )
 
+    private fun captureTerrainDocumentRefs(
+        project: LoadedProject,
+    ): Pair<WeakReference<SceneDocument>, WeakReference<List<Float>>> {
+        val doc = project.scene
+        val terrain = doc.nodes.flatMap { it.components }.filterIsInstance<SceneTerrain>().single()
+        return WeakReference(doc) to WeakReference(terrain.samples)
+    }
+
+    private fun heavyTerrainProjectFiles(): AssetSource {
+        val manifest =
+            """{"formatVersion":1,"id":"com.awakekt.test.release","name":"Harbor Town","version":"0.1.0","entryScene":"scenes/main.scene.json"}"""
+                .encodeToByteArray()
+        val samples = List(HEAVY_TERRAIN_SIDE * HEAVY_TERRAIN_SIDE) { TERRAIN_HEIGHT }.joinToString(",")
+        val scene = """
+            {
+              "version": 1,
+              "name": "terrain-world",
+              "nodes": [
+                { "name": "Camera", "components": [ { "component": "camera" } ] },
+                { "name": "Ground", "components": [
+                  { "component": "terrain", "width": $HEAVY_TERRAIN_SIDE, "depth": $HEAVY_TERRAIN_SIDE, "scaleX": 4.0, "scaleZ": 4.0, "samples": [$samples] }
+                ] }
+              ]
+            }
+        """.trimIndent().encodeToByteArray()
+        return AssetSource { path ->
+            when (path.value.removePrefix("/")) {
+                "awake.project.json" -> Result.success(manifest)
+                "scenes/main.scene.json" -> Result.success(scene)
+                else -> Result.failure(NoSuchElementException(path.value))
+            }
+        }
+    }
+
+    private class TestRenderer :
+        NoopRenderer(),
+        GpuDrawPreparationSource {
+        override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
+    }
+
     private fun minimalProjectFiles(): AssetSource {
         val manifest =
             """{"formatVersion":1,"id":"com.awakekt.test.close","name":"close-test","version":"0.1.0","entryScene":"scenes/main.scene.json"}"""
@@ -148,5 +235,7 @@ class ProjectCloseMemoryTest {
     private companion object {
         const val GC_ATTEMPTS = 30
         const val GC_WAIT_MS = 25L
+        const val HEAVY_TERRAIN_SIDE = 129
+        const val TERRAIN_HEIGHT = 2.25f
     }
 }

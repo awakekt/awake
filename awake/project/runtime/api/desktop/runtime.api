@@ -20,6 +20,36 @@ public final class com/awakekt/awake/project/runtime/CanvasActionSystemKt {
 	public static final field MOVE_ACTION Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/project/runtime/ColliderStreamConfig {
+	public static final field Companion Lcom/awakekt/awake/project/runtime/ColliderStreamConfig$Companion;
+	public static final field DEFAULT_MESH_LEAVE F
+	public static final field DEFAULT_MESH_REACH F
+	public static final field DEFAULT_MOVE_STEP F
+	public static final field DEFAULT_TERRAIN_LEAVE F
+	public static final field DEFAULT_TERRAIN_REACH F
+	public fun <init> ()V
+	public fun <init> (FFFFF)V
+	public synthetic fun <init> (FFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (FFFFF)Lcom/awakekt/awake/project/runtime/ColliderStreamConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/runtime/ColliderStreamConfig;FFFFFILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/ColliderStreamConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMeshLeave ()F
+	public final fun getMeshReach ()F
+	public final fun getMoveStep ()F
+	public final fun getTerrainLeave ()F
+	public final fun getTerrainReach ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/runtime/ColliderStreamConfig$Companion {
+}
+
 public final class com/awakekt/awake/project/runtime/CollisionMeshesKt {
 	public static final fun loadCollisionMeshes (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -144,6 +174,7 @@ public final class com/awakekt/awake/project/runtime/LoadedProject : java/lang/A
 	public final fun getPendingEntryScene ()Ljava/lang/String;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
 	public final fun getStrings ()Lcom/awakekt/awake/core/localization/Strings;
+	public final fun releaseSceneDocument ()V
 }
 
 public final class com/awakekt/awake/project/runtime/PhysicsCanvasOcclusion : com/awakekt/awake/ecs/System, com/awakekt/awake/scene/canvas/CanvasOcclusion {
@@ -234,11 +265,13 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;Z)V
-	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZLcom/awakekt/awake/project/runtime/DirectorRuntimeOverride;)V
+	public static final synthetic fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZLcom/awakekt/awake/project/runtime/DirectorRuntimeOverride;)V
+	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZLcom/awakekt/awake/project/runtime/DirectorRuntimeOverride;Z)V
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Ljava/util/Set;Z)V
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZILjava/lang/Object;)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZLcom/awakekt/awake/project/runtime/DirectorRuntimeOverride;ILjava/lang/Object;)V
+	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ZLcom/awakekt/awake/project/runtime/DirectorRuntimeOverride;ZILjava/lang/Object;)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Ljava/util/Set;ZILjava/lang/Object;)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V
 	public static final synthetic fun sceneSystems (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
@@ -477,6 +510,22 @@ public final class com/awakekt/awake/project/runtime/SceneSystemSetKt {
 	public static final fun sceneSystemsFor (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/SceneHostServices;Ljava/util/List;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
 	public static final fun sceneSystemsFor (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/SceneHostServices;Ljava/util/List;Ljava/util/Set;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
 	public static synthetic fun sceneSystemsFor$default (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/SceneHostServices;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
+}
+
+public final class com/awakekt/awake/project/runtime/StaticColliderStreamSystem : com/awakekt/awake/ecs/System, java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/project/runtime/StaticColliderStreamSystem$Companion;
+	public fun <init> (Lcom/awakekt/awake/scene/physics/PhysicsSystem;Lcom/awakekt/awake/project/runtime/ColliderStreamConfig;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/physics/PhysicsSystem;Lcom/awakekt/awake/project/runtime/ColliderStreamConfig;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun getParkedMeshCount ()I
+	public final fun getParkedTerrainCount ()I
+	public final fun getTrackedMeshCount ()I
+	public final fun getTrackedTerrainCount ()I
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/project/runtime/StaticColliderStreamSystem$Companion {
+	public final fun getDefaultObserver ()Lkotlin/jvm/functions/Function1;
 }
 
 public final class com/awakekt/awake/project/runtime/TerrainColliderSystem : com/awakekt/awake/ecs/System {

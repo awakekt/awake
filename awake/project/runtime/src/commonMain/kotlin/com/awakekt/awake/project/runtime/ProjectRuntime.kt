@@ -107,6 +107,11 @@ class LoadedProject internal constructor(
     /**
      * The document of the scene playing now: the entry scene, until a [SceneSwitch] request has
      * [runProject] play another or [switchTo] moves the project to another.
+     *
+     * Once [runProject] instantiates a scene (with `retainSceneDocument = false`, the default) or
+     * [releaseSceneDocument] is called, this retains only the scene header (`version` and `name`)
+     * with empty `nodes` and `extensions` so heavy terrain sample arrays and node ASTs can be
+     * garbage-collected.
      */
     val scene: SceneDocument get() = playing.document
 
@@ -132,6 +137,20 @@ class LoadedProject internal constructor(
     internal var sceneLoads: CoroutineContext = ioDispatcher
 
     /**
+     * Releases the playing scene's decoded [SceneDocument.nodes] and [SceneDocument.extensions]
+     * trees while preserving its header (`version` and `name`), freeing terrain sample lists and
+     * node ASTs once they have been instantiated into a [World].
+     *
+     * [runProject] calls this automatically after instantiating each scene unless
+     * `retainSceneDocument` is enabled. Call this directly from hosts that instantiate [scene] and
+     * plan [sceneSystems] without [runProject] and will not call [newSceneInstance]. Calling twice
+     * is harmless.
+     */
+    fun releaseSceneDocument() {
+        playing.releaseDocumentAfterInstantiation()
+    }
+
+    /**
      * Destroys the playing scene's physics world, if it has one, and stops loading models for spawned
      * nodes. When the app passed its own [Strings] to [loadProject], the project's tables are taken out
      * of it again, and the app's own stay: text read after this returns is the app's, unless a locale
@@ -140,6 +159,7 @@ class LoadedProject internal constructor(
     override fun close() {
         closed = true
         playing.close()
+        defaultSpawnRegistry = null
         val added = addedStrings ?: return
         addedStrings = null
         removeProjectStrings(checkNotNull(strings), added)
@@ -453,13 +473,11 @@ fun SceneAppDsl.runProject(
     disabledSystems: Set<String> = emptySet(),
     touchControls: Boolean = false,
 ) {
-    runProject(project, hostRole, disabledSystems, touchControls, directorOverride = null)
+    runProject(project, hostRole, disabledSystems, touchControls, directorOverride = null, retainSceneDocument = false)
 }
 
-/**
- * [runProject] directed by an external [directorOverride] (for headless trailer capture,
- * storyboard contact sheets, or scripted showcases without editing the scene file on disk).
- */
+/** [runProject] as it was before `retainSceneDocument`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 fun SceneAppDsl.runProject(
     project: LoadedProject,
     hostRole: SceneHostRole = SceneHostRole.Full,
@@ -467,7 +485,29 @@ fun SceneAppDsl.runProject(
     touchControls: Boolean = false,
     directorOverride: DirectorRuntimeOverride? = null,
 ) {
-    val scenes = ProjectSceneRunner(project, disabledSystems, hostRole, directorOverride)
+    runProject(project, hostRole, disabledSystems, touchControls, directorOverride, retainSceneDocument = false)
+}
+
+/**
+ * [runProject] directed by an external [directorOverride] (for headless trailer capture,
+ * storyboard contact sheets, or scripted showcases without editing the scene file on disk).
+ *
+ * By default (`retainSceneDocument = false`), each scene's decoded node and extension AST is
+ * released immediately after its systems are planned and its entities are instantiated into the
+ * world, retaining only [SceneDocument.version] and [SceneDocument.name] on [LoadedProject.scene].
+ * Pass `retainSceneDocument = true` only when a host needs to inspect [SceneDocument.nodes] after
+ * playback starts.
+ */
+@Suppress("LongParameterList") // Matches the existing runProject options plus retainSceneDocument.
+fun SceneAppDsl.runProject(
+    project: LoadedProject,
+    hostRole: SceneHostRole = SceneHostRole.Full,
+    disabledSystems: Set<String> = emptySet(),
+    touchControls: Boolean = false,
+    directorOverride: DirectorRuntimeOverride? = null,
+    retainSceneDocument: Boolean = false,
+) {
+    val scenes = ProjectSceneRunner(project, disabledSystems, hostRole, directorOverride, retainSceneDocument)
     service(ProjectSystemPlan::class) { ProjectSystemPlan(scenes::plannedSystems) }
     // Every scene's sprite and tilemap textures, read from the project as they are first drawn: the
     // KTX2 file each was cooked to when the project ships one, else the image. The device's block

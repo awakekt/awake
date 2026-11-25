@@ -111,6 +111,10 @@ class SceneInstance internal constructor(
 suspend fun LoadedProject.newSceneInstance(): SceneInstance {
     check(!closed) { "The project is closed; load it again to make an instance of its scene" }
     val source = playing
+    check(!source.documentReleased) {
+        "The project's scene document was released after instantiation; avoid releaseSceneDocument() " +
+            "or pass retainSceneDocument = true to runProject when creating new scene instances"
+    }
     val physics = if (PhysicsFeature.needsPhysics(source.document)) {
         // The project made the scene's own world from this factory, so a scene with bodies has one.
         checkNotNull(physicsWorld) { "${source.path} has physics bodies or characters and the project has no physicsWorld factory" }()

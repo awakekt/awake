@@ -109,6 +109,7 @@ internal class ProjectSceneRunner(
     private val disabledSystems: Set<String> = emptySet(),
     private val hostRole: SceneHostRole = SceneHostRole.Full,
     private val directorOverride: DirectorRuntimeOverride? = null,
+    private val retainSceneDocument: Boolean = false,
 ) : SceneSwitch,
     SceneSwitchStatus {
     /** Resolves the playing scene's glTF models for the app's asset library, whichever scene plays. */
@@ -189,6 +190,7 @@ internal class ProjectSceneRunner(
         systems = runCatching { systemsFor(scene, sceneLoads) }.onFailure { sceneLoads.close() }.getOrThrow()
         playLoads = sceneLoads
         instance = runtime.instantiate(scene, project.componentRegistry)
+        if (!retainSceneDocument) scene.releaseDocumentAfterInstantiation()
         begin()
         // A gated entry scene: the placeholder plays, and the real entry loads once the gate opens.
         project.pendingEntryScene?.let { entry ->
@@ -227,6 +229,9 @@ internal class ProjectSceneRunner(
         models.target = GltfAssetResolver()
         if (audio.isInitialized()) audio.value.dispose()
         loads?.cancel()
+        loads = null
+        loading = null
+        loadingPath = null
         finished.close()
         while (true) {
             val load = finished.tryReceive().getOrNull() ?: break
@@ -309,6 +314,7 @@ internal class ProjectSceneRunner(
         // once it does.
         val teardownFailure = leave(world, leaving, before)
         project.playing = next
+        if (!retainSceneDocument) next.releaseDocumentAfterInstantiation()
         systems = nextSystems
         playLoads = nextLoads
         instance = nextInstance
