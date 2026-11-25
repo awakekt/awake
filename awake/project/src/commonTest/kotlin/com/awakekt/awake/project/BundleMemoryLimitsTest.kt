@@ -164,27 +164,24 @@ class BundleMemoryLimitsTest {
 
     @Test
     fun rangedThresholdWorksWithSealedBundlesAndFallsBackWithoutRangeFetch() = runTest {
-        val mixedFiles = linkedMapOf<String, ByteArray>().apply {
-            repeat(MEMBERS) { m -> put("small/s$m.bin", ByteArray(SMALL_MEMBER_BYTES) { (m + it).toByte() }) }
-            repeat(MEMBERS) { m -> put("large/l$m.bin", ByteArray(LARGE_MEMBER_BYTES) { (m * 11 + it).toByte() }) }
-        }
+        val mixedFiles = mixedSizeFiles()
         val key = ByteArray(BundleEncryptionKey.KEY_BYTES) { (it * 5 + 3).toByte() }
-        val sealed = BundledProject(mixedFiles, ContentBundleWriter(encryption = BundleEncryptionKey("k1", key)))
-        val smallSize = sealed.index.bundles.minOf { it.sizeBytes }
-        val server = sealed.server()
+        val bundles = LinkedHashMap<String, WrittenContentBundle>()
+        val index = ContentBundleWriter(encryption = BundleEncryptionKey("k1", key))
+            .write(looseIndexOf(mixedFiles), { mixedFiles.getValue(it.path) }) { bundles[it.url] = it }
+        val smallSize = index.bundles.minOf { it.sizeBytes }
         var wholeCount = 0
         var rangeCount = 0
-        val cache = MemoryContentCache()
         val source = IndexedAssetSource(
-            index = sealed.index,
+            index = index,
             fetch = { url ->
                 wholeCount++
-                server(url)
+                bundles.getValue(url).bytes
             },
-            cache = cache,
+            cache = MemoryContentCache(),
             rangeFetch = { url, offset, length ->
                 rangeCount++
-                sealed.bundles.getValue(url).bytes.copyOfRange(offset.toInt(), (offset + length).toInt())
+                bundles.getValue(url).bytes.copyOfRange(offset.toInt(), (offset + length).toInt())
             },
             keys = { key },
             limits = BundleMemoryLimits(rangedMemberAboveBytes = smallSize),
@@ -200,10 +197,10 @@ class BundleMemoryLimitsTest {
         // Without rangeFetch, threshold is ignored and both bundles fetch whole.
         var fallbackWhole = 0
         val noRange = IndexedAssetSource(
-            index = sealed.index,
+            index = index,
             fetch = { url ->
                 fallbackWhole++
-                server(url)
+                bundles.getValue(url).bytes
             },
             cache = MemoryContentCache(),
             keys = { key },
