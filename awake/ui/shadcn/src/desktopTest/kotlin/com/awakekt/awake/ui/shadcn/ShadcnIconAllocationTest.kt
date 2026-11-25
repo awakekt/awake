@@ -16,13 +16,12 @@ import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import com.awakekt.awake.ui.shadcn.components.ShadcnIcon
 import com.awakekt.awake.ui.shadcn.theme.LocalShadcnTheme
 import com.awakekt.awake.ui.shadcn.theme.provideShadcnTheme
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 /**
@@ -46,24 +45,17 @@ class ShadcnIconAllocationTest {
             }
         }
         repeat(WARMUP) { composition.compose(content) }
-        val bean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-        val windows = List(WINDOWS) {
-            val before = bean.currentThreadAllocatedBytes
-            repeat(PASSES) { composition.compose(content) }
-            (bean.currentThreadAllocatedBytes - before) / PASSES
-        }
-        println("ShadcnIcon steady-state composition (x$ICONS): $windows B/pass")
-        assertEquals(0L, windows.min(), "steady-state ShadcnIcon composition allocated, windows=$windows")
+        val composeReading = readAllocation(PASSES) { repeat(PASSES) { composition.compose(content) } }
+        println("ShadcnIcon steady-state composition (x$ICONS): $composeReading")
+        assertAllocatesNothing(composeReading, "steady-state ShadcnIcon composition")
 
         // Painting an already-tessellated icon should stay bounded and reuse its mesh without
         // allocating a per-icon Rectangle.
         root.layoutTree(Constraints.fixed(128, 512))
         val painter = Painter()
         repeat(WARMUP) { painter.paint(root) }
-        val drawBefore = bean.currentThreadAllocatedBytes
-        repeat(PASSES) { painter.paint(root) }
-        val drawBytes = (bean.currentThreadAllocatedBytes - drawBefore) / PASSES
-        println("ShadcnIcon steady-state paint (x$ICONS): $drawBytes B/frame")
+        val drawReading = readAllocation(PASSES) { repeat(PASSES) { painter.paint(root) } }
+        println("ShadcnIcon steady-state paint (x$ICONS): $drawReading")
     }
 
     @Test
@@ -96,6 +88,5 @@ class ShadcnIconAllocationTest {
         const val ICONS = 16
         const val WARMUP = 2_000
         const val PASSES = 1_000
-        const val WINDOWS = 5
     }
 }

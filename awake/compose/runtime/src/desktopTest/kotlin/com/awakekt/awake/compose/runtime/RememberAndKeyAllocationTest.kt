@@ -5,10 +5,9 @@
  */
 package com.awakekt.awake.compose.runtime
 
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 private object TestNodeType
 
@@ -48,23 +47,15 @@ class RememberAndKeyAllocationTest {
     fun steadyStateRememberKeyAndProviderAllocateNothing() {
         repeat(WARM_UP_PASSES) { composition.reconcile(content) }
 
-        val windows = List(WINDOWS) { measure { repeat(PASSES) { composition.reconcile(content) } } }
+        val reading = readAllocation(PASSES) { repeat(PASSES) { composition.reconcile(content) } }
 
-        println("remember/key/provider steady state ($PASSES passes x $ITEMS items): $windows B")
-        assertEquals(0L, windows.min(), "steady-state remember/key/provider allocated, min of $WINDOWS windows")
-    }
-
-    private fun measure(block: () -> Unit): Long {
-        val bean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-        val before = bean.currentThreadAllocatedBytes
-        block()
-        return bean.currentThreadAllocatedBytes - before
+        println("remember/key/provider steady state ($PASSES passes x $ITEMS items): $reading")
+        assertAllocatesNothing(reading, "steady-state remember/key/provider")
     }
 
     private companion object {
         const val ITEMS = 16
         const val WARM_UP_PASSES = 5_000
         const val PASSES = 2_000
-        const val WINDOWS = 7
     }
 }
