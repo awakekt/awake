@@ -52,13 +52,6 @@ fun pagedTerrainContentFeature(
             textureUpdates = uploads,
             samplerTextures = mapOf(2 to 1) + samplerTextures,
             images = emptyMap(),
-            build = { pipeline, uniforms, geometry ->
-                TerrainRenderFeature(
-                    pipeline, uniforms, requireNotNull(geometry), TerrainClipmapTracker(config),
-                    (layout.maxElevation - layout.minElevation) * layout.heightScale,
-                    layout.minElevation * layout.heightScale, sampling, isVisible, terrain,
-                )
-            },
             alternateSpec = solidCoreSpec,
             buildWithAlternate = { pipeline, corePipeline, uniforms, geometry ->
                 TerrainRenderFeature(
@@ -73,6 +66,14 @@ fun pagedTerrainContentFeature(
                     pagedTerrain = terrain,
                     corePipeline = corePipeline,
                     coreIndexCount = coreIndices,
+                )
+            },
+            geometryKey = TerrainClipmapGeometryKey(config),
+            build = { pipeline, uniforms, geometry ->
+                TerrainRenderFeature(
+                    pipeline, uniforms, requireNotNull(geometry), TerrainClipmapTracker(config),
+                    (layout.maxElevation - layout.minElevation) * layout.heightScale,
+                    layout.minElevation * layout.heightScale, sampling, isVisible, terrain,
                 )
             },
         )

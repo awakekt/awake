@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.shaders.ContentFeatureGpu
 import com.awakekt.awake.asset.shaders.ContentGroupUpload
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.RenderBackend
+import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
@@ -51,14 +52,24 @@ internal class VulkanContentFeatureGpu(
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline
 
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload =
-        uploadInto(pipeline.contentFrameSlotCount, feature) { index, frame -> pipeline.writeContentTextureSlot(index, frame, feature.samplerTextures) }
+        upload(pipeline, feature, includeGeometry = true)
 
-    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload {
+    override fun upload(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentUpload =
+        uploadInto(pipeline.contentFrameSlotCount, feature, includeGeometry) { index, frame ->
+            pipeline.writeContentTextureSlot(index, frame, feature.samplerTextures)
+        }
+
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload =
+        uploadGroup(pipeline, feature, includeGeometry = true)
+
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentGroupUpload {
         val layout = checkNotNull(feature.spec.uniforms) { "Content feature '${feature.name}' declares no uniforms." }
         val slots = pipeline.newContentGroup()
         var uploaded: ContentUpload? = null
         try {
-            uploaded = uploadInto(slots.size, feature) { index, frame -> slots.writeTextures(frame, index, feature.samplerTextures) }
+            uploaded = uploadInto(slots.size, feature, includeGeometry) { index, frame ->
+                slots.writeTextures(frame, index, feature.samplerTextures)
+            }
         } finally {
             if (uploaded == null) slots.destroy()
         }
@@ -72,8 +83,26 @@ internal class VulkanContentFeatureGpu(
         )
     }
 
-    /** [feature]'s textures, one copy per frame slot of the mutable ones, written by [writeSlot]; and its geometry. */
-    private fun uploadInto(slotCount: Int, feature: ContentFeature, writeSlot: (Int, Map<Int, Texture>) -> Unit): ContentUpload {
+    override fun uploadGeometry(geometry: MeshGeometry): ContentUpload {
+        val mesh = Mesh(
+            graphicsDevice,
+            transferContext::runOneTimeCommands,
+            geometry.vertices,
+            geometry.indices,
+            geometry.format,
+        )
+        return ContentUpload(ContentGeometry(mesh.vertexBinding, mesh.indexBinding, mesh.indexCount)) {
+            mesh.destroy()
+        }
+    }
+
+    /** [feature]'s textures, one copy per frame slot of the mutable ones, written by [writeSlot]; and optionally its geometry. */
+    private fun uploadInto(
+        slotCount: Int,
+        feature: ContentFeature,
+        includeGeometry: Boolean,
+        writeSlot: (Int, Map<Int, Texture>) -> Unit,
+    ): ContentUpload {
         fun create(asset: TextureAsset): Texture =
             Texture(
                 graphicsDevice,
@@ -107,14 +136,18 @@ internal class VulkanContentFeatureGpu(
             }
         }
         frames.forEachIndexed(writeSlot)
-        val mesh = feature.geometry?.let { source ->
-            Mesh(
-                graphicsDevice,
-                transferContext::runOneTimeCommands,
-                source.vertices,
-                source.indices,
-                source.format,
-            )
+        val mesh = if (includeGeometry) {
+            feature.geometry?.let { source ->
+                Mesh(
+                    graphicsDevice,
+                    transferContext::runOneTimeCommands,
+                    source.vertices,
+                    source.indices,
+                    source.format,
+                )
+            }
+        } else {
+            null
         }
         // Owned here: a descriptor write or a recorded bind references these without owning them.
         return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }, prepare = { frameIndex, uploads ->

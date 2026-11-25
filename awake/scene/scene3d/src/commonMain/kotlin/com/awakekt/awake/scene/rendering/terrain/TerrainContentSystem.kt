@@ -27,8 +27,14 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
 /**
- * Draws every [TerrainComponent] entity by attaching a terrain content feature to [host], and
- * detaches it when the entity or its component goes away.
+ * Draws every visible [TerrainComponent] entity by attaching a terrain content feature to [host],
+ * and detaches it when the entity or its component goes away or becomes hidden.
+ *
+ * Terrains with `isVisible == false` (such as collider-only terrain areas) defer surface
+ * resolution and GPU feature upload until `isVisible` becomes `true`, at which point [update]
+ * lazily attaches them on that frame. Flipping `isVisible` back to `false` cancels any in-flight
+ * resolution and detaches the GPU feature so its heightmap, surface textures, and uniform slots
+ * are reclaimed immediately.
  *
  * A [TerrainSurfaceReference] beside the component picks the surface from [providers]; without
  * one, or when its provider is not installed, the terrain draws with [baseShaders] and the scene
@@ -40,7 +46,8 @@ import kotlinx.coroutines.launch
  *
  * Providers resolve in [scope], which may resume anywhere. Attaching uploads textures, and the
  * first terrain of a shader set builds its pipeline, so it starts from [update] on the frame
- * thread instead. Any number of terrains draw at once; those sharing a shader set share a pipeline.
+ * thread instead. Any number of terrains draw at once; those sharing a shader set share a pipeline,
+ * and those sharing a clipmap configuration share one reference-counted GPU clipmap mesh.
  *
  * With [surfacedOnly], a terrain without a reference is left alone, so another renderer (an
  * editor's mutable preview, say) can draw it.
@@ -86,7 +93,7 @@ class TerrainContentSystem(
         if (membershipChanged) {
             releaseRemoved(world)
         }
-        place(world)
+        syncTracked(world)
         applyAttached()
         applyResolved()
         if (membershipChanged) {
@@ -143,33 +150,51 @@ class TerrainContentSystem(
         }
     }
 
-    /** Where each tracked terrain lies now; written in place, so the frame allocates nothing. */
-    private fun place(world: World) {
+    /**
+     * Updates visible terrains' world origins in place and lazily attaches/detaches when
+     * `TerrainComponent.isVisible` toggles, allocating nothing on steady-state frames.
+     */
+    private fun syncTracked(world: World) {
         for (index in tracked.indices) {
             val entry = tracked[index]
-            terrainOrigin(world, entry.entity, entry.origin, transformTypeId)
+            if (entry.terrain.isVisible) {
+                terrainOrigin(world, entry.entity, entry.origin, transformTypeId)
+                if (!entry.started) {
+                    val reference = world.get<TerrainSurfaceReference>(entry.entity, referenceTypeId)
+                    if (reference != null || !surfacedOnly) beginAttach(entry, reference)
+                }
+            } else if (entry.started) {
+                entry.release()
+            }
         }
     }
 
-    /** A result for an entity that has since gone, or changed its terrain, is freed straight away. */
+    /** A result for an entity that has since gone, changed its terrain, or hidden is freed straight away. */
     private fun applyAttached() {
         while (true) {
             val result = attached.tryReceive().getOrNull() ?: return
-            val entry = find(result.entity)?.takeIf { it.terrain === result.terrain }
-            if (entry == null) result.feature.detach() else entry.feature = result.feature
+            val entry = find(result.entity)?.takeIf {
+                it.terrain === result.terrain && it.started && it.attachEpoch == result.epoch && it.terrain.isVisible
+            }
+            if (entry == null) {
+                result.feature.detach()
+            } else {
+                entry.feature?.detach()
+                entry.feature = result.feature
+            }
         }
     }
 
     private fun applyResolved() {
         while (true) {
             val result = resolved.tryReceive().getOrNull() ?: return
-            val entry = find(result.entity)?.takeIf { it.terrain === result.terrain } ?: continue
-            startAttach(entry, result.surface)
+            val entry = find(result.entity)?.takeIf {
+                it.terrain === result.terrain && it.started && it.attachEpoch == result.epoch && it.terrain.isVisible
+            } ?: continue
+            startAttach(entry, result.epoch, result.surface)
         }
     }
 
-    // TooGenericExceptionCaught: a provider that fails for any reason still leaves a drawn terrain.
-    @Suppress("TooGenericExceptionCaught")
     private fun track(world: World, entity: Entity, terrain: TerrainComponent, reference: TerrainSurfaceReference?) {
         val entry = Tracked(entity, terrain).also {
             tracked += it
@@ -177,7 +202,16 @@ class TerrainContentSystem(
             if (slot >= bySlot.size) bySlot = bySlot.copyOf(maxOf(slot + 1, bySlot.size * 2))
             bySlot[slot] = it
         }
+        if (!terrain.isVisible) return
         terrainOrigin(world, entity, entry.origin, transformTypeId)
+        beginAttach(entry, reference)
+    }
+
+    // TooGenericExceptionCaught: a provider that fails for any reason still leaves a drawn terrain.
+    @Suppress("TooGenericExceptionCaught")
+    private fun beginAttach(entry: Tracked, reference: TerrainSurfaceReference?) {
+        entry.started = true
+        val epoch = ++entry.attachEpoch
         val provider = reference?.let { providers[it.provider] }
         if (reference == null || provider == null) {
             if (reference != null) {
@@ -186,7 +220,7 @@ class TerrainContentSystem(
                         "base shading. The scene keeps its surface unchanged."
                 }
             }
-            startAttach(entry, TerrainSurface(baseShaders))
+            startAttach(entry, epoch, TerrainSurface(baseShaders))
             return
         }
         entry.job = scope.launch {
@@ -198,19 +232,19 @@ class TerrainContentSystem(
                 log.error(failure) { "Terrain surface '${reference.provider}' failed to resolve; drawing base shading." }
                 TerrainSurface(baseShaders)
             }
-            resolved.trySend(Resolved(entity, terrain, surface))
+            resolved.trySend(Resolved(entry.entity, entry.terrain, epoch, surface))
         }
     }
 
     // TooGenericExceptionCaught: whatever stops one terrain attaching must not stop the frame.
     @Suppress("TooGenericExceptionCaught")
-    private fun startAttach(entry: Tracked, surface: TerrainSurface) {
+    private fun startAttach(entry: Tracked, epoch: Int, surface: TerrainSurface) {
         entry.job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 val feature = host.attachContentFeature(
                     terrainContentFeature(surface.shaders, entry.terrain, surface.textures, surface.samplerTextures) { entry.origin },
                 )
-                attached.trySend(Attached(entry.entity, entry.terrain, feature))
+                attached.trySend(Attached(entry.entity, entry.terrain, epoch, feature))
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
@@ -234,18 +268,34 @@ class TerrainContentSystem(
     private class Tracked(val entity: Entity, val terrain: TerrainComponent) {
         /** The entity's translation, as of the last [update]; the drawn terrain reads it every frame. */
         val origin = Vec3f(0f, 0f, 0f)
+        var started = false
+        var attachEpoch = 0
         var job: Job? = null
         var feature: AttachedContentFeature? = null
 
         fun release() {
+            started = false
+            attachEpoch++
             job?.cancel()
+            job = null
             feature?.detach()
+            feature = null
         }
     }
 
-    private class Resolved(val entity: Entity, val terrain: TerrainComponent, val surface: TerrainSurface)
+    private class Resolved(
+        val entity: Entity,
+        val terrain: TerrainComponent,
+        val epoch: Int,
+        val surface: TerrainSurface,
+    )
 
-    private class Attached(val entity: Entity, val terrain: TerrainComponent, val feature: AttachedContentFeature)
+    private class Attached(
+        val entity: Entity,
+        val terrain: TerrainComponent,
+        val epoch: Int,
+        val feature: AttachedContentFeature,
+    )
 }
 
 /**
