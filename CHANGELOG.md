@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.77.0] - 2026-11-25
+
+### Added
+
+- **Android `MODE_STATIC` `AudioTrack` reaping, `AudioClip.durationMillis()`, and `FocusAudioPlayer` handle cleanup.** `AndroidAudioPlayer` now reaps expired one-shot `AudioTrack` instances automatically, bounds simultaneous one-shot tracks (default 16) while preserving its no-arg constructor, and removes stopped handles from its live list; `FocusAudioPlayer` stops finished handles before pruning or disposing.
+- **Resilient browser content transport and hardened WebGPU device-lost guards.** Added `BrowserTransportOptions` (connect, stall, and total timeouts, bounded exponential backoff retries honoring `Retry-After`, and streaming `ReadableStream` chunk progress with early chunk release) to `:awake:project:transport-browser`, and exposed `isDeviceLost` with zero-allocation submission guards across `WebGpuEngine`, `GraphicsDevice`, `Renderer`, and `WebGpuCanvasHost` in `:awake:backend:webgpu`.
+- **Cross-platform memory pressure, device profile, weak references, heap guards, and crash storage.** Added `MemoryPressure`, `MemoryPressureLevel`, `DeviceProfile`, `ThermalState`, `readDeviceProfile()`, and `WeakRef<T>` to `:awake:core:host` (with Android `onTrimMemory`, iOS memory warning, JVM runtime heap, and browser memory probes), plus `HeapGuard`, `PageMemoryBudget`, `PageMemoryGuard`, and atomic `FileCrashStorage` to `:awake:core:diagnostics`.
+- **Automatic `SceneDocument` AST release and opt-in `StaticColliderStreamSystem`.** `ProjectSceneRunner` now drops heavy `SceneDocument` node trees and `SceneTerrain.samples` right after scene instantiation (unless `retainSceneDocument = true` is passed to `runProject`, with `LoadedProject.releaseSceneDocument()` for manual hosts), and `:awake:project:runtime` adds `StaticColliderStreamSystem` + `ColliderStreamConfig` for zero-allocation, hysteresis-driven static terrain and mesh collider streaming around an observer.
+- **Soft screen-space silhouette outlines (`OutlineStyle.softness`).** `OutlineStyle` adds a `softness` parameter (`0f` keeps the crisp 16-tap border; `0..1f` evaluates a single-pass, scissored 2D Gaussian blur of the existing mask depth layer in `AslOutlineShader` with interior early-out and straight-alpha Porter-Duff compositing across Vulkan and WebGPU, requiring zero extra render passes or targets).
+- **Dynamic world-normal surface deposits (`SurfaceDeposit` and `SurfaceDepositMask`).** Scenes can now apply procedural upward-facing surface coatings (such as snow, frost, volcanic ash, desert dust, or moss) across textured PBR, skinned, lit, and terrain shaders with zero extra draw calls and zero idle fragment ALU (`amount == 0` early-out). Supports multi-scale non-repeating hash-fBm breakup, analytical micro-bump normal relief, dual-tone crevice contrast, optional crystalline glint, per-storm `seed` randomization, and per-entity `SurfaceDepositMask(scale, seed)` scaling or exemption.
+- **Disk persistence for Vulkan's `VkPipelineCache`.** Added `VulkanPipelineCacheStore` and an atomic, CRC-32-validated `FileVulkanPipelineCacheStore` (with hardware header pre-validation and unchanged-payload deduplication) wired into `VulkanEngine` (`pipelineCacheStore` and `flushPipelineCache()`). Android sessions now automatically persist compiled Vulkan shader pipelines under the application `cacheDir` after startup warmup, after the first submitted frame, on surface loss/backgrounding, and before device teardown so subsequent cold launches reuse cached pipelines instead of recompiling every shader from scratch.
+
+### Changed
+
+- **Eliminated steady-state native wrapper and `Cleaner` allocations in `JoltPhysicsWorld` queries (`:awake:backend:jolt`).** Replaced per-call `RShapeCast` / `RRayCast` `JoltPhysicsObject` + `Cleaner` registrations and collector hit wrappers with deterministic `MethodHandle` native query bindings (`JoltNativeQueryOps`) and a reusable `JoltQueryRunner` using native `IgnoreMultipleBodiesFilter` for `ignore` and live sensor exclusion across desktop and Android (`shapeCast` with `ignore`: 500 -> 104 B, plain hit 80 B, miss 0 B; `raycast`: 282 -> 56 B, miss 0 B; `overlapShape`: 91 -> 24 B; 0 `Cleaner` registrations/call), while also switching `setAngularVelocity`, `addImpulse`, `moveKinematic`, and `shiftOrigin` to allocation-free overloads/scratch vectors.
+- **Losslessly PNG-compressed built-in Roboto MTSDF font atlases.** Encoded the seven pre-baked `Roboto*UiFontData` RGBA8 atlases in `:awake:core:text` as lossless PNG payloads decoded through the module's pure-Kotlin `PngDecoder` (with fast Huffman lookup and zero-boxing deflate output), and emitted base64 payloads as whitespace-free chunked getters rather than static fields. This reduces the seven generated font data files from 10.29 MB to 2.80 MB (~72.8% smaller, 100% bit-exact RGBA) and eliminates permanent `<clinit>` heap retention of the embedded base64 strings after `releaseAtlasPixels()`.
+
+### Fixed
+
+- **No Android UI-thread ANR during cold Vulkan shader compilation.** `AwakeSurfaceView` now runs `WindowLifecycle.create`, `restoreSurface`, display-metric/inset updates, `resize`, `releaseSurface`, and `dispose` exclusively on its dedicated `AwakeSurfaceView-Render` thread instead of synchronously inside `surfaceCreated` on Android's UI thread.
+
 ## [0.76.0] - 2026-11-25
 
 ### Added
