@@ -65,6 +65,21 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
     var stagingChunksAllocated: Long = 0L
         private set
 
+    /** Idle staging chunks currently held in the warm pool, for tests. */
+    val freeChunkCount: Int
+        get() = lock.withLock { freeChunks.size }
+
+    /** Total staging bytes currently held across idle and in-flight chunks, for tests. */
+    val retainedStagingBytes: Long
+        get() = lock.withLock {
+            var total = 0L
+            for (chunk in freeChunks) total += chunk.capacity
+            for (batch in inFlightBatches) {
+                for (chunk in batch.chunks) total += chunk.capacity
+            }
+            total
+        }
+
     /** Enables inline frame-start upload flushing while a presentable renderer is active. */
     fun enableFrameDeferred() = lock.withLock {
         deferToFrame = true
@@ -249,6 +264,24 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
                 recycleChunkLocked(chunk, extra)
             }
             extra
+        }
+        destroyChunks(toFree)
+    }
+
+    /**
+     * Frees every idle and already-completed staging chunk while keeping any unrecorded
+     * [pendingCopies] intact. Caller must have waited for device idle first.
+     */
+    fun trimIdleChunks() {
+        val toFree = lock.withLock {
+            val collected = ArrayList<StagingChunk>(freeChunks.size + inFlightBatches.size)
+            collected.addAll(freeChunks)
+            freeChunks.clear()
+            for (batch in inFlightBatches) {
+                collected.addAll(batch.chunks)
+            }
+            inFlightBatches.clear()
+            collected
         }
         destroyChunks(toFree)
     }

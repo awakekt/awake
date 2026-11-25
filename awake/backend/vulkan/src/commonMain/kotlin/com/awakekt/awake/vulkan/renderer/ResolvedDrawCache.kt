@@ -65,6 +65,13 @@ internal class ResolvedDrawCache {
             .also { slots[index] = it }
     }
 
+    /** Drops all cached packets so the next batch resolves freshly against current GPU handles. */
+    fun clear() {
+        for (i in byKey.indices) {
+            byKey[i].clear()
+        }
+    }
+
     private fun slotsFor(key: Int): ArrayList<GpuResolvedDraw?> {
         while (byKey.size <= key) byKey += ArrayList<GpuResolvedDraw?>()
         return byKey[key]

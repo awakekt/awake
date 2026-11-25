@@ -56,6 +56,9 @@ internal fun Renderer.recordCommandBuffer(
     val outputWidth = swapchainManager.extent.width
     val outputHeight = swapchainManager.extent.height
     val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
+    if (scaled != null) {
+        retireSwapchainSceneFramebuffers()
+    }
     scaled?.prepareForColorAttachment(commandBuffer)
     val sceneWidth = scaled?.width ?: outputWidth
     val sceneHeight = scaled?.height ?: outputHeight
@@ -66,7 +69,7 @@ internal fun Renderer.recordCommandBuffer(
     VulkanCommands.vkCmdBeginRenderPassColorDepth(
         commandBuffer = commandBuffer,
         renderPass = if (directPresentPass != 0L) directPresentPass else renderPipeline.renderPass,
-        framebuffer = scaled?.framebuffer ?: framebuffers[acquiredImageIndex],
+        framebuffer = scaled?.framebuffer ?: ensureSwapchainSceneFramebuffers()[acquiredImageIndex],
         width = sceneWidth,
         height = sceneHeight,
         r = clearRgba.r,
@@ -150,6 +153,9 @@ internal fun Renderer.recordResolvedCommandBuffer(
     val outputWidth = swapchainManager.extent.width
     val outputHeight = swapchainManager.extent.height
     val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
+    if (scaled != null) {
+        retireSwapchainSceneFramebuffers()
+    }
     scaled?.prepareForColorAttachment(commandBuffer)
     val sceneWidth = scaled?.width ?: outputWidth
     val sceneHeight = scaled?.height ?: outputHeight
@@ -165,7 +171,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     VulkanCommands.vkCmdBeginRenderPassColorDepth(
         commandBuffer = commandBuffer,
         renderPass = if (directPresentPass != 0L) directPresentPass else renderPipeline.renderPass,
-        framebuffer = scaled?.framebuffer ?: framebuffers[acquiredImageIndex],
+        framebuffer = scaled?.framebuffer ?: ensureSwapchainSceneFramebuffers()[acquiredImageIndex],
         width = sceneWidth,
         height = sceneHeight,
         r = clearRgba.r,

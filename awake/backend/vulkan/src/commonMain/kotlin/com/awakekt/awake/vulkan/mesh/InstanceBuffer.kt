@@ -11,6 +11,7 @@ import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
+import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.handles.BufferHandle
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
@@ -48,6 +49,7 @@ class InstanceBuffer(
         val memory: DeviceMemoryHandle,
         val mappedPtr: Long,
         val capacity: Int,
+        val byteSize: Long,
     ) {
         /** This slot's buffer as the port's opaque handle -- built once, not per draw. */
         val binding = VulkanBufferBinding(buffer.handle)
@@ -59,12 +61,26 @@ class InstanceBuffer(
 
     private val frameResources = arrayOfNulls<FrameResources>(framesInFlight)
 
-    /** Outgrown buffers. A frame still in flight may read one, so they are freed in [destroy]. */
-    private val retired = ArrayList<FrameResources>()
-
     /** Uploads [update] made, for tests: one a frame slot whose models changed, none for one whose held. */
     internal var uploads = 0L
         private set
+
+    /** Outgrown slot buffers handed to the deferred reaper so far, for tests. */
+    internal var retiredCount = 0L
+        private set
+
+    /** Current allocated instance capacity for [frameIndex], or 0 before first use. */
+    internal fun capacityFor(frameIndex: Int): Int = frameResources.getOrNull(frameIndex)?.capacity ?: 0
+
+    /** Total requested GPU buffer bytes currently held across live frame slots, for tests. */
+    internal val allocatedBytes: Long
+        get() {
+            var total = 0L
+            for (i in frameResources.indices) {
+                total += frameResources[i]?.byteSize ?: 0L
+            }
+            return total
+        }
 
     // Grow-only scratch buffer reused across frames without reallocating as visible instance counts fluctuate.
 
@@ -83,9 +99,10 @@ class InstanceBuffer(
      * Writes one model matrix per instance into [frameIndex]'s buffer, growing that slot's buffer
      * first when the instances do not fit.
      *
-     * Capacity grows in powers of two up to the construction-time ceiling. A buffer that is
-     * outgrown is kept until [destroy] rather than freed, because a frame still in flight may be
-     * reading it. An empty list writes nothing.
+     * Capacity grows in powers of two up to the construction-time ceiling. Outgrown buffers are
+     * retired through the device's deferred resource reaper once frames in flight complete, so
+     * they are reclaimed mid-session instead of leaking until [destroy]. An empty list writes
+     * nothing.
      *
      * @param frameIndex The frame slot to write.
      * @param models One column-major model matrix per instance.
@@ -127,14 +144,15 @@ class InstanceBuffer(
     }
 
     /**
-     * Destroys and frees every frame slot's buffer, including the outgrown ones kept alive for
-     * frames in flight. Call once, after the GPU has finished with them.
+     * Destroys and frees every live frame slot's buffer. Call once, after the GPU has finished
+     * with them.
      */
     fun destroy() {
-        (frameResources.filterNotNull() + retired).forEach { frame ->
-            VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
-            if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.memory.handle)
-            VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
+        val vkDevice = device
+        for (i in frameResources.indices) {
+            val frame = frameResources[i] ?: continue
+            frameResources[i] = null
+            freeFrameResources(vkDevice, frame)
         }
     }
 
@@ -145,13 +163,30 @@ class InstanceBuffer(
         }
         val current = frameResources[frameIndex]
         if (current != null && current.capacity >= instances) return current
-        current?.let(retired::add)
-        var capacity = MIN_CAPACITY
+        current?.let(::retireFrameResources)
+        var capacity = MIN_CAPACITY.coerceAtMost(maxInstances)
         while (capacity < instances) capacity *= 2
         capacity = capacity.coerceAtMost(maxInstances)
         graphicsDevice.instanceBuffersCreated += 1
-        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer((capacity * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
-        return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), mappedPtr, capacity).also { frameResources[frameIndex] = it }
+        val byteSize = (capacity * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong()
+        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer(byteSize)
+        return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), mappedPtr, capacity, byteSize)
+            .also { frameResources[frameIndex] = it }
+    }
+
+    private fun retireFrameResources(old: FrameResources) {
+        val vkDevice = device
+        retiredCount += 1L
+        graphicsDevice.destroyOrRetire {
+            freeFrameResources(vkDevice, old)
+        }
+    }
+
+    private fun freeFrameResources(vkDevice: Long, frame: FrameResources) {
+        if (vkDevice == 0L) return
+        VulkanBuffers.vkDestroyBuffer(vkDevice, frame.buffer.handle)
+        if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(vkDevice, frame.memory.handle)
+        VulkanBuffers.vkFreeMemory(vkDevice, frame.memory.handle)
     }
 
     private fun allocateHostVisibleBuffer(byteSize: Long): Triple<Long, Long, Long> {

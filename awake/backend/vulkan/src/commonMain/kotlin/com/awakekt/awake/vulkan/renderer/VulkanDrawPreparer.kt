@@ -17,6 +17,7 @@ import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.canInstance
 import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
+import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 
@@ -30,9 +31,11 @@ internal class VulkanDrawPreparer(
     private val offscreen: Boolean = false,
 ) : GpuDrawPreparer {
     /** Each draw's uniform slot in its material and each instanced draw's instance buffers, by what
-     * the draw is: a draw culled earlier in the list leaves every later one where it was. */
+     * the draw is: a draw culled earlier in the list leaves every later one where it was. Each
+     * optional stream (skinned palettes, per-instance colours, particle frames) owns its own dense
+     * slot table so draws without that stream never create unused gap entries in sibling pools. */
     private val materialSlots = StableMaterialSlots()
-    private val instancedSlots = StableDrawSlots()
+    private val denseInstanceSlots = DenseInstanceSlots()
 
     /** Instanced casters' shared depth sets, for this batch. */
     private val sharedDepth = SharedDepthBindings()
@@ -71,18 +74,21 @@ internal class VulkanDrawPreparer(
         if (sourceIndex == 0) startBatch(context)
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         if (edgePipeline != null) writeEdgeFrame(context)
-        val cascades = context.cascades()
         val frameIndex = frameIndex()
+        val instancedKind = request.instancedDrawKind()
         val prepared = renderer.prepareGpuDraw(
             cmd = request,
             frameIndex = frameIndex,
-            instancedIndex = if (request.instanceModels != null) instancedSlots.slotFor(request.mesh, request.material) else sourceIndex,
+            instancedIndex = denseInstanceSlots.modelSlotFor(request, instancedKind, sourceIndex),
+            skinnedInstancedIndex = denseInstanceSlots.skinnedSlotFor(request, instancedKind),
+            alphaInstancedIndex = denseInstanceSlots.alphaSlotFor(request, instancedKind),
+            frameInstancedIndex = denseInstanceSlots.frameSlotFor(request, instancedKind),
             isTransparent = request.transparent,
             viewProjection = context.viewProjection,
             cameraPosition = context.cameraEye,
             cameraForward = context.cameraForward,
             lightUniforms = context.passUniforms,
-            shadowCascades = cascades,
+            shadowCascades = context.cascades(),
             fogColor = context.environment.fogColor,
             fogDensity = context.environment.fogDensity,
             debugView = context.environment.debugView,
@@ -96,36 +102,42 @@ internal class VulkanDrawPreparer(
             ),
             into = scratch,
         ) ?: return null
+        return resolvePreparedDraw(request, frameIndex, sourceIndex, edgePipeline != null, prepared)
+    }
+
+    private fun resolvePreparedDraw(
+        request: GpuDrawRequest,
+        frameIndex: Int,
+        sourceIndex: Int,
+        isEdge: Boolean,
+        prepared: PreparedDrawCall,
+    ): GpuResolvedDraw {
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
-        val kind = if (edgePipeline != null) ResolvedDrawCache.EDGE else ResolvedDrawCache.SINGLE
-        if (edgePipeline != null) return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared)
-        val format = prepared.vertexFormat
+        val kind = if (isEdge) ResolvedDrawCache.EDGE else ResolvedDrawCache.SINGLE
+        if (isEdge) return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared)
         val depthFeature = renderer.depthPrePassFeature ?: renderer.sceneDepthPassFeature
         val depthKey = request.depthRenderKey()
-        // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than
-        // drawing its whole card. Each return builds the draw once: building it and then copying it
-        // with the depth fields set made two or three of them per draw per frame.
-        val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared, depthKey)
+        val depthPipeline = depthFeature?.pipelineFor(depthKey, prepared.vertexFormat)
         val sourceMaterial = request.material as? com.awakekt.awake.vulkan.material.Material
-            ?: return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared, depthKey)
-        if (request.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked &&
-            !sourceMaterial.hasTexture
-        ) {
-            return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared, depthKey)
+        val missingMaskTexture = request.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked &&
+            sourceMaterial?.hasTexture != true
+        return if (depthPipeline == null || sourceMaterial == null || missingMaskTexture) {
+            resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared, depthKey)
+        } else {
+            resolvedDraws.resolve(
+                kind,
+                frameIndex,
+                sourceIndex,
+                prepared,
+                depthRenderKey = depthKey,
+                alphaCutoff = request.alphaCutoff,
+                depthPipeline = depthPipeline,
+                depthMaterialBinding = sharedDepth.bindingFor(request, depthKey, depthPipeline, prepared.pipeline, wholeBlock = false) {
+                    prepared.materialBinding
+                },
+                depthJointPaletteBinding = prepared.jointPaletteBinding,
+            )
         }
-        return resolvedDraws.resolve(
-            kind,
-            frameIndex,
-            sourceIndex,
-            prepared,
-            depthRenderKey = depthKey,
-            alphaCutoff = request.alphaCutoff,
-            depthPipeline = depthPipeline,
-            depthMaterialBinding = sharedDepth.bindingFor(request, depthKey, depthPipeline, prepared.pipeline, wholeBlock = false) {
-                prepared.materialBinding
-            },
-            depthJointPaletteBinding = prepared.jointPaletteBinding,
-        )
     }
 
     private fun frameIndex(): Int =
@@ -138,10 +150,17 @@ internal class VulkanDrawPreparer(
         edgeFrameWritten = true
     }
 
+    /** Clears cached resolved packets and dense instance slot indices after `Renderer.trimMemory()`. */
+    internal fun resetAfterTrim() {
+        resolvedDraws.clear()
+        denseInstanceSlots.clear()
+        sharedDepth.clear()
+    }
+
     /** The frame boundary: resets this batch's allocations and makes the frame slot safe to write. */
     private fun startBatch(context: GpuDrawPreparationContext) {
         materialSlots.begin()
-        instancedSlots.begin()
+        denseInstanceSlots.begin()
         sharedDepth.clear()
         edgeFrameWritten = false
         val frameIndex = frameIndex()
@@ -172,4 +191,41 @@ internal class VulkanDrawPreparer(
         (request.material as? com.awakekt.awake.vulkan.material.Material)
             ?.takeIf { request.drawsEdges(it.uniformFloatCount) }
             ?.let { renderer.pipelines.edges(request.mesh.format) }
+}
+
+private class DenseInstanceSlots {
+    private val models = StableDrawSlots()
+    private val skinned = StableDrawSlots()
+    private val alpha = StableDrawSlots()
+    private val frames = StableDrawSlots()
+
+    fun begin() {
+        models.begin()
+        skinned.begin()
+        alpha.begin()
+        frames.begin()
+    }
+
+    fun clear() {
+        models.clear()
+        skinned.clear()
+        alpha.clear()
+        frames.clear()
+    }
+
+    fun modelSlotFor(request: GpuDrawRequest, kind: InstancedDrawKind?, fallback: Int): Int =
+        if (kind != null) models.slotFor(request.mesh, request.material) else fallback
+
+    fun skinnedSlotFor(request: GpuDrawRequest, kind: InstancedDrawKind?): Int =
+        if (kind == InstancedDrawKind.Skinned) skinned.slotFor(request.mesh, request.material) else -1
+
+    fun alphaSlotFor(request: GpuDrawRequest, kind: InstancedDrawKind?): Int {
+        val needsAlpha = kind != null && kind != InstancedDrawKind.Skinned && !request.instanceColors.isNullOrEmpty()
+        return if (needsAlpha) alpha.slotFor(request.mesh, request.material) else -1
+    }
+
+    fun frameSlotFor(request: GpuDrawRequest, kind: InstancedDrawKind?): Int {
+        val needsFrames = kind == InstancedDrawKind.Particle && !request.instanceFrames.isNullOrEmpty()
+        return if (needsFrames) frames.slotFor(request.mesh, request.material) else -1
+    }
 }

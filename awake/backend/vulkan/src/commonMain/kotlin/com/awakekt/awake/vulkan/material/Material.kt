@@ -98,13 +98,23 @@ class Material(
     private val uniformSlotsByFrame = mutableListOf<MutableList<UniformSlot>>()
 
     /**
-     * Where uniform slots are carved from: one memory allocation and one descriptor pool per
-     * [SLOTS_PER_BLOCK] slots rather than one of each per slot. A slot is one draw of this material
-     * in one frame slot, so a scene of a few thousand distinct draws used to allocate memory a few
-     * thousand times -- and many drivers cap allocations at 4096 for the whole device.
+     * Where uniform slots are carved from: one memory allocation and one descriptor pool per block
+     * rather than one of each per slot. Block capacity starts small ([INITIAL_SLOTS_PER_BLOCK], or
+     * [LARGE_UBO_INITIAL_SLOTS_PER_BLOCK] for large skinned UBOs) and doubles up to
+     * [SLOTS_PER_BLOCK] on overflow, avoiding 32-slot over-allocation for single-draw materials
+     * while keeping heavily shared materials well within device allocation limits.
      */
     private val slotBlocks = mutableListOf<SlotBlock>()
-    private var slotsInLastBlock = SLOTS_PER_BLOCK
+    private var slotsInLastBlock = 0
+
+    /** Number of backing [SlotBlock] allocations created for this material, for tests. */
+    internal val slotBlockCount: Int get() = slotBlocks.size
+
+    /** Total uniform slots reserved across all [slotBlocks], for tests. */
+    internal val allocatedSlotCapacity: Int get() = slotBlocks.sumOf { it.slotCount }
+
+    /** Total GPU bytes reserved across all [slotBlocks], for tests. */
+    internal val allocatedUniformBytes: Long get() = slotBlocks.sumOf { it.stride * it.slotCount }
 
     private var fallbackSamplerHandle: Long = 0
 
@@ -182,11 +192,12 @@ class Material(
                 usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             ),
         )
-        if (slotsInLastBlock == SLOTS_PER_BLOCK) {
+        if (slotBlocks.isEmpty() || slotsInLastBlock == slotBlocks.last().slotCount) {
             slotBlocks += allocateSlotBlock(
                 graphicsDevice,
                 bindings,
                 VulkanBuffers.vkGetBufferMemoryRequirements(device, rawUniformBuffer),
+                slotCount = blockSlotCountFor(slotBlocks.size, uniformFloatCount),
             )
             slotsInLastBlock = 0
         }
@@ -422,8 +433,32 @@ class Material(
         /** One MVP matrix -- a plain-colored mesh's whole uniform block. */
         private val DEFAULT_UNIFORM_FLOAT_COUNT = UniformFields.DefaultMaterial.total
 
-        /** Uniform slots per memory allocation and descriptor pool. */
+        /** Maximum uniform slots per memory allocation and descriptor pool. */
         internal const val SLOTS_PER_BLOCK = 32
+
+        /** Initial slots per block for standard (< 2 KiB) uniform buffers (fits 2 frames in flight + offscreen). */
+        internal const val INITIAL_SLOTS_PER_BLOCK = 4
+
+        /** Initial slots per block for large (>= 2 KiB, e.g. skinned) uniform buffers. */
+        internal const val LARGE_UBO_INITIAL_SLOTS_PER_BLOCK = 2
+
+        /** Uniform float threshold (2048 B) above which block 0 uses [LARGE_UBO_INITIAL_SLOTS_PER_BLOCK]. */
+        internal const val LARGE_UBO_FLOAT_THRESHOLD = 512
+
+        /** Progressive block capacity: doubles per block up to [SLOTS_PER_BLOCK]. */
+        internal fun blockSlotCountFor(existingBlockCount: Int, uniformFloatCount: Int): Int {
+            var slots = if (uniformFloatCount >= LARGE_UBO_FLOAT_THRESHOLD) {
+                LARGE_UBO_INITIAL_SLOTS_PER_BLOCK
+            } else {
+                INITIAL_SLOTS_PER_BLOCK
+            }
+            var step = 0
+            while (step < existingBlockCount && slots < SLOTS_PER_BLOCK) {
+                slots = minOf(slots * 2, SLOTS_PER_BLOCK)
+                step++
+            }
+            return slots
+        }
 
         /** textured.wgsl's base-color image. Its sampler at 2 serves every other sampled
          * texture in the group too, which is why the PBR maps need no samplers of their own. */
@@ -500,13 +535,20 @@ private fun bindFrameBlock(graphicsDevice: GraphicsDevice, descriptorSet: Long, 
     )
 }
 
-/** One persistently mapped memory allocation and descriptor pool shared by [Material.SLOTS_PER_BLOCK] uniform slots. */
-internal class SlotBlock(val memory: Long, val mappedPtr: Long, val descriptorPool: Long, val stride: Long) {
+/** One persistently mapped memory allocation and descriptor pool shared by [slotCount] uniform slots. */
+internal class SlotBlock(
+    val memory: Long,
+    val mappedPtr: Long,
+    val descriptorPool: Long,
+    val stride: Long,
+    val slotCount: Int = Material.SLOTS_PER_BLOCK,
+) {
     val strideFloats: Int = (stride / Float.SIZE_BYTES).toInt()
-    val stagedFloats: FloatArray = FloatArray(Material.SLOTS_PER_BLOCK * strideFloats)
+    val stagedFloats: FloatArray = FloatArray(slotCount * strideFloats)
 
-    // 32-bit mask covering SLOTS_PER_BLOCK = 32 slots so flush writes only contiguous dirty runs
+    // Bitmask covering [slotCount] (1..32) slots so flush writes only contiguous dirty runs
     // and never overwrites an interleaved clean slot owned by another in-flight frame or offscreen pass.
+    private val fullMask: Int = if (slotCount == Int.SIZE_BITS) -1 else (1 shl slotCount) - 1
     private var dirtyMask: Int = 0
     private var singleDirtySlot: Material.UniformSlot? = null
     var destroyed: Boolean = false
@@ -539,7 +581,7 @@ internal class SlotBlock(val memory: Long, val mappedPtr: Long, val descriptorPo
                 val slotIndex = mask.countTrailingZeroBits()
                 VulkanBuffers.writeMappedMemoryFloats(mappedPtr, slotIndex * stride, single.lastWritten)
             }
-            mask == -1 -> {
+            mask == fullMask -> {
                 VulkanBuffers.writeMappedMemoryFloats(mappedPtr, 0L, stagedFloats)
             }
             else -> flushDirtyRuns(mask)
@@ -551,7 +593,7 @@ internal class SlotBlock(val memory: Long, val mappedPtr: Long, val descriptorPo
         while (remaining != 0) {
             val runStart = remaining.countTrailingZeroBits()
             var runEnd = runStart
-            while (runEnd + 1 < Material.SLOTS_PER_BLOCK && (remaining and (1 shl (runEnd + 1))) != 0) {
+            while (runEnd + 1 < slotCount && (remaining and (1 shl (runEnd + 1))) != 0) {
                 runEnd++
             }
             val runCount = runEnd - runStart + 1
@@ -568,16 +610,18 @@ internal class SlotBlock(val memory: Long, val mappedPtr: Long, val descriptorPo
     }
 }
 
-/** Memory for [Material.SLOTS_PER_BLOCK] buffers shaped like [requirements], each at an aligned stride. */
+/** Memory for [slotCount] buffers shaped like [requirements], each at an aligned stride. */
 @Suppress("TooGenericExceptionCaught")
 private fun allocateSlotBlock(
     graphicsDevice: GraphicsDevice,
     bindings: GroupBindings,
     requirements: VkMemoryRequirements,
+    slotCount: Int,
 ): SlotBlock {
+    require(slotCount in 1..Int.SIZE_BITS) { "SlotBlock slotCount $slotCount must be in 1..${Int.SIZE_BITS}." }
     val alignment = maxOf(requirements.alignment, Float.SIZE_BYTES.toLong())
     val stride = (requirements.size + alignment - 1) / alignment * alignment
-    val totalSize = stride * Material.SLOTS_PER_BLOCK
+    val totalSize = stride * slotCount
     val memory = graphicsDevice.allocateHostVisibleBufferMemory(
         VkMemoryRequirements(totalSize, alignment, requirements.memoryTypeBits),
         minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
@@ -585,8 +629,8 @@ private fun allocateSlotBlock(
     var mappedPtr = 0L
     try {
         mappedPtr = VulkanBuffers.vkMapMemory(graphicsDevice.device, memory, 0L, totalSize)
-        val pool = createMaterialDescriptorPool(graphicsDevice.device, bindings, maxSets = Material.SLOTS_PER_BLOCK)
-        return SlotBlock(memory, mappedPtr, pool, stride)
+        val pool = createMaterialDescriptorPool(graphicsDevice.device, bindings, maxSets = slotCount)
+        return SlotBlock(memory, mappedPtr, pool, stride, slotCount)
     } catch (failure: Throwable) {
         if (mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(graphicsDevice.device, memory)
         VulkanBuffers.vkFreeMemory(graphicsDevice.device, memory)

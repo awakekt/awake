@@ -8,8 +8,6 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.vulkan.material.Material
-import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
-import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
@@ -66,12 +64,12 @@ internal class PreparedDrawCall : PreparedDraw {
     var jointPaletteBuffer: SkinnedInstanceBuffer? = null
         private set
 
-    /** Non-null only for a billboard-particle instanced draw, bound at binding 2 beside [instanceBuffer]'s binding 1. */
-    var alphaInstanceBuffer: AlphaInstanceBuffer? = null
+    /** Non-null only for a tinted or particle instanced draw, bound at binding 2 beside [instanceBuffer]'s binding 1. */
+    override var instanceColorBuffer: VulkanBufferBinding? = null
         private set
 
-    /** Non-null only for a billboard-particle instanced draw, bound at binding 3 beside [alphaInstanceBuffer]'s binding 2. */
-    var frameInstanceBuffer: FrameInstanceBuffer? = null
+    /** Non-null only for a billboard-particle instanced draw, bound at binding 3 beside [instanceColorBuffer]'s binding 2. */
+    override var instanceFrameBuffer: VulkanBufferBinding? = null
         private set
 
     /** Squared distance to the camera eye, computed once at preparation rather than inside the sort comparator. */
@@ -98,8 +96,8 @@ internal class PreparedDrawCall : PreparedDraw {
         instanceBuffer: InstanceBuffer? = null,
         instanceCount: Int = 0,
         jointPaletteBuffer: SkinnedInstanceBuffer? = null,
-        alphaInstanceBuffer: AlphaInstanceBuffer? = null,
-        frameInstanceBuffer: FrameInstanceBuffer? = null,
+        instanceColorBuffer: VulkanBufferBinding? = null,
+        instanceFrameBuffer: VulkanBufferBinding? = null,
         depthSortKey: Float = 0f,
         sortOrder: Int = 0,
         sortLayer: Int = 0,
@@ -117,8 +115,8 @@ internal class PreparedDrawCall : PreparedDraw {
         this.instanceBuffer = instanceBuffer
         this.instanceCount = instanceCount
         this.jointPaletteBuffer = jointPaletteBuffer
-        this.alphaInstanceBuffer = alphaInstanceBuffer
-        this.frameInstanceBuffer = frameInstanceBuffer
+        this.instanceColorBuffer = instanceColorBuffer
+        this.instanceFrameBuffer = instanceFrameBuffer
         this.depthSortKey = depthSortKey
         this.sortOrder = sortOrder
         this.sortLayer = sortLayer
@@ -135,8 +133,6 @@ internal class PreparedDrawCall : PreparedDraw {
     override val instances get() = if (instanceBuffer == null) 1 else instanceCount
     override val instanceVertexBuffer get() = instanceBuffer?.binding(frameIndex)
     override val jointPaletteBinding get() = jointPaletteBuffer?.binding(frameIndex)
-    override val instanceColorBuffer get() = alphaInstanceBuffer?.binding(frameIndex)
-    override val instanceFrameBuffer get() = frameInstanceBuffer?.binding(frameIndex)
     override val depthMaterialBinding get() = materialBinding
     override val depthJointPaletteBinding get() = jointPaletteBinding
 }

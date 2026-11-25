@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.allocateTransientAttachmentMemory
+import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
 import com.awakekt.awake.vulkan.enums.VkFormat
 import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
@@ -92,6 +93,54 @@ internal fun Renderer.createFramebuffers() {
         )
         Vulkan.vkCreateFramebuffer(device, frameBufferInfo)
     }.toList()
+}
+
+/**
+ * Lazily allocates native-resolution swapchain depth targets (plus MSAA colour attachments when
+ * enabled) and builds the matching scene framebuffers only when a direct swapchain 3D pass
+ * actually executes (`renderScale == 1`). Scaled frames (`renderScale < 1`) render 3D into
+ * [Renderer.sceneScale] and composite onto the swapchain through single-attachment colour
+ * framebuffers without needing native-resolution swapchain depth images.
+ */
+internal fun Renderer.ensureSwapchainSceneFramebuffers(): List<Long> {
+    if (framebuffers.size != swapchainManager.imageViews.size || framebuffers.isEmpty()) {
+        if (framebuffers.isNotEmpty() || depthImages.isNotEmpty() || multisampleColors.isNotEmpty()) {
+            retireSwapchainSceneFramebuffers()
+        }
+        if (swapchainManager.imageViews.isNotEmpty()) {
+            createDepthResources()
+            createFramebuffers()
+        }
+    }
+    return framebuffers
+}
+
+/**
+ * Retires native-resolution swapchain depth attachments, MSAA colour attachments, and scene
+ * framebuffers through the deferred reaper so they are freed once in-flight frames complete (e.g.
+ * when switching from native `renderScale == 1` into scaled offscreen rendering).
+ */
+internal fun Renderer.retireSwapchainSceneFramebuffers() {
+    if (framebuffers.isEmpty() && depthImages.isEmpty() && multisampleColors.isEmpty()) return
+    val vkDevice = device
+    val framebuffersToDestroy = framebuffers
+    val multisampleToDestroy = multisampleColors
+    val viewsToDestroy = depthImageViews
+    val imagesToDestroy = depthImages
+    val memoriesToDestroy = depthImageMemories
+    framebuffers = emptyList()
+    multisampleColors = emptyList()
+    depthImageViews = emptyList()
+    depthImages = emptyList()
+    depthImageMemories = emptyList()
+    graphicsDevice.destroyOrRetire {
+        if (vkDevice == 0L) return@destroyOrRetire
+        framebuffersToDestroy.forEach { Vulkan.vkDestroyFramebuffer(vkDevice, it) }
+        multisampleToDestroy.forEach { it.destroy() }
+        viewsToDestroy.forEach { Vulkan.vkDestroyImageView(vkDevice, it) }
+        imagesToDestroy.forEach { VulkanImages.vkDestroyImage(vkDevice, it) }
+        memoriesToDestroy.forEach { VulkanBuffers.vkFreeMemory(vkDevice, it) }
+    }
 }
 
 /**
@@ -197,6 +246,7 @@ internal fun Renderer.releaseSwapchainResources() {
     // Nothing may still be reading/writing swapchain-derived resources (framebuffers,
     // depth image, image views) while they're torn down.
     VulkanBuffers.vkDeviceWaitIdle(device)
+    awaitSubmittedOffscreenCommands()
 
     sceneScale.release()
     imagePassExecutor.releaseTransientTargets()
@@ -208,6 +258,9 @@ internal fun Renderer.releaseSwapchainResources() {
     swapchainColorFramebuffers = emptyList()
     uiFramebuffers = emptyList()
     destroyDepthResources()
+    // Drain retired resources (including sceneScale's offscreen target and any previously retired
+    // swapchain depth framebuffers) while the device is idle and before swapchain image views die.
+    deferredResourceReaper.destroyAll()
     // Also clears the handle: swapchainManager.create() chains from it, and it must not
     // reference an already-destroyed swapchain.
     swapchainManager.destroy()
@@ -216,8 +269,6 @@ internal fun Renderer.releaseSwapchainResources() {
 /** Builds the swapchain and its sized resources against the device's current surface. */
 internal fun Renderer.rebuildSwapchainResources() {
     swapchainManager.create()
-    createDepthResources()
-    createFramebuffers()
 
     val uiPipeline = uiRenderPipeline
     if (uiPipeline != null) {

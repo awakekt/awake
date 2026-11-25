@@ -188,12 +188,18 @@ class Renderer internal constructor(
         return antiAliasing == requested
     }
 
-    override val gpuDrawPreparer: GpuDrawPreparer by lazy {
-        VulkanDrawPreparer(this)
-    }
+    private var gpuDrawPreparerInstance: VulkanDrawPreparer? = null
+    private var offscreenDrawPreparerInstance: VulkanDrawPreparer? = null
 
-    override val offscreenDrawPreparer: GpuDrawPreparer by lazy {
-        VulkanDrawPreparer(this, offscreen = true)
+    override val gpuDrawPreparer: GpuDrawPreparer
+        get() = gpuDrawPreparerInstance ?: VulkanDrawPreparer(this).also { gpuDrawPreparerInstance = it }
+
+    override val offscreenDrawPreparer: GpuDrawPreparer
+        get() = offscreenDrawPreparerInstance ?: VulkanDrawPreparer(this, offscreen = true).also { offscreenDrawPreparerInstance = it }
+
+    internal fun resetDrawPreparersAfterTrim() {
+        gpuDrawPreparerInstance?.resetAfterTrim()
+        offscreenDrawPreparerInstance?.resetAfterTrim()
     }
 
     internal val gpuPassExecutor: GpuPassExecutor by lazy { RendererGpuPassExecutor(this) }
@@ -621,8 +627,6 @@ class Renderer internal constructor(
                 ?.let { put(BindingSemantic.SceneDepth, it) }
             maskTarget?.binding()?.descriptorSetHandle?.let { put(BindingSemantic.MaskDepth, it) }
         }
-        createDepthResources()
-        createFramebuffers()
         if (swapchainManager.imageViews.isNotEmpty()) {
             ensureSceneToPresentRenderPass()
             graphicsDevice.registerReaper(deferredResourceReaper)
@@ -723,7 +727,7 @@ class Renderer internal constructor(
     internal fun recordSharedPassFeatures(slot: RenderPassSlot, context: VulkanRenderFrameContext) =
         recordPassFeatures(renderFeatures, slot, context)
 
-    private val textureUploads = com.awakekt.awake.vulkan.texture.TextureUploads(graphicsDevice)
+    internal val textureUploads = com.awakekt.awake.vulkan.texture.TextureUploads(graphicsDevice)
     internal val dirtyUniformBlocks = LinkedHashSet<com.awakekt.awake.vulkan.material.SlotBlock>()
 
     internal fun flushStagedUniformBlocks() {
@@ -864,6 +868,8 @@ class Renderer internal constructor(
     override fun waitIdle() {
         VulkanBuffers.vkDeviceWaitIdle(device)
     }
+
+    override fun trimMemory() = performTrimMemory()
 
     override fun destroy() {
         // Presentation frames also own references to the resources freed below. Waiting only for

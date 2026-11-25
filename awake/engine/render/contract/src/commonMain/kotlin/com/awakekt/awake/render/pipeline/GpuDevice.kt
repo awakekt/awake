@@ -124,6 +124,15 @@ interface GpuDevice {
     fun waitIdle() {}
 
     /**
+     * Releases reclaimable temporary GPU caches and pools (staging buffers, retired resources,
+     * idle transient allocations) without destroying caller-owned meshes, materials, or textures.
+     *
+     * Safe to invoke between frames during memory pressure, scene transitions, or backgrounding.
+     * Backends without explicit pool reclamation leave this a no-op.
+     */
+    fun trimMemory() {}
+
+    /**
      * Queries an optional hardware capability of this device. Returns `null` if the capability
      * is not supported by the underlying GPU hardware or backend implementation.
      */

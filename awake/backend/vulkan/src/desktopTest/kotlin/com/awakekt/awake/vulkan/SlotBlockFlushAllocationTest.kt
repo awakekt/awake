@@ -93,9 +93,9 @@ class SlotBlockFlushAllocationTest {
     private companion object {
         /** One MVP matrix, a default material's whole block. */
         const val FLOATS = 16
-        const val SLOTS = 12
-        const val FIRST_DIRTY = 3
-        const val LAST_DIRTY = 8
+        const val SLOTS = Material.INITIAL_SLOTS_PER_BLOCK
+        const val FIRST_DIRTY = 1
+        const val LAST_DIRTY = 2
         const val WARM_UP = 50
         const val FRAMES = 500
         const val BUDGET_PER_FRAME = 16L

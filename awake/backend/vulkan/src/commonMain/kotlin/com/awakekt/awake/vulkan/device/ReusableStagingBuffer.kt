@@ -44,6 +44,10 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
     var reuses: Long = 0L
         private set
 
+    /** Bytes currently retained by the cached staging buffer, or 0 when empty, for tests. */
+    val cachedBytes: Long
+        get() = lock.withLock { cached?.capacityBytes ?: 0L }
+
     /**
      * Checks out a persistently mapped staging buffer of at least [requiredBytes] bytes, runs
      * [block] against it, and returns the buffer to the pool (or frees it if oversized).
@@ -102,6 +106,18 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
         }
         if (displaced != null) {
             freeAllocation(displaced)
+        }
+    }
+
+    /** Frees any cached staging buffer without disabling reuse for future uploads. */
+    fun trim() {
+        val toFree = lock.withLock {
+            val current = cached
+            cached = null
+            current
+        }
+        if (toFree != null) {
+            freeAllocation(toFree)
         }
     }
 
