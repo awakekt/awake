@@ -228,6 +228,10 @@ internal fun Renderer.createRenderEncoder(): GPUCommandEncoder =
     gpuFrameTimer?.createEncoder() ?: graphicsDevice.wgpuContext.device.createCommandEncoder()
 
 internal fun Renderer.submitRenderCommands(encoder: GPUCommandEncoder) {
+    if (graphicsDevice.isDeviceLost) {
+        encoder.close()
+        return
+    }
     graphicsDevice.wgpuContext.device.queue.submitAndRelease(encoder)
     gpuFrameTimer?.submitted(encoder)
 }

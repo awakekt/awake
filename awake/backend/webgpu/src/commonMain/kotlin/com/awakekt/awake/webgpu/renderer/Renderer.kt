@@ -125,6 +125,10 @@ class Renderer internal constructor(
 ) : RenderRenderer,
     GpuDrawPreparationSource,
     ContentFeatureHost {
+    /** Whether the underlying `GPUDevice` has been reported lost; when true, draw and submission calls no-op cleanly. */
+    val isDeviceLost: Boolean
+        get() = graphicsDevice.isDeviceLost
+
     /** The mode in effect: the one the scene pass was built for, or Off and FXAA switched since (#1791). */
     override var antiAliasing: AntiAliasing = antiAliasing
         private set

@@ -119,6 +119,14 @@ open class WebGpuEngine(
      */
     var onDeviceLost: ((WebGpuDeviceLost) -> Unit)? = null
 
+    /**
+     * Whether this engine's `GPUDevice` has been reported lost. Once true, subsequent frames and
+     * renderer submissions no-op cleanly; reload the page or dispose this engine and launch a new
+     * one to draw again.
+     */
+    val isDeviceLost: Boolean
+        get() = deviceLoss != null
+
     /** Set as teardown starts, so the loss that destroying the device resolves is not reported. */
     private var tearingDown = false
 
@@ -132,6 +140,7 @@ open class WebGpuEngine(
     @Suppress("TooGenericExceptionCaught")
     internal fun deviceLost(loss: WebGpuDeviceLost): Boolean {
         if (tearingDown || !reportDeviceLost(WebGpuDeviceLostException(loss))) return false
+        if (::graphicsDevice.isInitialized) graphicsDevice.markDeviceLost()
         try {
             onDeviceLost?.invoke(loss)
         } catch (failure: Exception) {
@@ -144,6 +153,7 @@ open class WebGpuEngine(
         val shadowFormat = shadowDepthFormatFor(shadowDepthFormat)
         graphicsDevice = GraphicsDevice()
         graphicsDevice.create(window)
+        if (isDeviceLost) graphicsDevice.markDeviceLost()
         // WebGPU's core sample counts: 1 and 4, on every adapter.
         val antiAliasing = sceneAntiAliasing(plan.multisample, setOf(1, 4)) { println("Awake/WebGPU: $it") }
         val rasterState = antiAliasing.rasterState

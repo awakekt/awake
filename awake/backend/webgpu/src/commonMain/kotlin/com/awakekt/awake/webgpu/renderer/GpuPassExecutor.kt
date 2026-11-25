@@ -31,6 +31,10 @@ internal class RendererGpuPassExecutor(
     internal val renderer: Renderer,
 ) : GpuPassExecutor {
     override fun draw(input: GpuPassInput) {
+        if (renderer.graphicsDevice.isDeviceLost) {
+            renderer.uiRuns = emptyList()
+            return
+        }
         with(renderer) {
             val stages = drawStages
             stages?.begin(RenderDrawStage.Prepare)
@@ -115,6 +119,7 @@ internal class RendererGpuPassExecutor(
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) {
         val renderer = this.renderer
+        if (renderer.graphicsDevice.isDeviceLost) return
         check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
         renderer.ensureShadowLayers(input)
         renderer.ensureMaskTarget(target.width, target.height)

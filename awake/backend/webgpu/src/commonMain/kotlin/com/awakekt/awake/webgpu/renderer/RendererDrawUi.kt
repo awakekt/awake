@@ -37,6 +37,10 @@ internal fun Renderer.performDrawUi(
     imagePasses: List<ImagePassPlacement> = emptyList(),
     target: RenderTarget? = null,
 ) {
+    if (graphicsDevice.isDeviceLost) {
+        uiRuns = emptyList()
+        return
+    }
     ensureUiQuadPipeline()
     val allPrimitives = if (imagePasses.isEmpty()) {
         primitives
@@ -82,6 +86,7 @@ internal fun Renderer.performDrawUiToTexture(
     font: UiFont?,
     imagePasses: List<ImagePassPlacement> = emptyList(),
 ) {
+    if (graphicsDevice.isDeviceLost) return
     val offscreen = target as OffscreenRenderTarget
     performDrawUi(primitives, font, imagePasses, target = offscreen)
     val quad = requireNotNull(uiRenderPipeline)
@@ -153,6 +158,7 @@ internal fun Renderer.performCompositeUiTargets(
     output: RenderTarget,
     mode: UiTargetCompositeMode,
 ) {
+    if (graphicsDevice.isDeviceLost) return
     val destinationTarget = destination as OffscreenRenderTarget
     val sourceTarget = source as OffscreenRenderTarget
     val outputTarget = output as OffscreenRenderTarget
