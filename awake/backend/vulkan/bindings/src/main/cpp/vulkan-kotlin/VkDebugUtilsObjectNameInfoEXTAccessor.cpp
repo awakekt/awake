@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkDebugUtilsObjectNameInfoEXTAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkDebugUtilsObjectNameInfoEXTAccessor::VkDebugUtilsObjectNameInfoEXTAccessor(JNIEnv *env,
                                                                              jobject obj) : env(
@@ -57,10 +58,10 @@ VkDebugUtilsObjectNameInfoEXTAccessor::getpNext(VkDebugUtilsObjectNameInfoEXT &c
 void
 VkDebugUtilsObjectNameInfoEXTAccessor::getpObjectName(VkDebugUtilsObjectNameInfoEXT &clazzInfo) {
     auto pObjectNameObj = (jstring) env->GetObjectField(obj, pObjectNameField);
-    auto str = (const char *) env->GetStringUTFChars(pObjectNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(pObjectNameObj, str); // Release the local string reference
-    clazzInfo.pObjectName = result;
+    clazzInfo.pObjectName = awake::VulkanAccessArena::current().copyJString(env, pObjectNameObj);
+    if (pObjectNameObj != nullptr) {
+        env->DeleteLocalRef(pObjectNameObj);
+    }
 }
 
 VkDebugUtilsObjectNameInfoEXTAccessor::~VkDebugUtilsObjectNameInfoEXTAccessor() {

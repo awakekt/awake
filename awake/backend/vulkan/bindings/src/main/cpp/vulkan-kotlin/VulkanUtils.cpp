@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VulkanUtils.h>
+#include <includes/VulkanAccessArena.h>
 
 #include <atomic>
 #include <deque>
@@ -42,6 +43,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlongArray
     createGraphicsPipelines(JNIEnv *env, jlong arg0, jlong arg1, jobjectArray arg2) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto device = reinterpret_cast<VkDevice>(arg0);
         auto pipelineCache = reinterpret_cast<VkPipelineCache>(arg1);
@@ -85,6 +87,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createDebugUtilsMessengerEXT(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto instance = reinterpret_cast<VkInstance>(arg0);
         // object accessor?
@@ -375,6 +378,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createFramebuffer(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto device = reinterpret_cast<VkDevice>(arg0);
         // object accessor?
@@ -393,6 +397,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createRenderPass(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto device = reinterpret_cast<VkDevice>(arg0);
         // object accessor?
@@ -428,6 +433,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createDevice(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto physicalDevice = reinterpret_cast<VkPhysicalDevice>(arg0);
         // object accessor?
@@ -486,6 +492,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createSwapchainKHR(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto device = reinterpret_cast<VkDevice>(arg0);
         // object accessor?
@@ -607,6 +614,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createPipelineLayout(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto device = reinterpret_cast<VkDevice>(arg0);
         // object accessor?
@@ -711,6 +719,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createInstance(JNIEnv *env, jobject arg0) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         // object accessor?
         VkInstanceCreateInfo info{};
@@ -843,6 +852,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createShaderModule(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto device = reinterpret_cast<VkDevice>(arg0);
         // object accessor?
@@ -874,6 +884,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
 
     jlong
     createPipelineCache(JNIEnv *env, jlong arg0, jobject arg1) {
+        VulkanAccessArena::Scope arenaScope;
         // process parameter??
         auto device = reinterpret_cast<VkDevice>(arg0);
         // object accessor?

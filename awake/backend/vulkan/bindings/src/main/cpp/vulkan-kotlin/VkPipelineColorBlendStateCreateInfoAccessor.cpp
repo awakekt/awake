@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkPipelineColorBlendStateCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkPipelineColorBlendStateCreateInfoAccessor::VkPipelineColorBlendStateCreateInfoAccessor(
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
@@ -45,30 +46,26 @@ VkPipelineColorBlendStateCreateInfoAccessor::getpAttachments(
     if (pAttachmentsArray == nullptr) {
         clazzInfo.attachmentCount = 0;
         clazzInfo.pAttachments = nullptr;
-        env->DeleteLocalRef(pAttachmentsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pAttachmentsArray);
-    std::vector<VkPipelineColorBlendAttachmentState> pAttachments;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pAttachmentsArray,
-                                                            i); // actual type is VkPipelineColorBlendAttachmentState[];
-        // experimental optimize accessor
-        VkPipelineColorBlendAttachmentStateAccessor accessor(env, element);
-        VkPipelineColorBlendAttachmentState ref{};
-        accessor.fromObject(ref);
-        pAttachments.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.attachmentCount = 0;
+        clazzInfo.pAttachments = nullptr;
+        env->DeleteLocalRef(pAttachmentsArray);
+        return;
     }
-    // processing array data
-    auto attachmentCount = static_cast<uint32_t>(pAttachments.size());
-    clazzInfo.attachmentCount = attachmentCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineColorBlendAttachmentState[size];
-    std::copy(pAttachments.begin(), pAttachments.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineColorBlendAttachmentState>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pAttachmentsArray, i);
+        VkPipelineColorBlendAttachmentStateAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.attachmentCount = static_cast<uint32_t>(count);
     clazzInfo.pAttachments = copy;
-    env->DeleteLocalRef(pAttachmentsArray); // release reference
+    env->DeleteLocalRef(pAttachmentsArray);
 }
 
 void

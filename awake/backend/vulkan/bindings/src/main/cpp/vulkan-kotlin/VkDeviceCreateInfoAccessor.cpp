@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkDeviceCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkDeviceCreateInfoAccessor::VkDeviceCreateInfoAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                    obj(obj) {
@@ -58,28 +59,28 @@ VkDeviceCreateInfoAccessor::getppEnabledLayerNames(VkDeviceCreateInfo &clazzInfo
     if (ppEnabledLayerNamesArray == nullptr) {
         clazzInfo.enabledLayerCount = 0;
         clazzInfo.ppEnabledLayerNames = nullptr;
-        env->DeleteLocalRef(ppEnabledLayerNamesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(ppEnabledLayerNamesArray);
-    std::vector<const char *> ppEnabledLayerNames;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jstring) env->GetObjectArrayElement(ppEnabledLayerNamesArray,
-                                                            i); // actual type is String[];
-        auto str = env->GetStringUTFChars(element, nullptr);
-        auto result = strdup(str); // Allocate memory and copy the string
-        env->ReleaseStringUTFChars(element, str); // Release the local string reference
-        ppEnabledLayerNames.push_back(result);
+    if (size <= 0) {
+        clazzInfo.enabledLayerCount = 0;
+        clazzInfo.ppEnabledLayerNames = nullptr;
+        env->DeleteLocalRef(ppEnabledLayerNamesArray);
+        return;
     }
-    // processing array data
-    auto enabledLayerCount = static_cast<uint32_t>(ppEnabledLayerNames.size());
-    clazzInfo.enabledLayerCount = enabledLayerCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new const char *[size];
-    std::copy(ppEnabledLayerNames.begin(), ppEnabledLayerNames.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto &arena = awake::VulkanAccessArena::current();
+    auto *copy = arena.allocArray<const char *>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jstring) env->GetObjectArrayElement(ppEnabledLayerNamesArray, i);
+        copy[i] = arena.copyJString(env, element);
+        if (element != nullptr) {
+            env->DeleteLocalRef(element);
+        }
+    }
+    clazzInfo.enabledLayerCount = static_cast<uint32_t>(count);
     clazzInfo.ppEnabledLayerNames = copy;
-    env->DeleteLocalRef(ppEnabledLayerNamesArray); // release reference
+    env->DeleteLocalRef(ppEnabledLayerNamesArray);
 }
 
 void
@@ -89,28 +90,28 @@ VkDeviceCreateInfoAccessor::getppEnabledExtensionNames(VkDeviceCreateInfo &clazz
     if (ppEnabledExtensionNamesArray == nullptr) {
         clazzInfo.enabledExtensionCount = 0;
         clazzInfo.ppEnabledExtensionNames = nullptr;
-        env->DeleteLocalRef(ppEnabledExtensionNamesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(ppEnabledExtensionNamesArray);
-    std::vector<const char *> ppEnabledExtensionNames;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jstring) env->GetObjectArrayElement(ppEnabledExtensionNamesArray,
-                                                            i); // actual type is String[];
-        auto str = env->GetStringUTFChars(element, nullptr);
-        auto result = strdup(str); // Allocate memory and copy the string
-        env->ReleaseStringUTFChars(element, str); // Release the local string reference
-        ppEnabledExtensionNames.push_back(result);
+    if (size <= 0) {
+        clazzInfo.enabledExtensionCount = 0;
+        clazzInfo.ppEnabledExtensionNames = nullptr;
+        env->DeleteLocalRef(ppEnabledExtensionNamesArray);
+        return;
     }
-    // processing array data
-    auto enabledExtensionCount = static_cast<uint32_t>(ppEnabledExtensionNames.size());
-    clazzInfo.enabledExtensionCount = enabledExtensionCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new const char *[size];
-    std::copy(ppEnabledExtensionNames.begin(), ppEnabledExtensionNames.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto &arena = awake::VulkanAccessArena::current();
+    auto *copy = arena.allocArray<const char *>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jstring) env->GetObjectArrayElement(ppEnabledExtensionNamesArray, i);
+        copy[i] = arena.copyJString(env, element);
+        if (element != nullptr) {
+            env->DeleteLocalRef(element);
+        }
+    }
+    clazzInfo.enabledExtensionCount = static_cast<uint32_t>(count);
     clazzInfo.ppEnabledExtensionNames = copy;
-    env->DeleteLocalRef(ppEnabledExtensionNamesArray); // release reference
+    env->DeleteLocalRef(ppEnabledExtensionNamesArray);
 }
 
 void
@@ -118,29 +119,24 @@ VkDeviceCreateInfoAccessor::getpEnabledFeatures(VkDeviceCreateInfo &clazzInfo) {
     auto pEnabledFeaturesArray = (jobjectArray) env->GetObjectField(obj, pEnabledFeaturesField);
     if (pEnabledFeaturesArray == nullptr) {
         clazzInfo.pEnabledFeatures = nullptr;
-        env->DeleteLocalRef(pEnabledFeaturesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pEnabledFeaturesArray);
-    std::vector<VkPhysicalDeviceFeatures> pEnabledFeatures;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pEnabledFeaturesArray,
-                                                            i); // actual type is VkPhysicalDeviceFeatures[];
-        // experimental optimize accessor
-        VkPhysicalDeviceFeaturesAccessor accessor(env, element);
-        VkPhysicalDeviceFeatures ref{};
-        accessor.fromObject(ref);
-        pEnabledFeatures.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pEnabledFeatures = nullptr;
+        env->DeleteLocalRef(pEnabledFeaturesArray);
+        return;
     }
-    // processing array data
-    // no array size generated
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPhysicalDeviceFeatures[size];
-    std::copy(pEnabledFeatures.begin(), pEnabledFeatures.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPhysicalDeviceFeatures>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pEnabledFeaturesArray, i);
+        VkPhysicalDeviceFeaturesAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pEnabledFeatures = copy;
-    env->DeleteLocalRef(pEnabledFeaturesArray); // release reference
+    env->DeleteLocalRef(pEnabledFeaturesArray);
 }
 
 void
@@ -149,30 +145,26 @@ VkDeviceCreateInfoAccessor::getpQueueCreateInfos(VkDeviceCreateInfo &clazzInfo) 
     if (pQueueCreateInfosArray == nullptr) {
         clazzInfo.queueCreateInfoCount = 0;
         clazzInfo.pQueueCreateInfos = nullptr;
-        env->DeleteLocalRef(pQueueCreateInfosArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pQueueCreateInfosArray);
-    std::vector<VkDeviceQueueCreateInfo> pQueueCreateInfos;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pQueueCreateInfosArray,
-                                                            i); // actual type is VkDeviceQueueCreateInfo[];
-        // experimental optimize accessor
-        VkDeviceQueueCreateInfoAccessor accessor(env, element);
-        VkDeviceQueueCreateInfo ref{};
-        accessor.fromObject(ref);
-        pQueueCreateInfos.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.queueCreateInfoCount = 0;
+        clazzInfo.pQueueCreateInfos = nullptr;
+        env->DeleteLocalRef(pQueueCreateInfosArray);
+        return;
     }
-    // processing array data
-    auto queueCreateInfoCount = static_cast<uint32_t>(pQueueCreateInfos.size());
-    clazzInfo.queueCreateInfoCount = queueCreateInfoCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkDeviceQueueCreateInfo[size];
-    std::copy(pQueueCreateInfos.begin(), pQueueCreateInfos.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkDeviceQueueCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pQueueCreateInfosArray, i);
+        VkDeviceQueueCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.queueCreateInfoCount = static_cast<uint32_t>(count);
     clazzInfo.pQueueCreateInfos = copy;
-    env->DeleteLocalRef(pQueueCreateInfosArray); // release reference
+    env->DeleteLocalRef(pQueueCreateInfosArray);
 }
 
 VkDeviceCreateInfoAccessor::~VkDeviceCreateInfoAccessor() {

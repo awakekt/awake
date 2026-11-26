@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkLayerPropertiesAccessor.h>
+#include <cstring>
 
 VkLayerPropertiesAccessor::VkLayerPropertiesAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                  obj(obj) {
@@ -30,10 +31,19 @@ VkLayerPropertiesAccessor::fromObject(VkLayerProperties &clazzInfo) {
 void
 VkLayerPropertiesAccessor::getlayerName(VkLayerProperties &clazzInfo) {
     auto layerNameObj = (jstring) env->GetObjectField(obj, layerNameField);
-    auto str = (const char *) env->GetStringUTFChars(layerNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(layerNameObj, str); // Release the local string reference
-    strncpy(clazzInfo.layerName, result, VK_MAX_EXTENSION_NAME_SIZE);
+    if (layerNameObj == nullptr) {
+        clazzInfo.layerName[0] = '\0';
+        return;
+    }
+    auto str = env->GetStringUTFChars(layerNameObj, nullptr);
+    if (str != nullptr) {
+        std::strncpy(clazzInfo.layerName, str, VK_MAX_EXTENSION_NAME_SIZE - 1);
+        clazzInfo.layerName[VK_MAX_EXTENSION_NAME_SIZE - 1] = '\0';
+        env->ReleaseStringUTFChars(layerNameObj, str);
+    } else {
+        clazzInfo.layerName[0] = '\0';
+    }
+    env->DeleteLocalRef(layerNameObj);
 }
 
 uint32_t
@@ -44,10 +54,19 @@ VkLayerPropertiesAccessor::getimplementationVersion() {
 void
 VkLayerPropertiesAccessor::getdescription(VkLayerProperties &clazzInfo) {
     auto descriptionObj = (jstring) env->GetObjectField(obj, descriptionField);
-    auto str = (const char *) env->GetStringUTFChars(descriptionObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(descriptionObj, str); // Release the local string reference
-    strncpy(clazzInfo.description, result, VK_MAX_DESCRIPTION_SIZE);
+    if (descriptionObj == nullptr) {
+        clazzInfo.description[0] = '\0';
+        return;
+    }
+    auto str = env->GetStringUTFChars(descriptionObj, nullptr);
+    if (str != nullptr) {
+        std::strncpy(clazzInfo.description, str, VK_MAX_DESCRIPTION_SIZE - 1);
+        clazzInfo.description[VK_MAX_DESCRIPTION_SIZE - 1] = '\0';
+        env->ReleaseStringUTFChars(descriptionObj, str);
+    } else {
+        clazzInfo.description[0] = '\0';
+    }
+    env->DeleteLocalRef(descriptionObj);
 }
 
 VkLayerPropertiesAccessor::~VkLayerPropertiesAccessor() {

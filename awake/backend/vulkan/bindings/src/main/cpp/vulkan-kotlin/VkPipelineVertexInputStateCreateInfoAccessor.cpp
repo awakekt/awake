@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkPipelineVertexInputStateCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkPipelineVertexInputStateCreateInfoAccessor::VkPipelineVertexInputStateCreateInfoAccessor(
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
@@ -56,30 +57,26 @@ VkPipelineVertexInputStateCreateInfoAccessor::getpVertexAttributeDescriptions(
     if (pVertexAttributeDescriptionsArray == nullptr) {
         clazzInfo.vertexAttributeDescriptionCount = 0;
         clazzInfo.pVertexAttributeDescriptions = nullptr;
-        env->DeleteLocalRef(pVertexAttributeDescriptionsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pVertexAttributeDescriptionsArray);
-    std::vector<VkVertexInputAttributeDescription> pVertexAttributeDescriptions;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pVertexAttributeDescriptionsArray,
-                                                            i); // actual type is VkVertexInputAttributeDescription[];
-        // experimental optimize accessor
-        VkVertexInputAttributeDescriptionAccessor accessor(env, element);
-        VkVertexInputAttributeDescription ref{};
-        accessor.fromObject(ref);
-        pVertexAttributeDescriptions.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.vertexAttributeDescriptionCount = 0;
+        clazzInfo.pVertexAttributeDescriptions = nullptr;
+        env->DeleteLocalRef(pVertexAttributeDescriptionsArray);
+        return;
     }
-    // processing array data
-    auto vertexAttributeDescriptionCount = static_cast<uint32_t>(pVertexAttributeDescriptions.size());
-    clazzInfo.vertexAttributeDescriptionCount = vertexAttributeDescriptionCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkVertexInputAttributeDescription[size];
-    std::copy(pVertexAttributeDescriptions.begin(), pVertexAttributeDescriptions.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkVertexInputAttributeDescription>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pVertexAttributeDescriptionsArray, i);
+        VkVertexInputAttributeDescriptionAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(count);
     clazzInfo.pVertexAttributeDescriptions = copy;
-    env->DeleteLocalRef(pVertexAttributeDescriptionsArray); // release reference
+    env->DeleteLocalRef(pVertexAttributeDescriptionsArray);
 }
 
 void
@@ -90,30 +87,26 @@ VkPipelineVertexInputStateCreateInfoAccessor::getpVertexBindingDescriptions(
     if (pVertexBindingDescriptionsArray == nullptr) {
         clazzInfo.vertexBindingDescriptionCount = 0;
         clazzInfo.pVertexBindingDescriptions = nullptr;
-        env->DeleteLocalRef(pVertexBindingDescriptionsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pVertexBindingDescriptionsArray);
-    std::vector<VkVertexInputBindingDescription> pVertexBindingDescriptions;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pVertexBindingDescriptionsArray,
-                                                            i); // actual type is VkVertexInputBindingDescription[];
-        // experimental optimize accessor
-        VkVertexInputBindingDescriptionAccessor accessor(env, element);
-        VkVertexInputBindingDescription ref{};
-        accessor.fromObject(ref);
-        pVertexBindingDescriptions.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.vertexBindingDescriptionCount = 0;
+        clazzInfo.pVertexBindingDescriptions = nullptr;
+        env->DeleteLocalRef(pVertexBindingDescriptionsArray);
+        return;
     }
-    // processing array data
-    auto vertexBindingDescriptionCount = static_cast<uint32_t>(pVertexBindingDescriptions.size());
-    clazzInfo.vertexBindingDescriptionCount = vertexBindingDescriptionCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkVertexInputBindingDescription[size];
-    std::copy(pVertexBindingDescriptions.begin(), pVertexBindingDescriptions.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkVertexInputBindingDescription>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pVertexBindingDescriptionsArray, i);
+        VkVertexInputBindingDescriptionAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(count);
     clazzInfo.pVertexBindingDescriptions = copy;
-    env->DeleteLocalRef(pVertexBindingDescriptionsArray); // release reference
+    env->DeleteLocalRef(pVertexBindingDescriptionsArray);
 }
 
 VkPipelineVertexInputStateCreateInfoAccessor::~VkPipelineVertexInputStateCreateInfoAccessor() {

@@ -54,4 +54,24 @@ class VulkanDesktopNativeSmokeTest {
         assertNotEquals(0L, instance, "vkCreateInstance returned a null handle")
         Vulkan.vkDestroyInstance(instance)
     }
+
+    @Test
+    fun vkCreateInstance_repeatedCreateDestroyExercisesArenaAndStringCleanup() {
+        val isMac = System.getProperty("os.name").lowercase().contains("mac")
+        repeat(20) { iteration ->
+            val appInfo = VkApplicationInfo(
+                pApplicationName = "Awake Arena Churn $iteration",
+                pEngineName = "Awake Vulkan Engine",
+            )
+            val createInfo = VkInstanceCreateInfo(
+                flags = if (isMac) 0x00000001 else 0,
+                pApplicationInfo = arrayOf(appInfo),
+                ppEnabledLayerNames = emptyArray(),
+                ppEnabledExtensionNames = if (isMac) arrayOf("VK_KHR_portability_enumeration") else emptyArray(),
+            )
+            val instance = Vulkan.vkCreateInstance(createInfo)
+            assertNotEquals(0L, instance, "vkCreateInstance returned a null handle on iteration $iteration")
+            Vulkan.vkDestroyInstance(instance)
+        }
+    }
 }

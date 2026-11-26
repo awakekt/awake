@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkSubpassDescriptionAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkSubpassDescriptionAccessor::VkSubpassDescriptionAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                        obj(obj) {
@@ -33,30 +34,26 @@ VkSubpassDescriptionAccessor::getpInputAttachments(VkSubpassDescription &clazzIn
     if (pInputAttachmentsArray == nullptr) {
         clazzInfo.inputAttachmentCount = 0;
         clazzInfo.pInputAttachments = nullptr;
-        env->DeleteLocalRef(pInputAttachmentsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pInputAttachmentsArray);
-    std::vector<VkAttachmentReference> pInputAttachments;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pInputAttachmentsArray,
-                                                            i); // actual type is VkAttachmentReference[];
-        // experimental optimize accessor
-        VkAttachmentReferenceAccessor accessor(env, element);
-        VkAttachmentReference ref{};
-        accessor.fromObject(ref);
-        pInputAttachments.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.inputAttachmentCount = 0;
+        clazzInfo.pInputAttachments = nullptr;
+        env->DeleteLocalRef(pInputAttachmentsArray);
+        return;
     }
-    // processing array data
-    auto inputAttachmentCount = static_cast<uint32_t>(pInputAttachments.size());
-    clazzInfo.inputAttachmentCount = inputAttachmentCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkAttachmentReference[size];
-    std::copy(pInputAttachments.begin(), pInputAttachments.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkAttachmentReference>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pInputAttachmentsArray, i);
+        VkAttachmentReferenceAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.inputAttachmentCount = static_cast<uint32_t>(count);
     clazzInfo.pInputAttachments = copy;
-    env->DeleteLocalRef(pInputAttachmentsArray); // release reference
+    env->DeleteLocalRef(pInputAttachmentsArray);
 }
 
 void
@@ -65,30 +62,26 @@ VkSubpassDescriptionAccessor::getpColorAttachments(VkSubpassDescription &clazzIn
     if (pColorAttachmentsArray == nullptr) {
         clazzInfo.colorAttachmentCount = 0;
         clazzInfo.pColorAttachments = nullptr;
-        env->DeleteLocalRef(pColorAttachmentsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pColorAttachmentsArray);
-    std::vector<VkAttachmentReference> pColorAttachments;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pColorAttachmentsArray,
-                                                            i); // actual type is VkAttachmentReference[];
-        // experimental optimize accessor
-        VkAttachmentReferenceAccessor accessor(env, element);
-        VkAttachmentReference ref{};
-        accessor.fromObject(ref);
-        pColorAttachments.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.colorAttachmentCount = 0;
+        clazzInfo.pColorAttachments = nullptr;
+        env->DeleteLocalRef(pColorAttachmentsArray);
+        return;
     }
-    // processing array data
-    auto colorAttachmentCount = static_cast<uint32_t>(pColorAttachments.size());
-    clazzInfo.colorAttachmentCount = colorAttachmentCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkAttachmentReference[size];
-    std::copy(pColorAttachments.begin(), pColorAttachments.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkAttachmentReference>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pColorAttachmentsArray, i);
+        VkAttachmentReferenceAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.colorAttachmentCount = static_cast<uint32_t>(count);
     clazzInfo.pColorAttachments = copy;
-    env->DeleteLocalRef(pColorAttachmentsArray); // release reference
+    env->DeleteLocalRef(pColorAttachmentsArray);
 }
 
 VkPipelineBindPoint
@@ -106,28 +99,24 @@ VkSubpassDescriptionAccessor::getpResolveAttachments(VkSubpassDescription &clazz
                                                                        pResolveAttachmentsField);
     if (pResolveAttachmentsArray == nullptr) {
         clazzInfo.pResolveAttachments = nullptr;
-        env->DeleteLocalRef(pResolveAttachmentsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pResolveAttachmentsArray);
-    std::vector<VkAttachmentReference> pResolveAttachments;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pResolveAttachmentsArray,
-                                                            i); // actual type is VkAttachmentReference[];
-        // experimental optimize accessor
-        VkAttachmentReferenceAccessor accessor(env, element);
-        VkAttachmentReference ref{};
-        accessor.fromObject(ref);
-        pResolveAttachments.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pResolveAttachments = nullptr;
+        env->DeleteLocalRef(pResolveAttachmentsArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkAttachmentReference[size];
-    std::copy(pResolveAttachments.begin(), pResolveAttachments.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkAttachmentReference>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pResolveAttachmentsArray, i);
+        VkAttachmentReferenceAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pResolveAttachments = copy;
-    env->DeleteLocalRef(pResolveAttachmentsArray); // release reference
+    env->DeleteLocalRef(pResolveAttachmentsArray);
 }
 
 void
@@ -148,22 +137,21 @@ VkSubpassDescriptionAccessor::getpPreserveAttachments(VkSubpassDescription &claz
     if (pPreserveAttachmentsArray == nullptr) {
         clazzInfo.preserveAttachmentCount = 0;
         clazzInfo.pPreserveAttachments = nullptr;
-        env->DeleteLocalRef(pPreserveAttachmentsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pPreserveAttachmentsArray);
-    // primitive array?
-    std::vector<uint32_t> pPreserveAttachments(size);
-    env->GetIntArrayRegion(pPreserveAttachmentsArray, 0, size,
-                           reinterpret_cast<jint *>(pPreserveAttachments.data()));
-    // processing array data
-    auto preserveAttachmentCount = static_cast<uint32_t>(pPreserveAttachments.size());
-    clazzInfo.preserveAttachmentCount = preserveAttachmentCount;
-    // Make a copy of the primitive to ensure proper memory management;
-    auto copy = new uint32_t[size];
-    std::copy(pPreserveAttachments.begin(), pPreserveAttachments.end(), copy);
+    if (size <= 0) {
+        clazzInfo.preserveAttachmentCount = 0;
+        clazzInfo.pPreserveAttachments = nullptr;
+        env->DeleteLocalRef(pPreserveAttachmentsArray);
+        return;
+    }
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<uint32_t>(count);
+    env->GetIntArrayRegion(pPreserveAttachmentsArray, 0, size, reinterpret_cast<jint *>(copy));
+    clazzInfo.preserveAttachmentCount = static_cast<uint32_t>(count);
     clazzInfo.pPreserveAttachments = copy;
-    env->DeleteLocalRef(pPreserveAttachmentsArray); // release reference
+    env->DeleteLocalRef(pPreserveAttachmentsArray);
 }
 
 void
@@ -172,28 +160,24 @@ VkSubpassDescriptionAccessor::getpDepthStencilAttachment(VkSubpassDescription &c
                                                                            pDepthStencilAttachmentField);
     if (pDepthStencilAttachmentArray == nullptr) {
         clazzInfo.pDepthStencilAttachment = nullptr;
-        env->DeleteLocalRef(pDepthStencilAttachmentArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pDepthStencilAttachmentArray);
-    std::vector<VkAttachmentReference> pDepthStencilAttachment;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pDepthStencilAttachmentArray,
-                                                            i); // actual type is VkAttachmentReference[];
-        // experimental optimize accessor
-        VkAttachmentReferenceAccessor accessor(env, element);
-        VkAttachmentReference ref{};
-        accessor.fromObject(ref);
-        pDepthStencilAttachment.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pDepthStencilAttachment = nullptr;
+        env->DeleteLocalRef(pDepthStencilAttachmentArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkAttachmentReference[size];
-    std::copy(pDepthStencilAttachment.begin(), pDepthStencilAttachment.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkAttachmentReference>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pDepthStencilAttachmentArray, i);
+        VkAttachmentReferenceAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pDepthStencilAttachment = copy;
-    env->DeleteLocalRef(pDepthStencilAttachmentArray); // release reference
+    env->DeleteLocalRef(pDepthStencilAttachmentArray);
 }
 
 VkSubpassDescriptionAccessor::~VkSubpassDescriptionAccessor() {

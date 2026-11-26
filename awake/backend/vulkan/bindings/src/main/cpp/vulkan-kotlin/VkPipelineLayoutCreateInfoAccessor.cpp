@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkPipelineLayoutCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkPipelineLayoutCreateInfoAccessor::VkPipelineLayoutCreateInfoAccessor(JNIEnv *env, jobject obj)
         : env(env), obj(obj) {
@@ -42,28 +43,24 @@ VkPipelineLayoutCreateInfoAccessor::getpPushConstantRanges(VkPipelineLayoutCreat
                                                                        pPushConstantRangesField);
     if (pPushConstantRangesArray == nullptr) {
         clazzInfo.pPushConstantRanges = nullptr;
-        env->DeleteLocalRef(pPushConstantRangesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pPushConstantRangesArray);
-    std::vector<VkPushConstantRange> pPushConstantRanges;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pPushConstantRangesArray,
-                                                            i); // actual type is VkPushConstantRange[];
-        // experimental optimize accessor
-        VkPushConstantRangeAccessor accessor(env, element);
-        VkPushConstantRange ref{};
-        accessor.fromObject(ref);
-        pPushConstantRanges.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pPushConstantRanges = nullptr;
+        env->DeleteLocalRef(pPushConstantRangesArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPushConstantRange[size];
-    std::copy(pPushConstantRanges.begin(), pPushConstantRanges.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPushConstantRange>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pPushConstantRangesArray, i);
+        VkPushConstantRangeAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pPushConstantRanges = copy;
-    env->DeleteLocalRef(pPushConstantRangesArray); // release reference
+    env->DeleteLocalRef(pPushConstantRangesArray);
 }
 
 void
@@ -88,29 +85,29 @@ VkPipelineLayoutCreateInfoAccessor::getpSetLayouts(VkPipelineLayoutCreateInfo &c
     if (pSetLayoutsArray == nullptr) {
         clazzInfo.setLayoutCount = 0;
         clazzInfo.pSetLayouts = nullptr;
-        env->DeleteLocalRef(pSetLayoutsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pSetLayoutsArray);
-    // vkhandle array?
-    std::vector<VkDescriptorSetLayout> pSetLayouts;
+    if (size <= 0) {
+        clazzInfo.setLayoutCount = 0;
+        clazzInfo.pSetLayouts = nullptr;
+        env->DeleteLocalRef(pSetLayoutsArray);
+        return;
+    }
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkDescriptorSetLayout>(count);
     for (int i = 0; i < size; ++i) {
         auto element = env->GetObjectArrayElement(pSetLayoutsArray, i);
-        jmethodID getValueMethod = env->GetMethodID(env->GetObjectClass(element), "longValue",
-                                                    "()J");
+        jclass elementClass = env->GetObjectClass(element);
+        jmethodID getValueMethod = env->GetMethodID(elementClass, "longValue", "()J");
         jlong value = env->CallLongMethod(element, getValueMethod);
-        pSetLayouts.push_back(reinterpret_cast<VkDescriptorSetLayout>(value)); //vkhandle
-        env->DeleteLocalRef(element); // release element reference
+        copy[i] = reinterpret_cast<VkDescriptorSetLayout>(value);
+        env->DeleteLocalRef(elementClass);
+        env->DeleteLocalRef(element);
     }
-    // processing array data
-    auto setLayoutCount = static_cast<uint32_t>(pSetLayouts.size());
-    clazzInfo.setLayoutCount = setLayoutCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkDescriptorSetLayout[size];
-    std::copy(pSetLayouts.begin(), pSetLayouts.end(), copy);
+    clazzInfo.setLayoutCount = static_cast<uint32_t>(count);
     clazzInfo.pSetLayouts = copy;
-    env->DeleteLocalRef(pSetLayoutsArray); // release reference
+    env->DeleteLocalRef(pSetLayoutsArray);
 }
 
 VkPipelineLayoutCreateInfoAccessor::~VkPipelineLayoutCreateInfoAccessor() {

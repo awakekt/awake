@@ -84,6 +84,7 @@ set(VULKAN_KOTLIN_SOURCES
         VkVertexInputAttributeDescriptionAccessor.cpp
         VkVertexInputBindingDescriptionAccessor.cpp
         VkViewportAccessor.cpp
+        VulkanAccessArena.cpp
         VulkanUtils.cpp
         )
 

@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkDebugUtilsLabelEXTAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkDebugUtilsLabelEXTAccessor::VkDebugUtilsLabelEXTAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                        obj(obj) {
@@ -34,10 +35,10 @@ VkDebugUtilsLabelEXTAccessor::fromObject(VkDebugUtilsLabelEXT &clazzInfo) {
 void
 VkDebugUtilsLabelEXTAccessor::getpLabelName(VkDebugUtilsLabelEXT &clazzInfo) {
     auto pLabelNameObj = (jstring) env->GetObjectField(obj, pLabelNameField);
-    auto str = (const char *) env->GetStringUTFChars(pLabelNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(pLabelNameObj, str); // Release the local string reference
-    clazzInfo.pLabelName = result;
+    clazzInfo.pLabelName = awake::VulkanAccessArena::current().copyJString(env, pLabelNameObj);
+    if (pLabelNameObj != nullptr) {
+        env->DeleteLocalRef(pLabelNameObj);
+    }
 }
 
 void

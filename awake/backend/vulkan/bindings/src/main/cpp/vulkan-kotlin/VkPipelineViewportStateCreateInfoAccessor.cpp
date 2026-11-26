@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkPipelineViewportStateCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkPipelineViewportStateCreateInfoAccessor::VkPipelineViewportStateCreateInfoAccessor(JNIEnv *env,
                                                                                      jobject obj)
@@ -55,30 +56,26 @@ VkPipelineViewportStateCreateInfoAccessor::getpViewports(
     if (pViewportsArray == nullptr) {
         clazzInfo.viewportCount = 0;
         clazzInfo.pViewports = nullptr;
-        env->DeleteLocalRef(pViewportsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pViewportsArray);
-    std::vector<VkViewport> pViewports;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pViewportsArray,
-                                                            i); // actual type is VkViewport[];
-        // experimental optimize accessor
-        VkViewportAccessor accessor(env, element);
-        VkViewport ref{};
-        accessor.fromObject(ref);
-        pViewports.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.viewportCount = 0;
+        clazzInfo.pViewports = nullptr;
+        env->DeleteLocalRef(pViewportsArray);
+        return;
     }
-    // processing array data
-    auto viewportCount = static_cast<uint32_t>(pViewports.size());
-    clazzInfo.viewportCount = viewportCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkViewport[size];
-    std::copy(pViewports.begin(), pViewports.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkViewport>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pViewportsArray, i);
+        VkViewportAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.viewportCount = static_cast<uint32_t>(count);
     clazzInfo.pViewports = copy;
-    env->DeleteLocalRef(pViewportsArray); // release reference
+    env->DeleteLocalRef(pViewportsArray);
 }
 
 void
@@ -88,30 +85,26 @@ VkPipelineViewportStateCreateInfoAccessor::getpScissors(
     if (pScissorsArray == nullptr) {
         clazzInfo.scissorCount = 0;
         clazzInfo.pScissors = nullptr;
-        env->DeleteLocalRef(pScissorsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pScissorsArray);
-    std::vector<VkRect2D> pScissors;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pScissorsArray,
-                                                            i); // actual type is VkRect2D[];
-        // experimental optimize accessor
-        VkRect2DAccessor accessor(env, element);
-        VkRect2D ref{};
-        accessor.fromObject(ref);
-        pScissors.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.scissorCount = 0;
+        clazzInfo.pScissors = nullptr;
+        env->DeleteLocalRef(pScissorsArray);
+        return;
     }
-    // processing array data
-    auto scissorCount = static_cast<uint32_t>(pScissors.size());
-    clazzInfo.scissorCount = scissorCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkRect2D[size];
-    std::copy(pScissors.begin(), pScissors.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkRect2D>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pScissorsArray, i);
+        VkRect2DAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.scissorCount = static_cast<uint32_t>(count);
     clazzInfo.pScissors = copy;
-    env->DeleteLocalRef(pScissorsArray); // release reference
+    env->DeleteLocalRef(pScissorsArray);
 }
 
 VkPipelineViewportStateCreateInfoAccessor::~VkPipelineViewportStateCreateInfoAccessor() {

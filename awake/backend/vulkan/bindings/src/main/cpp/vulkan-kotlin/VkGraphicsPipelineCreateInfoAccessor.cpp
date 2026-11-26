@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkGraphicsPipelineCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkGraphicsPipelineCreateInfoAccessor::VkGraphicsPipelineCreateInfoAccessor(JNIEnv *env, jobject obj)
         : env(env), obj(obj) {
@@ -45,30 +46,26 @@ VkGraphicsPipelineCreateInfoAccessor::getpStages(VkGraphicsPipelineCreateInfo &c
     if (pStagesArray == nullptr) {
         clazzInfo.stageCount = 0;
         clazzInfo.pStages = nullptr;
-        env->DeleteLocalRef(pStagesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pStagesArray);
-    std::vector<VkPipelineShaderStageCreateInfo> pStages;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pStagesArray,
-                                                            i); // actual type is VkPipelineShaderStageCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineShaderStageCreateInfoAccessor accessor(env, element);
-        VkPipelineShaderStageCreateInfo ref{};
-        accessor.fromObject(ref);
-        pStages.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.stageCount = 0;
+        clazzInfo.pStages = nullptr;
+        env->DeleteLocalRef(pStagesArray);
+        return;
     }
-    // processing array data
-    auto stageCount = static_cast<uint32_t>(pStages.size());
-    clazzInfo.stageCount = stageCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineShaderStageCreateInfo[size];
-    std::copy(pStages.begin(), pStages.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineShaderStageCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pStagesArray, i);
+        VkPipelineShaderStageCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.stageCount = static_cast<uint32_t>(count);
     clazzInfo.pStages = copy;
-    env->DeleteLocalRef(pStagesArray); // release reference
+    env->DeleteLocalRef(pStagesArray);
 }
 
 VkPipeline
@@ -86,28 +83,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpTessellationState(
     auto pTessellationStateArray = (jobjectArray) env->GetObjectField(obj, pTessellationStateField);
     if (pTessellationStateArray == nullptr) {
         clazzInfo.pTessellationState = nullptr;
-        env->DeleteLocalRef(pTessellationStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pTessellationStateArray);
-    std::vector<VkPipelineTessellationStateCreateInfo> pTessellationState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pTessellationStateArray,
-                                                            i); // actual type is VkPipelineTessellationStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineTessellationStateCreateInfoAccessor accessor(env, element);
-        VkPipelineTessellationStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pTessellationState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pTessellationState = nullptr;
+        env->DeleteLocalRef(pTessellationStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineTessellationStateCreateInfo[size];
-    std::copy(pTessellationState.begin(), pTessellationState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineTessellationStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pTessellationStateArray, i);
+        VkPipelineTessellationStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pTessellationState = copy;
-    env->DeleteLocalRef(pTessellationStateArray); // release reference
+    env->DeleteLocalRef(pTessellationStateArray);
 }
 
 void
@@ -117,28 +110,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpRasterizationState(
                                                                        pRasterizationStateField);
     if (pRasterizationStateArray == nullptr) {
         clazzInfo.pRasterizationState = nullptr;
-        env->DeleteLocalRef(pRasterizationStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pRasterizationStateArray);
-    std::vector<VkPipelineRasterizationStateCreateInfo> pRasterizationState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pRasterizationStateArray,
-                                                            i); // actual type is VkPipelineRasterizationStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineRasterizationStateCreateInfoAccessor accessor(env, element);
-        VkPipelineRasterizationStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pRasterizationState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pRasterizationState = nullptr;
+        env->DeleteLocalRef(pRasterizationStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineRasterizationStateCreateInfo[size];
-    std::copy(pRasterizationState.begin(), pRasterizationState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineRasterizationStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pRasterizationStateArray, i);
+        VkPipelineRasterizationStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pRasterizationState = copy;
-    env->DeleteLocalRef(pRasterizationStateArray); // release reference
+    env->DeleteLocalRef(pRasterizationStateArray);
 }
 
 void
@@ -147,28 +136,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpDepthStencilState(
     auto pDepthStencilStateArray = (jobjectArray) env->GetObjectField(obj, pDepthStencilStateField);
     if (pDepthStencilStateArray == nullptr) {
         clazzInfo.pDepthStencilState = nullptr;
-        env->DeleteLocalRef(pDepthStencilStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pDepthStencilStateArray);
-    std::vector<VkPipelineDepthStencilStateCreateInfo> pDepthStencilState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pDepthStencilStateArray,
-                                                            i); // actual type is VkPipelineDepthStencilStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineDepthStencilStateCreateInfoAccessor accessor(env, element);
-        VkPipelineDepthStencilStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pDepthStencilState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pDepthStencilState = nullptr;
+        env->DeleteLocalRef(pDepthStencilStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineDepthStencilStateCreateInfo[size];
-    std::copy(pDepthStencilState.begin(), pDepthStencilState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineDepthStencilStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pDepthStencilStateArray, i);
+        VkPipelineDepthStencilStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pDepthStencilState = copy;
-    env->DeleteLocalRef(pDepthStencilStateArray); // release reference
+    env->DeleteLocalRef(pDepthStencilStateArray);
 }
 
 uint32_t
@@ -208,28 +193,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpViewportState(VkGraphicsPipelineCreate
     auto pViewportStateArray = (jobjectArray) env->GetObjectField(obj, pViewportStateField);
     if (pViewportStateArray == nullptr) {
         clazzInfo.pViewportState = nullptr;
-        env->DeleteLocalRef(pViewportStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pViewportStateArray);
-    std::vector<VkPipelineViewportStateCreateInfo> pViewportState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pViewportStateArray,
-                                                            i); // actual type is VkPipelineViewportStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineViewportStateCreateInfoAccessor accessor(env, element);
-        VkPipelineViewportStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pViewportState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pViewportState = nullptr;
+        env->DeleteLocalRef(pViewportStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineViewportStateCreateInfo[size];
-    std::copy(pViewportState.begin(), pViewportState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineViewportStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pViewportStateArray, i);
+        VkPipelineViewportStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pViewportState = copy;
-    env->DeleteLocalRef(pViewportStateArray); // release reference
+    env->DeleteLocalRef(pViewportStateArray);
 }
 
 void
@@ -239,28 +220,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpInputAssemblyState(
                                                                        pInputAssemblyStateField);
     if (pInputAssemblyStateArray == nullptr) {
         clazzInfo.pInputAssemblyState = nullptr;
-        env->DeleteLocalRef(pInputAssemblyStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pInputAssemblyStateArray);
-    std::vector<VkPipelineInputAssemblyStateCreateInfo> pInputAssemblyState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pInputAssemblyStateArray,
-                                                            i); // actual type is VkPipelineInputAssemblyStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineInputAssemblyStateCreateInfoAccessor accessor(env, element);
-        VkPipelineInputAssemblyStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pInputAssemblyState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pInputAssemblyState = nullptr;
+        env->DeleteLocalRef(pInputAssemblyStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineInputAssemblyStateCreateInfo[size];
-    std::copy(pInputAssemblyState.begin(), pInputAssemblyState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineInputAssemblyStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pInputAssemblyStateArray, i);
+        VkPipelineInputAssemblyStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pInputAssemblyState = copy;
-    env->DeleteLocalRef(pInputAssemblyStateArray); // release reference
+    env->DeleteLocalRef(pInputAssemblyStateArray);
 }
 
 void
@@ -268,28 +245,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpColorBlendState(VkGraphicsPipelineCrea
     auto pColorBlendStateArray = (jobjectArray) env->GetObjectField(obj, pColorBlendStateField);
     if (pColorBlendStateArray == nullptr) {
         clazzInfo.pColorBlendState = nullptr;
-        env->DeleteLocalRef(pColorBlendStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pColorBlendStateArray);
-    std::vector<VkPipelineColorBlendStateCreateInfo> pColorBlendState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pColorBlendStateArray,
-                                                            i); // actual type is VkPipelineColorBlendStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineColorBlendStateCreateInfoAccessor accessor(env, element);
-        VkPipelineColorBlendStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pColorBlendState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pColorBlendState = nullptr;
+        env->DeleteLocalRef(pColorBlendStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineColorBlendStateCreateInfo[size];
-    std::copy(pColorBlendState.begin(), pColorBlendState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineColorBlendStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pColorBlendStateArray, i);
+        VkPipelineColorBlendStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pColorBlendState = copy;
-    env->DeleteLocalRef(pColorBlendStateArray); // release reference
+    env->DeleteLocalRef(pColorBlendStateArray);
 }
 
 VkPipelineLayout
@@ -335,28 +308,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpVertexInputState(
     auto pVertexInputStateArray = (jobjectArray) env->GetObjectField(obj, pVertexInputStateField);
     if (pVertexInputStateArray == nullptr) {
         clazzInfo.pVertexInputState = nullptr;
-        env->DeleteLocalRef(pVertexInputStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pVertexInputStateArray);
-    std::vector<VkPipelineVertexInputStateCreateInfo> pVertexInputState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pVertexInputStateArray,
-                                                            i); // actual type is VkPipelineVertexInputStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineVertexInputStateCreateInfoAccessor accessor(env, element);
-        VkPipelineVertexInputStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pVertexInputState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pVertexInputState = nullptr;
+        env->DeleteLocalRef(pVertexInputStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineVertexInputStateCreateInfo[size];
-    std::copy(pVertexInputState.begin(), pVertexInputState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineVertexInputStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pVertexInputStateArray, i);
+        VkPipelineVertexInputStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pVertexInputState = copy;
-    env->DeleteLocalRef(pVertexInputStateArray); // release reference
+    env->DeleteLocalRef(pVertexInputStateArray);
 }
 
 void
@@ -364,28 +333,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpDynamicState(VkGraphicsPipelineCreateI
     auto pDynamicStateArray = (jobjectArray) env->GetObjectField(obj, pDynamicStateField);
     if (pDynamicStateArray == nullptr) {
         clazzInfo.pDynamicState = nullptr;
-        env->DeleteLocalRef(pDynamicStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pDynamicStateArray);
-    std::vector<VkPipelineDynamicStateCreateInfo> pDynamicState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pDynamicStateArray,
-                                                            i); // actual type is VkPipelineDynamicStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineDynamicStateCreateInfoAccessor accessor(env, element);
-        VkPipelineDynamicStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pDynamicState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pDynamicState = nullptr;
+        env->DeleteLocalRef(pDynamicStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineDynamicStateCreateInfo[size];
-    std::copy(pDynamicState.begin(), pDynamicState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineDynamicStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pDynamicStateArray, i);
+        VkPipelineDynamicStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pDynamicState = copy;
-    env->DeleteLocalRef(pDynamicStateArray); // release reference
+    env->DeleteLocalRef(pDynamicStateArray);
 }
 
 void
@@ -394,28 +359,24 @@ VkGraphicsPipelineCreateInfoAccessor::getpMultisampleState(
     auto pMultisampleStateArray = (jobjectArray) env->GetObjectField(obj, pMultisampleStateField);
     if (pMultisampleStateArray == nullptr) {
         clazzInfo.pMultisampleState = nullptr;
-        env->DeleteLocalRef(pMultisampleStateArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pMultisampleStateArray);
-    std::vector<VkPipelineMultisampleStateCreateInfo> pMultisampleState;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pMultisampleStateArray,
-                                                            i); // actual type is VkPipelineMultisampleStateCreateInfo[];
-        // experimental optimize accessor
-        VkPipelineMultisampleStateCreateInfoAccessor accessor(env, element);
-        VkPipelineMultisampleStateCreateInfo ref{};
-        accessor.fromObject(ref);
-        pMultisampleState.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pMultisampleState = nullptr;
+        env->DeleteLocalRef(pMultisampleStateArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkPipelineMultisampleStateCreateInfo[size];
-    std::copy(pMultisampleState.begin(), pMultisampleState.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkPipelineMultisampleStateCreateInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pMultisampleStateArray, i);
+        VkPipelineMultisampleStateCreateInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pMultisampleState = copy;
-    env->DeleteLocalRef(pMultisampleStateArray); // release reference
+    env->DeleteLocalRef(pMultisampleStateArray);
 }
 
 VkGraphicsPipelineCreateInfoAccessor::~VkGraphicsPipelineCreateInfoAccessor() {

@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkApplicationInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkApplicationInfoAccessor::VkApplicationInfoAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                  obj(obj) {
@@ -51,10 +52,10 @@ VkApplicationInfoAccessor::getpNext(VkApplicationInfo &clazzInfo) {
 void
 VkApplicationInfoAccessor::getpApplicationName(VkApplicationInfo &clazzInfo) {
     auto pApplicationNameObj = (jstring) env->GetObjectField(obj, pApplicationNameField);
-    auto str = (const char *) env->GetStringUTFChars(pApplicationNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(pApplicationNameObj, str); // Release the local string reference
-    clazzInfo.pApplicationName = result;
+    clazzInfo.pApplicationName = awake::VulkanAccessArena::current().copyJString(env, pApplicationNameObj);
+    if (pApplicationNameObj != nullptr) {
+        env->DeleteLocalRef(pApplicationNameObj);
+    }
 }
 
 uint32_t
@@ -70,10 +71,10 @@ VkApplicationInfoAccessor::getengineVersion() {
 void
 VkApplicationInfoAccessor::getpEngineName(VkApplicationInfo &clazzInfo) {
     auto pEngineNameObj = (jstring) env->GetObjectField(obj, pEngineNameField);
-    auto str = (const char *) env->GetStringUTFChars(pEngineNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(pEngineNameObj, str); // Release the local string reference
-    clazzInfo.pEngineName = result;
+    clazzInfo.pEngineName = awake::VulkanAccessArena::current().copyJString(env, pEngineNameObj);
+    if (pEngineNameObj != nullptr) {
+        env->DeleteLocalRef(pEngineNameObj);
+    }
 }
 
 VkApplicationInfoAccessor::~VkApplicationInfoAccessor() {
