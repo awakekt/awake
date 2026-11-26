@@ -37,7 +37,12 @@ enum class ThermalState {
  * @property batteryLevel Battery charge fraction in `0f..1f`, or `null` when unavailable.
  * @property lowPowerMode Whether the OS is currently in low-power or battery-saver mode.
  * @property isTouchPrimary Whether touch is the device's primary pointer input mechanism.
+ * @property isLowRamDevice Whether the OS classifies this device as low-RAM (e.g. Android Go).
+ * @property availableMemoryBytes Currently available physical device RAM in bytes, or `null` when unavailable.
+ * @property isLowMemory Whether the OS currently reports a system-wide low-memory condition.
+ * @property socModel System-on-chip identifier reported by the OS (e.g. Android `Build.SOC_MODEL`), or `null`.
  */
+@Suppress("LongParameterList") // Flat host snapshot; adding fields keeps existing defaults binary-compatible.
 data class DeviceProfile(
     val totalMemoryBytes: Long? = null,
     val displayRefreshHz: Int? = null,
@@ -45,7 +50,61 @@ data class DeviceProfile(
     val batteryLevel: Float? = null,
     val lowPowerMode: Boolean = false,
     val isTouchPrimary: Boolean = false,
-)
+    val isLowRamDevice: Boolean = false,
+    val availableMemoryBytes: Long? = null,
+    val isLowMemory: Boolean = false,
+    val socModel: String? = null,
+) {
+    /** Constructor as released before low-RAM, available-memory, low-memory, and SoC fields. */
+    @Deprecated(
+        "Use the constructor with isLowRamDevice, availableMemoryBytes, isLowMemory, and socModel.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    constructor(
+        totalMemoryBytes: Long? = null,
+        displayRefreshHz: Int? = null,
+        thermalState: ThermalState = ThermalState.Unknown,
+        batteryLevel: Float? = null,
+        lowPowerMode: Boolean = false,
+        isTouchPrimary: Boolean = false,
+    ) : this(
+        totalMemoryBytes = totalMemoryBytes,
+        displayRefreshHz = displayRefreshHz,
+        thermalState = thermalState,
+        batteryLevel = batteryLevel,
+        lowPowerMode = lowPowerMode,
+        isTouchPrimary = isTouchPrimary,
+        isLowRamDevice = false,
+        availableMemoryBytes = null,
+        isLowMemory = false,
+        socModel = null,
+    )
+
+    /** [copy] as released before low-RAM, available-memory, low-memory, and SoC fields. */
+    @Deprecated(
+        "Use copy with isLowRamDevice, availableMemoryBytes, isLowMemory, and socModel.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        totalMemoryBytes: Long? = this.totalMemoryBytes,
+        displayRefreshHz: Int? = this.displayRefreshHz,
+        thermalState: ThermalState = this.thermalState,
+        batteryLevel: Float? = this.batteryLevel,
+        lowPowerMode: Boolean = this.lowPowerMode,
+        isTouchPrimary: Boolean = this.isTouchPrimary,
+    ): DeviceProfile = copy(
+        totalMemoryBytes = totalMemoryBytes,
+        displayRefreshHz = displayRefreshHz,
+        thermalState = thermalState,
+        batteryLevel = batteryLevel,
+        lowPowerMode = lowPowerMode,
+        isTouchPrimary = isTouchPrimary,
+        isLowRamDevice = this.isLowRamDevice,
+        availableMemoryBytes = this.availableMemoryBytes,
+        isLowMemory = this.isLowMemory,
+        socModel = this.socModel,
+    )
+}
 
 /**
  * Reads a best-effort [DeviceProfile] snapshot from the current host platform.

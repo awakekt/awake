@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.core.host
 
+import kotlinx.coroutines.delay
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicInt
@@ -35,7 +36,14 @@ enum class MemoryPressureLevel {
  */
 @OptIn(ExperimentalAtomicApi::class)
 object MemoryPressure {
+    /** Default wait budget for [trimAndAwaitDrain] to let frame-thread watchers drain caches before GC. */
+    const val DEFAULT_DRAIN_TIMEOUT_MILLIS: Long = 150L
+
+    /** Default polling interval for [trimAndAwaitDrain]. */
+    const val DEFAULT_DRAIN_POLL_MILLIS: Long = 8L
+
     private val versionCounter = AtomicInt(0)
+    private val drainedVersionCounter = AtomicInt(0)
     private val listeners = AtomicReference<List<Subscription>>(emptyList())
 
     /**
@@ -49,6 +57,14 @@ object MemoryPressure {
         private set
 
     /**
+     * Highest [version] known to have been observed across a complete frame-loop tick via
+     * [markFrameDrained].
+     */
+    @Volatile
+    var drainedVersion: Int = 0
+        private set
+
+    /**
      * Signals a memory trim at [level], incrementing [version] and synchronously invoking all
      * currently subscribed listeners.
      *
@@ -59,6 +75,59 @@ object MemoryPressure {
      * @param level Severity of the memory-pressure event. Defaults to [MemoryPressureLevel.Low].
      */
     fun trim(level: MemoryPressureLevel = MemoryPressureLevel.Low) {
+        trimInternal(level)
+    }
+
+    /**
+     * Records that a full frame tick has drained all frame-thread [MemoryPressureWatcher]s up to
+     * [drainedUpTo] (typically captured from [version] immediately before stepping frame systems).
+     */
+    fun markFrameDrained(drainedUpTo: Int = version) {
+        if (drainedUpTo <= drainedVersion) return
+        val target = minOf(drainedUpTo, version)
+        var current = drainedVersionCounter.load()
+        while (target > current) {
+            if (drainedVersionCounter.compareAndSet(current, target)) {
+                drainedVersion = maxOf(target, drainedVersionCounter.load())
+                break
+            }
+            current = drainedVersionCounter.load()
+        }
+    }
+
+    /** Returns `true` when [drainedVersion] has caught up to [targetVersion]. */
+    fun hasFrameDrained(targetVersion: Int = version): Boolean = drainedVersion >= targetVersion
+
+    /**
+     * Signals a memory trim at [level] and suspends until the frame loop acknowledges draining
+     * frame-thread watchers via [markFrameDrained] or [timeoutMillis] elapses.
+     *
+     * Use this from background heap-guard coroutines before forcing GC and measuring live heap, so
+     * GPU/scene/ECS caches trimmed on the frame thread are released before live heap is evaluated.
+     *
+     * @param level Severity of the memory-pressure event.
+     * @param timeoutMillis Maximum wait time in milliseconds (`0` returns immediately after [trim]).
+     * @param pollMillis Delay between drain checks in milliseconds.
+     * @return `true` if the frame thread drained the trim within [timeoutMillis], `false` on timeout.
+     */
+    suspend fun trimAndAwaitDrain(
+        level: MemoryPressureLevel = MemoryPressureLevel.Low,
+        timeoutMillis: Long = DEFAULT_DRAIN_TIMEOUT_MILLIS,
+        pollMillis: Long = DEFAULT_DRAIN_POLL_MILLIS,
+    ): Boolean {
+        require(timeoutMillis >= 0L) { "timeoutMillis must be >= 0, was $timeoutMillis." }
+        require(pollMillis > 0L) { "pollMillis must be > 0, was $pollMillis." }
+        val targetVersion = trimInternal(level)
+        var elapsedMillis = 0L
+        while (!hasFrameDrained(targetVersion) && elapsedMillis < timeoutMillis) {
+            val step = minOf(pollMillis, timeoutMillis - elapsedMillis)
+            delay(step)
+            elapsedMillis += step
+        }
+        return hasFrameDrained(targetVersion)
+    }
+
+    private fun trimInternal(level: MemoryPressureLevel): Int {
         val incremented = versionCounter.addAndFetch(1)
         version = maxOf(incremented, versionCounter.load())
         val snapshot = listeners.load()
@@ -67,6 +136,7 @@ object MemoryPressure {
                 runCatching { subscription.listener(level) }.getOrDefault(Unit)
             }
         }
+        return incremented
     }
 
     /**
@@ -98,11 +168,13 @@ object MemoryPressure {
     fun watch(onTrim: ((MemoryPressureLevel) -> Unit)? = null): MemoryPressureWatcher =
         MemoryPressureWatcher(onTrim?.let(::subscribe))
 
-    /** Clears all registered listeners and resets [version] to zero for isolated unit tests. */
+    /** Clears all registered listeners and resets [version] and [drainedVersion] to zero for isolated unit tests. */
     internal fun resetForTesting() {
         listeners.store(emptyList())
         versionCounter.store(0)
+        drainedVersionCounter.store(0)
         version = 0
+        drainedVersion = 0
     }
 
     private fun unsubscribe(target: Subscription) {

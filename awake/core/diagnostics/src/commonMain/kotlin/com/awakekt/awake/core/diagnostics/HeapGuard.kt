@@ -74,21 +74,43 @@ class HeapGuard(
             return Action.None
         }
         val effectiveUsed = (collect?.invoke() ?: used).coerceAtLeast(0L)
-        return if (effectiveUsed.toDouble() / limit.toDouble() >= closeAt) {
+        return evaluatePostCollect(effectiveUsed, limit)
+    }
+
+    /**
+     * Suspending variant of [check] so background heap watchers can asynchronously await
+     * frame-thread cache eviction (for example `MemoryPressure.trimAndAwaitDrain()`) before
+     * triggering garbage collection and re-measuring live heap.
+     *
+     * @param used Current used heap bytes.
+     * @param limit Heap ceiling in bytes.
+     * @param collect Optional suspending reclamation callback returning post-collection used bytes.
+     * @return [Action.None], [Action.Collect], or [Action.Close].
+     */
+    suspend fun checkSuspending(used: Long, limit: Long, collect: (suspend () -> Long)? = null): Action {
+        if (limit <= 0L || used < 0L || used.toDouble() / limit.toDouble() < collectAt) {
+            consecutiveBreaches = 0
+            return Action.None
+        }
+        val effectiveUsed = (collect?.invoke() ?: used).coerceAtLeast(0L)
+        return evaluatePostCollect(effectiveUsed, limit)
+    }
+
+    private fun evaluatePostCollect(effectiveUsed: Long, limit: Long): Action =
+        if (effectiveUsed.toDouble() / limit.toDouble() >= closeAt) {
             consecutiveBreaches++
             if (consecutiveBreaches >= closeAfter) Action.Close else Action.Collect
         } else {
             consecutiveBreaches = 0
             Action.Collect
         }
-    }
 
     /** Resets [consecutiveBreaches] back to zero. */
     fun reset() {
         consecutiveBreaches = 0
     }
 
-    /** Default threshold constants for [HeapGuard]. */
+    /** Default threshold constants and device-RAM helpers for [HeapGuard]. */
     companion object {
         /** Default heap ratio (`70%`) that triggers [Action.Collect]. */
         const val COLLECT_AT: Double = 0.70
@@ -98,5 +120,21 @@ class HeapGuard(
 
         /** Default consecutive checks at or above [CLOSE_AT] before returning [Action.Close]. */
         const val CLOSE_AFTER: Int = 3
+
+        /** Default system-wide available device RAM floor (`256 MiB`) below which caches should shed. */
+        const val DEFAULT_LOW_AVAILABLE_BYTES: Long = 256L * 1024L * 1024L
+
+        /**
+         * Returns `true` when host-wide device memory signals indicate native/GPU memory pressure
+         * that warrants trimming caches even if the managed heap ratio is below [COLLECT_AT].
+         *
+         * Triggers when [isLowMemory] is reported by the OS or when [availableMemoryBytes] is
+         * non-negative and falls below [lowAvailableBytes].
+         */
+        fun isDeviceMemoryLow(
+            availableMemoryBytes: Long?,
+            isLowMemory: Boolean = false,
+            lowAvailableBytes: Long = DEFAULT_LOW_AVAILABLE_BYTES,
+        ): Boolean = isLowMemory || (availableMemoryBytes != null && availableMemoryBytes >= 0L && availableMemoryBytes < lowAvailableBytes)
     }
 }

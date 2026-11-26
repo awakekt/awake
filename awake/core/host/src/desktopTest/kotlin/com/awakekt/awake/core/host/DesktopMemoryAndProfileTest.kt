@@ -31,6 +31,10 @@ class DesktopMemoryAndProfileTest {
         assertEquals(ThermalState.Unknown, profile.thermalState)
         assertNull(profile.batteryLevel)
         assertFalse(profile.lowPowerMode)
+        assertFalse(profile.isLowRamDevice)
+        assertFalse(profile.isLowMemory)
+        assertNull(profile.socModel)
         profile.totalMemoryBytes?.let { assertTrue(it > 0L) }
+        profile.availableMemoryBytes?.let { assertTrue(it >= 0L) }
     }
 }

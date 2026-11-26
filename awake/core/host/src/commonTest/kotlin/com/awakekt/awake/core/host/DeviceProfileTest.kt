@@ -21,6 +21,20 @@ class DeviceProfileTest {
         assertNull(profile.batteryLevel)
         assertFalse(profile.lowPowerMode)
         assertFalse(profile.isTouchPrimary)
+        assertFalse(profile.isLowRamDevice)
+        assertNull(profile.availableMemoryBytes)
+        assertFalse(profile.isLowMemory)
+        assertNull(profile.socModel)
+    }
+
+    @Test
+    fun sanitizeSocModelNormalizesBlankAndUnknownValues() {
+        assertNull(sanitizeSocModel(null))
+        assertNull(sanitizeSocModel(""))
+        assertNull(sanitizeSocModel("   "))
+        assertNull(sanitizeSocModel("unknown"))
+        assertNull(sanitizeSocModel("UNKNOWN"))
+        assertEquals("MT6768", sanitizeSocModel(" MT6768 "))
     }
 
     @Test

@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.core.host
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -164,5 +167,44 @@ class MemoryPressureTest {
         watcher.close()
         MemoryPressure.trim(MemoryPressureLevel.Low)
         assertEquals(listOf(MemoryPressureLevel.Moderate, MemoryPressureLevel.Critical), immediate)
+    }
+
+    @Test
+    fun markFrameDrainedOnlyAcknowledgesCapturedVersion() {
+        MemoryPressure.trim(MemoryPressureLevel.Low)
+        val beforeMidFrameTrim = MemoryPressure.version
+        assertFalse(MemoryPressure.hasFrameDrained())
+
+        // A second trim arrives mid-frame: marking the earlier version must not acknowledge the new one.
+        MemoryPressure.trim(MemoryPressureLevel.Critical)
+        MemoryPressure.markFrameDrained(beforeMidFrameTrim)
+        assertEquals(beforeMidFrameTrim, MemoryPressure.drainedVersion)
+        assertTrue(MemoryPressure.hasFrameDrained(beforeMidFrameTrim))
+        assertFalse(MemoryPressure.hasFrameDrained())
+
+        // Next full frame drains the latest version.
+        MemoryPressure.markFrameDrained()
+        assertTrue(MemoryPressure.hasFrameDrained())
+    }
+
+    @Test
+    fun trimAndAwaitDrainReturnsTrueWhenFrameDrainsAndFalseOnTimeout() = runTest {
+        val waited = async {
+            MemoryPressure.trimAndAwaitDrain(
+                level = MemoryPressureLevel.Low,
+                timeoutMillis = 100L,
+                pollMillis = 10L,
+            )
+        }
+        delay(25L)
+        MemoryPressure.markFrameDrained()
+        assertTrue(waited.await())
+
+        val timedOut = MemoryPressure.trimAndAwaitDrain(
+            level = MemoryPressureLevel.Critical,
+            timeoutMillis = 30L,
+            pollMillis = 10L,
+        )
+        assertFalse(timedOut)
     }
 }
