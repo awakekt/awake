@@ -1178,7 +1178,6 @@ object DrawRunCoalescer {
                 repeatY = slice.repeatY,
                 baseColor = slice.color,
                 transform = slice.transform,
-                fade = requireNotNull(slice.edgeFade),
                 vertices = vertices,
                 indices = indices,
                 vertexStart = vertexStart,

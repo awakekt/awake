@@ -19,11 +19,15 @@ import kotlin.math.sin
 /**
  * Tessellates a [DrawCommand.Texture] with a non-empty [EdgeFade] into a compact per-vertex-alpha
  * textured grid so Vulkan and WebGPU interpolate smooth per-pixel edge feathering in hardware with
- * a single draw call and zero shader changes.
+ * a single draw call and zero shader changes. Grid stops and per-axis smoothstep weights are cached
+ * per [EdgeFade] value so dynamic edge-faded draws write straight into pooled buffers with zero
+ * heap allocations.
  */
 internal class EdgeFadeGrid(
     val xs: FloatArray,
     val ys: FloatArray,
+    val xAlphas: FloatArray,
+    val yAlphas: FloatArray,
 ) {
     val vertexCount: Int get() = xs.size * ys.size
     val indexCount: Int get() = (xs.size - 1) * (ys.size - 1) * VertexFormats2D.INDICES_PER_QUAD
@@ -36,7 +40,6 @@ internal class EdgeFadeGrid(
         repeatY: Boolean,
         baseColor: Color,
         transform: DrawTransform?,
-        fade: EdgeFade,
         vertices: FloatArray,
         indices: IntArray,
         vertexStart: Int,
@@ -56,22 +59,23 @@ internal class EdgeFadeGrid(
         val cy = primitive.y + primitive.h * 0.5f
         val rad = if (rotated) primitive.rotationDegrees * (PI / 180.0).toFloat() else 0f
         val cosA = if (rotated) cos(rad) else 1f
-        val sinA = if (rotated) sin(rad) else 0f
+        val sinA = if (rotated) sin(rad) else 1f
         val stride = VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+        val baseAlpha = baseColor.a
         var vCursor = vertexStart
         for (ry in ys.indices) {
             val nv = ys[ry]
             val localY = primitive.y + primitive.h * nv
             val tv = v0 + dv * nv
+            val rowAlpha = baseAlpha * yAlphas[ry]
             for (cxIdx in xs.indices) {
                 val nu = xs[cxIdx]
                 val localX = primitive.x + primitive.w * nu
                 val tu = u0 + du * nu
                 val vx = if (rotated) cx + (localX - cx) * cosA - (localY - cy) * sinA else localX
                 val vy = if (rotated) cy + (localX - cx) * sinA + (localY - cy) * cosA else localY
-                val factor = fade.alphaAt(nu, nv)
-                val vColor = if (factor >= 1f) baseColor else baseColor.withAlpha(baseColor.a * factor)
-                writeTextureVertex(vertices, vCursor, vx, vy, tu, tv, region.u0, region.v0, spanU, spanV, vColor, transform)
+                writeTextureVertex(vertices, vCursor, vx, vy, tu, tv, region.u0, region.v0, spanU, spanV, baseColor, transform)
+                vertices[vCursor + TEXTURE_ALPHA_OFFSET] = rowAlpha * xAlphas[cxIdx]
                 vCursor += stride
             }
         }
@@ -103,9 +107,31 @@ internal class EdgeFadeGrid(
     companion object {
         private const val EDGE_SEGMENTS = 4
         private const val EPSILON = 1e-4f
+        private const val TEXTURE_ALPHA_OFFSET = 11
+        private const val GRID_CACHE_CAPACITY = 32
+        private val gridCache = linkedMapOf<EdgeFade, EdgeFadeGrid>()
 
-        fun forFade(fade: EdgeFade): EdgeFadeGrid =
-            EdgeFadeGrid(axisStops(fade.left, fade.right), axisStops(fade.top, fade.bottom))
+        fun forFade(fade: EdgeFade): EdgeFadeGrid {
+            gridCache[fade]?.let { return it }
+            val xs = axisStops(fade.left, fade.right)
+            val ys = axisStops(fade.top, fade.bottom)
+            val xAlphas = FloatArray(xs.size) { i -> axisAlpha(xs[i], fade.left, fade.right) }
+            val yAlphas = FloatArray(ys.size) { i -> axisAlpha(ys[i], fade.top, fade.bottom) }
+            val grid = EdgeFadeGrid(xs, ys, xAlphas, yAlphas)
+            if (gridCache.size >= GRID_CACHE_CAPACITY) {
+                gridCache.remove(gridCache.keys.first())
+            }
+            gridCache[fade] = grid
+            return grid
+        }
+
+        private fun axisAlpha(coord: Float, startFade: Float, endFade: Float): Float {
+            val start = if (startFade > 0f) smoothstep((coord / startFade).coerceIn(0f, 1f)) else 1f
+            val end = if (endFade > 0f) smoothstep(((1f - coord) / endFade).coerceIn(0f, 1f)) else 1f
+            return start * end
+        }
+
+        private fun smoothstep(t: Float): Float = t * t * (3f - 2f * t)
 
         private fun axisStops(startFade: Float, endFade: Float): FloatArray {
             val raw = FloatArray(2 + EDGE_SEGMENTS * 2)

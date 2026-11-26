@@ -40,3 +40,7 @@ mavenPublishing {
         description.set("Backend-neutral 2D pass logic: run coalescing, mesh upload, command recording")
     }
 }
+
+tasks.named<Test>("desktopTest") {
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
