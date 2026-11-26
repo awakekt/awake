@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.81.0] - 2026-11-26
+
+### Added
+
+- **Lower Android image decode peak memory, pre-skipped mip chains, streaming Vulkan mip staging, and bounded `decodeDispatcher`.** Eliminated the leaked intermediate `Bitmap`, software Y-flip `Bitmap` copy, and full `IntArray` copy in Android image decoding (reading bottom-up straight-alpha rows directly into `RGBA8`), added `decodeImage(bytes, mipSkip)` / `decodeImageBlocking(bytes, mipSkip)` subsampled decode APIs and `DecodedImage.toRgba8Bytes()`, added `TextureAsset.mipChain(mipSkip)` to skip building discarded top mip levels, streamed mip levels directly into mapped Vulkan staging memory without an intermediate flattened `ByteArray`, and added `decodeDispatcher` (`awake:core:io`, capped at 2 concurrent decodes on mobile and 4 on desktop) wired into `AssetSourceTextureResolver`, `GltfModelLoads`, and `ProjectRuntime`.
+- Harden `:awake:core:di` with thread-safe singleton/cycle resolution, deterministic `AutoCloseable` disposal of child containers and singletons in reverse creation order (including automatic teardown via `appSpec { di(...) }`), isolated per-container module caches, and fail-fast `Container.verify()`, and key `:awake:compose:di`'s `rememberResolve` on the ambient `Container` so scope switches re-resolve cleanly.
+- **Host low-RAM/SoC `DeviceProfile` signals and frame-synced `MemoryPressure` / `HeapGuard` handoff.** Extended `DeviceProfile` (`awake:core:host`) with `isLowRamDevice`, `availableMemoryBytes`, `isLowMemory`, and `socModel` (preserving binary compatibility with existing constructors and `copy`), added `MemoryPressure.drainedVersion`, `markFrameDrained()`, `hasFrameDrained()`, and suspending `trimAndAwaitDrain()` (automatically acknowledged each frame by `SceneAppLifecycleRuntime`), and added `HeapGuard.checkSuspending()` plus `HeapGuard.isDeviceMemoryLow()` (`awake:core:diagnostics`) so background memory watchers wait for frame-thread cache eviction before GC and react to native/device RAM pressure.
+
+### Fixed
+
+- **Vulkan JNI C++ RAII & Android validation packaging**: Reclaimed every native `new T[]` and `strdup()` allocation across the 23 `vulkan-kotlin` CreateInfo JNI accessors via a thread-local `VulkanAccessArena` scoped to each `VulkanUtils` creation entrypoint, removed double-copying of SPIR-V bytecode in `VkShaderModuleCreateInfoAccessor`, fixed missing JNI local reference releases on string and class lookups, removed dead 32-bit (`armeabi-v7a`/`x86`) validation layer binaries from `android-native`, and excluded `libVkLayer_khronos_validation.so` from release APKs in `player-android` and the Android app templates.
+
 ## [0.80.0] - 2026-11-26
 
 ### Added
