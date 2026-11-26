@@ -482,9 +482,11 @@ internal fun vkDepthFormat(format: ShadowDepthFormat): VkFormat = when (format) 
 }
 
 /**
- * Shrinks the image to one [DepthTarget.DORMANT_SIZE] layer, which the descriptor set keeps binding,
- * so a shader that declares the array still samples something valid while no light casts (#1698).
- * The caller waits for the device first, as for [DepthTarget.reallocate], and clears the new layer
- * before it is sampled.
+ * Shrinks the image to a [DepthTarget.DORMANT_SIZE] stand-in with [dormantLayers] layers, which
+ * the descriptor set keeps binding so a shader declaring the target still samples something valid
+ * while no pass writes into it (#1698). Callers pass `MASK_TARGET_LAYER_COUNT` for arrayed mask
+ * targets whose shaders index fixed layer numbers. The caller waits for the device first, as for
+ * [DepthTarget.reallocate], and clears the new layers before anything samples them.
  */
-internal fun DepthTarget.release() = reallocate(layers = 1, width = DepthTarget.DORMANT_SIZE)
+internal fun DepthTarget.release(dormantLayers: Int = 1) =
+    reallocate(layers = dormantLayers, width = DepthTarget.DORMANT_SIZE)

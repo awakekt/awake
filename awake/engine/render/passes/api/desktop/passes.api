@@ -236,6 +236,7 @@ public final class com/awakekt/awake/render/passes/OpaqueRenderFeature : com/awa
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
@@ -287,12 +288,14 @@ public abstract interface class com/awakekt/awake/render/passes/RenderFeature {
 	public abstract fun destroy ()V
 	public abstract fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public abstract fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
 public final class com/awakekt/awake/render/passes/RenderFeature$DefaultImpls {
 	public static fun needsCoveringExemptMask (Lcom/awakekt/awake/render/passes/RenderFeature;Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public static fun needsSceneDepth (Lcom/awakekt/awake/render/passes/RenderFeature;Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public static fun prepareFrame (Lcom/awakekt/awake/render/passes/RenderFeature;ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 }
 
@@ -473,6 +476,7 @@ public final class com/awakekt/awake/render/passes/SkyboxRenderFeature : com/awa
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }

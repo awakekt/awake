@@ -30,6 +30,7 @@ import com.awakekt.awake.render.passes.uniforms.DrawBlockWriters
 import com.awakekt.awake.render.passes2d.DynamicRunArrayPool
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.passes2d.UiRun
+import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
@@ -61,6 +62,7 @@ import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuImagePassExecutor
 import com.awakekt.awake.webgpu.pipeline.WebGpuRenderFrameContext
+import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.DepthTarget
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
@@ -359,8 +361,36 @@ class Renderer internal constructor(
     /** How many shadow array layers stay resident, frame by frame: see [settleShadowArray] (#1698). */
     internal val shadowResidency = com.awakekt.awake.render.passes.ShadowArrayResidency()
 
+    /** When the camera-space scene-depth target is allocated and released back to its 1x1 stand-in. */
+    internal val sceneDepthResidency = com.awakekt.awake.render.passes.ShadowArrayResidency()
+
+    /** When the mask target is allocated and released back to its 1x1x3 stand-in. */
+    internal val maskResidency = com.awakekt.awake.render.passes.ShadowArrayResidency()
+
+    /** The scene-depth target's extent for the scene it is drawn over. */
+    internal val sceneDepthSizing = com.awakekt.awake.render.passes.MaskTargetSizing()
+
     /** The mask target's edge for the scene it is drawn over (#1709): see [settleMaskTarget]. */
     internal val maskSizing = com.awakekt.awake.render.passes.MaskTargetSizing()
+
+    /** Whether any 3D scene pipeline in [pipelines] declares the `SceneDepth` bind group. */
+    internal val anyScenePipelineSamplesSceneDepth: Boolean =
+        pipelineDeclaresSceneDepth(pipelines.primary) ||
+            anyScenePipelineDeclaresDepth(pipelines.byFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.backCulledByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.transparentByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.additiveByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.instancedByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.instancedBackCulledByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.skinnedInstancedByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.particlePipelines) ||
+            anyScenePipelineDeclaresDepth(pipelines.additiveParticlePipelines) ||
+            anyScenePipelineDeclaresDepth(pipelines.solidByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.solidBackCulledByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.solidInstancedByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.solidInstancedBackCulledByFormat) ||
+            anyScenePipelineDeclaresDepth(pipelines.solidSkinnedInstancedByFormat) ||
+            pipelines.blendedRasterByFormat.values.any { byVariant -> byVariant.values.any(::pipelineDeclaresSceneDepth) }
 
     /** Whether every mask layer holds the far plane or a frame's draws: false for a new texture, zero-filled. */
     internal var maskCleared = false
@@ -370,6 +400,8 @@ class Renderer internal constructor(
     override val shadowMapBytes: Long get() = depthPrePass?.depthTarget?.allocatedBytes ?: 0L
 
     override val maskTargetBytes: Long get() = maskPass?.depthTarget?.allocatedBytes ?: 0L
+
+    override val sceneDepthTargetBytes: Long get() = sceneDepthPass?.depthTarget?.allocatedBytes ?: 0L
 
     /** The shadow array's own depth format, chosen when the engine started (#1709). */
     override val shadowDepthFormat: com.awakekt.awake.render.renderer.ShadowDepthFormat
@@ -532,6 +564,12 @@ class Renderer internal constructor(
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) =
         gpuPassExecutor.renderToTexture(target, input)
+
+    private fun pipelineDeclaresSceneDepth(pipeline: RenderPipeline): Boolean =
+        pipeline.handle.hasBindingGroup(pipeline.bindingLayout.slot(BindingSemantic.SceneDepth))
+
+    private fun anyScenePipelineDeclaresDepth(map: Map<VertexFormat, RenderPipeline>): Boolean =
+        map.values.any(::pipelineDeclaresSceneDepth)
 
     override fun destroy() {
         gpuFrameTimer?.destroy()

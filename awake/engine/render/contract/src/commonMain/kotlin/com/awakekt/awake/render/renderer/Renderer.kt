@@ -211,6 +211,14 @@ interface Renderer : GpuDevice {
         get() = 0L
 
     /**
+     * Device memory the camera-space scene-depth target holds, in bytes; 0 on a renderer with no
+     * scene-depth pass or that does not count it. Stays at a 1x1 dormant stand-in when no active
+     * feature or draw reads scene depth.
+     */
+    val sceneDepthTargetBytes: Long
+        get() = 0L
+
+    /**
      * The depth format this renderer's shadow maps use (#1698): [ShadowDepthFormat.Default] unless
      * the engine was started with another, and on a renderer that does not choose one.
      */

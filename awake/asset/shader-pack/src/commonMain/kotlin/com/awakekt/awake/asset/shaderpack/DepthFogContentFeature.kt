@@ -88,6 +88,9 @@ class DepthFogRenderFeature(
     override fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean =
         isVisible() && environment.debugView == GpuDebugView.Off
 
+    override fun needsSceneDepth(environment: GpuEnvironmentState): Boolean =
+        isVisible() && environment.debugView == GpuDebugView.Off
+
     override fun recordCommands(context: RenderFrameContext) {
         // A debug view's colours are data; fog over them would misreport it.
         if (!isVisible() || context.environment.debugView != GpuDebugView.Off) return

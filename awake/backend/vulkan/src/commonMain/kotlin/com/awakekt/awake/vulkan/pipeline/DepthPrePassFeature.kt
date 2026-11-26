@@ -162,11 +162,11 @@ internal class DepthPrePassFeature(
      * caller has waited for the device and has not begun recording a frame that binds the target
      * (#1688, #1698).
      */
-    internal fun resize(layers: Int, width: Int, height: Int = width): Boolean {
+    internal fun resize(layers: Int, width: Int, height: Int = width, dormantLayers: Int = 1): Boolean {
         val resident = if (depthTarget.resident) depthTarget.layers else 0
         val sameExtent = width == depthTarget.width && height == depthTarget.height
         if (layers == resident && (layers == 0 || sameExtent)) return false
-        if (layers == 0) depthTarget.release() else depthTarget.reallocate(layers, width, height)
+        if (layers == 0) depthTarget.release(dormantLayers) else depthTarget.reallocate(layers, width, height)
         initializedLayers = BooleanArray(depthTarget.layers)
         dirtyLayers = BooleanArray(depthTarget.layers)
         return true

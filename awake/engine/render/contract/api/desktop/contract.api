@@ -2526,6 +2526,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
 	public fun getRenderScale ()F
+	public fun getSceneDepthTargetBytes ()J
 	public fun getSceneUpscaling ()Lcom/awakekt/awake/render/renderer/SceneUpscaling;
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
@@ -2588,6 +2589,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getOutputHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;)F
+	public static fun getSceneDepthTargetBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
 	public static fun getSceneUpscaling (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
 	public static fun getShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public static fun getShadowDepthFormat (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;

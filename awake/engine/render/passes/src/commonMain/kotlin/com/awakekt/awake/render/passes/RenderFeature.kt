@@ -172,6 +172,13 @@ interface RenderFeature<in C : RenderFrameContext> {
      */
     fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean = false
 
+    /**
+     * Whether this feature reads [com.awakekt.awake.render.pipeline.BindingSemantic.SceneDepth]
+     * during [environment]'s frame. Backends skip the camera-space scene-depth pre-pass and keep
+     * its target dormant when no attached feature or scene pipeline needs scene depth.
+     */
+    fun needsSceneDepth(environment: GpuEnvironmentState): Boolean = false
+
     /** Records drawing commands for this feature into the command buffer using [context]. */
     fun recordCommands(context: C)
 

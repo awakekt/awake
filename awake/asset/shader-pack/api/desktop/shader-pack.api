@@ -297,6 +297,7 @@ public final class com/awakekt/awake/asset/shaderpack/CloudLayerRenderFeature : 
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
@@ -339,6 +340,7 @@ public final class com/awakekt/awake/asset/shaderpack/DepthFogRenderFeature : co
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
@@ -369,6 +371,7 @@ public final class com/awakekt/awake/asset/shaderpack/OutlineRenderFeature : com
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
@@ -463,6 +466,7 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowMapViewRenderFeature
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
@@ -644,6 +648,7 @@ public final class com/awakekt/awake/asset/shaderpack/StylizedWaterRenderFeature
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
@@ -714,6 +719,7 @@ public final class com/awakekt/awake/asset/shaderpack/SunFlareRenderFeature : co
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
@@ -773,6 +779,7 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }

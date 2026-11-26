@@ -26,7 +26,6 @@ import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
-import com.awakekt.awake.render.passes.MASK_TARGET_MIN_SIZE
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
@@ -343,13 +342,12 @@ open class VulkanEngine(
 
     /**
      * Arrayed, one layer per mask layer and one for the draws exempt from coverings, read as an
-     * array by whatever samples the mask; null when the plan has no mask pass. Cleared to the far
-     * plane once, so a frame that draws no layer of it still samples a readable image: distance
-     * fog reads the mask on every frame, not only on masked ones.
+     * array by whatever samples the mask; null when the plan has no mask pass. Starts as a dormant
+     * 1x1x3 stand-in cleared to the far plane and grows to the scene extent only while a frame
+     * renders an active mask layer, matching [depthTarget]'s lazy residency.
      */
-    private fun createMaskTarget(): DepthTarget? = plan.maskShadersFor(RenderBackend.Vulkan)?.let {
-        // The smallest edge: the first frame sizes it to the scene (#1709).
-        DepthTarget(graphicsDevice, size = MASK_TARGET_MIN_SIZE, layers = MASK_TARGET_LAYER_COUNT, arrayed = true)
+    private fun createMaskTarget(depthFormat: ShadowDepthFormat): DepthTarget? = plan.maskShadersFor(RenderBackend.Vulkan)?.let {
+        DepthTarget(graphicsDevice, size = DepthTarget.DORMANT_SIZE, layers = MASK_TARGET_LAYER_COUNT, arrayed = true, format = depthFormat)
             .also { target -> transferContext.runOneTimeCommands(target::clearToFar) }
     }
 
@@ -622,6 +620,7 @@ open class VulkanEngine(
             // No longer has to precede pipelineDescriptorSetLayout: the depth target owns its own
             // descriptor set now, so no material layout depends on whether it exists.
             // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
+            val depthFormat = shadowDepthFormatFor(shadowDepthFormat)
             depthTarget = plan.depthPrePassShaderSet?.let {
                 // No array until a light casts: the renderer allocates the layers a frame draws
                 // the first time one does, and releases them again when none has for a while (#1698).
@@ -631,10 +630,10 @@ open class VulkanEngine(
                     layers = 1,
                     arrayed = true,
                     comparison = true,
-                    format = shadowDepthFormatFor(shadowDepthFormat),
+                    format = depthFormat,
                 )
             }
-            sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice, size = MASK_TARGET_MIN_SIZE) }
+            sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice, size = DepthTarget.DORMANT_SIZE, format = depthFormat) }
             pipelineDescriptorSetLayout =
                 Material.createDescriptorSetLayout(graphicsDevice)
             sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager, rasterState.count)
@@ -647,7 +646,7 @@ open class VulkanEngine(
                 ?.let { SkinnedInstanceBuffer.createDescriptorSetLayout(graphicsDevice) }
             skinnedInstanceDescriptorSetLayout = paletteLayout
             transferContext = TransferContext(graphicsDevice)
-            maskTarget = createMaskTarget()
+            maskTarget = createMaskTarget(depthFormat)
             depthPrePassPlaceholder = depthPlaceholderWithoutPrePass()
             pipelineRegistry = PipelineRegistry(
                 VulkanPipelineFactory(
