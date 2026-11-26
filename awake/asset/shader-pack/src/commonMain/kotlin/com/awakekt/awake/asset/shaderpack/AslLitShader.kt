@@ -60,6 +60,7 @@ val LitShader: AslShaderDefinition = shader("triangle") {
     }
 
     val ambient = const("AMBIENT_STRENGTH", 0.08f)
+    val depositNoise = declareSurfaceDepositNoise()
 
     fragment {
         val n = let("n", normalize(normal))
@@ -67,7 +68,7 @@ val LitShader: AslShaderDefinition = shader("triangle") {
         val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
         val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
         val baseRgb = variable("baseRgb", color)
-        applyUnlitSurfaceDeposit(baseRgb, n, worldPos, cameraPosition, surfaceDeposit, drawFade)
+        applyUnlitSurfaceDeposit(baseRgb, n, worldPos, cameraPosition, surfaceDeposit, drawFade, simplexFn = depositNoise)
         val lit = let("lit", baseRgb * shade * lightColor.xyz)
         val mapped = let("mapped", lit / (lit + vec3(1f.lit)))
         val fogged = applySceneFog(mapped, cameraPosition, worldPos, fogColor, fogRange)

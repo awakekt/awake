@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaderpack.forMobileSimpleLit
 import com.awakekt.awake.asset.shaderpack.outlineContentFeature
 import com.awakekt.awake.asset.shaderpack.skyboxContentFeature
 import com.awakekt.awake.asset.shaderpack.spriteScenePipeline
@@ -106,3 +107,10 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
         trailScenePipeline(),
     ),
 )
+
+/**
+ * Lean mobile counterpart of [ProjectRenderPlan] using single-fetch `SimpleLit` / `SkinnedSimpleLit`
+ * shaders without procedural surface-deposit noise to preserve shader-core occupancy and bandwidth
+ * on 4 GB mobile GPUs.
+ */
+val MobileProjectRenderPlan: RenderPlan by lazy { ProjectRenderPlan.forMobileSimpleLit() }

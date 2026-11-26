@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.shaderdsl.AslFunctionHandle
 import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
 import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.b
+import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.g
 import com.awakekt.awake.asset.shaderdsl.lit
@@ -22,6 +23,7 @@ import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.r
 import com.awakekt.awake.asset.shaderdsl.select
+import com.awakekt.awake.asset.shaderdsl.sqrt
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.core.geometry.GpuDataShape
@@ -136,4 +138,36 @@ fun AslShaderBuilder.sceneDisplayTransform(
         null
     }
     return SceneDisplayTransform(toneMap, encode, decode, isLinear = false)
+}
+
+/**
+ * Low-ALU mobile display transform: uses Khronos PBR Neutral tone mapping with a `sqrt`-based
+ * sRGB encoder (`0.585122381 * s1 + 0.783140355 * s2 - 0.368262736 * s3`, max error < 0.002)
+ * instead of `pow(x, 1/2.2)` so Mali/Adreno fragment units avoid `log2`/`exp2` SFU stalls.
+ */
+@Suppress("MagicNumber")
+internal fun AslShaderBuilder.fastSceneDisplayTransform(): SceneDisplayTransform {
+    val startCompression = const("TONE_MAP_START_COMPRESSION", 0.76f)
+    val desaturation = const("TONE_MAP_DESATURATION", 0.15f)
+    val toneMap = fn("toneMapPbrNeutral", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val color by param(GpuDataShape.Vec3)
+        val low = let("low", min(color.r, min(color.g, color.b)))
+        val offset = let("offset", select(0.04f.lit, low - 6.25f.lit * low * low, low lt 0.08f.lit))
+        val shifted = let("shifted", color - vec3(offset))
+        val peak = let("peak", max(shifted.r, max(shifted.g, shifted.b)))
+        iff(peak lt startCompression) { returnValue(shifted) }
+        val shoulder = 1f.lit - startCompression
+        val newPeak = let("newPeak", 1f.lit - shoulder * shoulder / (peak + shoulder - startCompression))
+        val fade = let("fade", 1f.lit - 1f.lit / (desaturation * (peak - newPeak) + 1f.lit))
+        returnValue(mix(shifted * (newPeak / peak), vec3(newPeak), fade))
+    }
+    val encode = fn("fastLinearToSrgb", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val linearParam by param(GpuDataShape.Vec3)
+        val c = let("c", max(linearParam, vec3(0f.lit)))
+        val s1 = let("s1", sqrt(c))
+        val s2 = let("s2", sqrt(s1))
+        val s3 = let("s3", sqrt(s2))
+        returnValue(clamp(s1 * 0.5851224f.lit + s2 * 0.7831404f.lit - s3 * 0.3682627f.lit, vec3(0f.lit), vec3(1f.lit)))
+    }
+    return SceneDisplayTransform(toneMap, encode, decode = null, isLinear = false)
 }
