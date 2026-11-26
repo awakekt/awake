@@ -7,7 +7,10 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
+import com.awakekt.awake.asset.shaderdsl.AslFunctionHandle
 import com.awakekt.awake.asset.shaderdsl.AslLayoutHandles
+import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
+import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.cos
 import com.awakekt.awake.asset.shaderdsl.div
@@ -37,6 +40,7 @@ import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
+import com.awakekt.awake.core.geometry.GpuDataShape
 
 private const val DEPOSIT_ACTIVE_EPSILON = 0.001f
 private const val MIN_SLOPE_SOFTNESS = 0.04f
@@ -163,6 +167,29 @@ private fun AslBlockBuilder.simplexNoise2dGrad(pExpr: AslExpr, tag: String): Sim
 }
 
 /**
+ * Declares a single shared `simplexNoise2dGrad(p: vec2<f32>) -> vec3<f32>` helper on this shader
+ * returning `(value, dV/dx, dV/dy)`. Calling this helper instead of inlining 3-octave Simplex noise
+ * at every deposit site cuts SPIR-V size and mobile register pressure substantially.
+ */
+internal fun AslShaderBuilder.declareSurfaceDepositNoise(): AslFunctionHandle =
+    fn("simplexNoise2dGrad", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val p by param(GpuDataShape.Vec2)
+        val g = simplexNoise2dGrad(p, "sn")
+        returnValue(vec3(g.value, g.dx, g.dy))
+    }
+
+private fun AslBlockBuilder.sampleSimplexGrad(
+    pExpr: AslExpr,
+    tag: String,
+    simplexFn: AslFunctionHandle?,
+): SimplexGrad = if (simplexFn != null) {
+    val s = let("${tag}S", simplexFn(pExpr))
+    SimplexGrad(s.x, s.y, s.z)
+} else {
+    simplexNoise2dGrad(pExpr, tag)
+}
+
+/**
  * Evaluates 3-octave domain-warped isotropic 2D Simplex deposit coverage, silky dual-tone texture
  * height, analytical C3-smooth micro-bump normal, and optional smooth crystalline glint.
  *
@@ -178,6 +205,7 @@ private fun AslBlockBuilder.evaluateSurfaceDeposit(
     effectiveAmount: AslExpr,
     frequencyMultiplier: Float,
     prefix: String,
+    simplexFn: AslFunctionHandle? = null,
 ): DepositSample {
     val sp = let("${prefix}Pos", samplePosition)
     val freq = let("${prefix}Freq", max(deposit.params.w, 0.05f.lit) * frequencyMultiplier.lit)
@@ -193,25 +221,28 @@ private fun AslBlockBuilder.evaluateSurfaceDeposit(
 
     // 3-octave domain-warped 2D Simplex noise (equilateral triangles, zero boxes, zero plaid):
     // 1. Flowing wind-sculpted macro drifts
-    val macro = simplexNoise2dGrad(
+    val macro = sampleSimplexGrad(
         vec2(rx * 0.42f.lit + ry * 0.25f.lit, rz * 0.68f.lit - ry * 0.21f.lit),
         "${prefix}Mac",
+        simplexFn,
     )
     // 2. Domain-warped soft billowy pillows/mounds
-    val pillow = simplexNoise2dGrad(
+    val pillow = sampleSimplexGrad(
         vec2(
             rx * 1.35f.lit + (macro.value - 0.5f.lit) * 1.05f.lit + ry * 0.52f.lit + 17.3f.lit,
             rz * 1.35f.lit - (macro.value - 0.5f.lit) * 0.85f.lit - ry * 0.44f.lit + 9.1f.lit,
         ),
         "${prefix}Plw",
+        simplexFn,
     )
     // 3. Soft fine powdery crust / dry dust texture (smooth C4 simplex, zero pixel boxes)
-    val fine = simplexNoise2dGrad(
+    val fine = sampleSimplexGrad(
         vec2(
             rx * 4.2f.lit + (pillow.value - 0.5f.lit) * 0.65f.lit + ry * 1.4f.lit + 41.7f.lit,
             rz * 4.2f.lit + (macro.value - 0.5f.lit) * 0.65f.lit - ry * 1.1f.lit + 23.9f.lit,
         ),
         "${prefix}Fin",
+        simplexFn,
     )
 
     val driftNoise = let("${prefix}Noise", saturate(macro.value * 0.60f.lit + pillow.value * 0.28f.lit + fine.value * 0.12f.lit))
@@ -291,6 +322,7 @@ internal fun AslBlockBuilder.applyLitSurfaceDeposit(
     deposit: SurfaceDepositUniforms,
     drawFade: AslExpr,
     characterScale: Boolean = false,
+    simplexFn: AslFunctionHandle? = null,
 ) {
     val effectiveAmount = let("depositAmount", effectiveSurfaceDepositAmount(deposit.color, drawFade))
     iff(effectiveAmount gt DEPOSIT_ACTIVE_EPSILON.lit) {
@@ -304,6 +336,7 @@ internal fun AslBlockBuilder.applyLitSurfaceDeposit(
             effectiveAmount,
             freqMult,
             "litDep",
+            simplexFn,
         )
         val primaryLin = let("litDepPri", pow(max(deposit.color.rgb, vec3(0f.lit)), vec3(DEPOSIT_GAMMA.lit)))
         val secondaryLin = let("litDepSec", pow(max(deposit.detail.rgb, vec3(0f.lit)), vec3(DEPOSIT_GAMMA.lit)))
@@ -338,6 +371,7 @@ internal fun AslBlockBuilder.applyUnlitSurfaceDeposit(
     deposit: SurfaceDepositUniforms,
     drawFade: AslExpr,
     characterScale: Boolean = false,
+    simplexFn: AslFunctionHandle? = null,
 ) {
     val effectiveAmount = let("unlitDepositAmount", effectiveSurfaceDepositAmount(deposit.color, drawFade))
     iff(effectiveAmount gt DEPOSIT_ACTIVE_EPSILON.lit) {
@@ -351,6 +385,7 @@ internal fun AslBlockBuilder.applyUnlitSurfaceDeposit(
             effectiveAmount,
             freqMult,
             "unlitDep",
+            simplexFn,
         )
         val keyDir = let("unlitDepKey", normalize(vec3(0.32f.lit, 0.88f.lit, 0.34f.lit)))
         val bumpLight = let("unlitDepBumpL", 0.84f.lit + 0.20f.lit * saturate(dot(sample.bumpedNormal, keyDir)))

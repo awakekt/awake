@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
@@ -88,24 +90,29 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * column sum, which is the same arithmetic without needing a mat3 type in ASL. Ceiling and
  * upgrade path unchanged: MikkTSpace tangents at load time plus a tangent vertex slot.
  */
+private fun texturedShaderName(
+    instanced: Boolean,
+    tinted: Boolean,
+    allowDiscard: Boolean,
+    includeSurfaceDeposit: Boolean,
+): String {
+    val base = when {
+        tinted -> "instanced_textured_tinted"
+        instanced -> "instanced_textured"
+        else -> "textured"
+    }
+    return base + (if (includeSurfaceDeposit) "" else "_nodeposit") + if (allowDiscard) "" else "_solid"
+}
+
 @Suppress("LongMethod")
 private fun textured(
     clipSpace: ClipSpace,
     instanced: Boolean = false,
     tinted: Boolean = false,
     allowDiscard: Boolean = true,
+    includeSurfaceDeposit: Boolean = true,
 ): AslShaderDefinition =
-    shader(
-        (
-            if (tinted) {
-                "instanced_textured_tinted"
-            } else if (instanced) {
-                "instanced_textured"
-            } else {
-                "textured"
-            }
-            ) + if (allowDiscard) "" else "_solid",
-    ) {
+    shader(texturedShaderName(instanced, tinted, allowDiscard, includeSurfaceDeposit)) {
         val u = uniformBlock(
             "Uniforms",
             group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -189,6 +196,7 @@ private fun textured(
         val minRoughness = const("MIN_ROUGHNESS", 0.05f)
         val gamma = const("GAMMA", 2.2f)
         val displayTransform = sceneDisplayTransform()
+        val depositNoise = if (includeSurfaceDeposit) declareSurfaceDepositNoise() else null
 
         // glTF stores base colour and emissive as sRGB; lighting needs them linear.
         val srgbToLinear = fn("srgbToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
@@ -285,7 +293,9 @@ private fun textured(
                         val unlitV = let("unlitV", normalize(cameraPosition.xyz - worldPos))
                         assign(unlitRgb, unlitSignedChrome(stored, unlitN, unlitV, emissiveFactor.w))
                     }
-                    applyUnlitSurfaceDeposit(unlitRgb, unlitN, worldPos, cameraPosition, surfaceDeposit, drawFade)
+                    if (includeSurfaceDeposit) {
+                        applyUnlitSurfaceDeposit(unlitRgb, unlitN, worldPos, cameraPosition, surfaceDeposit, drawFade, simplexFn = depositNoise)
+                    }
                     assign(fastRgb, displayTransform.unlit(unlitRgb))
                 }
                 iff(addsUnlit) {
@@ -310,7 +320,9 @@ private fun textured(
                     let("tangentNormal", textureSampleGrad(normalTexture, baseColorSampler, sampleUv, uvDx, uvDy).xyz * 2f.lit - vec3(1f.lit))
 
                 val n = variable("n", perturbNormal(normalize(normal), dPosDx, dPosDy, dSurfaceUvDx, dSurfaceUvDy, tangentNormal))
-                applyLitSurfaceDeposit(albedo, metallic, roughness, n, worldPos, cameraPosition, surfaceDeposit, drawFade)
+                if (includeSurfaceDeposit) {
+                    applyLitSurfaceDeposit(albedo, metallic, roughness, n, worldPos, cameraPosition, surfaceDeposit, drawFade, simplexFn = depositNoise)
+                }
                 val l = let("l", normalize(lightDirection.xyz))
                 val v = let("v", normalize(cameraPosition.xyz - worldPos))
                 val h = let("h", normalize(v + l))
@@ -370,7 +382,9 @@ private fun textured(
                 iff(materialUnlit) {
                     val stored = let("debugUnlitStored", baseColorFactor.rgb * baseColorSample.rgb * color)
                     val unlitReflected = variable("debugUnlitRgb", unlitSignedChrome(stored, n, v, emissiveFactor.w))
-                    applyUnlitSurfaceDeposit(unlitReflected, n, worldPos, cameraPosition, surfaceDeposit, drawFade)
+                    if (includeSurfaceDeposit) {
+                        applyUnlitSurfaceDeposit(unlitReflected, n, worldPos, cameraPosition, surfaceDeposit, drawFade, simplexFn = depositNoise)
+                    }
                     assign(shadedRgb, displayTransform.unlit(unlitReflected))
                 }
                 val shaded = vec4(shadedRgb, sourceAlpha)
@@ -402,15 +416,31 @@ private fun textured(
 /** `textured` for [clipSpace]: the shadow lookup's V axis follows the backend, as in lit_shadow. */
 fun texturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace)
 
+/** [texturedShader] with optional dynamic surface-deposit math (`includeSurfaceDeposit = false` omits 3-octave Simplex noise). */
+fun texturedShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    textured(clipSpace, includeSurfaceDeposit = includeSurfaceDeposit)
+
 /** Discard-free opaque companion of [texturedShader] for hardware Early-Z / Forward Pixel Kill. */
 fun texturedSolidShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, allowDiscard = false)
+
+/** [texturedSolidShader] with optional dynamic surface-deposit math. */
+fun texturedSolidShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    textured(clipSpace, allowDiscard = false, includeSurfaceDeposit = includeSurfaceDeposit)
 
 /** `textured` drawing many copies of one mesh, each placed by its own instance matrix. */
 fun instancedTexturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, instanced = true)
 
+/** [instancedTexturedShader] with optional dynamic surface-deposit math. */
+fun instancedTexturedShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    textured(clipSpace, instanced = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
 /** Discard-free opaque companion of [instancedTexturedShader]. */
 fun instancedTexturedSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
     textured(clipSpace, instanced = true, allowDiscard = false)
+
+/** [instancedTexturedSolidShader] with optional dynamic surface-deposit math. */
+fun instancedTexturedSolidShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    textured(clipSpace, instanced = true, allowDiscard = false, includeSurfaceDeposit = includeSurfaceDeposit)
 
 /**
  * [instancedTexturedShader] reading a tint and fade per copy after its matrix, for a pipeline built
@@ -419,9 +449,17 @@ fun instancedTexturedSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
  */
 fun instancedTexturedTintedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, instanced = true, tinted = true)
 
+/** [instancedTexturedTintedShader] with optional dynamic surface-deposit math. */
+fun instancedTexturedTintedShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    textured(clipSpace, instanced = true, tinted = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
 /** Discard-free opaque companion of [instancedTexturedTintedShader] when no instance fades below 1.0. */
 fun instancedTexturedTintedSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
     textured(clipSpace, instanced = true, tinted = true, allowDiscard = false)
+
+/** [instancedTexturedTintedSolidShader] with optional dynamic surface-deposit math. */
+fun instancedTexturedTintedSolidShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    textured(clipSpace, instanced = true, tinted = true, allowDiscard = false, includeSurfaceDeposit = includeSurfaceDeposit)
 
 /** The instance tint's location: after PositionNormalColorUv's four attributes and the matrix's four columns. */
 private const val INSTANCE_TINT_LOCATION = 8
@@ -437,7 +475,7 @@ private const val INSTANCE_TINT_LOCATION = 8
  * primitive, so the derivatives come from the unwrapped UV scaled to the cell; a 1 x 1 sheet skips
  * the wrap entirely and samples exactly as a still texture.
  */
-private fun AslBlockBuilder.animatedTextureUv(uv: AslExpr, frames: AslExpr, scroll: AslExpr): Triple<AslExpr, AslExpr, AslExpr> {
+internal fun AslBlockBuilder.animatedTextureUv(uv: AslExpr, frames: AslExpr, scroll: AslExpr): Triple<AslExpr, AslExpr, AslExpr> {
     val time = scroll.z
     val imageUv = let("imageUv", vec2(uv.x, 1f.lit - uv.y) + scroll.xy * time)
     val sheet = let("sheet", frames.xy)

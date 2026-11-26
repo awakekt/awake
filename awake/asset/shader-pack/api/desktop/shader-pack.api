@@ -59,6 +59,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslMeshVariantShadersKt {
 	public static final fun getSkinnedSolidShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkinnedTexturedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkinnedTexturedSolidShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedShader (Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedSolidShader (Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedTexturedShader (Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedTexturedSolidShader (Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslMipDownsampleShaderKt {
@@ -81,13 +85,40 @@ public final class com/awakekt/awake/asset/shaderpack/AslShadowShadersKt {
 	public static final fun getSceneDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun instancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun instancedLitShadowSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedLitShadowSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun litShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;F)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun litShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;FZ)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static synthetic fun litShadowShader$default (Lcom/awakekt/awake/core/math/ClipSpace;FILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun litShadowShader$default (Lcom/awakekt/awake/core/math/ClipSpace;FZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun litShadowSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;F)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun litShadowSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;FZ)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static synthetic fun litShadowSolidShader$default (Lcom/awakekt/awake/core/math/ClipSpace;FILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun litShadowSolidShader$default (Lcom/awakekt/awake/core/math/ClipSpace;FZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun skinnedInstancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedInstancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun skinnedInstancedLitShadowSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedInstancedLitShadowSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/AslSimpleLitShadersKt {
+	public static final fun instancedSimpleLitTexturedShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun instancedSimpleLitTexturedShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedSimpleLitTexturedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun instancedSimpleLitTexturedSolidShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedSimpleLitTexturedTintedShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun instancedSimpleLitTexturedTintedShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedSimpleLitTexturedTintedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun instancedSimpleLitTexturedTintedSolidShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun simpleLitTexturedShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun simpleLitTexturedShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun simpleLitTexturedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun simpleLitTexturedSolidShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedSimpleLitTexturedShader (Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun skinnedSimpleLitTexturedShader$default (ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedSimpleLitTexturedSolidShader (Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun skinnedSimpleLitTexturedSolidShader$default (ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslSkyboxCubemapShaderKt {
@@ -143,11 +174,17 @@ public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 
 public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
 	public static final fun instancedTexturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedTexturedShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun instancedTexturedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedTexturedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun instancedTexturedTintedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedTexturedTintedShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun instancedTexturedTintedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedTexturedTintedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun texturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun texturedShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun texturedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun texturedSolidShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslTrailShaderKt {
@@ -362,6 +399,12 @@ public final class com/awakekt/awake/asset/shaderpack/LitShadowUniformLayoutKt {
 	public static final fun getLitShadowUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/MobileRenderPlansKt {
+	public static final fun forMobileSimpleLit (Lcom/awakekt/awake/asset/shaders/RenderPlan;Z)Lcom/awakekt/awake/asset/shaders/RenderPlan;
+	public static synthetic fun forMobileSimpleLit$default (Lcom/awakekt/awake/asset/shaders/RenderPlan;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/RenderPlan;
+	public static final fun withoutSurfaceDeposit (Lcom/awakekt/awake/asset/shaders/RenderPlan;)Lcom/awakekt/awake/asset/shaders/RenderPlan;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/OutlineContentFeatureKt {
 	public static final fun outlineContentFeature ()Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
@@ -383,11 +426,17 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getInfiniteGrid ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstanced ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedMaskedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedTexturedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedTexturedSimpleLit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedTexturedTinted ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedTexturedTintedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedTexturedTintedSimpleLit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getLitShadow ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getLitShadowNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getMaskedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getParticle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getParticleShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -395,11 +444,15 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinned ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedInstanced ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedInstancedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedInstancedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedMaskedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedTexturedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedTexturedSimpleLit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkyboxCubemap ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSprite ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -410,6 +463,8 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrainShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTexturedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTexturedSimpleLit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTrail ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getWorldText ()Lcom/awakekt/awake/asset/shaders/ShaderSet;

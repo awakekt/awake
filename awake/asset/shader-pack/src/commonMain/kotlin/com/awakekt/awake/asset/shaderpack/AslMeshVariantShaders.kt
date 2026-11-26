@@ -74,6 +74,7 @@ private fun meshVariant(
     instanced: Boolean,
     skinned: Boolean,
     allowDiscard: Boolean = true,
+    includeSurfaceDeposit: Boolean = true,
 ): AslShaderDefinition =
     shader(name) {
         val u = uniformBlock(
@@ -170,6 +171,7 @@ private fun meshVariant(
         }
 
         val ambient = const("AMBIENT_STRENGTH", 0.35f)
+        val depositNoise = if (includeSurfaceDeposit) declareSurfaceDepositNoise() else null
 
         fragment {
             val n = let("n", normalize(normal))
@@ -184,7 +186,9 @@ private fun meshVariant(
             // Colours here are display-referred, lit as stored; the transform decodes them first.
             val output = if (tint != null && glow != null) {
                 val stored = variable("stored", rgb * tint.xyz)
-                applyUnlitSurfaceDeposit(stored, n, depositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = skinned)
+                if (includeSurfaceDeposit) {
+                    applyUnlitSurfaceDeposit(stored, n, depositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = skinned, simplexFn = depositNoise)
+                }
                 val lit = stored * shade
                 val v = let("v", normalize(cameraPosition.xyz - fragWorldPos))
                 val metallic = let("metallic", clamp(pbrFactors!!.x, 0f.lit, 1f.lit))
@@ -204,7 +208,9 @@ private fun meshVariant(
                 val shaded = vec4(select(litShaded, displayTransform.unlit(stored), pbrFactors.w gt UNLIT_THRESHOLD.lit), tint.w)
                 skinnedDebugColor(debug!!, debugVaryings!!, n, stored, displayTransform, exposure, shaded)
             } else {
-                applyUnlitSurfaceDeposit(rgb, n, depositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = skinned)
+                if (includeSurfaceDeposit) {
+                    applyUnlitSurfaceDeposit(rgb, n, depositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = skinned, simplexFn = depositNoise)
+                }
                 val lit = rgb * shade
                 val fogged = applySceneFog(
                     displayTransform.displayReferred(lit, exposure.x),
@@ -221,8 +227,13 @@ private fun meshVariant(
     }
 
 @Suppress("LongMethod")
-private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
-    shader(if (allowDiscard) "skinned_textured" else "skinned_textured_solid") {
+private fun skinnedTextured(
+    allowDiscard: Boolean = true,
+    includeSurfaceDeposit: Boolean = true,
+): AslShaderDefinition =
+    shader(
+        "skinned_textured" + (if (includeSurfaceDeposit) "" else "_nodeposit") + if (allowDiscard) "" else "_solid",
+    ) {
         val u = uniformBlock(
             "Uniforms",
             group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -241,6 +252,7 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
         val exposure = exposureAndFade(frame, handles)
         val debug = SkinnedDebugInputs(frame::value)
         val displayTransform = sceneDisplayTransform()
+        val depositNoise = if (includeSurfaceDeposit) declareSurfaceDepositNoise() else null
 
         val matGroup = BindingLayout.Standard.slot(BindingSemantic.Material)
         val baseColorTexture by texture2d(group = matGroup, binding = 1)
@@ -369,7 +381,9 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
                     val unlitV = let("unlitV", normalize(cameraPosition.xyz - worldPos))
                     assign(unlitRgb, unlitSignedChrome(stored, unlitN, unlitV, glow.w))
                 }
-                applyUnlitSurfaceDeposit(unlitRgb, unlitN, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true)
+                if (includeSurfaceDeposit) {
+                    applyUnlitSurfaceDeposit(unlitRgb, unlitN, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true, simplexFn = depositNoise)
+                }
                 assign(finalColor, vec4(displayTransform.unlit(unlitRgb), alpha))
             }
 
@@ -391,7 +405,9 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
                 val emissive = let("emissive", emissiveMask * glow.xyz)
 
                 val n = variable("n", perturbNormal(normalize(normal), dPosDx, dPosDy, dUvDx, dUvDy, tangentNormal))
-                applyLitSurfaceDeposit(albedo, metallic, roughness, n, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true)
+                if (includeSurfaceDeposit) {
+                    applyLitSurfaceDeposit(albedo, metallic, roughness, n, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true, simplexFn = depositNoise)
+                }
                 val l = let("l", normalize(frame.value("lightDirection").xyz))
                 val v = let("v", normalize(cameraPosition.xyz - worldPos))
                 val h = let("h", normalize(v + l))
@@ -450,7 +466,9 @@ private fun skinnedTextured(allowDiscard: Boolean = true): AslShaderDefinition =
                 val shadedRgb = variable("shadedRgb", litShaded)
                 iff(materialUnlit) {
                     val unlitReflected = variable("debugUnlitRgb", unlitSignedChrome(stored, n, v, glow.w))
-                    applyUnlitSurfaceDeposit(unlitReflected, n, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true)
+                    if (includeSurfaceDeposit) {
+                        applyUnlitSurfaceDeposit(unlitReflected, n, localDepositPos, cameraPosition, surfaceDeposit, drawFade, characterScale = true, simplexFn = depositNoise)
+                    }
                     assign(shadedRgb, displayTransform.unlit(unlitReflected))
                 }
                 val shaded = vec4(shadedRgb, alpha)
@@ -479,7 +497,7 @@ private fun sunShade(ambient: AslExpr, diffuse: AslExpr, lightColor: AslExpr): A
     ambient + (1f.lit - ambient) * diffuse * lightColor.xyz
 
 /** The single-draw skinned block's point-light slots: position with range in `w`, and colour. */
-private class SkinnedPointLights(array: (String) -> AslArrayHandle) {
+internal class SkinnedPointLights(array: (String) -> AslArrayHandle) {
     val positions = array("pointLightPositions")
     val colors = array("pointLightColors")
 }
@@ -506,7 +524,7 @@ private fun AslBlockBuilder.addPointLights(shade: AslExpr, ambient: AslExpr, nor
 private const val POINT_EPSILON = 0.0001f
 
 /** What the frame block holds for the skinned debug views: the scene's sun, the eye, the view and the joint. */
-private class SkinnedDebugInputs(value: (String) -> AslExpr) {
+internal class SkinnedDebugInputs(value: (String) -> AslExpr) {
     val lightDirection = value("lightDirection")
     val lightColor = value("lightColor")
     val cameraPosition = value("cameraPosition")
@@ -515,7 +533,7 @@ private class SkinnedDebugInputs(value: (String) -> AslExpr) {
 }
 
 /** The varyings the debug views read, from [firstLocation] on: world position, joint colour and the selected joint's weight. */
-private class SkinnedDebugVaryings(out: AslVaryings, firstLocation: Int) {
+internal class SkinnedDebugVaryings(out: AslVaryings, firstLocation: Int) {
     val worldPosition by out.varying(GpuDataShape.Vec3, location = firstLocation)
     val jointColor by out.varying(GpuDataShape.Vec3, location = firstLocation + 1)
     val jointWeight by out.varying(GpuDataShape.Float, location = firstLocation + 2)
@@ -533,7 +551,7 @@ private class SkinnedDebugVaryings(out: AslVaryings, firstLocation: Int) {
  * clay is lit by the scene's sun. These shaders sample no shadow, so clay's sun is unshadowed.
  */
 @Suppress("LongParameterList") // The fragment's own values; the inputs and varyings are grouped already.
-private fun AslBlockBuilder.skinnedDebugColor(
+internal fun AslBlockBuilder.skinnedDebugColor(
     inputs: SkinnedDebugInputs,
     varyings: SkinnedDebugVaryings,
     normal: AslExpr,
@@ -566,14 +584,41 @@ val InstancedShader: AslShaderDefinition = meshVariant("instanced", instanced = 
 /** Shader definition for skinned skeletal mesh rendering with lighting and shadows. */
 val SkinnedShader: AslShaderDefinition = meshVariant("skinned", instanced = false, skinned = true)
 
+/** [SkinnedShader] with optional dynamic surface-deposit math (`includeSurfaceDeposit = false` omits Simplex noise). */
+fun skinnedShader(includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    meshVariant(
+        if (includeSurfaceDeposit) "skinned" else "skinned_nodeposit",
+        instanced = false,
+        skinned = true,
+        includeSurfaceDeposit = includeSurfaceDeposit,
+    )
+
 /** Discard-free opaque companion of [SkinnedShader]. */
 val SkinnedSolidShader: AslShaderDefinition = meshVariant("skinned_solid", instanced = false, skinned = true, allowDiscard = false)
+
+/** [SkinnedSolidShader] with optional dynamic surface-deposit math. */
+fun skinnedSolidShader(includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    meshVariant(
+        if (includeSurfaceDeposit) "skinned_solid" else "skinned_nodeposit_solid",
+        instanced = false,
+        skinned = true,
+        allowDiscard = false,
+        includeSurfaceDeposit = includeSurfaceDeposit,
+    )
 
 /** Shader definition for skinned skeletal mesh rendering with diffuse texturing and shadows. */
 val SkinnedTexturedShader: AslShaderDefinition = skinnedTextured()
 
+/** [SkinnedTexturedShader] with optional dynamic surface-deposit math. */
+fun skinnedTexturedShader(includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    skinnedTextured(includeSurfaceDeposit = includeSurfaceDeposit)
+
 /** Discard-free opaque companion of [SkinnedTexturedShader]. */
 val SkinnedTexturedSolidShader: AslShaderDefinition = skinnedTextured(allowDiscard = false)
+
+/** [SkinnedTexturedSolidShader] with optional dynamic surface-deposit math. */
+fun skinnedTexturedSolidShader(includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    skinnedTextured(allowDiscard = false, includeSurfaceDeposit = includeSurfaceDeposit)
 
 /** Shader definition for instanced and skinned skeletal mesh rendering with shadows. */
 val SkinnedInstancedShader: AslShaderDefinition =

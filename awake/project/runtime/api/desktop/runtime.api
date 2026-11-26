@@ -237,6 +237,7 @@ public final class com/awakekt/awake/project/runtime/ProjectOpenIssueKind : java
 }
 
 public final class com/awakekt/awake/project/runtime/ProjectRenderPlanKt {
+	public static final fun getMobileProjectRenderPlan ()Lcom/awakekt/awake/asset/shaders/RenderPlan;
 	public static final fun getProjectRenderPlan ()Lcom/awakekt/awake/asset/shaders/RenderPlan;
 }
 

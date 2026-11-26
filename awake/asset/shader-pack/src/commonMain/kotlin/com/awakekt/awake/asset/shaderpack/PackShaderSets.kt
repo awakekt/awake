@@ -35,6 +35,10 @@ object PackShaderSets {
     /** Standard lit mesh shader set with directional light and cascaded shadow maps. */
     val LitShadow = aslShaderSet(::litShadowShader).withSolidOpaque(aslShaderSet(::litShadowSolidShader))
 
+    /** [LitShadow] without procedural surface-deposit Simplex noise for scenes/tiers without weather deposits. */
+    val LitShadowNoDeposit = aslShaderSet { litShadowShader(it, 0.08f, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { litShadowSolidShader(it, 0.08f, includeSurfaceDeposit = false) })
+
     /** Shadow depth pass shader set for rigid static meshes. */
     val ShadowDepth = aslShaderSet(ShadowDepthShader)
 
@@ -71,25 +75,69 @@ object PackShaderSets {
     /** Diffuse textured static mesh shader set with lighting and shadows. */
     val Textured = aslShaderSet(::texturedShader).withSolidOpaque(aslShaderSet(::texturedSolidShader))
 
+    /** [Textured] without procedural surface-deposit Simplex noise. */
+    val TexturedNoDeposit = aslShaderSet { texturedShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { texturedSolidShader(it, includeSurfaceDeposit = false) })
+
+    /** Lean mobile textured static mesh shader set (1 albedo fetch, no TBN/PBR fetches, no deposit noise). */
+    val TexturedSimpleLit = aslShaderSet { simpleLitTexturedShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { simpleLitTexturedSolidShader(it, includeSurfaceDeposit = false) })
+
     /** Instanced diffuse textured mesh shader set with lighting and shadows. */
     val InstancedTextured = aslShaderSet(::instancedTexturedShader).withSolidOpaque(aslShaderSet(::instancedTexturedSolidShader))
+
+    /** [InstancedTextured] without procedural surface-deposit Simplex noise. */
+    val InstancedTexturedNoDeposit = aslShaderSet { instancedTexturedShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { instancedTexturedSolidShader(it, includeSurfaceDeposit = false) })
+
+    /** Lean mobile instanced textured mesh shader set (1 albedo fetch, no TBN/PBR fetches). */
+    val InstancedTexturedSimpleLit = aslShaderSet { instancedSimpleLitTexturedShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { instancedSimpleLitTexturedSolidShader(it, includeSurfaceDeposit = false) })
 
     /** [InstancedTextured] with a tint and fade per instance, for `PipelineVariant.InstancedTinted`. */
     val InstancedTexturedTinted =
         aslShaderSet(::instancedTexturedTintedShader).withSolidOpaque(aslShaderSet(::instancedTexturedTintedSolidShader))
 
+    /** [InstancedTexturedTinted] without procedural surface-deposit Simplex noise. */
+    val InstancedTexturedTintedNoDeposit = aslShaderSet { instancedTexturedTintedShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { instancedTexturedTintedSolidShader(it, includeSurfaceDeposit = false) })
+
+    /** Lean mobile instanced tinted textured mesh shader set (1 albedo fetch, no TBN/PBR fetches). */
+    val InstancedTexturedTintedSimpleLit = aslShaderSet { instancedSimpleLitTexturedTintedShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { instancedSimpleLitTexturedTintedSolidShader(it, includeSurfaceDeposit = false) })
+
     /** Instanced static mesh shader set with lighting and shadows. */
     val Instanced = aslShaderSet(::instancedLitShadowShader).withSolidOpaque(aslShaderSet(::instancedLitShadowSolidShader))
+
+    /** [Instanced] without procedural surface-deposit Simplex noise. */
+    val InstancedNoDeposit = aslShaderSet { instancedLitShadowShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { instancedLitShadowSolidShader(it, includeSurfaceDeposit = false) })
 
     /** Skinned skeletal mesh shader set with lighting and shadows. */
     val Skinned = aslShaderSet(SkinnedShader).withSolidOpaque(aslShaderSet(SkinnedSolidShader))
 
+    /** [Skinned] without procedural surface-deposit Simplex noise. */
+    val SkinnedNoDeposit = aslShaderSet(skinnedShader(includeSurfaceDeposit = false))
+        .withSolidOpaque(aslShaderSet(skinnedSolidShader(includeSurfaceDeposit = false)))
+
     /** Skinned skeletal mesh shader set with diffuse texturing and shadows. */
     val SkinnedTextured = aslShaderSet(SkinnedTexturedShader).withSolidOpaque(aslShaderSet(SkinnedTexturedSolidShader))
+
+    /** [SkinnedTextured] without procedural surface-deposit Simplex noise. */
+    val SkinnedTexturedNoDeposit = aslShaderSet(skinnedTexturedShader(includeSurfaceDeposit = false))
+        .withSolidOpaque(aslShaderSet(skinnedTexturedSolidShader(includeSurfaceDeposit = false)))
+
+    /** Lean mobile skinned textured mesh shader set (1 albedo fetch, no TBN/PBR fetches, no deposit noise). */
+    val SkinnedTexturedSimpleLit = aslShaderSet(skinnedSimpleLitTexturedShader(includeSurfaceDeposit = false))
+        .withSolidOpaque(aslShaderSet(skinnedSimpleLitTexturedSolidShader(includeSurfaceDeposit = false)))
 
     /** Instanced skinned skeletal mesh shader set with lighting and shadows. */
     val SkinnedInstanced =
         aslShaderSet(::skinnedInstancedLitShadowShader).withSolidOpaque(aslShaderSet(::skinnedInstancedLitShadowSolidShader))
+
+    /** [SkinnedInstanced] without procedural surface-deposit Simplex noise. */
+    val SkinnedInstancedNoDeposit = aslShaderSet { skinnedInstancedLitShadowShader(it, includeSurfaceDeposit = false) }
+        .withSolidOpaque(aslShaderSet { skinnedInstancedLitShadowSolidShader(it, includeSurfaceDeposit = false) })
 
     /** Procedural gradient skybox shader set with celestial bodies. */
     val Skybox = aslShaderSet(SkyboxShader)

@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslExpr
@@ -188,6 +190,7 @@ val InstancedMaskedTexturedDepthShader: AslShaderDefinition = maskedTexturedDept
  * @param shaderName Emitted shader definition name.
  * @param ambientStrength How much of the surface colour shows with no light on it.
  * @param allowDiscard Whether to emit alpha-cutout and dither-fade discards; `false` builds the Early-Z solid opaque variant.
+ * @param includeSurfaceDeposit Whether to emit dynamic surface-deposit accumulation math (`false` omits Simplex noise).
  */
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun litShadow(
@@ -197,6 +200,7 @@ private fun litShadow(
     shaderName: String = "lit_shadow",
     ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH,
     allowDiscard: Boolean = true,
+    includeSurfaceDeposit: Boolean = true,
 ): AslShaderDefinition = shader(shaderName) {
     val u = shadowUniforms(includeLitTail = true)
     val shadowMap by textureDepth2dArray(
@@ -425,6 +429,7 @@ private fun litShadow(
         val fogAmount = let("fogAmount", fogAmount(dist, u.fogColor!!, u.fogRange!!))
         returnValue(mix(baseColor, u.fogColor.rgb, saturate(fogAmount)))
     }
+    val depositNoise = if (includeSurfaceDeposit) declareSurfaceDepositNoise() else null
 
     fragment {
         val rgb = variable("baseRgb", if (skinned) color.xyz else color)
@@ -432,17 +437,20 @@ private fun litShadow(
         val metallic = variable("metallic", clamp(u.material!!.x, 0f.lit, 1f.lit))
         // Floored roughness: perfectly smooth GGX aliases into a single-pixel highlight.
         val roughness = variable("roughness", clamp(u.material.y, minRoughness, 1f.lit))
-        applyLitSurfaceDeposit(
-            rgb,
-            metallic,
-            roughness,
-            n,
-            worldPos,
-            u.cameraPosition!!,
-            u.surfaceDepositUniforms(),
-            u.drawFade!!,
-            characterScale = skinned,
-        )
+        if (includeSurfaceDeposit) {
+            applyLitSurfaceDeposit(
+                rgb,
+                metallic,
+                roughness,
+                n,
+                worldPos,
+                u.cameraPosition,
+                u.surfaceDepositUniforms(),
+                u.drawFade!!,
+                characterScale = skinned,
+                simplexFn = depositNoise,
+            )
+        }
         val directionalLength = let("directionalLength", length(u.lightDirection.xyz))
         val directionalEnabled = let("directionalEnabled", directionalLength gt epsilon)
         val l = let(
@@ -532,9 +540,9 @@ private fun litShadow(
             jointWeights = joint?.jointColor,
         )
         // Encode before writing -- the swapchain is _UNORM and nothing downstream encodes.
-        val shaded = vec4(applyFog(displayTransform.display(ambientColor + direct, u.exposure!!.x), worldPos), 1f.lit)
+        val shaded = vec4(applyFog(displayTransform.display(ambientColor + direct, u.exposure.x), worldPos), 1f.lit)
         val debugColor = debugViewColor(u.debugView!!, u.cameraPosition, surface, shaded)
-        if (allowDiscard) ditherFade(u.exposure!!.y)
+        if (allowDiscard) ditherFade(u.exposure.y)
         colorOutput(if (skinned) vec4(debugColor.xyz, color.w) else debugColor)
     }
 }
@@ -548,9 +556,34 @@ private fun litShadow(
 fun litShadowShader(clipSpace: ClipSpace, ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH): AslShaderDefinition =
     litShadow(clipSpace, ambientStrength = ambientStrength)
 
+/** [litShadowShader] with optional dynamic surface-deposit math (`includeSurfaceDeposit = false` omits Simplex noise). */
+fun litShadowShader(
+    clipSpace: ClipSpace,
+    ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH,
+    includeSurfaceDeposit: Boolean,
+): AslShaderDefinition = litShadow(
+    clipSpace,
+    shaderName = if (includeSurfaceDeposit) "lit_shadow" else "lit_shadow_nodeposit",
+    ambientStrength = ambientStrength,
+    includeSurfaceDeposit = includeSurfaceDeposit,
+)
+
 /** Discard-free opaque companion of [litShadowShader] for hardware Early-Z / Forward Pixel Kill. */
 fun litShadowSolidShader(clipSpace: ClipSpace, ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH): AslShaderDefinition =
     litShadow(clipSpace, shaderName = "lit_shadow_solid", ambientStrength = ambientStrength, allowDiscard = false)
+
+/** [litShadowSolidShader] with optional dynamic surface-deposit math. */
+fun litShadowSolidShader(
+    clipSpace: ClipSpace,
+    ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH,
+    includeSurfaceDeposit: Boolean,
+): AslShaderDefinition = litShadow(
+    clipSpace,
+    shaderName = if (includeSurfaceDeposit) "lit_shadow_solid" else "lit_shadow_nodeposit_solid",
+    ambientStrength = ambientStrength,
+    allowDiscard = false,
+    includeSurfaceDeposit = includeSurfaceDeposit,
+)
 
 private const val DEFAULT_AMBIENT_STRENGTH = 0.08f
 
@@ -558,17 +591,57 @@ private const val DEFAULT_AMBIENT_STRENGTH = 0.08f
 fun instancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
     litShadow(clipSpace, instanced = true, shaderName = "instanced_lit_shadow")
 
+/** [instancedLitShadowShader] with optional dynamic surface-deposit math. */
+fun instancedLitShadowShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    litShadow(
+        clipSpace,
+        instanced = true,
+        shaderName = if (includeSurfaceDeposit) "instanced_lit_shadow" else "instanced_lit_shadow_nodeposit",
+        includeSurfaceDeposit = includeSurfaceDeposit,
+    )
+
 /** Discard-free opaque companion of [instancedLitShadowShader]. */
 fun instancedLitShadowSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
     litShadow(clipSpace, instanced = true, shaderName = "instanced_lit_shadow_solid", allowDiscard = false)
+
+/** [instancedLitShadowSolidShader] with optional dynamic surface-deposit math. */
+fun instancedLitShadowSolidShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    litShadow(
+        clipSpace,
+        instanced = true,
+        shaderName = if (includeSurfaceDeposit) "instanced_lit_shadow_solid" else "instanced_lit_shadow_nodeposit_solid",
+        allowDiscard = false,
+        includeSurfaceDeposit = includeSurfaceDeposit,
+    )
 
 /** Shadowed scene variant for skinned instance transforms. */
 fun skinnedInstancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
     litShadow(clipSpace, instanced = true, skinned = true, shaderName = "skinned_instanced_lit_shadow")
 
+/** [skinnedInstancedLitShadowShader] with optional dynamic surface-deposit math. */
+fun skinnedInstancedLitShadowShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    litShadow(
+        clipSpace,
+        instanced = true,
+        skinned = true,
+        shaderName = if (includeSurfaceDeposit) "skinned_instanced_lit_shadow" else "skinned_instanced_lit_shadow_nodeposit",
+        includeSurfaceDeposit = includeSurfaceDeposit,
+    )
+
 /** Discard-free opaque companion of [skinnedInstancedLitShadowShader]. */
 fun skinnedInstancedLitShadowSolidShader(clipSpace: ClipSpace): AslShaderDefinition =
     litShadow(clipSpace, instanced = true, skinned = true, shaderName = "skinned_instanced_lit_shadow_solid", allowDiscard = false)
+
+/** [skinnedInstancedLitShadowSolidShader] with optional dynamic surface-deposit math. */
+fun skinnedInstancedLitShadowSolidShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean): AslShaderDefinition =
+    litShadow(
+        clipSpace,
+        instanced = true,
+        skinned = true,
+        shaderName = if (includeSurfaceDeposit) "skinned_instanced_lit_shadow_solid" else "skinned_instanced_lit_shadow_nodeposit_solid",
+        allowDiscard = false,
+        includeSurfaceDeposit = includeSurfaceDeposit,
+    )
 
 /** The varying [com.awakekt.awake.render.passes.uniforms.RenderDebugView.JointWeights] reads on a skinned mesh. */
 private class JointColorVarying(out: AslVaryings, location: Int) {
