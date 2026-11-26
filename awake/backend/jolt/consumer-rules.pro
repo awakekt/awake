@@ -11,3 +11,7 @@
 # jolt-jni's desktop jar names a test class in its module-info, testjoltjni.app.helloworld.HelloWorld,
 # that the jar doesn't ship. ProGuard fails a build on that unresolved reference.
 -dontwarn testjoltjni.**
+
+# JoltNativeQueryOps calls MethodHandle.invokeExact, whose @PolymorphicSignature descriptors are
+# synthesized by the compiler and do not exist as concrete methods in java.lang.invoke.MethodHandle.
+-dontwarn java.lang.invoke.MethodHandle
