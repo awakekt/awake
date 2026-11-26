@@ -1,0 +1,1 @@
+Added `:awake:player` (`com.awakekt.awake:player`), a standalone Kotlin Multiplatform runtime for playing full Awake projects or single declarative `.scene.json` scenes without Awake Studio, along with Core-owned prebuilt player shells (`:awake:player:player-shell`, `:awake:player:player-android`), macOS packaging script, and the `Prebuilt players` release workflow.

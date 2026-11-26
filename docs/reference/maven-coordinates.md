@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 115 | Existing root `v*` tags and the shared Core release train |
+| Core | 116 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -153,6 +153,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.net:server-ktor` | `:awake:net:server-ktor` | `core` | `api` → `:awake:net:api`; `api` → `:awake:ecs` |
 | `com.awakekt.awake.physics:api` | `:awake:physics:api` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry` |
 | `com.awakekt.awake.physics:ragdoll` | `:awake:physics:ragdoll` | `core` | `api` → `:awake:physics:api`; `api` → `:awake:core:animation`; `api` → `:awake:core:math` |
+| `com.awakekt.awake:player` | `:awake:player` | `core` | `api` → `:awake:project:runtime`; `api` → `:awake:engine:bootstrap`; `api` → `:awake:engine:platform`; `api` → `:awake:core:io`; `api` → `:awake:core:input`; `api` → `:awake:core:localization`; `api` → `:awake:physics:api`; `api` → `:awake:scene:authoring`; `api` → `:awake:scene:runtime`; `implementation` → `:awake:backend:jolt`; `implementation` → `:awake:core:host`; `implementation` → `:awake:ecs`; `implementation` → `:awake:scene:binding`; `implementation` → `:awake:scene:controls`; `implementation` → `:awake:compose:ui` |
 | `com.awakekt.awake:plugin-archive` | `:awake:plugin-archive` | `core` | — |
 | `com.awakekt.awake:project` | `:awake:project` | `core` | — |
 | `com.awakekt.awake.project:blueprint` | `:awake:project:blueprint` | `core` | `api` → `:awake:project:runtime`; `api` → `:awake:scene:blueprint` |

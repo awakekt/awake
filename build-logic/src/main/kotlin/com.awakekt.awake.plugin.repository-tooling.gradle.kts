@@ -33,9 +33,9 @@ val verifyFeatureLayering = tasks.register<VerifyFeatureLayeringTask>("verifyFea
             exclude("**/build/**")
         },
     )
-    // The scene wrappers, the modules that compose and run whole projects, and a benchmark harness that
+    // The scene wrappers, the modules that compose and run whole projects or scenes, and a benchmark harness that
     // measures the scene by design.
-    exemptModulePrefixes.set(listOf(":awake:scene", ":awake:project", ":awake:ecs:benchmark"))
+    exemptModulePrefixes.set(listOf(":awake:scene", ":awake:project", ":awake:player", ":awake:ecs:benchmark"))
 }
 
 // The task's name before capabilities became features: CI, docs and agent guides may still call it.

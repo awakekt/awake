@@ -30,8 +30,10 @@ apiValidation {
         "processor",
         // Every entry here is a sample or a build tool, except the two explained below.
         "tailwind-generator", "testing",
-        // The `awake` command line, an application rather than a library.
+        // The `awake` command line and prebuilt player shells, applications rather than libraries.
         "cli",
+        "player-shell",
+        "player-android",
         // Known limit: `webgpu` is published but unvalidated, because its `jvmToolchain(25)` (needed
         // for the FFM API) emits class-file major 69 and binary-compatibility-validator 0.17.0
         // bundles an ASM that cannot read it -- `desktopApiBuild` dies with "Unsupported class

@@ -1,0 +1,276 @@
+name: Prebuilt players
+
+# Builds the prebuilt Awake Players directly from Core's `:awake:player:player-shell` and
+# `:awake:player:player-android` modules at the exact commit of a Core release:
+# - web-player.zip (stored zip, WebGPU browser player + Basis transcoder)
+# - android-player.apk (unsigned R8-shrunk arm64-v8a + x86_64 base APK)
+# - macos-arm64-player.zip (self-contained Apple Silicon AwakePlayer.app)
+#
+# Runs automatically after a Core `Publish` workflow succeeds on a `v*` tag, or on demand via
+# workflow_dispatch. Uploads the assets to the Core `v<version>` GitHub Release (or `player-<ref>`)
+# and mirrors `player/<version>/` additively to Cloudflare R2 (https://maven.awakekt.com/) when
+# configured so browser Studio exports have CORS-enabled downloads without GitHub Pages quota limits.
+
+on:
+  workflow_run:
+    workflows: [Publish]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git tag or branch to build prebuilt players from (blank: default branch)'
+        required: false
+      release_tag:
+        description: 'Release tag to attach assets to (blank: derived from tag or player-<version>)'
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prebuilt-players
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '17'
+  R2_BUCKET: awake-maven
+  R2_PUBLIC_URL: https://maven.awakekt.com/
+
+jobs:
+  resolve:
+    name: Resolve
+    runs-on: ubuntu-latest
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+      }}
+    outputs:
+      build: ${{ steps.pick.outputs.build }}
+      ref: ${{ steps.pick.outputs.ref }}
+      version: ${{ steps.pick.outputs.version }}
+      release_tag: ${{ steps.pick.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Pick release ref and version
+        id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          IN_REF: ${{ inputs.ref }}
+          IN_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ "$EVENT" == workflow_dispatch ]]; then
+            ref="${IN_REF:-$GITHUB_SHA}"
+            tag=$(git tag -l 'v[0-9]*' --points-at "$ref" | head -n 1 || true)
+            if [[ -n "$tag" ]]; then
+              version="${tag#v}"
+              release_tag="${IN_TAG:-$tag}"
+            else
+              short=$(git rev-parse --short "$ref")
+              version="${IN_TAG:-dev-$short}"
+              version="${version#v}"
+              release_tag="${IN_TAG:-player-$version}"
+            fi
+            build=true
+          else
+            tag=$(git tag -l 'v[0-9]*' --points-at "$SHA" | head -n 1 || true)
+            if [[ -z "$tag" ]]; then
+              echo "::notice::$SHA carries no Core release tag; skipping prebuilt player build."
+              echo "build=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            ref="$SHA"
+            version="${tag#v}"
+            release_tag="$tag"
+            build=true
+          fi
+          echo "build=$build ref=$ref version=$version release_tag=$release_tag"
+          {
+            echo "build=$build"
+            echo "ref=$ref"
+            echo "version=$version"
+            echo "release_tag=$release_tag"
+          } >> "$GITHUB_OUTPUT"
+
+  build-web:
+    name: Build web player
+    needs: resolve
+    if: needs.resolve.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Build web player distribution
+        run: scripts/gradle-retry.sh ./gradlew :awake:player:player-shell:wasmJsBrowserDistribution --no-configuration-cache
+
+      # Stored, not deflated: browser Studio reads stored zips directly.
+      - name: Package web-player.zip
+        run: |
+          cd awake/player/player-shell/build/dist/wasmJs/productionExecutable
+          zip -q -0 -X -r "$GITHUB_WORKSPACE/web-player.zip" .
+          ls -lh "$GITHUB_WORKSPACE/web-player.zip"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: web-player
+          path: web-player.zip
+          retention-days: 1
+
+  build-android:
+    name: Build Android player
+    needs: resolve
+    if: needs.resolve.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+          submodules: recursive
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Install the Android NDK
+        run: |
+          version=$(sed -n 's/^ *ndkVersion = "\(.*\)"/\1/p' awake/backend/vulkan/bindings/android-native/build.gradle.kts)
+          test -n "$version"
+          (yes || true) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$version" > /dev/null
+
+      - name: Build Android player release APK
+        run: scripts/gradle-retry.sh ./gradlew :awake:player:player-android:assembleRelease -Pandroid.enableResourceOptimizations=false --no-configuration-cache
+
+      - name: Package unsigned base APK
+        run: |
+          src="awake/player/player-android/build/outputs/apk/release/player-android-release.apk"
+          test -f "$src"
+          cp "$src" "$GITHUB_WORKSPACE/android-player.apk"
+          zip -q -d "$GITHUB_WORKSPACE/android-player.apk" 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*.DSA' 'META-INF/*.EC' 'META-INF/MANIFEST.MF' || true
+          unzip -l "$GITHUB_WORKSPACE/android-player.apk" | grep -q 'AndroidManifest.xml'
+          unzip -l "$GITHUB_WORKSPACE/android-player.apk" | grep -qE 'res/mipmap-xxxhdpi[^/]*/ic_launcher\.png'
+          ls -lh "$GITHUB_WORKSPACE/android-player.apk"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-player
+          path: android-player.apk
+          retention-days: 1
+
+  build-macos:
+    name: Build macOS (Apple silicon) player
+    needs: resolve
+    if: needs.resolve.outputs.build == 'true'
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+          submodules: recursive
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Install Vulkan loader, MoltenVK and GLFW
+        run: brew install vulkan-loader molten-vk glfw
+
+      - name: Package macOS player
+        run: bash scripts/package-macos-player.sh "$GITHUB_WORKSPACE/macos-arm64-player.zip"
+
+      - name: Smoke test packaged AwakePlayer.app
+        run: |
+          work="$(mktemp -d)"
+          unzip -q "$GITHUB_WORKSPACE/macos-arm64-player.zip" -d "$work"
+          proj="$work/AwakePlayer.app/Contents/Resources/project"
+          mkdir -p "$proj/scenes"
+          cat > "$proj/awake.project.json" <<'EOF'
+          {"formatVersion":1,"id":"com.awakekt.smoke","name":"Core Player Smoke","version":"1.0.0","entryScene":"scenes/main.scene.json"}
+          EOF
+          cat > "$proj/scenes/main.scene.json" <<'EOF'
+          {"version":1,"name":"main","nodes":[{"name":"Camera","components":[{"component":"camera","eye":{"x":0,"y":5,"z":10},"center":{"x":0,"y":0,"z":0},"fovYDegrees":45,"near":0.1,"far":500,"primary":true}]}]}
+          EOF
+          output="$("$work/AwakePlayer.app/Contents/MacOS/AwakePlayer" --smoke-test)"
+          echo "$output"
+          grep -q 'AWAKE_PLAYER_OK' <<< "$output"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-arm64-player
+          path: macos-arm64-player.zip
+          retention-days: 1
+
+  publish:
+    name: Publish prebuilt players
+    needs: [resolve, build-web, build-android, build-macos]
+    if: needs.resolve.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: web-player
+          path: dist
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: android-player
+          path: dist
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: macos-arm64-player
+          path: dist
+
+      - name: Attach prebuilt players to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.release_tag }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          assets=(dist/web-player.zip dist/android-player.apk dist/macos-arm64-player.zip)
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" \
+              --title "Awake Core $VERSION (prebuilt players)" \
+              --notes "Prebuilt players (web-player.zip, android-player.apk, macos-arm64-player.zip) built directly from Awake Core $VERSION."
+          fi
+
+      - name: Mirror players additively to Cloudflare R2 (maven.awakekt.com)
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "::notice::Skipping Cloudflare R2 player mirror (${R2_PUBLIC_URL}player/${VERSION}/)."
+            exit 0
+          fi
+          endpoint="https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          aws --endpoint-url "$endpoint" s3 sync dist/ "s3://${R2_BUCKET}/player/${VERSION}/" \
+            --no-progress \
+            --cache-control "public, max-age=31536000, immutable"
+          echo "Mirrored prebuilt players to ${R2_PUBLIC_URL}player/${VERSION}/"
