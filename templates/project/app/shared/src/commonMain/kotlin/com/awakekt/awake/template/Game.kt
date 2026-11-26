@@ -1,20 +1,16 @@
 package com.awakekt.awake.template
 
-import com.awakekt.awake.core.host.readResourceBytes
-import com.awakekt.awake.core.input.CursorImage
-import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.localization.systemLocale
-import com.awakekt.awake.engine.bootstrap.dsl.app
-import com.awakekt.awake.engine.bootstrap.dsl.select
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
-import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
-import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
-import com.awakekt.awake.scene.authoring.scene
-import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.player.AwakePlayerConfig
+import com.awakekt.awake.player.LoadedPlayerGame
+import com.awakekt.awake.player.bundledProjectAssets
+import com.awakekt.awake.player.createPlayerApp
+import com.awakekt.awake.player.loadPlayerProject
 
 /** The window title. */
 const val GAME_TITLE = "Awake Project"
@@ -23,54 +19,36 @@ const val GAME_TITLE = "Awake Project"
  * The Awake project this app plays: everything under `project/` in the shared module's resources.
  * Replace that folder with a project from Awake Studio to play it instead of the sample.
  */
-val BundledProject = AssetSource { path -> runCatching { readResourceBytes("project/${path.value}") } }
+val BundledProject: AssetSource = bundledProjectAssets()
 
 /** What the app needs before its first frame: the project and the text its overlay shows. */
-class GameData(val project: LoadedProject, val strings: Strings)
+class GameData(val game: LoadedPlayerGame, val strings: Strings) : AutoCloseable by game
 
 /**
  * Reads the bundled project and its entry scene, and its string tables (`project/strings/<tag>.json`)
  * in the device's language, falling back to English when the project has no table for it.
  */
-suspend fun loadGame(): GameData = GameData(
-    project = loadProject(BundledProject, physicsWorld = ::createJoltPhysicsWorld),
-    strings = Strings.load(StringTableSource.assets(BundledProject), locale = systemLocale()),
-)
+suspend fun loadGame(): GameData {
+    val strings = Strings.load(StringTableSource.assets(BundledProject), locale = systemLocale())
+    val game = loadPlayerProject(
+        source = BundledProject,
+        config = AwakePlayerConfig(windowTitle = GAME_TITLE),
+        strings = strings,
+    )
+    return GameData(game = game, strings = strings)
+}
 
-/** Creates a fresh application lifecycle that plays [game]; [touchControls] shows its on-screen controls. */
+/** Creates a fresh application lifecycle that plays [data]; [touchControls] shows its on-screen controls. */
 fun createGame(
-    game: GameData,
+    data: GameData,
     windowBackend: AppWindowBackend = AppWindowBackend.VULKAN,
     touchControls: Boolean = false,
-): AwakeAppLifecycle = app {
-    window {
-        title = GAME_TITLE
-        size(1280, 720)
-        backend.select(windowBackend)
-    }
-    scene("game") {
-        runProject(game.project, touchControls)
-        ui { Hud(game.strings) }
-    }
-}
-
-/**
- * The pointer shape [game]'s UI asks for each frame, such as a text beam over a text field. The
- * desktop window and the browser canvas show it when their host is given it as `cursor`; without it
- * they keep the default arrow.
- */
-fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor {
-    val runtime = game.requireService<SceneAppLifecycleRuntime>()
-    return { runtime.cursor }
-}
-
-/**
- * The custom cursor image [game] asks for each frame: the hovered UI node's
- * (`Modifier.pointerCursor(image)`), else the scene's own `cursorImage`, else `null`. While it is not
- * null the desktop window and the browser canvas show it, given it as `cursorImage`, over the
- * [pointerCursorOf] shape.
- */
-fun pointerCursorImageOf(game: AwakeAppLifecycle): () -> CursorImage? {
-    val runtime = game.requireService<SceneAppLifecycleRuntime>()
-    return { runtime.effectiveCursorImage }
-}
+): AwakeAppLifecycle = createPlayerApp(
+    game = data.game,
+    config = AwakePlayerConfig(
+        windowTitle = GAME_TITLE,
+        windowBackend = windowBackend,
+        touchControls = touchControls,
+    ),
+    overlay = { Hud(data.strings) },
+)

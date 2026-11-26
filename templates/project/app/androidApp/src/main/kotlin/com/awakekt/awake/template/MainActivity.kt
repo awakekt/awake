@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.awakekt.awake.engine.window.AwakeSurfaceView
+import com.awakekt.awake.project.runtime.ProjectRenderPlan
 import com.awakekt.awake.vulkan.application.VulkanEngine
 import kotlinx.coroutines.launch
 
@@ -13,7 +14,7 @@ class MainActivity : ComponentActivity() {
         // Reading the project happens off the main thread; the view appears once it's loaded.
         lifecycleScope.launch {
             val game = loadGame()
-            val engine = VulkanEngine(createGame(game, touchControls = true), AwakeRenderPlan)
+            val engine = VulkanEngine(createGame(game, touchControls = true), ProjectRenderPlan)
             setContentView(AwakeSurfaceView(this@MainActivity, engine))
         }
     }
