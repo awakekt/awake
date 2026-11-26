@@ -1,7 +1,9 @@
 public final class com/awakekt/awake/physics/jolt/JoltPhysicsWorld : com/awakekt/awake/physics/PhysicsWorld {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;Lcom/awakekt/awake/physics/PhysicsWorldConfig;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;Lcom/awakekt/awake/physics/PhysicsWorldConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun addImpulse-5Z1epPo (JLcom/awakekt/awake/core/math/Vec3f;)V
 	public fun applyBuoyancy-QB6aDRY (JFLcom/awakekt/awake/physics/Buoyancy;F)V
 	public fun createBody-KN-qpMI (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZ)J
@@ -27,11 +29,14 @@ public final class com/awakekt/awake/physics/jolt/JoltPhysicsWorld : com/awakekt
 	public fun shapeCast-KJBOitM (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/physics/ShapeCastHit;
 	public fun shiftOrigin (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public fun step (F)V
+	public fun trimMemory ()V
 	public fun visitBodyTransforms (Lcom/awakekt/awake/physics/BodyTransformVisitor;)V
 }
 
 public final class com/awakekt/awake/physics/jolt/JoltPhysicsWorldFactoryKt {
+	public static final fun createJoltPhysicsWorld (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;Lcom/awakekt/awake/physics/PhysicsWorldConfig;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun createJoltPhysicsWorld (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun createJoltPhysicsWorld$default (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;Lcom/awakekt/awake/physics/PhysicsWorldConfig;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun createJoltPhysicsWorld$default (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayers;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 

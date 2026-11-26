@@ -27,7 +27,18 @@ import com.awakekt.awake.scene.physics.ScenePhysicsBody
  * one reference share one shape. Throws [IllegalArgumentException] naming the model and the node when
  * a model can't be read or has no such primitive.
  */
-suspend fun loadCollisionMeshes(scene: SceneDocument, files: AssetSource): CollisionMeshSource {
+suspend fun loadCollisionMeshes(scene: SceneDocument, files: AssetSource): CollisionMeshSource =
+    loadCollisionMeshes(scene, files, maxCachedShapes = Int.MAX_VALUE)
+
+/**
+ * Overload of [loadCollisionMeshes] returning a [BoundedCollisionMeshCache] capped at
+ * [maxCachedShapes] entries (use [BoundedCollisionMeshCache.defaultMaxEntries] on streamed scenes).
+ */
+suspend fun loadCollisionMeshes(
+    scene: SceneDocument,
+    files: AssetSource,
+    maxCachedShapes: Int,
+): BoundedCollisionMeshCache {
     // Group references by model file so each glTF/GLB is parsed once, its collision shapes are
     // extracted immediately, and the full LoadedScene can be collected before the next model loads.
     val byModel = LinkedHashMap<String, MutableList<Pair<String, Int?>>>()
@@ -35,18 +46,19 @@ suspend fun loadCollisionMeshes(scene: SceneDocument, files: AssetSource): Colli
         val (meshPath, primitive) = modelRef
         byModel.getOrPut(meshPath) { mutableListOf() }.add(node to primitive)
     }
-    val shapes = HashMap<Pair<String, Int?>, MeshShape>()
+    val shapes = BoundedCollisionMeshCache(maxEntries = maxCachedShapes)
     for ((meshPath, refs) in byModel) {
         val firstNode = refs.first().first
         val model = suspendRunCatching { readGltfScene(meshPath, files) }.getOrElse { cause ->
             throw IllegalArgumentException("Can't load $meshPath, the collision mesh of node $firstNode: ${cause.message}", cause)
         }
         for ((node, primitive) in refs) {
-            val key = meshPath to primitive
-            if (key !in shapes) shapes[key] = model.collisionShape(meshPath, primitive, node)
+            if (shapes.meshShape(meshPath, primitive) == null) {
+                shapes.put(meshPath, primitive, model.collisionShape(meshPath, primitive, node))
+            }
         }
     }
-    return CollisionMeshSource { mesh, primitive -> shapes[mesh to primitive] }
+    return shapes
 }
 
 /** Every mesh and convex_hull collision shape under these nodes, with its node's path as scene validation writes it. */

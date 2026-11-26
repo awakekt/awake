@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.host.DeviceProfile
+import com.awakekt.awake.core.host.readDeviceProfile
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.FrameThreadGuard
@@ -436,6 +438,36 @@ class SceneAssetLibrary(
     /** Bytes currently held in released-but-kept meshes, for a test or a diagnostic. */
     fun retainedMeshBytes(): Long = retainedBytes
 
+    /**
+     * Destroys least-recently-released idle meshes until [retainedMeshBytes] is at most
+     * [targetBudgetBytes] (default `0`, releasing all idle retained meshes) without touching live
+     * held meshes.
+     *
+     * @param targetBudgetBytes Maximum retained bytes to keep after trimming; clamped to `>= 0`.
+     * @return Total mesh bytes freed by this trim pass.
+     */
+    fun trimRetainedMeshes(targetBudgetBytes: Long = 0L): Long {
+        val cap = targetBudgetBytes.coerceAtLeast(0L)
+        val before = retainedBytes
+        while (retainedBytes > cap && retainedMeshes.isNotEmpty()) {
+            val eldest = retainedMeshes.keys.first()
+            retainedMeshes.remove(eldest)?.let {
+                retainedBytes -= it.sizeBytes
+                it.destroy()
+            }
+        }
+        return (before - retainedBytes).coerceAtLeast(0L)
+    }
+
+    /**
+     * Releases all idle retained GPU meshes and notifies every installed [SceneAssetResolver] to
+     * drop unreferenced CPU caches. Called on the frame thread when host memory pressure fires.
+     */
+    fun trimMemory() {
+        trimRetainedMeshes(0L)
+        dynamicResolvers.forEach { it.trimMemory() }
+    }
+
     /** Whether [name] is released but still kept for reuse. */
     fun isMeshRetained(name: String): Boolean = name in retainedMeshes
 
@@ -637,6 +669,34 @@ class SceneAssetLibrary(
         meshHolders.clear()
         materialHolders.clear()
         resolvedRequests.clear()
+    }
+
+    /** Device-scaled retained-mesh budget recommendations for streamed scenes. */
+    companion object {
+        private const val FOUR_GIB_BYTES: Long = 4L * 1024L * 1024L * 1024L
+        private const val EIGHT_GIB_BYTES: Long = 8L * 1024L * 1024L * 1024L
+
+        /** Recommended retained idle mesh budget for low-RAM / 4 GB devices (8 MiB). */
+        const val LOW_RAM_RETAINED_MESH_BUDGET_BYTES: Long = 8L * 1024L * 1024L
+
+        /** Recommended retained idle mesh budget for mid-tier 4-8 GB devices (24 MiB). */
+        const val MID_RAM_RETAINED_MESH_BUDGET_BYTES: Long = 24L * 1024L * 1024L
+
+        /** Recommended retained idle mesh budget for high-RAM / desktop devices (64 MiB). */
+        const val HIGH_RAM_RETAINED_MESH_BUDGET_BYTES: Long = 64L * 1024L * 1024L
+
+        /**
+         * Returns a [DeviceProfile]-scaled default for [retainedMeshBudgetBytes] so streamed
+         * worlds keep bounded idle GPU mesh caches on 4 GB mobile devices.
+         */
+        fun defaultRetainedMeshBudgetBytes(profile: DeviceProfile = readDeviceProfile()): Long {
+            val total = profile.totalMemoryBytes
+            return when {
+                profile.isLowRamDevice || (total != null && total in 1L..FOUR_GIB_BYTES) -> LOW_RAM_RETAINED_MESH_BUDGET_BYTES
+                total != null && total <= EIGHT_GIB_BYTES -> MID_RAM_RETAINED_MESH_BUDGET_BYTES
+                else -> HIGH_RAM_RETAINED_MESH_BUDGET_BYTES
+            }
+        }
     }
 }
 

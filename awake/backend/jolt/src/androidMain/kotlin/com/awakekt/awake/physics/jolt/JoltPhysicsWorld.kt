@@ -29,6 +29,7 @@ import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsCapabilityException
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.PhysicsWorldConfig
 import com.awakekt.awake.physics.RaycastHit
 import com.awakekt.awake.physics.ScaledShape
 import com.awakekt.awake.physics.ShapeCastHit
@@ -56,6 +57,7 @@ import com.github.stephengold.joltjni.ShapeRefC
 import com.github.stephengold.joltjni.ShapeResult
 import com.github.stephengold.joltjni.SixDofConstraintSettings
 import com.github.stephengold.joltjni.TempAllocator
+import com.github.stephengold.joltjni.TempAllocatorImpl
 import com.github.stephengold.joltjni.TempAllocatorMalloc
 import com.github.stephengold.joltjni.TwoBodyConstraint
 import com.github.stephengold.joltjni.Vec3
@@ -182,9 +184,8 @@ private const val FLOATS_PER_TRIANGLE = VALUES_PER_VERTEX * INDICES_PER_TRIANGLE
 private const val NUM_BROADPHASE_LAYERS = 2
 private const val BROADPHASE_LAYER_STATIC = 0
 private const val BROADPHASE_LAYER_MOVING = 1
-private const val MAX_BODIES = 65_536
-private const val MAX_BODY_PAIRS = 65_536
-private const val MAX_CONTACTS = 20_480
+private const val MOBILE_MIN_WORKERS = 1
+private const val MOBILE_MAX_WORKERS = 2
 
 /**
  * jolt-jni-backed [PhysicsWorld] -- Android only (see `desktopMain`'s near-identical
@@ -194,6 +195,10 @@ private const val MAX_CONTACTS = 20_480
  * implementation -- there's no additional platform-neutral layer to extract without
  * reinventing jolt-jni's own API.
  *
+ * Defaults to [PhysicsWorldConfig.Mobile] (`8K` bodies, `8K` body pairs, `2K` contacts, `1-2`
+ * workers, fixed 2 MiB `TempAllocatorImpl`, and bounded `MeshShape` BVH cache) so 4 GB Android
+ * devices stay within mobile memory and core budgets.
+ *
  * Use a world from one thread at a time, as the loop that steps it does. Its queries share one set
  * of scratch objects, so two queries running at once on different threads would overwrite each
  * other's. A query an [overlapShape] callback makes is safe: that is handled.
@@ -202,7 +207,15 @@ private const val MAX_CONTACTS = 20_480
 class JoltPhysicsWorld(
     gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
     override val layers: CollisionLayers = CollisionLayers.Default,
+    config: PhysicsWorldConfig = PhysicsWorldConfig.Mobile,
 ) : PhysicsWorld {
+    /** Binary-compatibility constructor prior to [PhysicsWorldConfig]. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
+        layers: CollisionLayers = CollisionLayers.Default,
+    ) : this(gravity, layers, PhysicsWorldConfig.Mobile)
+
     private val shapeCastContacts = ShapeCastContactDecoder()
 
     // Companion object init always runs before any instance member -- the only ordering
@@ -214,13 +227,16 @@ class JoltPhysicsWorld(
         }
     }
 
+    internal val activeConfig: PhysicsWorldConfig = config
+    internal val workerThreadCount: Int
     private val physicsSystem: PhysicsSystem
 
     /** Kept for query filters: Jolt needs it again to answer "what would layer X hit". */
     private val objectLayerPairFilter: ObjectLayerPairFilterTable
     private val bodyInterface: BodyInterface
     private val queries: JoltQueryRunner
-    private val tempAllocator: TempAllocator = TempAllocatorMalloc()
+    private val tempAllocator: TempAllocator =
+        if (config.tempAllocatorBytes > 0) TempAllocatorImpl(config.tempAllocatorBytes) else TempAllocatorMalloc()
     private val jobSystem: JobSystem
 
     // Held in a field, not just handed to Jolt: the native side keeps a raw pointer to this Java
@@ -258,9 +274,11 @@ class JoltPhysicsWorld(
     private val shiftPosition = RVec3()
     private val shiftRotation = com.github.stephengold.joltjni.Quat()
 
-    // Built base MeshShape BVHs reused across unit-scale and ScaledShape placements in this world.
-    // Closed in destroy() so native memory is released deterministically with the world.
-    private val meshShapes = HashMap<MeshShape, ShapeRefC>()
+    // Refcounted + LRU-bounded base MeshShape BVHs reused across unit-scale and ScaledShape placements.
+    private val meshShapes = MeshShapeBvhCache(config.maxCachedMeshShapes)
+
+    /** Number of native `MeshShape` BVHs currently cached in this world, for tests and diagnostics. */
+    internal val cachedMeshShapeCount: Int get() = meshShapes.size
 
     init {
         objectLayerPairFilter = ObjectLayerPairFilterTable(layers.count).apply {
@@ -298,10 +316,10 @@ class JoltPhysicsWorld(
 
         physicsSystem = PhysicsSystem().apply {
             init(
-                MAX_BODIES,
+                config.maxBodies,
                 0,
-                MAX_BODY_PAIRS,
-                MAX_CONTACTS,
+                config.maxBodyPairs,
+                config.maxContactConstraints,
                 broadPhaseLayerInterface,
                 objectVsBroadPhaseLayerFilter,
                 // Qualified: PhysicsSystem has a getObjectLayerPairFilter() of its own, and inside
@@ -314,9 +332,13 @@ class JoltPhysicsWorld(
         bodyInterface = physicsSystem.bodyInterface
         queries = JoltQueryRunner(bodyInterface, physicsSystem.narrowPhaseQuery, shapeCastContacts)
 
-        val numWorkerThreads = Runtime.getRuntime().availableProcessors()
+        workerThreadCount = if (config.workerThreads > 0) {
+            config.workerThreads
+        } else {
+            (Runtime.getRuntime().availableProcessors() - 2).coerceIn(MOBILE_MIN_WORKERS, MOBILE_MAX_WORKERS)
+        }
         jobSystem =
-            JobSystemThreadPool(Jolt.cMaxPhysicsJobs, Jolt.cMaxPhysicsBarriers, numWorkerThreads)
+            JobSystemThreadPool(Jolt.cMaxPhysicsJobs, Jolt.cMaxPhysicsBarriers, workerThreadCount)
     }
 
     override fun createBody(
@@ -355,6 +377,7 @@ class JoltPhysicsWorld(
                 bodyInterface.addBody(body, activation)
 
                 trackedBodyIds.add(body.id)
+                resolved.cachedMeshShape?.let { meshShapes.attachBody(body.id, it) }
                 if (sensor) {
                     contacts.setReporting(body.id, true)
                     queries.addSensor(body.id)
@@ -362,8 +385,8 @@ class JoltPhysicsWorld(
                 return BodyHandle(body.id.toLong())
             }
         } finally {
-            // Cached base MeshShapes stay alive until destroy(); temporary handles are released once
-            // the body holds its own Jolt reference.
+            // Cached base MeshShapes stay alive while held or within LRU cap; temporary handles
+            // are released once the body holds its own Jolt reference.
             resolved.owned?.close()
         }
     }
@@ -388,15 +411,14 @@ class JoltPhysicsWorld(
             val built = convexShapeOf(shape)
             ResolvedShape(built, built as? AutoCloseable)
         }
-        is MeshShape -> ResolvedShape(cachedMeshShape(shape), owned = null)
+        is MeshShape -> ResolvedShape(meshShapes.acquire(shape), owned = null, cachedMeshShape = shape)
         is ScaledShape -> when (val inner = shape.shape) {
-            is MeshShape -> scaledShapeOf(cachedMeshShape(inner), shape.scale).let { ResolvedShape(it, it) }
+            is MeshShape -> scaledShapeOf(meshShapes.acquire(inner), shape.scale)
+                .let { ResolvedShape(it, it, cachedMeshShape = inner) }
             else -> convexShapeOf(shape).let { ResolvedShape(it, it as? AutoCloseable) }
         }
         is HeightFieldShape -> heightFieldShapeOf(shape).let { ResolvedShape(it, it) }
     }
-
-    private fun cachedMeshShape(shape: MeshShape): ShapeRefC = meshShapes.getOrPut(shape) { meshShapeOf(shape) }
 
     override fun destroyBody(handle: BodyHandle) {
         val id = handle.id.toInt()
@@ -406,6 +428,7 @@ class JoltPhysicsWorld(
         bodyInterface.removeBody(id)
         bodyInterface.destroyBody(id)
         trackedBodyIds.remove(id)
+        meshShapes.detachBody(id)
         queries.removeSensor(id)
         // Jolt hands the id back out to the next body created, which would inherit this one's
         // contact reporting.
@@ -705,6 +728,10 @@ class JoltPhysicsWorld(
 
     override fun drainContacts(action: (ContactEvent) -> Unit) = contacts.drain(action)
 
+    override fun trimMemory() {
+        meshShapes.trimUnused()
+    }
+
     override fun destroy() {
         constraints.keys.toList().forEach { destroyConstraint(ConstraintHandle(it)) }
         trackedBodyIds.forEach { id ->
@@ -713,8 +740,7 @@ class JoltPhysicsWorld(
             contacts.setReporting(id, false)
         }
         trackedBodyIds.clear()
-        meshShapes.values.forEach { it.close() }
-        meshShapes.clear()
+        meshShapes.destroy()
         queries.close()
         activeBodyIds.close()
         jobSystem.close()
@@ -723,7 +749,77 @@ class JoltPhysicsWorld(
     }
 }
 
-private class ResolvedShape(val shape: ConstShape, val owned: AutoCloseable?)
+private class ResolvedShape(
+    val shape: ConstShape,
+    val owned: AutoCloseable?,
+    val cachedMeshShape: MeshShape? = null,
+)
+
+private class MeshShapeBvhCache(private val maxCached: Int) {
+    private val shapes = LinkedHashMap<MeshShape, ShapeRefC>()
+    private val holders = HashMap<MeshShape, Int>()
+    private val bodyShapes = HashMap<Int, MeshShape>()
+
+    val size: Int get() = shapes.size
+
+    fun acquire(shape: MeshShape): ShapeRefC {
+        val existing = shapes.remove(shape)
+        if (existing != null) {
+            shapes[shape] = existing
+            return existing
+        }
+        return meshShapeOf(shape).also { shapes[shape] = it }
+    }
+
+    fun attachBody(bodyId: Int, shape: MeshShape) {
+        bodyShapes[bodyId] = shape
+        holders[shape] = (holders[shape] ?: 0) + 1
+        evictOverLimit()
+    }
+
+    fun detachBody(bodyId: Int) {
+        val base = bodyShapes.remove(bodyId) ?: return
+        val remaining = (holders[base] ?: 1) - 1
+        if (remaining > 0) {
+            holders[base] = remaining
+        } else {
+            holders.remove(base)
+            shapes.remove(base)?.let { shapes[base] = it }
+            evictOverLimit()
+        }
+    }
+
+    fun trimUnused() {
+        val iterator = shapes.entries.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.key !in holders) {
+                val shape = entry.value
+                iterator.remove()
+                shape.close()
+            }
+        }
+    }
+
+    fun destroy() {
+        shapes.values.forEach { it.close() }
+        shapes.clear()
+        holders.clear()
+        bodyShapes.clear()
+    }
+
+    private fun evictOverLimit() {
+        if (shapes.size <= maxCached) return
+        val iterator = shapes.entries.iterator()
+        while (shapes.size > maxCached && iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.key in holders) continue
+            val shape = entry.value
+            iterator.remove()
+            shape.close()
+        }
+    }
+}
 
 private fun toJoltMotionType(motionType: MotionType): EMotionType = when (motionType) {
     MotionType.STATIC -> EMotionType.Static

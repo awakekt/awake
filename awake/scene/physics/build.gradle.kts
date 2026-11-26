@@ -42,6 +42,7 @@ kotlin {
             api(project(":awake:engine:render:contract"))
             // PhysicsDebugSource is a DebugSource.
             api(project(":awake:core:diagnostics"))
+            implementation(project(":awake:core:host"))
         }
         named("androidDeviceTest") {
             dependencies {

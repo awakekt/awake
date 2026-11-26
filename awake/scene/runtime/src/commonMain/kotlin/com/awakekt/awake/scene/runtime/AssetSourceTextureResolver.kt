@@ -5,13 +5,17 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.host.DeviceProfile
+import com.awakekt.awake.core.host.readDeviceProfile
 import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.decodeDispatcher
+import com.awakekt.awake.core.pool.BoundedLruCache
 import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.asReleasingGpuImageSource
+import com.awakekt.awake.render.texture.releaseImageData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -35,12 +39,12 @@ import kotlin.coroutines.EmptyCoroutineContext
  * [SceneTextureLoad.Loading]: the sprite or tilemap is not
  * drawn yet. A later frame finds it loaded, and the frame uploads it and draws it from then on. A file
  * that can't be read or decoded answers [SceneTextureLoad.Failed], and what uses it is not drawn. Each
- * is read once until it is forgotten; a texture registered by name with `texture(name) { ... }` is used
- * instead of this.
+ * is read once until it is forgotten or evicted by the LRU cache; a texture registered by name with
+ * `texture(name) { ... }` is used instead of this.
  *
- * A texture is kept until [forgetTexture] or [forgetTextures] drops it, which a host does through
- * [SceneAssetLibrary.forgetTexture] when a file changes, so the frame also lets go of what it uploaded.
- * The next ask reads the file again, so an edited image redraws and a failed one is tried again.
+ * Loaded entries are retained in a [BoundedLruCache] capped by [maxCachedEntries] (scaled by
+ * [DeviceProfile]). Evicted, forgotten, trimmed, or closed entries release their CPU image and
+ * encoded byte payloads via [releaseImageData] while leaving already-uploaded GPU textures intact.
  *
  * Asked on the frame thread only. [close] it when the scene stops, which drops what is still loading.
  *
@@ -74,16 +78,26 @@ class AssetSourceTextureResolver(
         loads = scope.childScope()
     }
 
+    /** Maximum number of settled texture entries retained in CPU memory before LRU eviction. */
+    var maxCachedEntries: Int = defaultMaxCachedEntries()
+        set(value) {
+            field = value.coerceAtLeast(1)
+            textures.evictOverLimit(pinned = loading.keys, onEvict = ::releaseLoad)
+        }
+
     // A child of the scope the session attached, or the one given; null until then.
     private var loads: CoroutineScope? = null
     private val finished = Channel<Finished>(Channel.UNLIMITED)
 
     // Read and written on the frame thread only; loads hand their results over through [finished].
-    private val textures = HashMap<String, SceneTextureLoad>()
+    private val textures = BoundedLruCache<String, SceneTextureLoad> { maxCachedEntries }
 
     // The load each texture still waits for. A result from any other load, one forgotten since, is dropped.
     private val loading = HashMap<String, Job>()
     private var closed = false
+
+    /** Number of texture entries currently retained in the LRU cache, for tests and diagnostics. */
+    internal val cachedEntryCount: Int get() = textures.size
 
     /** Runs this resolver's loads in a child of the scene session's [sessionScope], in [context]. */
     override fun attach(sessionScope: CoroutineScope) {
@@ -98,12 +112,14 @@ class AssetSourceTextureResolver(
 
     override fun texture(name: String): SceneTextureLoad {
         receiveFinished()
-        if (name !in textures && !closed) {
+        val existing = textures.get(name)
+        if (existing != null) return existing
+        if (!closed) {
             val scope = checkNotNull(loads) {
                 "AssetSourceTextureResolver loads in its scene session's scope: install it with the scene's assets, " +
                     "or give it the scope its loads run under."
             }
-            textures[name] = SceneTextureLoad.Loading
+            textures.put(name, SceneTextureLoad.Loading, pinned = loading.keys + name, onEvict = ::releaseLoad)
             loading[name] = scope.launch {
                 val result = read(name)
                 finished.trySend(Finished(name, coroutineContext.job, result))
@@ -111,20 +127,40 @@ class AssetSourceTextureResolver(
             // A context that runs the load at once, as a test's does, has finished it already.
             receiveFinished()
         }
-        return textures[name] ?: SceneTextureLoad.Loading
+        return textures.get(name) ?: SceneTextureLoad.Loading
     }
 
     /** Drops the texture [name], and stops reading it if it is still loading; the next ask reads it again. */
     override fun forgetTexture(name: String) {
-        textures.remove(name)
+        textures.remove(name)?.let { releaseLoad(name, it) }
         loading.remove(name)?.cancel()
     }
 
     /** [forgetTexture] for every texture, such as when the files now hold another project. */
     override fun forgetTextures() {
-        textures.clear()
+        textures.trimAll(::releaseLoad)
         loading.values.forEach { it.cancel() }
         loading.clear()
+    }
+
+    /**
+     * Releases all settled cached textures (dropping retained decoded pixels and compressed file
+     * bytes) without cancelling active loads or destroying already-uploaded GPU textures.
+     */
+    override fun trimMemory() {
+        receiveFinished()
+        if (loading.isEmpty()) {
+            textures.trimAll(::releaseLoad)
+            return
+        }
+        val active = HashMap<String, SceneTextureLoad>(loading.size)
+        for (name in loading.keys) {
+            textures.remove(name)?.let { active[name] = it }
+        }
+        textures.trimAll(::releaseLoad)
+        for ((name, load) in active) {
+            textures.put(name, load, pinned = loading.keys, onEvict = ::releaseLoad)
+        }
     }
 
     /** Stops what is still loading and drops it. Asking after this starts no new load. */
@@ -133,7 +169,7 @@ class AssetSourceTextureResolver(
         closed = true
         loads?.cancel()
         finished.close()
-        textures.clear()
+        textures.trimAll(::releaseLoad)
         loading.clear()
     }
 
@@ -142,8 +178,16 @@ class AssetSourceTextureResolver(
             val done = finished.tryReceive().getOrNull() ?: return
             if (loading[done.name] !== done.load) continue
             loading.remove(done.name)
-            textures[done.name] = done.result.fold({ SceneTextureLoad.Loaded(it) }, { SceneTextureLoad.Failed(it) })
+            val load = done.result.fold({ SceneTextureLoad.Loaded(it) }, { SceneTextureLoad.Failed(it) })
+            textures.put(done.name, load, pinned = loading.keys + done.name, onEvict = ::releaseLoad)
         }
+    }
+
+    private fun releaseLoad(
+        @Suppress("UNUSED_PARAMETER") name: String,
+        load: SceneTextureLoad,
+    ) {
+        (load as? SceneTextureLoad.Loaded)?.source?.releaseImageData()
     }
 
     // TooGenericExceptionCaught: a file that fails to read or decode, for whatever reason, only fails its texture.
@@ -162,4 +206,22 @@ class AssetSourceTextureResolver(
     }
 
     private class Finished(val name: String, val load: Job, val result: Result<GpuImageSource>)
+
+    /** Device-scaled LRU cache defaults for [AssetSourceTextureResolver]. */
+    companion object {
+        private const val LOW_RAM_BYTES: Long = 4L * 1024L * 1024L * 1024L
+
+        /** Default LRU ceiling for low-RAM / 4 GB devices. */
+        const val LOW_RAM_MAX_CACHED_ENTRIES: Int = 64
+
+        /** Default LRU ceiling for devices with more than 4 GB RAM. */
+        const val DEFAULT_MAX_CACHED_ENTRIES: Int = 256
+
+        /** Picks a conservative texture cache ceiling for [profile]. */
+        fun defaultMaxCachedEntries(profile: DeviceProfile = readDeviceProfile()): Int {
+            val total = profile.totalMemoryBytes
+            val isLowRam = profile.isLowRamDevice || (total != null && total in 1L..LOW_RAM_BYTES)
+            return if (isLowRam) LOW_RAM_MAX_CACHED_ENTRIES else DEFAULT_MAX_CACHED_ENTRIES
+        }
+    }
 }

@@ -465,6 +465,12 @@ interface PhysicsWorld {
     fun drainContacts(action: (ContactEvent) -> Unit)
 
     /**
+     * Releases unreferenced native cached shapes (such as idle `MeshShape` BVHs no longer held by
+     * any live body) to reclaim native memory under pressure without disturbing active bodies.
+     */
+    fun trimMemory() {}
+
+    /**
      * Releases the world and everything in it.
      *
      * Native allocations outlive garbage collection on every backend, so a world that is dropped

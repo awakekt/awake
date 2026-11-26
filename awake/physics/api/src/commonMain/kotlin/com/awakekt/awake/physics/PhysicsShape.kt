@@ -187,6 +187,23 @@ data class MeshShape(
     /** How many triangles this mesh collides as. */
     val triangleCount: Int get() = indices.size / INDICES_PER_TRIANGLE
 
+    private var cachedHashCode: Int = 0
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        return other is MeshShape && vertices.contentEquals(other.vertices) && indices.contentEquals(other.indices)
+    }
+
+    override fun hashCode(): Int {
+        val existing = cachedHashCode
+        if (existing != 0) return existing
+        var result = vertices.contentHashCode()
+        result = 31 * result + indices.contentHashCode()
+        if (result == 0) result = 1
+        cachedHashCode = result
+        return result
+    }
+
     /**
      * Asserts that [motionType] is supported by triangle mesh shapes, throwing [PhysicsCapabilityException] if not.
      *

@@ -18,6 +18,8 @@ import com.awakekt.awake.asset.shaderpack.TexturedUniformLayout
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.host.DeviceProfile
+import com.awakekt.awake.core.host.readDeviceProfile
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.image.DecodedImage
 import com.awakekt.awake.core.image.decodeImage
@@ -95,6 +97,29 @@ class GltfAssetResolver(
     private var imageDecoder: (suspend (ByteArray) -> GpuImageSource?)? = null
     private val loads = GltfModelLoads(this, ::staging)
     private val releases = GltfReleases()
+    private val sceneRetention = GltfSceneRetention(loadedScenes, releases::isKept, ::forget)
+
+    /** Maximum unreferenced skinned scenes retained in CPU memory before LRU eviction. */
+    var maxRetainedScenes: Int
+        get() = sceneRetention.maxRetainedScenes
+        set(value) {
+            sceneRetention.maxRetainedScenes = value
+        }
+
+    /**
+     * Marks model [path] as actively held by a live entity or subsystem so LRU eviction and
+     * [trimMemory] keep its parsed skeleton and animations resident until [releaseModel].
+     */
+    fun acquireModel(path: String) = sceneRetention.acquire(path)
+
+    /** Releases one hold acquired via [acquireModel], allowing LRU eviction when count reaches 0. */
+    fun releaseModel(path: String) = sceneRetention.release(path)
+
+    /** Active holder count recorded for model [path] via [acquireModel]/[releaseModel]. */
+    fun modelHolderCount(path: String): Int = sceneRetention.holderCount(path)
+
+    /** Evicts unreferenced, unpinned skinned scenes under host memory pressure. */
+    override fun trimMemory() = sceneRetention.trimUnused()
 
     /**
      * Retrieves a previously loaded skinned scene by its path.
@@ -102,7 +127,7 @@ class GltfAssetResolver(
      * @param path The glTF or GLB asset path.
      * @return The cached [LoadedSkinnedScene], or null if the path has not been preloaded.
      */
-    fun getLoadedScene(path: String): LoadedSkinnedScene? = loadedScenes[path]
+    fun getLoadedScene(path: String): LoadedSkinnedScene? = loadedScenes[path]?.also { sceneRetention.touch(path) }
 
     /**
      * Supplies project-file access for JSON glTF sidecars.
@@ -187,6 +212,7 @@ class GltfAssetResolver(
             if (path !in loadedScenes) {
                 runCatching { GltfParser.parseSkinned(json, externalResources) }.onSuccess { scene ->
                     loadedScenes[path] = scene
+                    sceneRetention.recordLoaded(path)
                     scene.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
                 }
             }
@@ -230,6 +256,7 @@ class GltfAssetResolver(
         skinnedPartPbr.keys.removeAll { it.startsWith("$path#") }
         materialContentKeys.keys.removeAll { it == path || it.startsWith("$path#") }
         releases.forget(path)
+        sceneRetention.onForget(path)
     }
 
     /**
@@ -269,6 +296,7 @@ class GltfAssetResolver(
         if (dropped.isNotEmpty() || releasedMaterials.isNotEmpty()) {
             from.loadedScenes[path]?.let {
                 loadedScenes[path] = it
+                sceneRetention.recordLoaded(path)
                 loadedParts.remove(path)
             }
         }
@@ -306,7 +334,10 @@ class GltfAssetResolver(
      * thread, where nothing else reads it, and adopts it into the scene's resolver on the frame thread.
      */
     fun adopt(path: String, from: GltfAssetResolver) {
-        from.loadedScenes[path]?.let { loadedScenes.getOrPut(path) { it } }
+        from.loadedScenes[path]?.let {
+            loadedScenes.getOrPut(path) { it }
+            sceneRetention.recordLoaded(path)
+        }
         from.loadedMaterialSlots[path]?.let { loadedMaterialSlots.getOrPut(path) { it } }
         from.loadedStaticMeshes.forEach { (key, geometry) ->
             val base = if (lodLevels.isLevelKey(key)) lodLevels.baseKey(key) else key
@@ -377,7 +408,10 @@ class GltfAssetResolver(
 
     private suspend fun preloadMaterials(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
         if (path in loadedMaterialSlots) return
-        val skinned = loadedScenes[path] ?: parseSkinnedScene(bytes, external)?.also { loadedScenes[path] = it }
+        val skinned = loadedScenes[path] ?: parseSkinnedScene(bytes, external)?.also {
+            loadedScenes[path] = it
+            sceneRetention.recordLoaded(path)
+        }
         if (skinned != null && skinned.skinnedNodes.isNotEmpty()) {
             preloadSkinnedParts(path, bytes, external)
         } else {
@@ -815,6 +849,19 @@ class GltfAssetResolver(
     private fun skinnedPartParameters(mesh: String): GltfMaterialParameters? {
         if (part(mesh) !is GltfPart.Skinned) return null
         return loadedMaterialSlots[modelPath(mesh)]?.firstOrNull { it.mesh == mesh }?.parameters
+    }
+
+    /** Device-scaled skinned-scene retention defaults for [GltfAssetResolver]. */
+    companion object {
+        /** Default skinned-scene LRU ceiling for low-RAM / 4 GB devices. */
+        const val LOW_RAM_MAX_RETAINED_SCENES: Int = GltfSceneRetention.LOW_RAM_MAX_RETAINED_SCENES
+
+        /** Default skinned-scene LRU ceiling for devices with more than 4 GB RAM. */
+        const val DEFAULT_MAX_RETAINED_SCENES: Int = GltfSceneRetention.DEFAULT_MAX_RETAINED_SCENES
+
+        /** Returns the recommended skinned-scene cache limit for [profile]. */
+        fun defaultMaxRetainedScenes(profile: DeviceProfile = readDeviceProfile()): Int =
+            GltfSceneRetention.defaultMaxRetainedScenes(profile)
     }
 }
 

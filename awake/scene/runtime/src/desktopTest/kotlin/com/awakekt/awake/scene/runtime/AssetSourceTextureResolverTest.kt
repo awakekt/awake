@@ -5,9 +5,11 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.host.DeviceProfile
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.asGpuImageSource
+import com.awakekt.awake.render.texture.isReleased
 import com.awakekt.awake.render.texture.needsDecode
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.TestScope
@@ -148,6 +150,36 @@ class AssetSourceTextureResolverTest {
 
         textures.close()
         assertSame(SceneTextureLoad.Loading, textures.texture("hero.png"), "close clears cached textures")
+    }
+
+    @Test
+    fun lruEvictionAndTrimMemoryReleaseRetainedImageBytes() = runTest {
+        val multiFiles = AssetSource { Result.success(PNG) }
+        val textures = AssetSourceTextureResolver(multiFiles, this).apply { maxCachedEntries = 2 }
+
+        textures.texture("a.png")
+        textures.texture("b.png")
+        advanceUntilIdle()
+        val loadedA = assertIs<SceneTextureLoad.Loaded>(textures.texture("a.png"))
+        val loadedB = assertIs<SceneTextureLoad.Loaded>(textures.texture("b.png"))
+        assertEquals(2, textures.cachedEntryCount)
+
+        // Touch 'a' so 'b' becomes least-recently-used, then load 'c' -> evicts and releases 'b'.
+        assertSame(loadedA, textures.texture("a.png"))
+        textures.texture("c.png")
+        advanceUntilIdle()
+        assertEquals(2, textures.cachedEntryCount)
+        assertTrue(loadedB.source.isReleased, "Evicted LRU texture must release decoded and encoded bytes")
+        assertFalse(loadedA.source.isReleased, "Recently touched texture stays resident")
+
+        textures.trimMemory()
+        assertEquals(0, textures.cachedEntryCount)
+        assertTrue(loadedA.source.isReleased, "trimMemory() must release retained texture bytes")
+        assertEquals(
+            AssetSourceTextureResolver.LOW_RAM_MAX_CACHED_ENTRIES,
+            AssetSourceTextureResolver.defaultMaxCachedEntries(DeviceProfile(totalMemoryBytes = 4L * 1024 * 1024 * 1024)),
+        )
+        textures.close()
     }
 
     private fun TestScope.resolver() = AssetSourceTextureResolver(files, this)

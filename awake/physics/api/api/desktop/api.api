@@ -373,6 +373,7 @@ public abstract interface class com/awakekt/awake/physics/PhysicsWorld {
 	public static synthetic fun shapeCast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;
 	public abstract fun shiftOrigin (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public abstract fun step (F)V
+	public fun trimMemory ()V
 	public fun visitBodyTransforms (Lcom/awakekt/awake/physics/BodyTransformVisitor;)V
 }
 
@@ -385,7 +386,48 @@ public final class com/awakekt/awake/physics/PhysicsWorld$DefaultImpls {
 	public static fun raycast-KJBOitM (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/physics/RaycastHit;
 	public static synthetic fun raycast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/RaycastHit;
 	public static synthetic fun shapeCast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;
+	public static fun trimMemory (Lcom/awakekt/awake/physics/PhysicsWorld;)V
 	public static fun visitBodyTransforms (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/BodyTransformVisitor;)V
+}
+
+public final class com/awakekt/awake/physics/PhysicsWorldConfig {
+	public static final field AUTO_TEMP_ALLOCATOR_BYTES I
+	public static final field AUTO_WORKER_THREADS I
+	public static final field Companion Lcom/awakekt/awake/physics/PhysicsWorldConfig$Companion;
+	public static final field DESKTOP_MAX_BODIES I
+	public static final field DESKTOP_MAX_BODY_PAIRS I
+	public static final field DESKTOP_MAX_CACHED_MESH_SHAPES I
+	public static final field DESKTOP_MAX_CONTACT_CONSTRAINTS I
+	public static final field MOBILE_MAX_BODIES I
+	public static final field MOBILE_MAX_BODY_PAIRS I
+	public static final field MOBILE_MAX_CACHED_MESH_SHAPES I
+	public static final field MOBILE_MAX_CONTACT_CONSTRAINTS I
+	public static final field MOBILE_TEMP_ALLOCATOR_BYTES I
+	public fun <init> ()V
+	public fun <init> (IIIIII)V
+	public synthetic fun <init> (IIIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun copy (IIIIII)Lcom/awakekt/awake/physics/PhysicsWorldConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/PhysicsWorldConfig;IIIIIIILjava/lang/Object;)Lcom/awakekt/awake/physics/PhysicsWorldConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxBodies ()I
+	public final fun getMaxBodyPairs ()I
+	public final fun getMaxCachedMeshShapes ()I
+	public final fun getMaxContactConstraints ()I
+	public final fun getTempAllocatorBytes ()I
+	public final fun getWorkerThreads ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/physics/PhysicsWorldConfig$Companion {
+	public final fun getDesktop ()Lcom/awakekt/awake/physics/PhysicsWorldConfig;
+	public final fun getMobile ()Lcom/awakekt/awake/physics/PhysicsWorldConfig;
 }
 
 public final class com/awakekt/awake/physics/PhysicsWorldKt {
