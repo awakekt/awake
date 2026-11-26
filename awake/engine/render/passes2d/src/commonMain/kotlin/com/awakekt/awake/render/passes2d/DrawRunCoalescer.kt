@@ -16,6 +16,7 @@ import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.DrawTransform
+import com.awakekt.awake.core.graphics2d.EdgeFade
 import com.awakekt.awake.core.graphics2d.StrokeJoin
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.TexturedTriangleMesh
@@ -490,7 +491,7 @@ object DrawRunCoalescer {
                 is DrawCommand.Texture -> {
                     @Suppress("UNCHECKED_CAST")
                     val textureSlice = slice as List<DrawCommand.Texture>
-                    runs += buildTextureRun(textureSlice, activePathClips, safeInteriorRect, maxQuadsPerRun)
+                    runs += buildTextureRun(textureSlice, activePathClips, safeInteriorRect, maxQuadsPerRun, spanPool)
                 }
                 is DrawCommand.ClipPathPush -> {
                     @Suppress("UNCHECKED_CAST")
@@ -540,7 +541,13 @@ object DrawRunCoalescer {
             }
             if (translated) moveStagedClips(runs, stagedRunStart, moveX, moveY)
             if (spanPool != null) {
-                for (runIndex in stagedRunStart until runs.size) runs[runIndex].requiresUpload = true
+                for (runIndex in stagedRunStart until runs.size) {
+                    val run = runs[runIndex]
+                    run.requiresUpload = true
+                    if (run is StagedDrawRun.TextureRun) {
+                        for (p in run.primitives) p.requiresUpload = true
+                    }
+                }
             }
             if (cacheable && spanPool == null) {
                 retained.store(
@@ -1009,6 +1016,7 @@ object DrawRunCoalescer {
         activePathClips: List<DrawPath>,
         safeInteriorRect: Rectangle?,
         maxQuadsPerRun: Int,
+        pool: DynamicRunArrayPool? = null,
     ): StagedDrawRun.TextureRun {
         val maxVertices = maxQuadsPerRun * VertexFormats2D.VERTICES_PER_QUAD
         val maxIndices = maxQuadsPerRun * VertexFormats2D.INDICES_PER_QUAD
@@ -1019,7 +1027,7 @@ object DrawRunCoalescer {
 
         fun flushChunk() {
             if (chunk.isEmpty()) return
-            stagedRuns += stageCoalescedTextureRun(chunk)
+            stagedRuns += stageCoalescedTextureRun(chunk, pool)
             chunk.clear()
             chunkVertices = 0
             chunkIndices = 0
@@ -1049,23 +1057,34 @@ object DrawRunCoalescer {
         activePathClips: List<DrawPath>,
         safeInteriorRect: Rectangle?,
     ): StagedTextureSlice? {
-        val fastQuad = primitive.rotationDegrees == 0f &&
-            (activePathClips.isEmpty() || canSkipExactClip(safeInteriorRect, primitive.x, primitive.y, primitive.w, primitive.h))
-        val clipped = if (fastQuad) null else clipTextureQuad(primitive, activePathClips, safeInteriorRect)
+        val fade = primitive.edgeFade?.takeUnless { it.isNone }
+        val unclipped = activePathClips.isEmpty() || canSkipRotatedExactClip(safeInteriorRect, primitive)
+        val fadeGrid = if (fade != null && unclipped) EdgeFadeGrid.forFade(fade) else null
+        val fastQuad = fade == null && canUseFastTextureQuad(primitive, activePathClips, safeInteriorRect)
+        val clipped = if (fastQuad || fadeGrid != null) null else clipTextureQuad(primitive, activePathClips, safeInteriorRect)
         if (clipped != null && (clipped.vertices.isEmpty() || clipped.indices.isEmpty())) return null
         return StagedTextureSlice(
             material = primitive.material,
             blendMode = primitive.blendMode,
             premultiplied = primitive.premultiplied,
             mesh = clipped,
-            quad = if (fastQuad) primitive else null,
+            quad = if (fastQuad || fade != null) primitive else null,
             color = primitive.tint.withAlpha(primitive.tint.a * primitive.alpha),
             transform = primitive.transform,
             region = primitive.region,
             repeatX = primitive.repeatX != 1f,
             repeatY = primitive.repeatY != 1f,
+            edgeFade = fade,
+            edgeFadeGrid = fadeGrid,
         )
     }
+
+    private fun canUseFastTextureQuad(
+        primitive: DrawCommand.Texture,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+    ): Boolean = primitive.rotationDegrees == 0f &&
+        (activePathClips.isEmpty() || canSkipExactClip(safeInteriorRect, primitive.x, primitive.y, primitive.w, primitive.h))
 
     private fun clipTextureQuad(
         primitive: DrawCommand.Texture,
@@ -1109,7 +1128,10 @@ object DrawRunCoalescer {
         return canSkipExactClip(safeInteriorRect, cx - aabbW * 0.5f, cy - aabbH * 0.5f, aabbW, aabbH)
     }
 
-    private fun stageCoalescedTextureRun(chunk: List<StagedTextureSlice>): TexturedDrawRun {
+    private fun stageCoalescedTextureRun(
+        chunk: List<StagedTextureSlice>,
+        pool: DynamicRunArrayPool? = null,
+    ): TexturedDrawRun {
         val head = chunk.first()
         var totalVertices = 0
         var totalIndices = 0
@@ -1118,38 +1140,96 @@ object DrawRunCoalescer {
             totalVertices += slice.vertexCount
             totalIndices += slice.indexCount
         }
-        val vertices = FloatArray(totalVertices * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX)
-        val indices = IntArray(totalIndices)
+        val buffers = pool?.take(totalVertices * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX, totalIndices)
+        val vertices = buffers?.vertices ?: FloatArray(totalVertices * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX)
+        val indices = buffers?.indices ?: IntArray(totalIndices)
         var vertexCursor = 0
         var indexCursor = 0
         var vertexOffset = 0
         for (i in chunk.indices) {
             val slice = chunk[i]
-            val region = slice.region
-            val spanU = if (slice.repeatX) region.u1 - region.u0 else 0f
-            val spanV = if (slice.repeatY) region.v1 - region.v0 else 0f
-            val mesh = slice.mesh
-            if (mesh == null) {
-                writeFastQuadSlice(slice, vertices, indices, vertexCursor, indexCursor, vertexOffset, spanU, spanV)
-                vertexCursor += VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
-                indexCursor += VertexFormats2D.INDICES_PER_QUAD
-                vertexOffset += VertexFormats2D.VERTICES_PER_QUAD
-            } else {
-                for (vertex in mesh.vertices) {
-                    writeTextureVertex(
-                        vertices, vertexCursor, vertex.position.x, vertex.position.y, vertex.u, vertex.v,
-                        region.u0, region.v0, spanU, spanV, slice.color, slice.transform,
-                    )
-                    vertexCursor += VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
-                }
-                for (index in mesh.indices) {
-                    indices[indexCursor] = vertexOffset + index
-                    indexCursor += 1
-                }
-                vertexOffset += mesh.vertices.size
-            }
+            writeTextureSlice(slice, vertices, indices, vertexCursor, indexCursor, vertexOffset)
+            vertexCursor += slice.vertexCount * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+            indexCursor += slice.indexCount
+            vertexOffset += slice.vertexCount
         }
         return TexturedDrawRun(head.material, vertices, indices, head.blendMode, head.premultiplied)
+    }
+
+    @Suppress("LongParameterList")
+    private fun writeTextureSlice(
+        slice: StagedTextureSlice,
+        vertices: FloatArray,
+        indices: IntArray,
+        vertexStart: Int,
+        indexStart: Int,
+        vertexOffset: Int,
+    ) {
+        val region = slice.region
+        val spanU = if (slice.repeatX) region.u1 - region.u0 else 0f
+        val spanV = if (slice.repeatY) region.v1 - region.v0 else 0f
+        val fadeGrid = slice.edgeFadeGrid
+        val mesh = slice.mesh
+        when {
+            fadeGrid != null -> fadeGrid.writeTo(
+                primitive = requireNotNull(slice.quad),
+                region = region,
+                repeatX = slice.repeatX,
+                repeatY = slice.repeatY,
+                baseColor = slice.color,
+                transform = slice.transform,
+                vertices = vertices,
+                indices = indices,
+                vertexStart = vertexStart,
+                indexStart = indexStart,
+                vertexOffset = vertexOffset,
+                spanU = spanU,
+                spanV = spanV,
+            )
+            mesh == null -> writeFastQuadSlice(slice, vertices, indices, vertexStart, indexStart, vertexOffset, spanU, spanV)
+            else -> writeClippedTextureSlice(slice, mesh, vertices, indices, vertexStart, indexStart, vertexOffset, spanU, spanV)
+        }
+    }
+
+    @Suppress("LongParameterList")
+    private fun writeClippedTextureSlice(
+        slice: StagedTextureSlice,
+        mesh: TexturedTriangleMesh,
+        vertices: FloatArray,
+        indices: IntArray,
+        vertexStart: Int,
+        indexStart: Int,
+        vertexOffset: Int,
+        spanU: Float,
+        spanV: Float,
+    ) {
+        val region = slice.region
+        var vCursor = vertexStart
+        for (vertex in mesh.vertices) {
+            val vColor = fadedClippedVertexColor(slice, vertex.position.x, vertex.position.y)
+            writeTextureVertex(
+                vertices, vCursor, vertex.position.x, vertex.position.y, vertex.u, vertex.v,
+                region.u0, region.v0, spanU, spanV, vColor, slice.transform,
+            )
+            vCursor += VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+        }
+        var iCursor = indexStart
+        for (index in mesh.indices) {
+            indices[iCursor] = vertexOffset + index
+            iCursor += 1
+        }
+    }
+
+    private fun fadedClippedVertexColor(slice: StagedTextureSlice, vx: Float, vy: Float): Color {
+        val fade = slice.edgeFade
+        val quad = slice.quad
+        val canFade = fade != null && quad != null && quad.w > 0f && quad.h > 0f
+        val factor = if (canFade) {
+            fade.alphaAt(((vx - quad.x) / quad.w).coerceIn(0f, 1f), ((vy - quad.y) / quad.h).coerceIn(0f, 1f))
+        } else {
+            1f
+        }
+        return if (factor >= 1f) slice.color else slice.color.withAlpha(slice.color.a * factor)
     }
 
     @Suppress("LongParameterList")
@@ -1438,9 +1518,11 @@ private class StagedTextureSlice(
     val region: TextureRegion,
     val repeatX: Boolean,
     val repeatY: Boolean,
+    val edgeFade: EdgeFade? = null,
+    val edgeFadeGrid: EdgeFadeGrid? = null,
 ) {
-    val vertexCount: Int get() = mesh?.vertices?.size ?: VertexFormats2D.VERTICES_PER_QUAD
-    val indexCount: Int get() = mesh?.indices?.size ?: VertexFormats2D.INDICES_PER_QUAD
+    val vertexCount: Int get() = edgeFadeGrid?.vertexCount ?: mesh?.vertices?.size ?: VertexFormats2D.VERTICES_PER_QUAD
+    val indexCount: Int get() = edgeFadeGrid?.indexCount ?: mesh?.indices?.size ?: VertexFormats2D.INDICES_PER_QUAD
 
     fun matchesBatchState(other: StagedTextureSlice): Boolean =
         material === other.material &&

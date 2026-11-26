@@ -10,13 +10,11 @@ import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeTextureBytes
 import io.ygdrasil.webgpu.Extent3D
 import io.ygdrasil.webgpu.GPUTextureDimension
 import io.ygdrasil.webgpu.GPUTextureFormat
 import io.ygdrasil.webgpu.GPUTextureUsage
-import io.ygdrasil.webgpu.TexelCopyBufferLayout
-import io.ygdrasil.webgpu.TexelCopyTextureInfo
 import io.ygdrasil.webgpu.TextureDescriptor
 
 /**
@@ -51,11 +49,14 @@ internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage, filt
         val blocksHigh = (image.levelHeight(level) + format.blockHeight - 1) / format.blockHeight
         // A copy of a block format covers whole blocks, so a level smaller than a block is written
         // as the one block it takes.
-        device.queue.writeTexture(
-            destination = TexelCopyTextureInfo(texture = texture, mipLevel = (level - skip).toUInt()),
-            data = fastArrayBufferOf(bytes),
-            dataLayout = TexelCopyBufferLayout(bytesPerRow = (blocksWide * format.blockBytes).toUInt(), rowsPerImage = blocksHigh.toUInt()),
-            size = Extent3D(width = (blocksWide * format.blockWidth).toUInt(), height = (blocksHigh * format.blockHeight).toUInt()),
+        device.queue.writeTextureBytes(
+            texture = texture,
+            data = bytes,
+            bytesPerRow = blocksWide * format.blockBytes,
+            rowsPerImage = blocksHigh,
+            width = blocksWide * format.blockWidth,
+            height = blocksHigh * format.blockHeight,
+            mipLevel = level - skip,
         )
     }
     return Texture.FilledTexture(

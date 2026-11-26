@@ -10,7 +10,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.mipChain
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeTextureBytes
 import io.ygdrasil.webgpu.Extent3D
 import io.ygdrasil.webgpu.GPUAddressMode
 import io.ygdrasil.webgpu.GPUFilterMode
@@ -23,8 +23,6 @@ import io.ygdrasil.webgpu.GPUTextureUsage
 import io.ygdrasil.webgpu.GPUTextureView
 import io.ygdrasil.webgpu.GPUTextureViewDimension
 import io.ygdrasil.webgpu.SamplerDescriptor
-import io.ygdrasil.webgpu.TexelCopyBufferLayout
-import io.ygdrasil.webgpu.TexelCopyTextureInfo
 import io.ygdrasil.webgpu.TextureDescriptor
 import io.ygdrasil.webgpu.TextureViewDescriptor
 
@@ -200,19 +198,16 @@ class Texture private constructor(
             )
             mipLevels.forEachIndexed { index, level ->
                 // Layers are already packed back to back, which is exactly what `rowsPerImage` means,
-                // so one write covers all of them.
-                device.queue.writeTexture(
-                    destination = TexelCopyTextureInfo(texture = texture, mipLevel = index.toUInt()),
-                    data = fastArrayBufferOf(level.data),
-                    dataLayout = TexelCopyBufferLayout(
-                        bytesPerRow = (level.width * 4).toUInt(),
-                        rowsPerImage = level.height.toUInt(),
-                    ),
-                    size = Extent3D(
-                        width = level.width.toUInt(),
-                        height = level.height.toUInt(),
-                        depthOrArrayLayers = layerCount.toUInt(),
-                    ),
+                // so one write covers all of them without an intermediate JS ArrayBuffer copy on web.
+                device.queue.writeTextureBytes(
+                    texture = texture,
+                    data = level.data,
+                    bytesPerRow = level.width * 4,
+                    rowsPerImage = level.height,
+                    width = level.width,
+                    height = level.height,
+                    depthOrArrayLayers = layerCount,
+                    mipLevel = index,
                 )
             }
             return FilledTexture(

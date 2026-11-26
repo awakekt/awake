@@ -11,15 +11,18 @@ import io.ygdrasil.webgpu.ArrayBuffer
 import io.ygdrasil.webgpu.Buffer
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUQueue
+import io.ygdrasil.webgpu.GPUTexture
 import io.ygdrasil.webgpu.Queue
 import io.ygdrasil.webgpu.WGPUBuffer
 import io.ygdrasil.webgpu.WGPUQueue
+import io.ygdrasil.webgpu.WGPUTexture
 import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.JsAny
 import kotlin.wasm.unsafe.Pointer
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
 import kotlin.wasm.unsafe.wasmMemory
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
+import io.ygdrasil.webgpu.Texture as WgpuTexture
 
 internal actual fun fastArrayBufferOf(data: FloatArray): ArrayBuffer = fromLinearMemory(data.size * Float.SIZE_BYTES) { base ->
     for (index in data.indices) (base + index * Float.SIZE_BYTES).storeInt(data[index].toRawBits())
@@ -30,6 +33,11 @@ internal actual fun fastArrayBufferOf(data: IntArray): ArrayBuffer = fromLinearM
 }
 
 internal actual fun fastArrayBufferOf(data: ByteArray): ArrayBuffer = fromLinearMemory(data.size) { base ->
+    storeBytes(base, data)
+}
+
+/** Writes [data] into wasm linear memory starting at [base], a word at a time then leftover bytes. */
+private fun storeBytes(base: Pointer, data: ByteArray) {
     // A word at a time, little-endian as linear memory is, then the bytes left over.
     val words = data.size / Int.SIZE_BYTES
     for (word in 0 until words) {
@@ -103,5 +111,67 @@ private fun writeFromLinearMemoryDirect(
     byteOffset: Int,
     byteSize: Int,
 ): Unit = js("queue.writeBuffer(buffer, bufferOffset, memory.buffer, byteOffset, byteSize)")
+
+@Suppress("LongParameterList")
+internal actual fun GPUQueue.writeTextureBytes(
+    texture: GPUTexture,
+    data: ByteArray,
+    bytesPerRow: Int,
+    rowsPerImage: Int,
+    width: Int,
+    height: Int,
+    depthOrArrayLayers: Int,
+    mipLevel: Int,
+    originX: Int,
+    originY: Int,
+    originZ: Int,
+) {
+    if (data.isEmpty()) return
+    if (width <= 0 || height <= 0 || depthOrArrayLayers <= 0) return
+    withScopedMemoryAllocator { allocator ->
+        val base = allocator.allocate(data.size)
+        storeBytes(base, data)
+        writeTextureFromLinearMemoryDirect(
+            (this as Queue).handler,
+            (texture as WgpuTexture).handler,
+            mipLevel,
+            originX,
+            originY,
+            originZ,
+            wasmMemory,
+            base.address.toInt(),
+            bytesPerRow,
+            rowsPerImage,
+            width,
+            height,
+            depthOrArrayLayers,
+        )
+    }
+}
+
+/** Read [memory] after the allocation, which may have grown linear memory and replaced its buffer. */
+@Suppress("UnusedParameter", "LongParameterList") // Read by the JS body.
+private fun writeTextureFromLinearMemoryDirect(
+    queue: WGPUQueue,
+    texture: WGPUTexture,
+    mipLevel: Int,
+    originX: Int,
+    originY: Int,
+    originZ: Int,
+    memory: JsAny,
+    byteOffset: Int,
+    bytesPerRow: Int,
+    rowsPerImage: Int,
+    width: Int,
+    height: Int,
+    depthOrArrayLayers: Int,
+): Unit = js(
+    """queue.writeTexture(
+        { texture: texture, mipLevel: mipLevel, origin: { x: originX, y: originY, z: originZ } },
+        memory.buffer,
+        { offset: byteOffset, bytesPerRow: bytesPerRow, rowsPerImage: rowsPerImage },
+        { width: width, height: height, depthOrArrayLayers: depthOrArrayLayers },
+    )""",
+)
 
 private const val BYTE = 0xFF

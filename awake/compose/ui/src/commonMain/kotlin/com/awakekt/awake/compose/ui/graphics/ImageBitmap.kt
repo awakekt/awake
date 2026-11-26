@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.ui.graphics
 
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.EdgeFade
 import com.awakekt.awake.core.graphics2d.FilterQuality
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.image.createBitmap
@@ -112,4 +113,39 @@ fun DrawScope.drawImage(
         )
     }
     drawTexture(image, x, y, width, height, region, tint, filterQuality)
+}
+
+/**
+ * Draws [image] with smooth per-edge alpha feathering ([edgeFade]) in a single draw call.
+ */
+@Suppress("LongParameterList")
+fun DrawScope.drawImage(
+    image: ImageBitmap,
+    x: Float = 0f,
+    y: Float = 0f,
+    width: Float = this.width.toFloat(),
+    height: Float = this.height.toFloat(),
+    srcX: Int = 0,
+    srcY: Int = 0,
+    srcWidth: Int = image.width,
+    srcHeight: Int = image.height,
+    tint: Color = Color.White,
+    filterQuality: FilterQuality = FilterQuality.Low,
+    edgeFade: EdgeFade,
+) {
+    val atOrigin = srcX == 0 && srcY == 0
+    val region = if (atOrigin && srcWidth == image.width && srcHeight == image.height) {
+        TextureRegion.Whole
+    } else {
+        require(image.width > 0 && image.height > 0) { "A texture is at least 1 x 1; was ${image.width} x ${image.height}." }
+        val invW = 1f / image.width
+        val invH = 1f / image.height
+        TextureRegion(
+            srcX * invW,
+            srcY * invH,
+            (srcX + srcWidth) * invW,
+            (srcY + srcHeight) * invH,
+        )
+    }
+    drawTexture(image, x, y, width, height, region, tint, filterQuality, premultiplied = false, edgeFade = edgeFade)
 }

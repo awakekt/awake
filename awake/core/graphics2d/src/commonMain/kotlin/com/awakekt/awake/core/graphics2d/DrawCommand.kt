@@ -372,6 +372,7 @@ sealed class DrawCommand {
      * stretches it once over the quad, and 3.5 draws it three and a half times, the last one cut
      * short. One quad however many times it repeats, so a tiled fill costs what a stretched one does.
      * @property repeatY How many times [region] repeats down the quad's height.
+     * @property edgeFade Optional smooth per-edge alpha feathering applied across the quad's edges.
      */
     data class Texture(
         val x: Float,
@@ -394,6 +395,7 @@ sealed class DrawCommand {
         val filterQuality: FilterQuality = FilterQuality.Low,
         val repeatX: Float = 1f,
         val repeatY: Float = 1f,
+        val edgeFade: EdgeFade? = null,
     ) : UiDrawPrimitive() {
         init {
             require(repeatX > 0f && repeatY > 0f) { "A region repeats a positive number of times, not $repeatX x $repeatY." }
@@ -418,9 +420,56 @@ sealed class DrawCommand {
             region: TextureRegion = TextureRegion.Whole,
             tint: Color = Color.White,
             filterQuality: FilterQuality = FilterQuality.Low,
-        ) : this(x, y, w, h, material, alpha, rotationDegrees, blendMode, premultiplied, tokenId, transform, region, tint, filterQuality, 1f, 1f)
+            repeatX: Float = 1f,
+            repeatY: Float = 1f,
+        ) : this(
+            x, y, w, h, material, alpha, rotationDegrees, blendMode, premultiplied, tokenId, transform, region, tint, filterQuality,
+            repeatX, repeatY, null,
+        )
 
-        /** The `copy` from before [repeatX] and [repeatY], which keeps this one's repeats. */
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        constructor(
+            x: Float,
+            y: Float,
+            w: Float,
+            h: Float,
+            material: Any,
+            alpha: Float = 1f,
+            rotationDegrees: Float = 0f,
+            blendMode: BlendMode = BlendMode.SourceOver,
+            premultiplied: Boolean = false,
+            tokenId: String? = null,
+            transform: DrawTransform? = null,
+            region: TextureRegion = TextureRegion.Whole,
+            tint: Color = Color.White,
+            filterQuality: FilterQuality = FilterQuality.Low,
+        ) : this(x, y, w, h, material, alpha, rotationDegrees, blendMode, premultiplied, tokenId, transform, region, tint, filterQuality, 1f, 1f, null)
+
+        /** The `copy` from before [edgeFade], which keeps this one's [edgeFade]. */
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        fun copy(
+            x: Float = this.x,
+            y: Float = this.y,
+            w: Float = this.w,
+            h: Float = this.h,
+            material: Any = this.material,
+            alpha: Float = this.alpha,
+            rotationDegrees: Float = this.rotationDegrees,
+            blendMode: BlendMode = this.blendMode,
+            premultiplied: Boolean = this.premultiplied,
+            tokenId: String? = this.tokenId,
+            transform: DrawTransform? = this.transform,
+            region: TextureRegion = this.region,
+            tint: Color = this.tint,
+            filterQuality: FilterQuality = this.filterQuality,
+            repeatX: Float = this.repeatX,
+            repeatY: Float = this.repeatY,
+        ): Texture = Texture(
+            x, y, w, h, material, alpha, rotationDegrees, blendMode, premultiplied, tokenId, transform, region, tint, filterQuality,
+            repeatX, repeatY, edgeFade,
+        )
+
+        /** The `copy` from before [repeatX] and [repeatY], which keeps this one's repeats and [edgeFade]. */
         @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
         fun copy(
             x: Float = this.x,
@@ -439,7 +488,7 @@ sealed class DrawCommand {
             filterQuality: FilterQuality = this.filterQuality,
         ): Texture = Texture(
             x, y, w, h, material, alpha, rotationDegrees, blendMode, premultiplied, tokenId, transform, region, tint, filterQuality,
-            repeatX, repeatY,
+            repeatX, repeatY, edgeFade,
         )
     }
 

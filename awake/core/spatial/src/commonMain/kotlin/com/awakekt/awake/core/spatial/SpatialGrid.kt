@@ -7,11 +7,9 @@ package com.awakekt.awake.core.spatial
 
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.BoundedVolume
-import com.awakekt.awake.core.math.Frustum
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.intersects
-import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.core.math.squaredDistanceTo
 import kotlin.math.floor
 import kotlin.math.max
@@ -23,57 +21,26 @@ const val DEFAULT_SPATIAL_CELL_SIZE = 64f
 /**
  * Which objects are where, so a query can visit a neighbourhood instead of the whole world.
  *
- * A uniform grid of vertical columns keyed by (x, z), not an octree or a BVH. The world it is
- * for is wide, thin and evenly populated, which is exactly the distribution a uniform grid is
- * best at and the one a tree spends its structure on for nothing. Insert and move are hash
- * operations with no rebalancing, which matters more here than the tighter bounds a tree would
- * give: an open world moves things constantly.
- *
- * Columns rather than 3D cells for the same reason: a scene spread over kilometres is rarely
- * more than a few hundred metres tall, so a Y axis would mostly produce empty cells. The ceiling
- * that buys is real -- everything stacked in one column degrades to a linear scan of that
- * column -- and it is the trade a wide world wants.
- *
- * Holds integer ids rather than entities or components: this is `:awake:core:spatial`, with no
- * dependency on the ECS or the scene layer, and an id is the one thing every layer above can
- * resolve for itself.
+ * A uniform grid of vertical columns keyed by (x, z), backed by primitive open-addressing tables
+ * ([LongColumnMap], [IntEntryMap]) and a reusable [ScratchFrustum] so per-frame frustum and
+ * bounded-volume queries into [IntIdSet] allocate zero bytes on JVM and Kotlin/Wasm.
  *
  * @property cellSize Side of one column. Too small wastes work walking empty columns; too large
  * makes every query a near-linear scan. One or two per typical object is the useful range.
  */
+@Suppress("TooManyFunctions") // Symmetric MutableCollection<Int> and zero-boxing IntIdSet query overloads.
 class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
 
-    /** Column key (packed x/z) to the ids in it. */
-    private val columns = HashMap<Long, MutableList<Int>>()
+    /** Primitive column key (packed x/z) to its member ID array and Y-height envelope. */
+    private val columns = LongColumnMap()
 
-    /** Every id currently indexed, with the bounds and column span it was inserted under, so a
-     * move can leave exactly the columns it used to occupy. */
-    private val entries = HashMap<Int, Entry>()
+    /** Every id currently indexed, with its bounds and column span (primitive Int keys, zero boxing). */
+    private val entries = IntEntryMap<Entry>()
 
-    /** Per column, `[minY, maxY]` over everything ever inserted into it -- see [columnBounds]. */
-    private val columnHeights = HashMap<Long, FloatArray>()
-
-    /**
-     * Per-id stamp marking "already emitted by this query".
-     *
-     * An object spanning four columns is in four lists, and a query walking those columns would
-     * otherwise return it four times. A stamp array rather than a `HashSet` per query, because a
-     * query runs per frame and a set would allocate one per frame.
-     */
+    /** Per-id stamp marking "already emitted by this query". */
     private var stamps = IntArray(INITIAL_STAMP_CAPACITY)
     private var stamp = 0
 
-    /**
-     * The box around everything ever inserted, grown and never shrunk, for the same reason
-     * [columnHeights] is: a query that reaches without limit, such as [queryVolume] for a
-     * directional shadow cascade, needs a bound, and one that over-includes after a removal only
-     * costs a few empty columns.
-     *
-     * Across the ground it is whole columns, grown only when an entry enters a new span. Its
-     * height grows with the columns' heights, only when an entry moves past the range it was
-     * folded in at, so the common case -- an entry that stayed where it was -- pays two
-     * comparisons for both.
-     */
     private var contentMinColumnX = Int.MAX_VALUE
     private var contentMinColumnZ = Int.MAX_VALUE
     private var contentMaxColumnX = Int.MIN_VALUE
@@ -82,19 +49,15 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
     private var contentMaxY = Float.NEGATIVE_INFINITY
     private val contentBounds = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
 
-    /** Scratch for the queries, so a per-frame query builds no boxes. */
+    /** Scratch buffers owned by the grid so per-frame queries allocate nothing. */
     private val volumeReach = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
-    private val scratchColumn = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
+    private val scratchFrustum = ScratchFrustum()
 
     /** The number of entries currently indexed in this spatial grid. */
     val size: Int get() = entries.size
 
     /**
      * Indexes [entityId] at [bounds], replacing whatever it was indexed under.
-     *
-     * Insert and move are one call on purpose: a caller updating a moved object would otherwise
-     * have to remember to remove it first, and forgetting leaves a stale entry the queries
-     * happily return.
      */
     fun insert(entityId: Int, bounds: Aabb) {
         val minX = columnIndexOf(cellSize, bounds.min.x)
@@ -102,34 +65,22 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         val maxX = columnIndexOf(cellSize, bounds.max.x)
         val maxZ = columnIndexOf(cellSize, bounds.max.z)
         val existing = entries[entityId]
-        // Same span means the same lists: rewriting them would be identical work with a window
-        // where the entity is in neither, and a moving entity usually stays put.
         if (existing != null && existing.spans(minX, minZ, maxX, maxZ)) {
             existing.bounds = bounds
-            // Its columns' heights already cover the range it was folded in at, so only a move
-            // past that range -- rising, sinking, growing -- has anything to widen. Skipping it
-            // would leave a risen entity above its column's box, and a query that sees only its
-            // new height would skip the column and cull it while in view.
             if (bounds.min.y < existing.foldedMinY || bounds.max.y > existing.foldedMaxY) {
                 if (bounds.min.y < contentMinY) contentMinY = bounds.min.y
                 if (bounds.max.y > contentMaxY) contentMaxY = bounds.max.y
-                existing.widenHeights(bounds, columnHeights)
+                existing.widenHeights(bounds, columns)
             }
             return
         }
         if (existing != null) detach(entityId, existing)
         entries[entityId] = Entry(bounds, minX, minZ, maxX, maxZ)
-        if (minX < contentMinColumnX) contentMinColumnX = minX
-        if (minZ < contentMinColumnZ) contentMinColumnZ = minZ
-        if (maxX > contentMaxColumnX) contentMaxColumnX = maxX
-        if (maxZ > contentMaxColumnZ) contentMaxColumnZ = maxZ
-        if (bounds.min.y < contentMinY) contentMinY = bounds.min.y
-        if (bounds.max.y > contentMaxY) contentMaxY = bounds.max.y
+        widenContentBounds(minX, minZ, maxX, maxZ, bounds.min.y, bounds.max.y)
         forEachColumn(minX, minZ, maxX, maxZ) { key ->
-            columns.getOrPut(key) { ArrayList(INITIAL_COLUMN_CAPACITY) }.add(entityId)
-            val height = columnHeights.getOrPut(key) { floatArrayOf(bounds.min.y, bounds.max.y) }
-            height[0] = min(height[0], bounds.min.y)
-            height[1] = max(height[1], bounds.max.y)
+            val column = columns.getOrCreate(key, bounds.min.y, bounds.max.y)
+            column.add(entityId)
+            column.widen(bounds.min.y, bounds.max.y)
         }
     }
 
@@ -142,7 +93,6 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
     /** Removes all entries, columns, and height extents from this spatial grid. */
     fun clear() {
         columns.clear()
-        columnHeights.clear()
         entries.clear()
         contentMinColumnX = Int.MAX_VALUE
         contentMinColumnZ = Int.MAX_VALUE
@@ -152,28 +102,24 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         contentMaxY = Float.NEGATIVE_INFINITY
     }
 
-    /** Every indexed id -- for a maintainer reconciling the grid against the objects that
-     * still exist. */
-    val ids: Set<Int> get() = entries.keys
+    /** Every indexed id -- for a maintainer reconciling the grid against the objects that still exist. */
+    val ids: Set<Int> get() = entries.keySet()
 
     /**
      * Ids whose bounds overlap [box], appended to [out].
-     *
-     * Appended rather than returned fresh so a per-frame caller reuses one list. The result is
-     * exact, not a candidate set: the column walk narrows, and each candidate's own bounds
-     * decide.
      */
     fun queryAabb(box: Aabb, out: MutableCollection<Int>): MutableCollection<Int> {
+        if (contentMinColumnX > contentMaxColumnX) return out
         stamp += 1
-        forEachColumn(
-            columnIndexOf(cellSize, box.min.x),
-            columnIndexOf(cellSize, box.min.z),
-            columnIndexOf(cellSize, box.max.x),
-            columnIndexOf(cellSize, box.max.z),
-        ) { key ->
+        val minX = max(columnIndexOf(cellSize, box.min.x), contentMinColumnX)
+        val minZ = max(columnIndexOf(cellSize, box.min.z), contentMinColumnZ)
+        val maxX = min(columnIndexOf(cellSize, box.max.x), contentMaxColumnX)
+        val maxZ = min(columnIndexOf(cellSize, box.max.z), contentMaxColumnZ)
+        forEachColumn(minX, minZ, maxX, maxZ) { key ->
             val column = columns[key] ?: return@forEachColumn
-            for (index in column.indices) {
-                val id = column[index]
+            val ids = column.ids
+            for (index in 0 until column.size) {
+                val id = ids[index]
                 if (claim(id)) {
                     val bounds = entries[id]?.bounds ?: continue
                     if (bounds.intersects(box)) out.add(id)
@@ -185,27 +131,20 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
 
     /**
      * Ids within [radius] of [center], appended to [out].
-     *
-     * Bounds-versus-sphere, so an entry counts when any part of it is in range rather than only
-     * when its centre is -- the same rule [queryAabb] uses, and the one that stops a large object
-     * disappearing from a query it obviously overlaps.
      */
     fun queryRange(center: Vec3f, radius: Float, out: MutableCollection<Int>): MutableCollection<Int> {
-        val box = Aabb(
-            Vec3f(center.x - radius, center.y - radius, center.z - radius),
-            Vec3f(center.x + radius, center.y + radius, center.z + radius),
-        )
+        if (contentMinColumnX > contentMaxColumnX) return out
         stamp += 1
         val radiusSquared = radius * radius
-        forEachColumn(
-            columnIndexOf(cellSize, box.min.x),
-            columnIndexOf(cellSize, box.min.z),
-            columnIndexOf(cellSize, box.max.x),
-            columnIndexOf(cellSize, box.max.z),
-        ) { key ->
+        val minX = max(columnIndexOf(cellSize, center.x - radius), contentMinColumnX)
+        val minZ = max(columnIndexOf(cellSize, center.z - radius), contentMinColumnZ)
+        val maxX = min(columnIndexOf(cellSize, center.x + radius), contentMaxColumnX)
+        val maxZ = min(columnIndexOf(cellSize, center.z + radius), contentMaxColumnZ)
+        forEachColumn(minX, minZ, maxX, maxZ) { key ->
             val column = columns[key] ?: return@forEachColumn
-            for (index in column.indices) {
-                val id = column[index]
+            val ids = column.ids
+            for (index in 0 until column.size) {
+                val id = ids[index]
                 if (claim(id)) {
                     val bounds = entries[id]?.bounds ?: continue
                     if (bounds.squaredDistanceTo(center) <= radiusSquared) out.add(id)
@@ -217,83 +156,122 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
 
     /**
      * Ids whose bounds intersect [lens]'s frustum at [aspect], appended to [out].
-     *
-     * Two levels, both through the same [Frustum.intersects] the caller would have used itself:
-     * a column's own box first, then each entry in a surviving column. Using one predicate for
-     * both is what makes the result identical to testing every entry -- a cheaper approximation
-     * at the column level would cull things the per-entry test would have kept.
      */
     fun queryFrustum(lens: Lens, aspect: Float, out: MutableCollection<Int>): MutableCollection<Int> {
-        val corners = Frustum.corners(lens, aspect)
-        var minX = Float.POSITIVE_INFINITY
-        var minZ = Float.POSITIVE_INFINITY
-        var maxX = Float.NEGATIVE_INFINITY
-        var maxZ = Float.NEGATIVE_INFINITY
-        for (corner in corners) {
-            minX = min(minX, corner.x)
-            maxX = max(maxX, corner.x)
-            minZ = min(minZ, corner.z)
-            maxZ = max(maxZ, corner.z)
-        }
-        // Once, not per column and per entity: Frustum.intersects(lens, aspect, box) rebuilds
-        // six planes on every call, which at two levels of testing costs more than the culling
-        // saves.
-        val planes = Frustum.planes(lens, aspect)
-        stamp += 1
-        forEachColumn(columnIndexOf(cellSize, minX), columnIndexOf(cellSize, minZ), columnIndexOf(cellSize, maxX), columnIndexOf(cellSize, maxZ)) { key ->
-            val column = columns[key] ?: return@forEachColumn
-            if (!planes.intersects(columnBounds(key, scratchColumn))) return@forEachColumn
-            for (index in column.indices) {
-                val id = column[index]
-                if (claim(id)) {
-                    val bounds = entries[id]?.bounds ?: continue
-                    if (planes.intersects(bounds)) out.add(id)
-                }
-            }
-        }
+        forEachFrustumHit(lens, aspect) { out.add(it) }
         return out
     }
 
     /**
+     * Non-boxing twin of [queryFrustum] that writes matching primitive IDs straight into [out].
+     */
+    fun queryFrustum(lens: Lens, aspect: Float, out: IntIdSet): IntIdSet {
+        forEachFrustumHit(lens, aspect) { out.add(it) }
+        return out
+    }
+
+    private inline fun forEachFrustumHit(lens: Lens, aspect: Float, onHit: (Int) -> Unit) {
+        if (contentMinColumnX > contentMaxColumnX) return
+        val frustum = scratchFrustum
+        frustum.set(lens, aspect)
+        val minX = max(columnIndexOf(cellSize, frustum.minX), contentMinColumnX)
+        val minZ = max(columnIndexOf(cellSize, frustum.minZ), contentMinColumnZ)
+        val maxX = min(columnIndexOf(cellSize, frustum.maxX), contentMaxColumnX)
+        val maxZ = min(columnIndexOf(cellSize, frustum.maxZ), contentMaxColumnZ)
+        if (minX > maxX || minZ > maxZ) return
+        stamp += 1
+        for (cz in minZ..maxZ) {
+            val z0 = cz * cellSize
+            val z1 = (cz + 1) * cellSize
+            for (cx in minX..maxX) {
+                val column = columns[columnKeyOf(cx, cz)]
+                if (column != null && column.size > 0 &&
+                    frustum.intersects(cx * cellSize, column.minY, z0, (cx + 1) * cellSize, column.maxY, z1)
+                ) {
+                    visitColumnFrustum(column, frustum, onHit)
+                }
+            }
+        }
+    }
+
+    private inline fun visitColumnFrustum(column: SpatialColumn, frustum: ScratchFrustum, onHit: (Int) -> Unit) {
+        val ids = column.ids
+        for (index in 0 until column.size) {
+            val id = ids[index]
+            if (claim(id)) {
+                val bounds = entries[id]?.bounds ?: continue
+                if (frustum.intersects(bounds)) onHit(id)
+            }
+        }
+    }
+
+    /**
      * Ids whose bounds [volume] admits, appended to [out].
-     *
-     * Mirrors [queryFrustum]: the same [BoundedVolume.admits] decides a column's box and then
-     * each entry in a surviving column, so the result is exactly what testing every entry would
-     * give. When [volume] reaches without limit in some direction, the columns walked are bounded
-     * by where it meets the box around everything indexed ([BoundedVolume.bounds]).
      */
     fun queryVolume(volume: BoundedVolume, out: MutableCollection<Int>): MutableCollection<Int> {
+        forEachVolumeHit(volume) { out.add(it) }
+        return out
+    }
+
+    /**
+     * Non-boxing twin of [queryVolume] that writes matching primitive IDs straight into [out].
+     */
+    fun queryVolume(volume: BoundedVolume, out: IntIdSet): IntIdSet {
+        forEachVolumeHit(volume) { out.add(it) }
+        return out
+    }
+
+    private inline fun forEachVolumeHit(volume: BoundedVolume, onHit: (Int) -> Unit) {
         val hasContent = contentMinColumnX <= contentMaxColumnX
         if (hasContent) {
             contentBounds.min.set(contentMinColumnX * cellSize, contentMinY, contentMinColumnZ * cellSize)
             contentBounds.max.set((contentMaxColumnX + 1) * cellSize, contentMaxY, (contentMaxColumnZ + 1) * cellSize)
         }
-        if (!hasContent || !volume.bounds(contentBounds, volumeReach)) return out
+        if (!hasContent || !volume.bounds(contentBounds, volumeReach)) return
+        val minX = max(columnIndexOf(cellSize, volumeReach.min.x), contentMinColumnX)
+        val minZ = max(columnIndexOf(cellSize, volumeReach.min.z), contentMinColumnZ)
+        val maxX = min(columnIndexOf(cellSize, volumeReach.max.x), contentMaxColumnX)
+        val maxZ = min(columnIndexOf(cellSize, volumeReach.max.z), contentMaxColumnZ)
+        if (minX > maxX || minZ > maxZ) return
         stamp += 1
-        forEachColumn(
-            columnIndexOf(cellSize, volumeReach.min.x),
-            columnIndexOf(cellSize, volumeReach.min.z),
-            columnIndexOf(cellSize, volumeReach.max.x),
-            columnIndexOf(cellSize, volumeReach.max.z),
-        ) { key ->
-            val column = columns[key] ?: return@forEachColumn
-            if (!volume.admits(columnBounds(key, scratchColumn))) return@forEachColumn
-            for (index in column.indices) {
-                val id = column[index]
-                if (claim(id)) {
-                    val bounds = entries[id]?.bounds ?: continue
-                    if (volume.admits(bounds)) out.add(id)
+        for (cz in minZ..maxZ) {
+            val z0 = cz * cellSize
+            val z1 = (cz + 1) * cellSize
+            for (cx in minX..maxX) {
+                val column = columns[columnKeyOf(cx, cz)]
+                if (column != null && column.size > 0 &&
+                    volume.admits(cx * cellSize, column.minY, z0, (cx + 1) * cellSize, column.maxY, z1)
+                ) {
+                    visitColumnVolume(column, volume, onHit)
                 }
             }
         }
-        return out
+    }
+
+    private inline fun visitColumnVolume(column: SpatialColumn, volume: BoundedVolume, onHit: (Int) -> Unit) {
+        val ids = column.ids
+        for (index in 0 until column.size) {
+            val id = ids[index]
+            if (claim(id)) {
+                val bounds = entries[id]?.bounds ?: continue
+                if (volume.admits(bounds)) onHit(id)
+            }
+        }
+    }
+
+    @Suppress("LongParameterList")
+    private fun widenContentBounds(minX: Int, minZ: Int, maxX: Int, maxZ: Int, minY: Float, maxY: Float) {
+        if (minX < contentMinColumnX) contentMinColumnX = minX
+        if (minZ < contentMinColumnZ) contentMinColumnZ = minZ
+        if (maxX > contentMaxColumnX) contentMaxColumnX = maxX
+        if (maxZ > contentMaxColumnZ) contentMaxColumnZ = maxZ
+        if (minY < contentMinY) contentMinY = minY
+        if (maxY > contentMaxY) contentMaxY = maxY
     }
 
     private fun detach(entityId: Int, entry: Entry) {
         forEachColumn(entry.minX, entry.minZ, entry.maxX, entry.maxZ) { key ->
-            val column = columns[key] ?: return@forEachColumn
-            column.remove(entityId)
-            if (column.isEmpty()) columns.remove(key)
+            columns[key]?.remove(entityId)
         }
     }
 
@@ -307,37 +285,6 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         return true
     }
 
-    /**
-     * A column's own box: its footprint, and the Y range of everything ever put in it.
-     *
-     * A real range rather than an infinite one, because a plane test on an infinite coordinate
-     * produces NaN wherever the plane's normal has no Y component, and NaN compares false --
-     * which would silently cull whole columns.
-     *
-     * The range only ever grows: an entry leaving does not shrink it. That over-includes after
-     * a tall object is removed, which costs a column of per-entry tests and can never cull
-     * something visible. Shrinking would mean recomputing from the column's remaining members on
-     * every removal, for a bound that is about to grow again.
-     *
-     * Written into [into], a scratch box the query owns, rather than a new box per column.
-     */
-    private fun columnBounds(key: Long, into: Aabb): Aabb {
-        val x = (key shr Int.SIZE_BITS).toInt()
-        val z = key.toInt()
-        val height = columnHeights[key] ?: EMPTY_HEIGHT
-        into.min.set(x * cellSize, height[0], z * cellSize)
-        into.max.set((x + 1) * cellSize, height[1], (z + 1) * cellSize)
-        return into
-    }
-
-    /**
-     * One indexed id: its current bounds, the column span it occupies, and the height range
-     * already folded into those columns' heights and the content extent.
-     *
-     * The folded range is copied out of the bounds rather than read back from them: a caller may
-     * pass the same box again after changing it in place, and comparing a box with itself would
-     * never see the move.
-     */
     private class Entry(
         var bounds: Aabb,
         val minX: Int,
@@ -351,14 +298,12 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         fun spans(minX: Int, minZ: Int, maxX: Int, maxZ: Int): Boolean =
             this.minX == minX && this.minZ == minZ && this.maxX == maxX && this.maxZ == maxZ
 
-        /** Folds [moved] into the folded range and into [heights] for every column of the span. */
-        fun widenHeights(moved: Aabb, heights: Map<Long, FloatArray>) {
+        /** Folds [moved] into the folded range and into [columns] for every column of the span. */
+        fun widenHeights(moved: Aabb, columns: LongColumnMap) {
             foldedMinY = min(foldedMinY, moved.min.y)
             foldedMaxY = max(foldedMaxY, moved.max.y)
             forEachColumn(minX, minZ, maxX, maxZ) { key ->
-                val height = heights[key] ?: return@forEachColumn
-                height[0] = min(height[0], foldedMinY)
-                height[1] = max(height[1], foldedMaxY)
+                columns[key]?.widen(foldedMinY, foldedMaxY)
             }
         }
     }
@@ -366,14 +311,10 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
     private companion object {
         const val INITIAL_STAMP_CAPACITY = 64
         const val INITIAL_COLUMN_CAPACITY = 4
-
-        /** A column with no members has no height; an empty range contains nothing, which is
-         * what a query should find there. */
-        val EMPTY_HEIGHT = floatArrayOf(0f, 0f)
     }
 }
 
-/** Every column key in the span, row by row: the walk every query and every insert makes. */
+/** Every column key in the span, row by row. */
 private inline fun forEachColumn(minX: Int, minZ: Int, maxX: Int, maxZ: Int, block: (Long) -> Unit) {
     for (z in minZ..maxZ) {
         for (x in minX..maxX) {
@@ -385,7 +326,7 @@ private inline fun forEachColumn(minX: Int, minZ: Int, maxX: Int, maxZ: Int, blo
 /** Which column [coordinate] falls in, for a grid of [cellSize] columns. */
 private fun columnIndexOf(cellSize: Float, coordinate: Float): Int = floor(coordinate / cellSize).toInt()
 
-/** One `Long` rather than a data class key, so a query allocates nothing per column. */
+/** Packs column coordinates `(x, z)` into one primitive `Long` key. */
 private fun columnKeyOf(x: Int, z: Int): Long =
     (x.toLong() shl Int.SIZE_BITS) or (z.toLong() and INT_MASK)
 

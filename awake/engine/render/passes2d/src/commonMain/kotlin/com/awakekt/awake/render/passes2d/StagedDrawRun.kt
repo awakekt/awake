@@ -97,7 +97,11 @@ data class TexturedDrawRun(
     val blendMode: BlendMode,
     val premultiplied: Boolean,
     val compositeMode: TextureCompositeMode = TextureCompositeMode(blendMode, premultiplied),
-)
+) {
+    /** Pooled arrays may change in place, so their upload must not be skipped by array identity. */
+    var requiresUpload: Boolean = false
+        internal set
+}
 
 /** Alias for [TexturedDrawRun]. */
 typealias TexturedPrimitiveRun = TexturedDrawRun
