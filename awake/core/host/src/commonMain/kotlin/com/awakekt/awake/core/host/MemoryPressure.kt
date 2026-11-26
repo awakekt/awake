@@ -85,6 +85,19 @@ object MemoryPressure {
         }
     }
 
+    /**
+     * Creates a [MemoryPressureWatcher] tracking [version] for zero-allocation frame-loop polling,
+     * paired with an optional immediate [onTrim] callback invoked synchronously during [trim]
+     * (useful when the render loop is paused or backgrounded).
+     *
+     * Close the returned watcher on teardown to release its subscription.
+     *
+     * @param onTrim Optional synchronous trim callback invoked on every [trim] call.
+     * @return A per-owner [MemoryPressureWatcher] handle.
+     */
+    fun watch(onTrim: ((MemoryPressureLevel) -> Unit)? = null): MemoryPressureWatcher =
+        MemoryPressureWatcher(onTrim?.let(::subscribe))
+
     /** Clears all registered listeners and resets [version] to zero for isolated unit tests. */
     internal fun resetForTesting() {
         listeners.store(emptyList())
@@ -114,6 +127,43 @@ object MemoryPressure {
             if (!closed.compareAndSet(expectedValue = false, newValue = true)) return
             unsubscribe(this)
         }
+    }
+}
+
+/**
+ * Per-system handle to [MemoryPressure] combining zero-allocation frame-loop polling ([check] /
+ * [drain]) with an optional immediate subscription owned and released by [close].
+ */
+@OptIn(ExperimentalAtomicApi::class)
+class MemoryPressureWatcher internal constructor(
+    private val subscription: AutoCloseable?,
+) : AutoCloseable {
+    private var seenVersion: Int = MemoryPressure.version
+    private val closed = AtomicBoolean(false)
+
+    /**
+     * Returns `true` once per [MemoryPressure.trim] signal observed since the previous [check] or
+     * [drain], advancing the watcher's watermark without allocating.
+     */
+    fun check(): Boolean {
+        val current = MemoryPressure.version
+        if (current == seenVersion) return false
+        seenVersion = current
+        return true
+    }
+
+    /**
+     * Invokes [onTrim] once when [MemoryPressure.trim] has fired since the previous [check] or
+     * [drain].
+     */
+    inline fun drain(onTrim: () -> Unit) {
+        if (check()) onTrim()
+    }
+
+    /** Idempotently unsubscribes the optional immediate trim listener owned by this watcher. */
+    override fun close() {
+        if (!closed.compareAndSet(expectedValue = false, newValue = true)) return
+        subscription?.close()
     }
 }
 

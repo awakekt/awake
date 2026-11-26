@@ -1,3 +1,7 @@
+public final class com/awakekt/awake/core/state/CancellableCatchingKt {
+	public static final fun runCancellableCatching (Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/core/state/ContextualEffectDrainer : java/lang/AutoCloseable {
 	public fun <init> ()V
 	public final fun bind (Lcom/awakekt/awake/core/state/EffectSource;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljava/lang/AutoCloseable;
