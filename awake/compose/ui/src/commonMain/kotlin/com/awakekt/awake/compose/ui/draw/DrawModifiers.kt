@@ -162,6 +162,9 @@ private class DropShadowElement(
         node.shape = shape
         node.shadow = shadow
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is DropShadowElement && shape == other.shape && shadow == other.shadow)
+    override fun hashCode(): Int = 31 * shape.hashCode() + shadow.hashCode()
     override fun toString(): String = "dropShadow($shape, $shadow)"
 }
 
@@ -262,6 +265,9 @@ private class ScaleElement(
         node.scaleX = scaleX
         node.scaleY = scaleY
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is ScaleElement && scaleX == other.scaleX && scaleY == other.scaleY)
+    override fun hashCode(): Int = 31 * scaleX.hashCode() + scaleY.hashCode()
     override fun toString(): String = "scale($scaleX, $scaleY)"
 }
 
@@ -424,6 +430,9 @@ private class ShapeClipElement(
     override fun update(node: ShapeClipNode) {
         node.shape = shape
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is ShapeClipElement && shape == other.shape)
+    override fun hashCode(): Int = shape.hashCode()
     override fun toString(): String = "clip($shape)"
 }
 
@@ -483,6 +492,9 @@ private class AlphaElement(
     override fun update(node: AlphaNode) {
         node.alpha = alpha
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is AlphaElement && alpha == other.alpha)
+    override fun hashCode(): Int = alpha.hashCode()
     override fun toString(): String = "alpha($alpha)"
 }
 

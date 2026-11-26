@@ -35,19 +35,53 @@ import com.awakekt.awake.core.input.PointerCursor
  * per pass, so measuring allocates nothing here.
  *
  * @property measurePolicy The policy that measures and places this node's [children].
- * @property density Pixels per dp for this node's measure scopes and drawing.
- * @property fontScale Extra multiplier on sp text sizes, applied on top of [density].
- * @property layoutDirection Direction used to resolve start and end placement inside this node.
+ * @param density Pixels per dp for this node's measure scopes and drawing.
+ * @param fontScale Extra multiplier on sp text sizes, applied on top of [density].
+ * @param layoutDirection Direction used to resolve start and end placement inside this node.
  */
 class LayoutNode(
     var measurePolicy: MeasurePolicy,
-    var density: Float = 1f,
-    var fontScale: Float = 1f,
-    var layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection =
+    density: Float = 1f,
+    fontScale: Float = 1f,
+    layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection =
         com.awakekt.awake.compose.ui.unit.LayoutDirection.Ltr,
 ) : Placeable(),
     Measurable,
     RememberHolder {
+
+    /** Pixels per dp for this node's measure scopes and drawing. */
+    var density: Float = density
+        set(value) {
+            if (field != value) {
+                field = value
+                drawVersion += 1
+            }
+        }
+
+    /** Extra multiplier on sp text sizes, applied on top of [density]. */
+    var fontScale: Float = fontScale
+        set(value) {
+            if (field != value) {
+                field = value
+                drawVersion += 1
+            }
+        }
+
+    /** Direction used to resolve start and end placement inside this node. */
+    var layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection = layoutDirection
+        set(value) {
+            if (field != value) {
+                field = value
+                drawVersion += 1
+            }
+        }
+
+    /**
+     * Incremented whenever this node's draw-relevant structure changes (chain rebuild, changed
+     * draw-modifier element, child list mutation, or density/font-scale/layout-direction change)
+     * so retained draw can replay unchanged subtrees across composed frames.
+     */
+    internal var drawVersion: Int = 0
 
     /** The node whose [children] or [layers] holds this one, or `null` for a root or detached node. */
     var parent: LayoutNode? = null
@@ -516,6 +550,7 @@ class LayoutNode(
         while (retainedModifierNodes.size > modifierIndex) {
             retainedModifierNodes.removeAt(retainedModifierNodes.lastIndex)?.node?.detach()
         }
+        val zChanged = zIndex != nodeZIndex
         zIndex = nodeZIndex
         parentData = data
         drawModifiers = drawNodes
@@ -534,6 +569,8 @@ class LayoutNode(
         textInputs = textInputNodes
         pointerCursor = cursorRequest
         keyInputs = keyInputNodes
+        if (zChanged) parent?.markDrawDirty()
+        drawVersion += 1
         // A chain of the same length is re-pointed rather than rebuilt. The modifier objects are
         // new every frame -- nothing memoizes them until Stage 2's `remember` -- and rebuilding
         // meant a ChainLink, a placeable, a scope and a result object per link per node per frame.
@@ -555,6 +592,7 @@ class LayoutNode(
             return element
         }
         if (previous != null && previous.elementClass.isInstance(element)) {
+            previous.lastElement = element
             nodeElement.updateUnchecked(previous.node)
             return previous.node
         }
@@ -562,14 +600,15 @@ class LayoutNode(
         val node = nodeElement.create()
         nodeElement.updateUnchecked(node)
         node.attachTo(this)
-        val retained = RetainedModifierNode(element::class, node)
+        val retained = RetainedModifierNode(element::class, node, element)
         if (index < retainedModifierNodes.size) retainedModifierNodes[index] = retained else retainedModifierNodes += retained
         return node
     }
 
-    internal data class RetainedModifierNode(
+    internal class RetainedModifierNode(
         val elementClass: kotlin.reflect.KClass<out Modifier.Element>,
         val node: Modifier.Node,
+        var lastElement: Modifier.Element,
     )
 
     internal fun dispose() {
@@ -775,3 +814,8 @@ internal fun Any.cursorImageOrKeep(current: CursorImage?): CursorImage? = when (
 /** The layout links outside this element's cursor or cursor image request, or [current] when it makes none. */
 internal fun Any.cursorDepthOrKeep(current: Int, outside: Int): Int =
     if (this is PointerCursorNode || this is PointerCursorImageNode) outside else current
+
+/** Marks [LayoutNode.drawVersion] dirty without adding another member to [LayoutNode]. */
+internal fun LayoutNode.markDrawDirty() {
+    drawVersion += 1
+}

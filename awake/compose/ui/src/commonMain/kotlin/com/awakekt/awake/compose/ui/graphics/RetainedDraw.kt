@@ -34,6 +34,8 @@ internal class RetainedDrawRecord {
     var width = 0
     var height = 0
     var childCount = 0
+    var drawVersion = 0
+    var zIndex = 0f
     var cacheable = false
     var translatable = false
 
@@ -55,11 +57,13 @@ internal class RetainedDrawRecord {
         relY = node.absoluteY - (parent?.absoluteY ?: 0)
     }
 
-    /** Records [node]'s size and each draw link's rect, using [bounds] as scratch. */
+    /** Records [node]'s size, draw version, z-index, and each draw link's rect, using [bounds] as scratch. */
     fun recordGeometry(node: LayoutNode, bounds: IntArray) {
         width = node.width
         height = node.height
         childCount = placedChildren(node)
+        drawVersion = node.drawVersion
+        zIndex = node.zIndex
         val links = node.drawDepths.size
         if (linkBounds.size != links * 4) linkBounds = IntArray(links * 4)
         for (i in 0 until links) {
@@ -68,10 +72,11 @@ internal class RetainedDrawRecord {
         }
     }
 
-    /** Whether nothing [node]'s own draw links depend on changed: their reads, its size, their rects. */
+    /** Whether nothing [node]'s own draw links depend on changed: their reads, draw version, z-order, size, their rects. */
     fun ownInputsMatch(node: LayoutNode, bounds: IntArray): Boolean {
         val links = node.drawDepths.size
-        var same = reads?.isInvalid != true && node.width == width && node.height == height && linkBounds.size == links * 4
+        var same = reads?.isInvalid != true && node.drawVersion == drawVersion && node.zIndex == zIndex &&
+            node.width == width && node.height == height && linkBounds.size == links * 4
         var i = 0
         while (same && i < links) {
             node.drawBoundsAt(node.drawDepths[i], bounds)
@@ -255,7 +260,7 @@ internal class RetainedDraw(private val scope: PaintScope) {
         val record = node.retainedDraw ?: return false
         if (record.checkedPaint != paint) {
             record.checkedPaint = paint
-            record.unchanged = record.paint != NEVER && record.cacheable &&
+            record.unchanged = record.paint == paint - 1 && record.cacheable &&
                 record.ownInputsMatch(node, bounds) && childrenUnchanged(node, record)
         }
         return record.unchanged

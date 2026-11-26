@@ -90,20 +90,10 @@ private data class SoftBlurRing(
     val tapWeight: Float,
 )
 
-/**
- * Five concentric staggered rings whose tap counts grow with circumference (6 + 10 + 14 + 16 + 18 = 64 taps),
- * weighted by annulus area * 2D Gaussian * smooth boundary taper so the outer glow reaches zero smoothly inside
- * [OutlineScissor] with no hard cutoff and rounds off sharp polygon silhouettes on both thick and thin meshes.
- */
-private val SOFT_BLUR_RINGS: List<SoftBlurRing> = run {
-    val specs = listOf(
-        Triple(0.14f, 6, 0f),
-        Triple(0.30f, 10, (PI / 10.0).toFloat()),
-        Triple(0.48f, 14, 0f),
-        Triple(0.68f, 16, (PI / 16.0).toFloat()),
-        Triple(0.88f, 18, 0f),
-    )
-    val edges = listOf(0f, 0.22f, 0.39f, 0.58f, 0.78f, 1.0f)
+private fun buildSoftBlurRings(
+    specs: List<Triple<Float, Int, Float>>,
+    edges: List<Float>,
+): List<SoftBlurRing> {
     val rawWeights = specs.mapIndexed { index, (radius, taps, _) ->
         val areaPerTap = (edges[index + 1] * edges[index + 1] - edges[index] * edges[index]) / taps
         val gauss = exp(-0.5 * (radius / SOFT_GAUSSIAN_SIGMA) * (radius / SOFT_GAUSSIAN_SIGMA)).toFloat()
@@ -111,7 +101,7 @@ private val SOFT_BLUR_RINGS: List<SoftBlurRing> = run {
         areaPerTap * gauss * taper
     }
     val totalWeight = specs.indices.sumOf { i -> (specs[i].second * rawWeights[i]).toDouble() }.toFloat()
-    specs.mapIndexed { index, (radius, taps, phase) ->
+    return specs.mapIndexed { index, (radius, taps, phase) ->
         val offsets = List(taps) { j ->
             val angle = phase + (2.0 * PI * j / taps)
             (cos(angle).toFloat() * radius) to (sin(angle).toFloat() * radius)
@@ -119,6 +109,36 @@ private val SOFT_BLUR_RINGS: List<SoftBlurRing> = run {
         SoftBlurRing(offsets = offsets, tapWeight = rawWeights[index] / totalWeight)
     }
 }
+
+/**
+ * Five concentric staggered rings whose tap counts grow with circumference (6 + 10 + 14 + 16 + 18 = 64 taps),
+ * weighted by annulus area * 2D Gaussian * smooth boundary taper so the outer glow reaches zero smoothly inside
+ * [OutlineScissor] with no hard cutoff and rounds off sharp polygon silhouettes on both thick and thin meshes.
+ */
+private val SOFT_BLUR_RINGS: List<SoftBlurRing> = buildSoftBlurRings(
+    specs = listOf(
+        Triple(0.14f, 6, 0f),
+        Triple(0.30f, 10, (PI / 10.0).toFloat()),
+        Triple(0.48f, 14, 0f),
+        Triple(0.68f, 16, (PI / 16.0).toFloat()),
+        Triple(0.88f, 18, 0f),
+    ),
+    edges = listOf(0f, 0.22f, 0.39f, 0.58f, 0.78f, 1.0f),
+)
+
+/**
+ * Lean three-ring staggered Gaussian kernel (6 + 8 + 10 = 24 taps) used at `EffectQuality.Medium`
+ * (`viewport.z >= 0.5`): 2.67x fewer depth fetches than [SOFT_BLUR_RINGS] with zero extra render
+ * passes or targets, preserving smooth outer glow falloff on mobile tile GPUs.
+ */
+private val SOFT_BLUR_RINGS_MEDIUM: List<SoftBlurRing> = buildSoftBlurRings(
+    specs = listOf(
+        Triple(0.22f, 6, 0f),
+        Triple(0.52f, 8, (PI / 8.0).toFloat()),
+        Triple(0.82f, 10, 0f),
+    ),
+    edges = listOf(0f, 0.37f, 0.68f, 1.0f),
+)
 
 /**
  * The outline overlay: a full-screen triangle that, for each mask layer, draws the layer's colour
@@ -165,7 +185,7 @@ fun outlineShader(clipSpace: ClipSpace): AslShaderDefinition = shader("outline")
         fun covered(layer: Int, at: AslExpr): AslExpr =
             step(textureSampleArrayLevelDepth(mask, maskSampler, at, layer.lit, 0.lit), farPlane)
 
-        val sampling = OutlineLayerSampling(uv, pixel, ::covered)
+        val sampling = OutlineLayerSampling(uv, pixel, viewport.z, ::covered)
         val edges = colors.indices.map { layer ->
             layerEdge(
                 layer = layer,
@@ -186,6 +206,7 @@ fun outlineShader(clipSpace: ClipSpace): AslShaderDefinition = shader("outline")
 private class OutlineLayerSampling(
     val uv: AslExpr,
     val pixel: AslExpr,
+    val mediumSoft: AslExpr,
     val covered: (Int, AslExpr) -> AslExpr,
 )
 
@@ -214,12 +235,12 @@ private fun AslBlockBuilder.layerEdge(
             }
             iff(softness gt SOFTNESS_EPSILON.lit) {
                 val blur = variable("blur$layer", 0f.lit)
-                SOFT_BLUR_RINGS.forEach { ring ->
-                    var ringSum: AslExpr = 0f.lit
-                    ring.offsets.forEach { (ox, oy) ->
-                        ringSum = ringSum + sampling.covered(layer, sampling.uv + vec2(ox.lit, oy.lit) * stepUv)
-                    }
-                    assign(blur, blur + ringSum * ring.tapWeight.lit)
+                // Uniform branch on viewport.z: High runs 64-tap 5-ring blur, Medium runs 24-tap 3-ring blur.
+                iff(sampling.mediumSoft lt 0.5f.lit) {
+                    accumulateSoftBlur(layer, blur, stepUv, SOFT_BLUR_RINGS, sampling)
+                }
+                iff(sampling.mediumSoft ge 0.5f.lit) {
+                    accumulateSoftBlur(layer, blur, stepUv, SOFT_BLUR_RINGS_MEDIUM, sampling)
                 }
                 val knee = mix(SOFT_KNEE_MIN.lit, SOFT_KNEE_MAX.lit, clamp(softness, 0f.lit, 1f.lit))
                 val shaped = let("shaped$layer", clamp(blur / knee, 0f.lit, 1f.lit))
@@ -228,4 +249,20 @@ private fun AslBlockBuilder.layerEdge(
         }
     }
     return edge
+}
+
+private fun AslBlockBuilder.accumulateSoftBlur(
+    layer: Int,
+    blur: AslExpr,
+    stepUv: AslExpr,
+    rings: List<SoftBlurRing>,
+    sampling: OutlineLayerSampling,
+) {
+    rings.forEach { ring ->
+        var ringSum: AslExpr = 0f.lit
+        ring.offsets.forEach { (ox, oy) ->
+            ringSum = ringSum + sampling.covered(layer, sampling.uv + vec2(ox.lit, oy.lit) * stepUv)
+        }
+        assign(blur, blur + ringSum * ring.tapWeight.lit)
+    }
 }

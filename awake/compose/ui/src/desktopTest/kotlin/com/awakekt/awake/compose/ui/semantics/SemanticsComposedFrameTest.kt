@@ -99,6 +99,33 @@ class SemanticsComposedFrameTest {
         }
     }
 
+    @Test
+    fun buildSemanticsFalseReturnsEmptyAndRebuildsWhenReEnabled() {
+        val host = ComposeHost()
+        val withSemantics = host.frame(input) { content(tagged = true, merging = false) }.semantics
+        assertEquals(ITEMS, withSemantics.size)
+
+        host.buildSemantics = false
+        val skipped = host.frame(input) { content(tagged = true, merging = false) }.semantics
+        assertTrue(skipped.isEmpty(), "expected empty semantics when buildSemantics=false")
+
+        // Moving or mutating tags while buildSemantics=false stays empty without allocating semantics nodes.
+        var counter = 0
+        repeat(WARMUP) {
+            counter++
+            val frame = host.frame(input) {
+                Layout(ProbeType, modifier = Modifier.size(10.dp).testTag("t-$counter"), measurePolicy = column, content = null)
+            }
+            assertTrue(frame.semantics.isEmpty())
+        }
+
+        host.buildSemantics = true
+        val rebuilt = host.frame(input) {
+            Layout(ProbeType, modifier = Modifier.size(10.dp).testTag("t-$counter"), measurePolicy = column, content = null)
+        }.semantics
+        assertEquals(listOf("t-$counter"), rebuilt.map { it.testTag })
+    }
+
     private companion object {
         const val ITEMS = 50
         const val NODES = ITEMS * 2

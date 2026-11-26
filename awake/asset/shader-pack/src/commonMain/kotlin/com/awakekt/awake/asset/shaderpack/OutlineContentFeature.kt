@@ -44,6 +44,8 @@ private const val SOFTNESS_EPSILON = 0.001f
  * Already-crisp outlines keep their authored width untouched.
  */
 private const val LOW_SOFT_WIDTH_CAP = 2f
+private const val SOFT_QUALITY_HIGH = 0f
+private const val SOFT_QUALITY_MEDIUM = 1f
 
 /**
  * An outline around the silhouette of every masked draw, in its mask layer's style, drawn over the
@@ -53,10 +55,15 @@ private const val LOW_SOFT_WIDTH_CAP = 2f
  *
  * Honors [RenderFrameContext.effectQuality] with zero per-frame allocations:
  * - [EffectQuality.Off]: skips the outline overlay draw completely (0 samples).
- * - [EffectQuality.Low]: converts soft 64-tap Gaussian glows (`softness > 0`) to crisp 16-tap
+ * - [EffectQuality.Low]: converts soft Gaussian glows (`softness > 0`) to crisp 16-tap
  *   silhouettes (`softness = 0`, width capped at 2 px) to protect mobile tile GPUs while keeping
  *   already-crisp outlines at their authored width.
- * - [EffectQuality.Medium] / [EffectQuality.High]: draws the full authored outline style.
+ * - [EffectQuality.Medium]: evaluates a lean 3-ring 24-tap staggered Gaussian blur for soft glows
+ *   (2.67x fewer mask fetches than [EffectQuality.High], with zero extra render passes or targets).
+ * - [EffectQuality.High]: draws the full 5-ring 64-tap Gaussian soft glow.
+ *
+ * When multiple bounded targets are outlined, [OutlineScissor] issues one scissored overlay draw
+ * per strictly disjoint screen cluster so distant targets never shade the empty gap between them.
  */
 fun outlineContentFeature(): ContentFeatureSource = ContentFeatureSource { backend ->
     val stages = aslShaderSet(::outlineShader).stagesFor(backend)
@@ -90,8 +97,9 @@ class OutlineRenderFeature(
     private val scissor = OutlineScissor()
     private var viewportWidth = 0f
     private var viewportHeight = 0f
+    private var softQualityMode = SOFT_QUALITY_HIGH
     private val fillUniforms: UniformWriter.() -> Unit = {
-        put(OutlineFields.Viewport, viewportWidth, viewportHeight, 0f, 0f)
+        put(OutlineFields.Viewport, viewportWidth, viewportHeight, softQualityMode, 0f)
         put(OutlineFields.Color0, layerR[0], layerG[0], layerB[0], layerA[0])
         put(OutlineFields.Color1, layerR[1], layerG[1], layerB[1], layerA[1])
         put(OutlineFields.Widths, layerWidth[0], layerWidth[1], layerSoftness[0], layerSoftness[1])
@@ -102,6 +110,7 @@ class OutlineRenderFeature(
         if (context.effectQuality == EffectQuality.Off || input == null || !styledOnScreen(context, input)) return
         viewportWidth = sceneWidth(context, input)
         viewportHeight = sceneHeight(context, input)
+        softQualityMode = if (context.effectQuality == EffectQuality.Medium) SOFT_QUALITY_MEDIUM else SOFT_QUALITY_HIGH
         uniforms.write(context.frameIndex, fillUniforms)
         val recorder: CommandRecorder = context.recorder
         recorder.bindPipeline(pipeline)
@@ -110,9 +119,15 @@ class OutlineRenderFeature(
         context.engineBinding(pipeline, BindingSemantic.MaskDepth)?.let {
             recorder.bindMaterial(BindingSemantic.MaskDepth, it)
         }
-        if (scissor.narrowed) recorder.setScissor(scissor.x, scissor.y, scissor.width, scissor.height)
-        recorder.draw(FULLSCREEN_TRIANGLE_VERTICES, 1)
-        if (scissor.narrowed) recorder.setScissor(scissor.fullX, scissor.fullY, scissor.fullWidth, scissor.fullHeight)
+        if (!scissor.narrowed) {
+            recorder.draw(FULLSCREEN_TRIANGLE_VERTICES, 1)
+        } else {
+            for (i in 0 until scissor.rectCount) {
+                recorder.setScissor(scissor.rectX(i), scissor.rectY(i), scissor.rectWidth(i), scissor.rectHeight(i))
+                recorder.draw(FULLSCREEN_TRIANGLE_VERTICES, 1)
+            }
+            recorder.setScissor(scissor.fullX, scissor.fullY, scissor.fullWidth, scissor.fullHeight)
+        }
     }
 
     /**

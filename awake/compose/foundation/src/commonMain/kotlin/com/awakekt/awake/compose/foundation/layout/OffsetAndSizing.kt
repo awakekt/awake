@@ -100,6 +100,9 @@ private class OffsetElement(
         node.x = x
         node.y = y
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is OffsetElement && x == other.x && y == other.y)
+    override fun hashCode(): Int = 31 * x.hashCode() + y.hashCode()
 }
 
 private class OffsetNode :
@@ -151,6 +154,9 @@ private class AbsoluteOffsetElement(
         node.x = x
         node.y = y
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is AbsoluteOffsetElement && x == other.x && y == other.y)
+    override fun hashCode(): Int = 31 * x.hashCode() + y.hashCode()
 }
 
 private class AbsoluteOffsetNode :

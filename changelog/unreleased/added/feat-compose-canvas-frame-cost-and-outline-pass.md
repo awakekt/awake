@@ -1,0 +1,1 @@
+- Add `ComposeHost.buildSemantics` to skip per-frame accessibility tree construction when unused, `ComposeHost.retainUnchangedSubtrees` to replay unchanged subtrees across composed frames, allocation-free `CanvasElement.alpha` fades, disjoint multi-cluster `OutlineScissor` rects, and a 24-tap 3-ring Gaussian soft outline kernel at `EffectQuality.Medium`.

@@ -12,6 +12,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
@@ -108,6 +109,7 @@ class OutlineParityTest {
                 assertTrue(hovered.blue > RING_PIXELS && hovered.red == 0, "$backend: set 1 in its own colour: $hovered")
 
                 verifyWideTarget(backend, renderer, mesh, material, lens)
+                verifyMultiClusterDisjointScissor(backend, renderer, material, lens)
                 verifySoftGlow(backend, renderer, target, mesh, material, lens)
                 verifyEffectQualityScaling(backend, renderer, target, mesh, material, lens, unmaskedDraws)
             } finally {
@@ -160,7 +162,63 @@ class OutlineParityTest {
         }
     }
 
-    /** Softness > 0 renders a smooth, monotonically fading screen-space Gaussian glow at [EffectQuality.High]. */
+    /** Two distant bounded meshes render pixel-identically under disjoint per-cluster scissors vs full-screen. */
+    private suspend fun verifyMultiClusterDisjointScissor(
+        backend: HeadlessUiBackend,
+        renderer: Renderer,
+        material: com.awakekt.awake.render.material.Material,
+        lens: Lens,
+    ) {
+        val wideTarget = renderer.createRenderTarget(WIDE_WIDTH, SIZE)
+        // Distinct meshes so auto-instancing does not fold them into one combined draw before mask culling.
+        val leftCube = renderer.createMesh(generate { cube(size = CLUSTER_CUBE, colored = false) })
+        val rightCube = renderer.createMesh(generate { cube(size = CLUSTER_CUBE, colored = false) })
+        try {
+            val leftModel = Mat4().translate(-CLUSTER_OFFSET_X, 0f, 0f)
+            val rightModel = Mat4().translate(CLUSTER_OFFSET_X, 0f, 0f)
+            val half = CLUSTER_CUBE / 2f
+            val leftBounds = Aabb(Vec3f(-CLUSTER_OFFSET_X - half, -half, -half), Vec3f(-CLUSTER_OFFSET_X + half, half, half))
+            val rightBounds = Aabb(Vec3f(CLUSTER_OFFSET_X - half, -half, -half), Vec3f(CLUSTER_OFFSET_X + half, half, half))
+
+            suspend fun renderPair(withBounds: Boolean): Pair<ByteArray, Int> {
+                val passInput = ScenePassCompiler.compile(
+                    lens = lens,
+                    drawCalls = listOf(
+                        RenderDrawCommand(leftCube, material, model = leftModel, maskLayer = 0, worldBounds = if (withBounds) leftBounds else null),
+                        RenderDrawCommand(rightCube, material, model = rightModel, maskLayer = 0, worldBounds = if (withBounds) rightBounds else null),
+                    ),
+                    light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
+                    clipSpace = renderer.clipSpace,
+                    aspect = WIDE_WIDTH.toFloat() / SIZE.toFloat(),
+                    drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                    maskLayers = listOf(SELECTED.packed(), HOVERED.packed()),
+                )
+                renderer.renderToTexture(wideTarget, passInput)
+                return renderer.readPixels(wideTarget).data.copyOf() to (passInput.maskPasses.firstOrNull { it.targetLayer == 0 }?.screenBoundRectCount ?: 0)
+            }
+
+            val (unboundedPixels, unboundedCount) = renderPair(withBounds = false)
+            val (clusteredPixels, clusterCount) = renderPair(withBounds = true)
+            assertEquals(0, unboundedCount, "$backend: unbounded pair should not populate cluster rects")
+            assertEquals(2, clusterCount, "$backend: bounded pair must populate 2 per-draw cluster rects")
+            assertTrue(
+                unboundedPixels.contentEquals(clusteredPixels),
+                "$backend: disjoint cluster scissors must match unbounded outline pixel-for-pixel",
+            )
+            val redCount = (0 until WIDE_WIDTH * SIZE).count { p ->
+                clusteredPixels.channel(p, 0) > STRONG && clusteredPixels.channel(p, 1) < WEAK && clusteredPixels.channel(p, 2) < WEAK
+            }
+            println("$backend multi-cluster outline (256x128): clusters=$clusterCount redPixels=$redCount (exact pixel parity)")
+            assertTrue(redCount > RING_PIXELS, "$backend: expected both distant cubes outlined, got $redCount red pixels")
+        } finally {
+            renderer.waitIdle()
+            leftCube.destroy()
+            rightCube.destroy()
+            wideTarget.destroy()
+        }
+    }
+
+    /** Softness > 0 renders a smooth, monotonically fading screen-space Gaussian glow at [EffectQuality.High] and [EffectQuality.Medium]. */
     private suspend fun verifySoftGlow(
         backend: HeadlessUiBackend,
         renderer: Renderer,
@@ -170,40 +228,42 @@ class OutlineParityTest {
         lens: Lens,
     ) {
         val previousQuality = renderer.effectQuality
-        renderer.effectQuality = EffectQuality.High
         try {
             val half = CUBE / 2
             val bounds = Aabb(Vec3f(-half, -half, -half), Vec3f(half, half, half))
-            renderer.renderToTexture(
-                target,
-                ScenePassCompiler.compile(
-                    lens = lens,
-                    drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0, worldBounds = bounds)),
-                    light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
-                    clipSpace = renderer.clipSpace,
-                    aspect = 1f,
-                    drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
-                    maskLayers = listOf(SOFT_SELECTED.packed(), HOVERED.packed()),
-                ),
-            )
-            val pixels = renderer.readPixels(target).data
-            val row = SIZE / 2
-            val squareLeft = SIZE / 2 - SQUARE / 2
-            val nearRed = pixels.channel(row * SIZE + (squareLeft - 1), 0)
-            val midRed = pixels.channel(row * SIZE + (squareLeft - 5), 0)
-            val farRed = pixels.channel(row * SIZE + (squareLeft - 12), 0)
-            val insideRed = pixels.channel(row * SIZE + (squareLeft + 4), 0)
-            val insideBlue = pixels.channel(row * SIZE + (squareLeft + 4), 2)
-            println("$backend soft outline (High): nearRed=$nearRed midRed=$midRed farRed=$farRed inside=($insideRed,$insideBlue)")
-            assertTrue(nearRed > STRONG, "$backend: soft glow near edge must be bright, got $nearRed")
-            assertTrue(
-                midRed in (farRed + 20) until (nearRed - 20),
-                "$backend: soft glow must smoothly fade (far=$farRed < mid=$midRed < near=$nearRed)",
-            )
-            assertTrue(
-                kotlin.math.abs(insideRed - insideBlue) < 10,
-                "$backend: soft glow must not bleed into the white silhouette interior: R=$insideRed B=$insideBlue",
-            )
+            for (quality in listOf(EffectQuality.High, EffectQuality.Medium)) {
+                renderer.effectQuality = quality
+                renderer.renderToTexture(
+                    target,
+                    ScenePassCompiler.compile(
+                        lens = lens,
+                        drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0, worldBounds = bounds)),
+                        light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
+                        clipSpace = renderer.clipSpace,
+                        aspect = 1f,
+                        drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                        maskLayers = listOf(SOFT_SELECTED.packed(), HOVERED.packed()),
+                    ),
+                )
+                val pixels = renderer.readPixels(target).data
+                val row = SIZE / 2
+                val squareLeft = SIZE / 2 - SQUARE / 2
+                val nearRed = pixels.channel(row * SIZE + (squareLeft - 1), 0)
+                val midRed = pixels.channel(row * SIZE + (squareLeft - 5), 0)
+                val farRed = pixels.channel(row * SIZE + (squareLeft - 12), 0)
+                val insideRed = pixels.channel(row * SIZE + (squareLeft + 4), 0)
+                val insideBlue = pixels.channel(row * SIZE + (squareLeft + 4), 2)
+                println("$backend soft outline ($quality): nearRed=$nearRed midRed=$midRed farRed=$farRed inside=($insideRed,$insideBlue)")
+                assertTrue(nearRed > STRONG, "$backend ($quality): soft glow near edge must be bright, got $nearRed")
+                assertTrue(
+                    midRed in (farRed + 20) until (nearRed - 20),
+                    "$backend ($quality): soft glow must smoothly fade (far=$farRed < mid=$midRed < near=$nearRed)",
+                )
+                assertTrue(
+                    kotlin.math.abs(insideRed - insideBlue) < 10,
+                    "$backend ($quality): soft glow must not bleed into the white silhouette interior: R=$insideRed B=$insideBlue",
+                )
+            }
         } finally {
             renderer.effectQuality = previousQuality
         }
@@ -330,6 +390,8 @@ class OutlineParityTest {
         const val SIZE = 128
         const val WIDE_WIDTH = 256
         const val CUBE = 2f
+        const val CLUSTER_CUBE = 1f
+        const val CLUSTER_OFFSET_X = 2.5f
         const val HALF_HEIGHT = 2f
 
         /** The cube's face on screen: [CUBE] of the frame's 2 x [HALF_HEIGHT] units. */

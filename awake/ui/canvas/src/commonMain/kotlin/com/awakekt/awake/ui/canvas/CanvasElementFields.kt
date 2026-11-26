@@ -208,6 +208,14 @@ sealed class CanvasElementFields : CanvasElementBase() {
         set(value) {
             lookFor(value != null)?.previewState = value
         }
+
+    /** See [CanvasAppearance.alpha]. */
+    var alpha: Float
+        get() = appearancePart?.alpha ?: CanvasAppearance.DEFAULT_ALPHA
+        set(value) {
+            val clamped = if (value.isNaN()) CanvasAppearance.DEFAULT_ALPHA else value.coerceIn(0f, 1f)
+            lookFor(clamped != CanvasAppearance.DEFAULT_ALPHA)?.alpha = clamped
+        }
 }
 
 private val DEFAULT_STYLE = CanvasStyle()
