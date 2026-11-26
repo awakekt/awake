@@ -15,13 +15,16 @@ import com.awakekt.awake.asset.shaderdsl.AslFragmentBuilder
 import com.awakekt.awake.asset.shaderdsl.AslLayoutHandles
 import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.abs
 import com.awakekt.awake.asset.shaderdsl.and
+import com.awakekt.awake.asset.shaderdsl.b
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.floor
+import com.awakekt.awake.asset.shaderdsl.g
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.lit
@@ -32,10 +35,12 @@ import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
 import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.plus
+import com.awakekt.awake.asset.shaderdsl.r
 import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.samplerComparison
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.sqrt
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureDepth2dArray
 import com.awakekt.awake.asset.shaderdsl.textureSampleLevel
@@ -628,17 +633,80 @@ fun pagedTerrainShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShade
 /** Discard-free Level-0 core-ring companion of [pagedTerrainShader] for hardware Early-Z / FPK. */
 fun pagedTerrainCoreShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, true, allowDiscard = false)
 
-private fun terrainShader(clipSpace: ClipSpace, paged: Boolean, allowDiscard: Boolean = true): AslShaderDefinition =
-    shader((if (paged) "paged_terrain" else "terrain") + if (allowDiscard) "" else "_core") {
+/** Lean mobile neutral terrain shader (fast polynomial/sqrt display transform, opt-in surface deposit). */
+fun terrainFastShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainShader(clipSpace, paged = false, allowDiscard = true, fast = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
+/** Discard-free Level-0 core-ring companion of [terrainFastShader] for hardware Early-Z / FPK. */
+fun terrainFastCoreShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainShader(clipSpace, paged = false, allowDiscard = false, fast = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
+/** Lean mobile paged neutral terrain shader (fast polynomial/sqrt display transform, opt-in surface deposit). */
+fun pagedTerrainFastShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainShader(clipSpace, paged = true, allowDiscard = true, fast = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
+/** Discard-free Level-0 core-ring companion of [pagedTerrainFastShader] for hardware Early-Z / FPK. */
+fun pagedTerrainFastCoreShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainShader(clipSpace, paged = true, allowDiscard = false, fast = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
+@Suppress("MagicNumber")
+private fun AslShaderBuilder.fastTerrainDisplayTransform(): SceneDisplayTransform {
+    val startCompression = const("TONE_MAP_START_COMPRESSION", 0.76f)
+    val desaturation = const("TONE_MAP_DESATURATION", 0.15f)
+    val toneMap = fn("toneMapPbrNeutral", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val color by param(GpuDataShape.Vec3)
+        val low = let("low", min(color.r, min(color.g, color.b)))
+        val offset = let("offset", select(0.04f.lit, low - 6.25f.lit * low * low, low lt 0.08f.lit))
+        val shifted = let("shifted", color - vec3(offset))
+        val peak = let("peak", max(shifted.r, max(shifted.g, shifted.b)))
+        iff(peak lt startCompression) { returnValue(shifted) }
+        val shoulder = 1f.lit - startCompression
+        val newPeak = let("newPeak", 1f.lit - shoulder * shoulder / (peak + shoulder - startCompression))
+        val fade = let("fade", 1f.lit - 1f.lit / (desaturation * (peak - newPeak) + 1f.lit))
+        returnValue(mix(shifted * (newPeak / peak), vec3(newPeak), fade))
+    }
+    val encode = fn("fastLinearToSrgb", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val linearParam by param(GpuDataShape.Vec3)
+        val c = let("c", max(linearParam, vec3(0f.lit)))
+        val s1 = let("s1", sqrt(c))
+        val s2 = let("s2", sqrt(s1))
+        val s3 = let("s3", sqrt(s2))
+        returnValue(clamp(s1 * 0.5851224f.lit + s2 * 0.7831404f.lit - s3 * 0.3682627f.lit, vec3(0f.lit), vec3(1f.lit)))
+    }
+    val decode = fn("fastDisplayToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val encoded by param(GpuDataShape.Vec3)
+        val c = let("c", max(encoded, vec3(0f.lit)))
+        returnValue(c * (c * (c * 0.30530602f.lit + 0.6821711f.lit) + 0.012522878f.lit))
+    }
+    return SceneDisplayTransform(toneMap, encode, decode, isLinear = false)
+}
+
+private fun terrainShader(
+    clipSpace: ClipSpace,
+    paged: Boolean,
+    allowDiscard: Boolean = true,
+    fast: Boolean = false,
+    includeSurfaceDeposit: Boolean = true,
+): AslShaderDefinition =
+    shader(
+        (if (paged) "paged_terrain" else "terrain") +
+            (if (fast) "_fast" else "") +
+            (if (fast && includeSurfaceDeposit) "_deposit" else "") +
+            if (allowDiscard) "" else "_core",
+    ) {
         val terrain = terrainClipmapVertexStage(true, false, paged, exportRingCell = allowDiscard)
         val shadows = terrainShadowSampling(terrain, clipSpace)
-        val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
+        val displayTransform = if (fast) fastTerrainDisplayTransform() else sceneDisplayTransform(decodesDisplayReferred = true)
 
         fragment {
             if (allowDiscard) terrainClipmapDiscardUnderFinerRing(terrain)
             val normal = variable("normal", normalize(terrain.worldNormal))
             val base = let("base", terrain.terrainParams.z)
-            val baseAlbedo = applyTerrainSurfaceDeposit(vec3(base, base, base), normal, terrain.worldPosition, terrain)
+            val baseAlbedo = if (includeSurfaceDeposit) {
+                applyTerrainSurfaceDeposit(vec3(base, base, base), normal, terrain.worldPosition, terrain)
+            } else {
+                vec3(base, base, base)
+            }
             // Not negated: SceneLight.direction already points TOWARD the light, which is how every
             // other lit shader in the pack reads it.
             val toLight = let("toLight", normalize(terrain.sunDirection.xyz))

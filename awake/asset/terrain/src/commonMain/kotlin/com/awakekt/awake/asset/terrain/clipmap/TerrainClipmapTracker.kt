@@ -93,7 +93,6 @@ class TerrainClipmapTracker(
      * @return List of updated [ClipmapRingState] from Level 0 to Level ringCount - 1.
      */
     fun update(cameraPosition: Vec3f): List<ClipmapRingState> {
-        _ringStates.clear()
         val outerHalf = config.extentForLevel(config.ringCount - 1) * 0.5f
         val outerSnapMargin = config.spacingForLevel(config.ringCount - 1)
         val reach = outerHalf - outerSnapMargin
@@ -107,14 +106,27 @@ class TerrainClipmapTracker(
             val snappedX = floor((focusX - halfExtent) / coarse + 0.5f) * coarse + halfExtent
             val snappedZ = floor((focusZ - halfExtent) / coarse + 0.5f) * coarse + halfExtent
 
-            _ringStates.add(
-                ClipmapRingState(
+            if (level < _ringStates.size) {
+                val existing = _ringStates[level]
+                if (existing.snappedCenter.x == snappedX && existing.snappedCenter.z == snappedZ) {
+                    continue
+                }
+                _ringStates[level] = ClipmapRingState(
                     level = level,
                     spacing = spacing,
                     snappedCenter = Vec3f(snappedX, 0f, snappedZ),
                     halfExtent = halfExtent,
-                ),
-            )
+                )
+            } else {
+                _ringStates.add(
+                    ClipmapRingState(
+                        level = level,
+                        spacing = spacing,
+                        snappedCenter = Vec3f(snappedX, 0f, snappedZ),
+                        halfExtent = halfExtent,
+                    ),
+                )
+            }
         }
         lastCameraPos = cameraPosition
         return _ringStates

@@ -185,6 +185,29 @@ public final class com/awakekt/awake/asset/terrain/TerrainPageLayout {
 	public final fun validate (Lcom/awakekt/awake/asset/terrain/Heightmap;)V
 }
 
+public final class com/awakekt/awake/asset/terrain/clipmap/ClipmapBlockRange {
+	public fun <init> (IIIFFFF)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun copy (IIIFFFF)Lcom/awakekt/awake/asset/terrain/clipmap/ClipmapBlockRange;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/terrain/clipmap/ClipmapBlockRange;IIIFFFFILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/clipmap/ClipmapBlockRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFirstIndex ()I
+	public final fun getIndexCount ()I
+	public final fun getLevel ()I
+	public final fun getMaxLocalX ()F
+	public final fun getMaxLocalZ ()F
+	public final fun getMinLocalX ()F
+	public final fun getMinLocalZ ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/asset/terrain/clipmap/ClipmapColliderSamplesKt {
 	public static final field DEFAULT_MAX_COLLIDER_SIDE I
 	public static final fun clipmapColliderFactor (Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;I)I
@@ -217,6 +240,7 @@ public final class com/awakekt/awake/asset/terrain/clipmap/ClipmapRingState {
 }
 
 public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig {
+	public static final field Companion Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig$Companion;
 	public fun <init> ()V
 	public fun <init> (IIF)V
 	public synthetic fun <init> (IIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -236,6 +260,12 @@ public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig 
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig$Companion {
+	public final fun getCompact ()Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+	public final fun getDefault ()Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+	public final fun getMobile ()Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+}
+
 public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometry {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometry;
 	public final fun buildAllClipmapMeshes (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Ljava/util/List;
@@ -245,6 +275,8 @@ public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometr
 	public static synthetic fun buildMergedClipmapMesh$default (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public final fun buildRingMesh (ILcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public final fun coreIndexCount (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)I
+	public final fun mergedClipmapBlocks (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Ljava/util/List;
+	public static synthetic fun mergedClipmapBlocks$default (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker {
