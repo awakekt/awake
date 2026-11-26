@@ -9,7 +9,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class MemoryPressureTest {
     @BeforeTest
@@ -135,5 +137,32 @@ class MemoryPressureTest {
         assertNull(mapAndroidTrimLevel(3))
         assertNull(mapAndroidTrimLevel(12))
         assertNull(mapAndroidTrimLevel(30))
+    }
+
+    @Test
+    fun watcherDrainsOncePerSignalAndClosesImmediateSubscriptionIdempotently() {
+        val immediate = mutableListOf<MemoryPressureLevel>()
+        var frameDrains = 0
+        val watcher = MemoryPressure.watch { immediate += it }
+
+        assertFalse(watcher.check())
+        watcher.drain { frameDrains++ }
+        assertEquals(0, frameDrains)
+
+        MemoryPressure.trim(MemoryPressureLevel.Moderate)
+        assertEquals(listOf(MemoryPressureLevel.Moderate), immediate)
+        watcher.drain { frameDrains++ }
+        watcher.drain { frameDrains++ }
+        assertEquals(1, frameDrains)
+
+        MemoryPressure.trim(MemoryPressureLevel.Critical)
+        assertEquals(listOf(MemoryPressureLevel.Moderate, MemoryPressureLevel.Critical), immediate)
+        assertTrue(watcher.check())
+        assertFalse(watcher.check())
+
+        watcher.close()
+        watcher.close()
+        MemoryPressure.trim(MemoryPressureLevel.Low)
+        assertEquals(listOf(MemoryPressureLevel.Moderate, MemoryPressureLevel.Critical), immediate)
     }
 }

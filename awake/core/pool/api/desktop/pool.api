@@ -1,3 +1,20 @@
+public final class com/awakekt/awake/core/pool/BoundedLruCache {
+	public fun <init> (I)V
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public final fun clear ()V
+	public final fun contains (Ljava/lang/Object;)Z
+	public final fun evictOverLimit (Ljava/util/Set;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun evictOverLimit$default (Lcom/awakekt/awake/core/pool/BoundedLruCache;Ljava/util/Set;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun get (Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun getSize ()I
+	public final fun isEmpty ()Z
+	public final fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Set;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun put$default (Lcom/awakekt/awake/core/pool/BoundedLruCache;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Set;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun remove (Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun trimAll (Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun trimAll$default (Lcom/awakekt/awake/core/pool/BoundedLruCache;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/core/pool/ScratchPool {
 	public static final field Companion Lcom/awakekt/awake/core/pool/ScratchPool$Companion;
 	public static final field DEFAULT_CAPACITY I
