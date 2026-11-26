@@ -43,6 +43,19 @@ data class GpuSubPass(
      */
     var screenBounds: ImagePassRect? = null
 
+    /**
+     * Optional per-draw screen-space bounds packed as `(minU, minV, maxU, maxV)` quadruples in
+     * `[0, screenBoundRectCount * 4)`, in the same texture coordinates as [screenBounds].
+     *
+     * Populated by a mask pass when multiple bounded draws are present so the outline overlay can
+     * scissor disjoint on-screen clusters independently instead of shading the empty gap between
+     * distant outlined targets. Not part of [equals].
+     */
+    var screenBoundRects: FloatArray? = null
+
+    /** Number of valid `(minU, minV, maxU, maxV)` rectangles packed in [screenBoundRects]. */
+    var screenBoundRectCount: Int = 0
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is GpuSubPass) return false

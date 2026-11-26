@@ -155,7 +155,7 @@ data class SceneCanvasText(
  */
 @Serializable
 @SerialName("canvas_appearance")
-@SceneBinding(CanvasAppearance::class, runtimeOnly = ["revision", "previewState"])
+@SceneBinding(CanvasAppearance::class, runtimeOnly = ["revision", "previewState", "alpha"])
 data class SceneCanvasAppearance(
     val color: String = CanvasAppearance.DEFAULT_COLOR,
     val background: String = CanvasAppearance.DEFAULT_BACKGROUND,

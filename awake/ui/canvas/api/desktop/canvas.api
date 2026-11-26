@@ -111,14 +111,17 @@ public final class com/awakekt/awake/ui/canvas/CanvasAnchor$Companion {
 
 public final class com/awakekt/awake/ui/canvas/CanvasAppearance : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasAppearance$Companion;
+	public static final field DEFAULT_ALPHA F
 	public static final field DEFAULT_BACKGROUND Ljava/lang/String;
 	public static final field DEFAULT_COLOR Ljava/lang/String;
 	public fun <init> ()V
+	public final fun getAlpha ()F
 	public final fun getBackground ()Ljava/lang/String;
 	public final fun getColor ()Ljava/lang/String;
 	public final fun getPreviewState ()Lcom/awakekt/awake/ui/canvas/CanvasControlState;
 	public final fun getSkin ()Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;
 	public final fun getStyle ()Lcom/awakekt/awake/ui/canvas/CanvasStyle;
+	public final fun setAlpha (F)V
 	public final fun setBackground (Ljava/lang/String;)V
 	public final fun setColor (Ljava/lang/String;)V
 	public final fun setPreviewState (Lcom/awakekt/awake/ui/canvas/CanvasControlState;)V
@@ -797,6 +800,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementBase : com/awakek
 }
 
 public abstract class com/awakekt/awake/ui/canvas/CanvasElementFields : com/awakekt/awake/ui/canvas/CanvasElementBase {
+	public final fun getAlpha ()F
 	public final fun getAnchor ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
 	public final fun getBackground ()Ljava/lang/String;
 	public final fun getColor ()Ljava/lang/String;
@@ -823,6 +827,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementFields : com/awak
 	public final fun getTouchOnly ()Z
 	public final fun getVisible ()Z
 	public final fun getWidth ()F
+	public final fun setAlpha (F)V
 	public final fun setAnchor (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
 	public final fun setBackground (Ljava/lang/String;)V
 	public final fun setColor (Ljava/lang/String;)V

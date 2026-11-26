@@ -36,51 +36,70 @@ class NodeChildren internal constructor(private val owner: LayoutNode? = null) {
     fun add(node: LayoutNode) {
         node.parent = owner
         items += node
+        owner?.markDrawDirty()
     }
 
     /** Inserts [node] at [index], or at the end if [index] is past it, and makes the owner its parent. */
     fun insertAt(index: Int, node: LayoutNode) {
         node.parent = owner
         items.add(index.coerceAtMost(items.size), node)
+        owner?.markDrawDirty()
     }
 
     /** Moves an existing node into position -- how a keyed list survives reordering. */
     fun move(from: Int, to: Int) {
         if (from == to) return
         items.add(to, items.removeAt(from))
+        owner?.markDrawDirty()
     }
 
     /** Drops everything from [index] onward: what the latest pass no longer declares. */
     fun truncateFrom(index: Int) {
+        if (items.size <= index) return
         while (items.size > index) {
             val removed = items.removeAt(items.size - 1)
             removed.parent = null
             removed.dispose()
         }
+        owner?.markDrawDirty()
     }
 
     /** Removes every node, detaching each from its parent and disposing it. */
     fun clear() {
+        if (items.isEmpty()) return
         while (items.isNotEmpty()) {
             val removed = items.removeAt(items.lastIndex)
             removed.parent = null
             removed.dispose()
         }
+        owner?.markDrawDirty()
     }
 
     /** Removes every node and detaches it from its parent, without disposing it. */
     fun clearWithoutDispose() {
+        if (items.isEmpty()) return
         for (i in items.indices) items[i].parent = null
         items.clear()
+        owner?.markDrawDirty()
     }
 
     /** Replaces the contents with [nodes], parented to the owner; the previous nodes are detached, not disposed. */
     fun setFrom(nodes: List<LayoutNode>) {
+        if (items.size == nodes.size) {
+            var same = true
+            var i = 0
+            while (same && i < items.size) {
+                same = items[i] === nodes[i]
+                i++
+            }
+            if (same) return
+        }
         for (i in items.indices) items[i].parent = null
         items.clear()
         for (i in nodes.indices) {
             nodes[i].parent = owner
             items.add(nodes[i])
         }
+        owner?.markDrawDirty()
     }
 }

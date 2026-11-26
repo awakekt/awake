@@ -120,12 +120,81 @@ class OutlineOverlayDrawTest {
     }
 
     @Test
-    fun effectQualityMediumPreservesAuthoredSoftGlow() {
+    fun effectQualityMediumPreservesAuthoredSoftGlowAndSelectsLeanBlurKernel() {
         val soft = layer(0, OutlineStyle(Color(1f, 0.9f, 0.5f, 0.95f), widthPixels = 10f, softness = 0.85f))
+        val high = record(EffectQuality.High, soft)
         val medium = record(EffectQuality.Medium, soft)
+        assertEquals(1, high.recorder.draws)
+        assertEquals(0f, high.uniforms.last[SOFT_QUALITY_OFFSET])
         assertEquals(1, medium.recorder.draws)
         assertEquals(10f, medium.uniforms.last[WIDTH0_OFFSET])
         assertEquals(0.85f, medium.uniforms.last[SOFTNESS0_OFFSET])
+        assertEquals(1f, medium.uniforms.last[SOFT_QUALITY_OFFSET])
+    }
+
+    @Test
+    fun disjointClustersIssueSeparateNonOverlappingScissorsAndOverlappingClustersMerge() {
+        val style = OutlineStyle(Color(1f, 0f, 0f, 1f), widthPixels = 2f)
+        // Two distant draws in the same mask layer: left [0.05..0.15] and right [0.85..0.95] of 64 px.
+        val distant = layer(0, style).also {
+            it.screenBounds = ImagePassRect(0.05f, 0.4f, 0.90f, 0.2f)
+            it.screenBoundRects = floatArrayOf(
+                0.05f,
+                0.4f,
+                0.15f,
+                0.6f,
+                0.85f,
+                0.4f,
+                0.95f,
+                0.6f,
+            )
+            it.screenBoundRectCount = 2
+        }
+        val distantRecorder = record(distant)
+        assertEquals(2, distantRecorder.draws)
+        // Two disjoint cluster scissors followed by one full-scene restore.
+        assertEquals(3, distantRecorder.scissors.size)
+        val r0 = distantRecorder.scissors[0]
+        val r1 = distantRecorder.scissors[1]
+        assertEquals(listOf(0, 0, SIZE, SIZE), distantRecorder.scissors[2])
+        val disjoint = (r0[0] + r0[2] <= r1[0]) || (r1[0] + r1[2] <= r0[0]) ||
+            (r0[1] + r0[3] <= r1[1]) || (r1[1] + r1[3] <= r0[1])
+        kotlin.test.assertTrue(disjoint, "emitted cluster scissors must be strictly pairwise disjoint: $r0 vs $r1")
+        val combinedArea = r0[2] * r0[3] + r1[2] * r1[3]
+        kotlin.test.assertTrue(combinedArea < SIZE * SIZE / 4, "disjoint scissors must skip empty gap area: $combinedArea")
+
+        // Two overlapping draws must merge into one scissor so no pixel blends twice.
+        val overlapping = layer(0, style).also {
+            it.screenBounds = ImagePassRect(0.25f, 0.25f, 0.30f, 0.30f)
+            it.screenBoundRects = floatArrayOf(
+                0.25f,
+                0.25f,
+                0.45f,
+                0.45f,
+                0.35f,
+                0.35f,
+                0.55f,
+                0.55f,
+            )
+            it.screenBoundRectCount = 2
+        }
+        val mergedRecorder = record(overlapping)
+        assertEquals(1, mergedRecorder.draws)
+        assertEquals(2, mergedRecorder.scissors.size)
+    }
+
+    @Test
+    fun distantLayersKeepTightPerLayerScissors() {
+        val left = layer(0, OutlineStyle(Color(1f, 0f, 0f, 1f), widthPixels = 2f)).also {
+            it.screenBounds = ImagePassRect(0.05f, 0.4f, 0.10f, 0.2f)
+        }
+        val right = layer(1, OutlineStyle(Color(0f, 0f, 1f, 1f), widthPixels = 4f)).also {
+            it.screenBounds = ImagePassRect(0.80f, 0.4f, 0.10f, 0.2f)
+        }
+        val recorder = record(left, right)
+        assertEquals(2, recorder.draws)
+        assertEquals(3, recorder.scissors.size)
+        assertEquals(listOf(0, 0, SIZE, SIZE), recorder.scissors[2])
     }
 
     private fun layer(layer: Int, style: OutlineStyle) =
@@ -199,6 +268,7 @@ class OutlineOverlayDrawTest {
 
     private companion object {
         const val SIZE = 64
+        const val SOFT_QUALITY_OFFSET = 2
         const val WIDTH0_OFFSET = 12
         const val WIDTH1_OFFSET = 13
         const val SOFTNESS0_OFFSET = 14

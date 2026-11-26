@@ -1550,6 +1550,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun cutFocusedSelection ()Ljava/lang/String;
 	public final fun dispose ()V
 	public final fun frame (Lcom/awakekt/awake/compose/ui/platform/FrameInput;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/platform/FrameOutput;
+	public final fun getBuildSemantics ()Z
 	public final fun getCompositionStats ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStats;
 	public final fun getDensity ()F
 	public final fun getExplainMeasure ()Z
@@ -1563,6 +1564,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getOnStaleSkip ()Lkotlin/jvm/functions/Function1;
 	public final fun getPlacementRecompositions ()I
 	public final fun getRetainUnchangedDraw ()Z
+	public final fun getRetainUnchangedSubtrees ()Z
 	public final fun getRetainedDraws ()I
 	public final fun getRoot ()Lcom/awakekt/awake/compose/ui/node/LayoutNode;
 	public final fun getSkipUnchangedComposition ()Z
@@ -1574,6 +1576,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getVerifySkippedCompositions ()Z
 	public final fun getWindowInsets ()Lcom/awakekt/awake/compose/ui/platform/WindowInsets;
 	public final fun invalidate ()V
+	public final fun setBuildSemantics (Z)V
 	public final fun setDensity (F)V
 	public final fun setExplainMeasure (Z)V
 	public final fun setExplainPlacement (Z)V
@@ -1582,6 +1585,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun setLayoutDirection (Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
 	public final fun setOnStaleSkip (Lkotlin/jvm/functions/Function1;)V
 	public final fun setRetainUnchangedDraw (Z)V
+	public final fun setRetainUnchangedSubtrees (Z)V
 	public final fun setSkipUnchangedComposition (Z)V
 	public final fun setSkipUnchangedMeasure (Z)V
 	public final fun setVerifySkippedCompositions (Z)V

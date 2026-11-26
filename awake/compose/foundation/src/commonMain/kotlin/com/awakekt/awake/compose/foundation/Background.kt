@@ -120,6 +120,9 @@ private class ImageFillBackgroundElement(
     override fun update(node: ImageFillBackgroundNode) {
         node.fill = fill
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is ImageFillBackgroundElement && fill == other.fill)
+    override fun hashCode(): Int = fill.hashCode()
     override fun toString(): String = "background(imageFill)"
 }
 
@@ -143,6 +146,9 @@ private class BackgroundElement(
         node.color = color
         node.shape = shape
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is BackgroundElement && color == other.color && shape == other.shape)
+    override fun hashCode(): Int = 31 * color.hashCode() + shape.hashCode()
     override fun toString(): String = "background($color, shape=$shape)"
 }
 
@@ -177,6 +183,19 @@ private class BorderElement(
         node.color = color
         node.shape = shape
         node.sides = sides
+    }
+    override fun equals(other: Any?): Boolean = this === other || (
+        other is BorderElement &&
+            strokeWidth == other.strokeWidth &&
+            color == other.color &&
+            shape == other.shape &&
+            sides == other.sides
+        )
+    override fun hashCode(): Int {
+        var result = strokeWidth.hashCode()
+        result = 31 * result + color.hashCode()
+        result = 31 * result + shape.hashCode()
+        return 31 * result + sides.hashCode()
     }
     override fun toString(): String = "border($strokeWidth, $color, shape=$shape, sides=$sides)"
 }

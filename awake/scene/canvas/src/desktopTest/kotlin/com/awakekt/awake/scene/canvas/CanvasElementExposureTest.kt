@@ -51,6 +51,7 @@ class CanvasElementExposureTest {
         "charges" to "how many uses are left right now, set by game code or read through bind.charges",
         "aimLock" to "a hook into the game's own targets, which only code can answer",
         "previewState" to "an editor's preview of one state, never saved with the scene",
+        "alpha" to "a runtime fade multiplier mutated by game code without copying style, never saved with the scene",
         "number" to "a Stepper's number right now, saved as its stepper.value, set by the player, game code or bind.value",
         "composeContent" to "Compose UI declared by code in canvas content's compose { }, a lambda, which data cannot hold",
         "changes" to "the counter a host that skips unchanged frames reads, linked at run time, never saved",

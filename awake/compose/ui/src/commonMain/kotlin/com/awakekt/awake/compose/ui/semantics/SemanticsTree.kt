@@ -65,6 +65,16 @@ class SemanticsTreeBuilder {
         private set
     private var mergedCursor = 0
 
+    /** Drops any retained semantics tree and trace so disabled hosts keep no references to old nodes. */
+    internal fun clear() {
+        trace.clear()
+        last = emptyList()
+        merged.clear()
+        reuse = false
+        reusedLast = false
+        mergedCursor = 0
+    }
+
     /**
      * Builds the semantics nodes for the placed tree under [root], including its layers.
      *

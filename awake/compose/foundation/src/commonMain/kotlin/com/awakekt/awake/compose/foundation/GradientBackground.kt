@@ -35,6 +35,9 @@ internal class GradientBackgroundElement(private val brush: LinearGradient, priv
         node.brush = brush
         node.shape = shape
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is GradientBackgroundElement && sameBrush(brush, other.brush) && shape == other.shape)
+    override fun hashCode(): Int = 31 * brush.hashCode() + shape.hashCode()
 }
 
 internal class CornerGradientElement(
@@ -46,6 +49,9 @@ internal class CornerGradientElement(
         node.gradient = gradient
         node.shape = shape
     }
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is CornerGradientElement && gradient == other.gradient && shape == other.shape)
+    override fun hashCode(): Int = 31 * gradient.hashCode() + shape.hashCode()
 }
 
 internal class CornerGradientNode :

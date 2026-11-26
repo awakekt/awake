@@ -47,12 +47,28 @@ class CanvasAppearance : CanvasRevised() {
             field = revised(field, value)
         }
 
-    /** Default colours. */
+    /**
+     * Runtime opacity multiplier for this element and its children, in `0..1`.
+     *
+     * Mutating this directly fades an element (such as a floating hit mark or transient HUD status)
+     * without copying [style]. Applied multiplicatively alongside any opacity declared in [style].
+     * Set from code only, never saved.
+     */
+    var alpha: Float = DEFAULT_ALPHA
+        set(value) {
+            val clamped = if (value.isNaN()) DEFAULT_ALPHA else value.coerceIn(0f, 1f)
+            field = revised(field, clamped)
+        }
+
+    /** Default colours and opacity. */
     companion object {
         /** White, the default foreground. */
         const val DEFAULT_COLOR = "#FFFFFF"
 
         /** Fully transparent, the default background. */
         const val DEFAULT_BACKGROUND = "#00000000"
+
+        /** Fully opaque, the default runtime opacity multiplier. */
+        const val DEFAULT_ALPHA = 1f
     }
 }

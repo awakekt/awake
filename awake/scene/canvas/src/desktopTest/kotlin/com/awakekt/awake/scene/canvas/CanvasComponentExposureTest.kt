@@ -40,7 +40,14 @@ class CanvasComponentExposureTest {
     private val exposures = listOf(
         Exposure(CanvasRect::class, SceneCanvasRect.serializer()),
         Exposure(CanvasText::class, SceneCanvasText.serializer()),
-        Exposure(CanvasAppearance::class, SceneCanvasAppearance.serializer(), mapOf("previewState" to "an editor's preview of one state, never saved with the scene")),
+        Exposure(
+            CanvasAppearance::class,
+            SceneCanvasAppearance.serializer(),
+            mapOf(
+                "previewState" to "an editor's preview of one state, never saved with the scene",
+                "alpha" to "a runtime fade multiplier mutated by game code without copying style, never saved with the scene",
+            ),
+        ),
         Exposure(CanvasFollow::class, SceneCanvasFollow.serializer(), mapOf("score" to "a follower's importance right now, which game code works out each frame")),
         Exposure(CanvasInput::class, SceneCanvasInput.serializer()),
         Exposure(CanvasTooltip::class, SceneCanvasTooltip.serializer()),

@@ -39,6 +39,7 @@ internal class ModifierChainInPlace(private val owner: LayoutNode) : (Unit, Modi
     private var cursorDepth = 0
     private var hitMargin = 0
     private var anyPointer = false
+    private var drawChanged = false
 
     /** Updates the chain in place and returns true, or returns false when [modifier] needs a rebuild. */
     fun update(modifier: Modifier): Boolean {
@@ -53,7 +54,9 @@ internal class ModifierChainInPlace(private val owner: LayoutNode) : (Unit, Modi
         cursorDepth = 0
         hitMargin = 0
         anyPointer = false
+        drawChanged = false
         modifier.foldIn(Unit, this)
+        val zChanged = owner.zIndex != zIndex
         owner.parentData = parentData
         owner.zIndex = zIndex
         owner.pointerCursor = cursor
@@ -61,6 +64,8 @@ internal class ModifierChainInPlace(private val owner: LayoutNode) : (Unit, Modi
         owner.pointerCursorDepth = cursorDepth
         owner.maxPointerHitMargin = if (anyPointer) hitMargin else 0
         parentData = null
+        if (zChanged) owner.parent?.markDrawDirty()
+        if (drawChanged) owner.markDrawDirty()
         return true
     }
 
@@ -90,7 +95,12 @@ internal class ModifierChainInPlace(private val owner: LayoutNode) : (Unit, Modi
 
     // The same reads, in the same order, as the full rebuild's fold.
     private fun apply(element: Modifier.Element) {
-        val node = checkNotNull(owner.retainedModifierNodes[index]).node
+        val retained = checkNotNull(owner.retainedModifierNodes[index])
+        val node = retained.node
+        if (node is DrawModifierNode && retained.lastElement !== element && retained.lastElement != element) {
+            retained.lastElement = element
+            drawChanged = true
+        }
         (element as ModifierNodeElement<*>).updateUnchecked(node)
         val outside = layoutLinks
         if (node is LayoutModifierNode) layoutLinks += 1

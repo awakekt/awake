@@ -210,6 +210,31 @@ class ComposeHost(
      */
     var retainUnchangedDraw: Boolean = false
 
+    /**
+     * Replays unchanged subtrees even on frames that composed or measured (for example, when one
+     * HUD counter, bar, or status badge updates while sibling panels, buttons, and labels stay
+     * untouched). Off by default; takes effect only while [retainUnchangedDraw] is on.
+     *
+     * A subtree replays on a composed or measured frame only when every node in it kept its draw
+     * modifier inputs, child structure, z-order, density/font-scale/layout-direction, size, draw
+     * rects, relative offsets, and draw-phase state reads since the previous paint.
+     */
+    var retainUnchangedSubtrees: Boolean = false
+
+    /**
+     * Builds the accessibility and testing semantics tree (`FrameOutput.semantics`) on each frame.
+     * True by default so editors, screen readers, and UI tests observe the full tree.
+     *
+     * Set to `false` for in-game HUDs with no active accessibility consumer to skip the per-frame
+     * semantics tree walk and release retained `SemanticsNode` caches; [FrameOutput.semantics] then
+     * returns `emptyList()`.
+     */
+    var buildSemantics: Boolean = true
+        set(value) {
+            field = value
+            if (!value) semanticsBuilder.clear()
+        }
+
     /** How many subtrees [retainUnchangedDraw] replayed instead of drawing them. */
     val retainedDraws: Int get() = painter.retainedDraws
 
@@ -344,14 +369,18 @@ class ComposeHost(
         val clipboardText = answerClipboardCommands(input.clipboardCommands)
 
         stages?.begin(ComposeFrameStage.Draw)
-        val paint = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped)
+        val paint = painter.paintOutput(
+            root,
+            retain = retainUnchangedDraw,
+            reuse = measureSkipped || retainUnchangedSubtrees,
+        )
         stages?.end(ComposeFrameStage.Draw)
         frameCounts.nodesDrawn = painter.nodesPainted - paintedBefore
         frameCounts.subtreesReplayed = painter.retainedDraws - replayedBefore
         return FrameOutput(
             primitives = paint.primitives,
             graphicsLayers = paint.layers,
-            semantics = semanticsBuilder.build(root).also(::verifySemantics),
+            semantics = if (buildSemantics) semanticsBuilder.build(root).also(::verifySemantics) else emptyList(),
             ownership = ownership,
             // The platform raises a soft keyboard while a field holds focus; on desktop nothing
             // acts on it, which is why it is a request rather than a call.
@@ -406,6 +435,7 @@ class ComposeHost(
         composition.dispose()
         compositionInputs.reset()
         measureSkip.invalidate()
+        semanticsBuilder.clear()
         placedOnce = false
         imeOwner = null
     }
@@ -515,7 +545,11 @@ class ComposeHost(
         }
         // Flattened, so a subtree a retained draw replays inside a translate range compares by where
         // it lands, as a fresh paint draws it, not by how the list spells it (#1512).
-        val skipped = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped).primitives.toList().flattened()
+        val skipped = painter.paintOutput(
+            root,
+            retain = retainUnchangedDraw,
+            reuse = measureSkipped || retainUnchangedSubtrees,
+        ).primitives.toList().flattened()
         compose(content, input)
         layout(input, composed = true)
         val composed = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = false).primitives.flattened()

@@ -42,33 +42,17 @@ class OutlineAndCloudAllocationTest {
         val recorder = CountingRecorder()
         val uniforms = ReusableUniforms(OutlineUniformLayout)
         val feature = OutlineRenderFeature(StandardPipeline, uniforms)
-        val bounds = ImagePassRect(0.25f, 0.25f, 0.25f, 0.25f)
-        val masks = listOf(
-            GpuSubPass(
-                target = null,
-                targetLayer = 0,
-                viewProjection = Mat4(),
-                passUniforms = OutlineStyle(Color(1f, 0.85f, 0.4f, 0.95f), widthPixels = 10f, softness = 1f).packed(),
-            ).also { it.screenBounds = bounds },
-            GpuSubPass(
-                target = null,
-                targetLayer = 1,
-                viewProjection = Mat4(),
-                passUniforms = OutlineStyle(Color(0.2f, 0.6f, 1f, 1f), widthPixels = 4f, softness = 0f).packed(),
-            ).also { it.screenBounds = bounds },
-            GpuSubPass(target = null, targetLayer = COVERING_EXEMPT_MASK_LAYER, viewProjection = Mat4()),
-        )
         val context = FrameContext(
             recorder = recorder,
             passInput = GpuPassInput(
                 viewProjection = Mat4(),
                 cameraEye = Vec3f.ZERO,
                 passUniforms = FloatArray(0),
-                maskPasses = masks,
+                maskPasses = sampleMaskPasses(),
             ),
         )
 
-        for (quality in listOf(EffectQuality.High, EffectQuality.Low, EffectQuality.Off)) {
+        for (quality in listOf(EffectQuality.High, EffectQuality.Medium, EffectQuality.Low, EffectQuality.Off)) {
             context.effectQuality = quality
             recorder.draws = 0
             var elapsedNs = 0L
@@ -86,6 +70,30 @@ class OutlineAndCloudAllocationTest {
                 assertTrue(recorder.draws > 0, "EffectQuality.$quality must record outline draws")
             }
         }
+    }
+
+    private fun sampleMaskPasses(): List<GpuSubPass> {
+        val bounds = ImagePassRect(0.25f, 0.25f, 0.25f, 0.25f)
+        val clusterRects = floatArrayOf(0.05f, 0.35f, 0.15f, 0.55f, 0.80f, 0.35f, 0.90f, 0.55f)
+        return listOf(
+            GpuSubPass(
+                target = null,
+                targetLayer = 0,
+                viewProjection = Mat4(),
+                passUniforms = OutlineStyle(Color(1f, 0.85f, 0.4f, 0.95f), widthPixels = 10f, softness = 1f).packed(),
+            ).also {
+                it.screenBounds = ImagePassRect(0.05f, 0.35f, 0.85f, 0.20f)
+                it.screenBoundRects = clusterRects
+                it.screenBoundRectCount = 2
+            },
+            GpuSubPass(
+                target = null,
+                targetLayer = 1,
+                viewProjection = Mat4(),
+                passUniforms = OutlineStyle(Color(0.2f, 0.6f, 1f, 1f), widthPixels = 4f, softness = 0f).packed(),
+            ).also { it.screenBounds = bounds },
+            GpuSubPass(target = null, targetLayer = COVERING_EXEMPT_MASK_LAYER, viewProjection = Mat4()),
+        )
     }
 
     @Test

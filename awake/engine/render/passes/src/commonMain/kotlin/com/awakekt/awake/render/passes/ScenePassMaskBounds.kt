@@ -45,5 +45,45 @@ internal fun screenBounds(box: FloatArray, at: Int, viewProjection: Mat4, clipSp
     return ImagePassRect(minU, minV, maxU - minU, maxV - minV)
 }
 
+/**
+ * Allocation-free counterpart of [screenBounds] that writes `(minU, minV, maxU, maxV)` into
+ * [out] starting at [outAt] and returns `false` when any corner is at or behind the camera plane.
+ */
+@Suppress("LongParameterList")
+internal fun writeScreenBounds(
+    box: FloatArray,
+    at: Int,
+    viewProjection: Mat4,
+    clipSpace: ClipSpace,
+    out: FloatArray,
+    outAt: Int,
+): Boolean {
+    val m = viewProjection.data
+    var minU = Float.POSITIVE_INFINITY
+    var minV = Float.POSITIVE_INFINITY
+    var maxU = Float.NEGATIVE_INFINITY
+    var maxV = Float.NEGATIVE_INFINITY
+    for (corner in 0 until CORNERS) {
+        val x = box[at + if (corner and 1 == 0) 0 else 3]
+        val y = box[at + if (corner and 2 == 0) 1 else 4]
+        val z = box[at + if (corner and 4 == 0) 2 else 5]
+        val w = m[3] * x + m[7] * y + m[11] * z + m[15]
+        if (w <= MIN_CLIP_W) return false
+        val ndcX = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w
+        val ndcY = (m[1] * x + m[5] * y + m[9] * z + m[13]) / w
+        val u = (ndcX + 1f) * HALF
+        val v = if (clipSpace.flipY) (ndcY + 1f) * HALF else (1f - ndcY) * HALF
+        minU = minOf(minU, u)
+        maxU = maxOf(maxU, u)
+        minV = minOf(minV, v)
+        maxV = maxOf(maxV, v)
+    }
+    out[outAt] = minU
+    out[outAt + 1] = minV
+    out[outAt + 2] = maxU
+    out[outAt + 3] = maxV
+    return true
+}
+
 private const val CORNERS = 8
 private const val HALF = 0.5f

@@ -243,10 +243,17 @@ private class MaskedDraws {
     private val bounds = FloatArray(MASK_TARGET_LAYER_COUNT * BOUNDS_FLOATS)
     private val bounded = BooleanArray(MASK_TARGET_LAYER_COUNT)
 
+    // Per-draw world bounds and projected screen rects for styled outline layers so distant outlined
+    // targets get separate disjoint scissors instead of shading the empty gap between them.
+    private val drawWorldBounds = Array(MASK_LAYER_COUNT) { FloatArray(MAX_MASK_CLUSTERS * BOUNDS_FLOATS) }
+    private val drawWorldBoundCount = IntArray(MASK_LAYER_COUNT)
+    private val drawScreenRects = Array(MASK_LAYER_COUNT) { FloatArray(MAX_MASK_CLUSTERS * SCREEN_RECT_FLOATS) }
+
     fun reset(maskLayers: List<FloatArray>) {
         layers = maskLayers
         if (anyMasked) {
             for (layer in draws.indices) draws[layer]?.clear()
+            drawWorldBoundCount.fill(0)
             passes.clear()
             anyMasked = false
         }
@@ -267,6 +274,25 @@ private class MaskedDraws {
             bounded[layer] = false
         } else if (bounded[layer]) {
             grow(layer, worldBounds, first)
+            recordDrawBounds(layer, worldBounds)
+        }
+    }
+
+    private fun recordDrawBounds(layer: Int, box: Aabb) {
+        if (layer !in 0 until MASK_LAYER_COUNT) return
+        val count = drawWorldBoundCount[layer]
+        if (count in 0 until MAX_MASK_CLUSTERS) {
+            val at = count * BOUNDS_FLOATS
+            val target = drawWorldBounds[layer]
+            target[at] = box.min.x
+            target[at + 1] = box.min.y
+            target[at + 2] = box.min.z
+            target[at + 3] = box.max.x
+            target[at + 4] = box.max.y
+            target[at + 5] = box.max.z
+            drawWorldBoundCount[layer] = count + 1
+        } else if (count >= MAX_MASK_CLUSTERS) {
+            drawWorldBoundCount[layer] = CLUSTER_OVERFLOW
         }
     }
 
@@ -288,16 +314,38 @@ private class MaskedDraws {
             val drawn = draws[layer]
             if (drawn != null && drawn.isNotEmpty()) {
                 val uniforms = layers.getOrElse(layer) { NO_LAYER_UNIFORMS }
-                passes += GpuSubPass(target = null, targetLayer = layer, viewProjection = viewProjection, resolvedDraws = drawn, passUniforms = uniforms)
-                    .also { it.screenBounds = if (bounded[layer]) screenBounds(bounds, layer * BOUNDS_FLOATS, viewProjection, clipSpace) else null }
+                val pass = GpuSubPass(target = null, targetLayer = layer, viewProjection = viewProjection, resolvedDraws = drawn, passUniforms = uniforms)
+                if (bounded[layer]) {
+                    pass.screenBounds = screenBounds(bounds, layer * BOUNDS_FLOATS, viewProjection, clipSpace)
+                    populateClusterRects(layer, pass, viewProjection, clipSpace)
+                }
+                passes += pass
             }
         }
         return passes
+    }
+
+    private fun populateClusterRects(layer: Int, pass: GpuSubPass, viewProjection: Mat4, clipSpace: ClipSpace) {
+        val count = if (layer in 0 until MASK_LAYER_COUNT && pass.screenBounds != null) drawWorldBoundCount[layer] else 0
+        if (count < 2) return
+        val src = drawWorldBounds[layer]
+        val dst = drawScreenRects[layer]
+        for (i in 0 until count) {
+            if (!writeScreenBounds(src, i * BOUNDS_FLOATS, viewProjection, clipSpace, dst, i * SCREEN_RECT_FLOATS)) {
+                pass.screenBounds = null
+                return
+            }
+        }
+        pass.screenBoundRects = dst
+        pass.screenBoundRectCount = count
     }
 }
 
 private const val AXES = 3
 private const val BOUNDS_FLOATS = 2 * AXES
+private const val SCREEN_RECT_FLOATS = 4
+private const val MAX_MASK_CLUSTERS = 16
+private const val CLUSTER_OVERFLOW = -1
 
 /** [COVERING_EXEMPT_MASK_LAYER]'s sub-pass uniforms: nothing reads a style from it. */
 private val NO_LAYER_UNIFORMS = FloatArray(0)
