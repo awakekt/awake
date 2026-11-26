@@ -844,26 +844,35 @@ class Renderer internal constructor(
     }
 
     private fun filterMasksForFrame(masks: List<GpuSubPass>, environment: GpuEnvironmentState): List<GpuSubPass> {
-        var result = masks
-        if (masks.isNotEmpty() && !needsCoveringExemptMask(environment)) {
-            var hasExempt = false
-            for (i in masks.indices) {
-                if (masks[i].targetLayer == COVERING_EXEMPT_MASK_LAYER) {
-                    hasExempt = true
-                    break
-                }
-            }
-            if (hasExempt) {
-                filteredMasks.clear()
-                for (i in masks.indices) {
-                    val pass = masks[i]
-                    if (pass.targetLayer != COVERING_EXEMPT_MASK_LAYER) filteredMasks.add(pass)
-                }
-                result = filteredMasks
-            }
+        val dropExempt = !needsCoveringExemptMask(environment)
+        val dropOutlines = effectQuality == EffectQuality.Off
+        if (masks.isEmpty() || (!dropExempt && !dropOutlines)) return masks
+        var skipped = 0
+        for (i in masks.indices) {
+            if (shouldSkipMaskLayer(masks[i].targetLayer, dropExempt, dropOutlines)) skipped++
         }
-        return result
+        return when {
+            skipped == 0 -> masks
+            skipped == masks.size -> emptyList()
+            else -> collectKeptMasks(masks, dropExempt, dropOutlines)
+        }
     }
+
+    private fun collectKeptMasks(
+        masks: List<GpuSubPass>,
+        dropExempt: Boolean,
+        dropOutlines: Boolean,
+    ): List<GpuSubPass> {
+        filteredMasks.clear()
+        for (i in masks.indices) {
+            val pass = masks[i]
+            if (!shouldSkipMaskLayer(pass.targetLayer, dropExempt, dropOutlines)) filteredMasks.add(pass)
+        }
+        return filteredMasks
+    }
+
+    private fun shouldSkipMaskLayer(layer: Int, dropExempt: Boolean, dropOutlines: Boolean): Boolean =
+        (dropExempt && layer == COVERING_EXEMPT_MASK_LAYER) || (dropOutlines && layer < MASK_LAYER_COUNT)
 
     override fun waitIdle() {
         VulkanBuffers.vkDeviceWaitIdle(device)

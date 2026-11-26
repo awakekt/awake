@@ -22,6 +22,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
@@ -363,6 +364,7 @@ class Renderer internal constructor(
 
     /** Whether every mask layer holds the far plane or a frame's draws: false for a new texture, zero-filled. */
     internal var maskCleared = false
+    internal val filteredMasks = ArrayList<GpuSubPass>()
 
     /** The shadow depth array's bytes as allocated now; it grows with the layers a frame draws. */
     override val shadowMapBytes: Long get() = depthPrePass?.depthTarget?.allocatedBytes ?: 0L

@@ -12,6 +12,7 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.ResourceKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class StylizedWaterAndCloudShaderTest {
@@ -50,11 +51,27 @@ class StylizedWaterAndCloudShaderTest {
         val wgsl = CloudLayerShader.emitWgsl()
         assertTrue(wgsl.contains("fn valueNoise"), "WGSL includes procedural value noise")
         assertTrue(wgsl.contains("uvUpper"), "WGSL includes single-pass dual-layer parallax path")
+        assertTrue(wgsl.contains("fbmFast"), "WGSL includes low-ALU Fast analytic branch")
         val group = BindingLayout.Standard.slot(BindingSemantic.Material)
         val sampled = CloudLayerShader.bindingsForGroup(group)
             ?.entries
             .orEmpty()
             .filter { it.kind == ResourceKind.SampledTexture }
         assertEquals(0, sampled.size, "CloudLayerShader requires zero texture bindings")
+    }
+
+    @Test
+    fun cloudLayerFastShaderUsesLowAluAnalyticFieldAndZeroTextures() {
+        val wgsl = CloudLayerFastShader.emitWgsl()
+        assertTrue(wgsl.contains("fbmFast"), "Fast WGSL includes analytic cloud field")
+        assertTrue(wgsl.contains("sin(") && wgsl.contains("cos("), "Fast WGSL uses domain-warped trig waves")
+        assertFalse(wgsl.contains("fn mod289"), "Fast WGSL omits mod289 hash helper")
+        assertFalse(wgsl.contains("fn valueNoise"), "Fast WGSL omits lattice valueNoise helper")
+        val group = BindingLayout.Standard.slot(BindingSemantic.Material)
+        val sampled = CloudLayerFastShader.bindingsForGroup(group)
+            ?.entries
+            .orEmpty()
+            .filter { it.kind == ResourceKind.SampledTexture }
+        assertEquals(0, sampled.size, "CloudLayerFastShader requires zero texture bindings")
     }
 }

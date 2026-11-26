@@ -106,10 +106,15 @@ class EarlyZAndFastTierShaderTest {
     @Test
     fun cloudLayerFastShaderOmitsStandardThreeShellMathAndAttachesAsAlternateSpec() {
         val fastWgsl = CloudLayerFastShader.emitWgsl()
-        assertTrue("fn valueNoise" in fastWgsl)
-        assertTrue("fn rotateOctave" in fastWgsl)
+        assertFalse("fn mod289" in fastWgsl, "Fast cloud shader must omit mod289 hash helper")
+        assertFalse("fn permute" in fastWgsl, "Fast cloud shader must omit permute hash helper")
+        assertFalse("fn hash2d" in fastWgsl, "Fast cloud shader must omit hash2d helper")
+        assertFalse("fn valueNoise" in fastWgsl, "Fast cloud shader must omit valueNoise helper")
+        assertFalse("fn rotateOctave" in fastWgsl, "Fast cloud shader must omit rotateOctave helper")
         assertFalse("fn cumulusMacro" in fastWgsl, "Fast cloud shader must omit 3-shell cumulusMacro helper")
         assertFalse("parallaxFactor" in fastWgsl, "Fast cloud shader must omit Standard parallax volume math")
+        assertTrue("sin(" in fastWgsl && "cos(" in fastWgsl, "Fast cloud shader must use low-ALU analytic trig waves")
+        assertTrue("fbmFast" in fastWgsl, "Fast cloud shader must emit analytic cloud heightfield")
         assertEquals(
             CloudLayerShader.bindingsForGroup(materialGroup),
             CloudLayerFastShader.bindingsForGroup(materialGroup),

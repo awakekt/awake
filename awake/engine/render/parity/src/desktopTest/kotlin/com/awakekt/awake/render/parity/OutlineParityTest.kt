@@ -20,6 +20,7 @@ import com.awakekt.awake.render.command.NO_MASK_LAYER
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.OutlineStyle
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
@@ -108,6 +109,7 @@ class OutlineParityTest {
 
                 verifyWideTarget(backend, renderer, mesh, material, lens)
                 verifySoftGlow(backend, renderer, target, mesh, material, lens)
+                verifyEffectQualityScaling(backend, renderer, target, mesh, material, lens, unmaskedDraws)
             } finally {
                 renderer.waitIdle()
                 mesh.destroy()
@@ -158,7 +160,7 @@ class OutlineParityTest {
         }
     }
 
-    /** Softness > 0 renders a smooth, monotonically fading screen-space Gaussian glow without tinting inside or clipping at the scissor. */
+    /** Softness > 0 renders a smooth, monotonically fading screen-space Gaussian glow at [EffectQuality.High]. */
     private suspend fun verifySoftGlow(
         backend: HeadlessUiBackend,
         renderer: Renderer,
@@ -167,14 +169,16 @@ class OutlineParityTest {
         material: com.awakekt.awake.render.material.Material,
         lens: Lens,
     ) {
-        val half = CUBE / 2
-        val bounds = Aabb(Vec3f(-half, -half, -half), Vec3f(half, half, half))
-        suspend fun renderSoft(worldBounds: Aabb?): ByteArray {
+        val previousQuality = renderer.effectQuality
+        renderer.effectQuality = EffectQuality.High
+        try {
+            val half = CUBE / 2
+            val bounds = Aabb(Vec3f(-half, -half, -half), Vec3f(half, half, half))
             renderer.renderToTexture(
                 target,
                 ScenePassCompiler.compile(
                     lens = lens,
-                    drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0, worldBounds = worldBounds)),
+                    drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0, worldBounds = bounds)),
                     light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
                     clipSpace = renderer.clipSpace,
                     aspect = 1f,
@@ -182,26 +186,102 @@ class OutlineParityTest {
                     maskLayers = listOf(SOFT_SELECTED.packed(), HOVERED.packed()),
                 ),
             )
-            return renderer.readPixels(target).data
+            val pixels = renderer.readPixels(target).data
+            val row = SIZE / 2
+            val squareLeft = SIZE / 2 - SQUARE / 2
+            val nearRed = pixels.channel(row * SIZE + (squareLeft - 1), 0)
+            val midRed = pixels.channel(row * SIZE + (squareLeft - 5), 0)
+            val farRed = pixels.channel(row * SIZE + (squareLeft - 12), 0)
+            val insideRed = pixels.channel(row * SIZE + (squareLeft + 4), 0)
+            val insideBlue = pixels.channel(row * SIZE + (squareLeft + 4), 2)
+            println("$backend soft outline (High): nearRed=$nearRed midRed=$midRed farRed=$farRed inside=($insideRed,$insideBlue)")
+            assertTrue(nearRed > STRONG, "$backend: soft glow near edge must be bright, got $nearRed")
+            assertTrue(
+                midRed in (farRed + 20) until (nearRed - 20),
+                "$backend: soft glow must smoothly fade (far=$farRed < mid=$midRed < near=$nearRed)",
+            )
+            assertTrue(
+                kotlin.math.abs(insideRed - insideBlue) < 10,
+                "$backend: soft glow must not bleed into the white silhouette interior: R=$insideRed B=$insideBlue",
+            )
+        } finally {
+            renderer.effectQuality = previousQuality
         }
-        val pixels = renderSoft(worldBounds = bounds)
-        val row = SIZE / 2
-        val squareLeft = SIZE / 2 - SQUARE / 2
-        val nearRed = pixels.channel(row * SIZE + (squareLeft - 1), 0)
-        val midRed = pixels.channel(row * SIZE + (squareLeft - 5), 0)
-        val farRed = pixels.channel(row * SIZE + (squareLeft - 12), 0)
-        val insideRed = pixels.channel(row * SIZE + (squareLeft + 4), 0)
-        val insideBlue = pixels.channel(row * SIZE + (squareLeft + 4), 2)
-        println("$backend soft outline: nearRed=$nearRed midRed=$midRed farRed=$farRed inside=($insideRed,$insideBlue)")
-        assertTrue(nearRed > STRONG, "$backend: soft glow near edge must be bright, got $nearRed")
-        assertTrue(
-            midRed in (farRed + 20) until (nearRed - 20),
-            "$backend: soft glow must smoothly fade (far=$farRed < mid=$midRed < near=$nearRed)",
-        )
-        assertTrue(
-            kotlin.math.abs(insideRed - insideBlue) < 10,
-            "$backend: soft glow must not bleed into the white silhouette interior: R=$insideRed B=$insideBlue",
-        )
+    }
+
+    /**
+     * [EffectQuality.Low] downgrades soft 64-tap glows to crisp 2 px silhouettes and [EffectQuality.Off]
+     * skips both outline mask layers and the overlay draw on both Vulkan and WebGPU.
+     */
+    @Suppress("LongParameterList")
+    private suspend fun verifyEffectQualityScaling(
+        backend: HeadlessUiBackend,
+        renderer: Renderer,
+        target: com.awakekt.awake.render.texture.RenderTarget,
+        mesh: com.awakekt.awake.render.mesh.Mesh,
+        material: com.awakekt.awake.render.material.Material,
+        lens: Lens,
+        unmaskedDraws: Int?,
+    ) {
+        val previousQuality = renderer.effectQuality
+        val half = CUBE / 2
+        val bounds = Aabb(Vec3f(-half, -half, -half), Vec3f(half, half, half))
+        try {
+            renderer.effectQuality = EffectQuality.Low
+            renderer.renderToTexture(
+                target,
+                ScenePassCompiler.compile(
+                    lens = lens,
+                    drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0, worldBounds = bounds)),
+                    light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
+                    clipSpace = renderer.clipSpace,
+                    aspect = 1f,
+                    drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                    maskLayers = listOf(SOFT_SELECTED.packed(), HOVERED.packed()),
+                ),
+            )
+            val lowPixels = renderer.readPixels(target).data
+            val row = SIZE / 2
+            val squareLeft = SIZE / 2 - SQUARE / 2
+            val lowNearRed = lowPixels.channel(row * SIZE + (squareLeft - 1), 0)
+            val lowMidRed = lowPixels.channel(row * SIZE + (squareLeft - 5), 0)
+            val lowInsideRed = lowPixels.channel(row * SIZE + (squareLeft + 4), 0)
+            val lowInsideBlue = lowPixels.channel(row * SIZE + (squareLeft + 4), 2)
+            println("$backend soft outline (Low): nearRed=$lowNearRed midRed=$lowMidRed inside=($lowInsideRed,$lowInsideBlue)")
+            assertTrue(lowNearRed > STRONG, "$backend: Low crisp downgrade must still draw near edge, got $lowNearRed")
+            assertTrue(lowMidRed < WEAK, "$backend: Low crisp downgrade must cap soft width to 2 px (5 px out=$lowMidRed)")
+            assertTrue(
+                kotlin.math.abs(lowInsideRed - lowInsideBlue) < 10,
+                "$backend: Low outline must not bleed inside silhouette: R=$lowInsideRed B=$lowInsideBlue",
+            )
+
+            renderer.effectQuality = EffectQuality.Off
+            renderer.renderToTexture(
+                target,
+                ScenePassCompiler.compile(
+                    lens = lens,
+                    drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0, worldBounds = bounds)),
+                    light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
+                    clipSpace = renderer.clipSpace,
+                    aspect = 1f,
+                    drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                    maskLayers = listOf(SOFT_SELECTED.packed(), HOVERED.packed()),
+                ),
+            )
+            val offRow = measure(renderer.readPixels(target).data)
+            val offDraws = renderer.frameStats?.drawCalls
+            println("$backend outline (Off): row=$offRow draws=$offDraws against unmasked draws=$unmaskedDraws")
+            assertEquals(0, offRow.red + offRow.blue, "$backend: EffectQuality.Off must draw no outline: $offRow")
+            if (unmaskedDraws != null && offDraws != null) {
+                assertEquals(
+                    unmaskedDraws,
+                    offDraws,
+                    "$backend: EffectQuality.Off must skip outline mask and overlay draws ($offDraws vs unmasked $unmaskedDraws)",
+                )
+            }
+        } finally {
+            renderer.effectQuality = previousQuality
+        }
     }
 
     private suspend fun open(backend: HeadlessUiBackend): HeadlessRenderSession {

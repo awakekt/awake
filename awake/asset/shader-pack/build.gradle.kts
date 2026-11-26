@@ -55,3 +55,9 @@ mavenPublishing {
         description.set("Awake's authored WGSL shaders and their Kotlin-side uniform layouts")
     }
 }
+
+// Allocation gates here count every byte hot render-feature paths allocate per frame. With escape
+// analysis enabled, the JVM elides short-lived temporaries Kotlin/Wasm really allocates (#1555).
+tasks.named<Test>("desktopTest") {
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}

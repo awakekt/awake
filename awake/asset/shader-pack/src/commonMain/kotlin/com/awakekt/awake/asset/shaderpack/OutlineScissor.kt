@@ -6,7 +6,6 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.render.command.GpuSubPass
-import com.awakekt.awake.render.renderer.OutlineStyle
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -51,29 +50,40 @@ internal class OutlineScissor {
     private var pad = 0f
 
     /**
-     * Fits the scissor to [masks]' styled layers in the scene rectangle at [left], [top], [sceneWidth]
-     * by [sceneHeight] pixels. Returns false when the outline can't reach the scene: nothing to draw.
+     * Fits the scissor to [masks]' active styled layers in the scene rectangle at [left], [top],
+     * [sceneWidth] by [sceneHeight] pixels. Returns false when the outline can't reach the scene.
      */
-    fun fit(masks: List<GpuSubPass>, styles: Array<OutlineStyle?>, left: Float, top: Float, sceneWidth: Float, sceneHeight: Float): Boolean {
+    @Suppress("LongParameterList")
+    fun fit(
+        masks: List<GpuSubPass>,
+        draws: BooleanArray,
+        widths: FloatArray,
+        left: Float,
+        top: Float,
+        sceneWidth: Float,
+        sceneHeight: Float,
+    ): Boolean {
         fullX = left.toInt()
         fullY = top.toInt()
         fullWidth = sceneWidth.toInt()
         fullHeight = sceneHeight.toInt()
-        val known = union(masks, styles)
+        val known = union(masks, draws, widths)
         return if (known && minU <= maxU) clip(left, top, sceneWidth, sceneHeight) else whole()
     }
 
     /** Unions the styled layers' bounds and widest outline; false when one of them has no bounds. */
-    private fun union(masks: List<GpuSubPass>, styles: Array<OutlineStyle?>): Boolean {
+    private fun union(masks: List<GpuSubPass>, draws: BooleanArray, widths: FloatArray): Boolean {
         minU = Float.POSITIVE_INFINITY
         minV = Float.POSITIVE_INFINITY
         maxU = Float.NEGATIVE_INFINITY
         maxV = Float.NEGATIVE_INFINITY
         pad = 0f
         var known = true
-        for (mask in masks) {
-            val style = styles.getOrNull(mask.targetLayer)?.takeIf { it.draws } ?: continue
-            pad = maxOf(pad, style.widthPixels)
+        for (i in masks.indices) {
+            val mask = masks[i]
+            val layer = mask.targetLayer
+            if (layer !in draws.indices || !draws[layer]) continue
+            pad = maxOf(pad, widths[layer])
             val bounds = mask.screenBounds
             if (bounds == null) {
                 known = false

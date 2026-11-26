@@ -17,7 +17,7 @@ import com.awakekt.awake.render.renderer.UniformLayout
  * @property code Numeric code packed into `lightDirection.w` for uniform shader branching.
  */
 enum class CloudLayerQuality(val code: Int) {
-    /** Low-spec mobile tier: single drifting 2-octave procedural layer with horizon fade (0 texture fetches). */
+    /** Low-spec mobile tier: single drifting 3-wave domain-warped analytic layer with horizon fade (0 texture fetches, 0 hash/floor ops). */
     Fast(0),
 
     /** Standard tier: two parallax-drifting layers blended in one pass with sunlit tops and cool undersides. */

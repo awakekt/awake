@@ -17,6 +17,7 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.RenderPassKind
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.texture.TextureUploadRecorder
@@ -111,6 +112,12 @@ interface RenderFrameContext {
 
     /** The backend's draw counter, which features tag by pass; null for a backend that does not count. */
     val stats: RenderStatsCounter? get() = null
+
+    /**
+     * Active effect quality tier for this frame. Multi-pass and heavy overlay features (such as
+     * soft silhouette outlines) scale down on [EffectQuality.Low] and skip on [EffectQuality.Off].
+     */
+    val effectQuality: EffectQuality get() = EffectQuality.High
 
     /**
      * This frame's camera-space depth group for [pipeline], or null when there is nothing to
