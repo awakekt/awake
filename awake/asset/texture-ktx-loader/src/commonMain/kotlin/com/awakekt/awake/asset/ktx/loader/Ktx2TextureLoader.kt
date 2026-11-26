@@ -53,8 +53,8 @@ object Ktx2TextureLoader {
         filtering: TextureFiltering = TextureFiltering.Linear,
     ): Ktx2Upload? {
         val texture = Ktx2Reader.read(bytes)
-        require(texture.faceCount == 1 && texture.layerCount <= 1 && texture.depth <= 1) {
-            "only a single 2D texture loads; this one has ${texture.faceCount} faces, ${texture.layerCount} layers, depth ${texture.depth}"
+        require(texture.faceCount == 1 && texture.depth <= 1) {
+            "only a 2D texture or 2D texture array loads; this one has ${texture.faceCount} faces, ${texture.layerCount} layers, depth ${texture.depth}"
         }
         return if (texture.needsTranscoding) basis(bytes, texture, formats, transcoder, filtering) else raw(texture, formats, filtering)
     }
@@ -67,10 +67,13 @@ object Ktx2TextureLoader {
         filtering: TextureFiltering,
     ): Ktx2Upload? {
         transcoder ?: return null
+        val layers = texture.layerCount.coerceAtLeast(1)
         val target = Ktx2Formats.transcodeTargets(texture.encoding)
             .firstOrNull { it in formats && it in transcoder.formats && texture.bottomRowFirst }
         return if (target != null) {
-            Ktx2Upload.Compressed(CompressedTextureImage(target, texture.width, texture.height, texture.srgb, transcoder.levels(bytes, target)))
+            Ktx2Upload.Compressed(
+                CompressedTextureImage(target, texture.width, texture.height, texture.srgb, transcoder.levels(bytes, target), layerCount = layers),
+            )
         } else {
             rgba(transcoder.levels(bytes, null).first(), texture, filtering)
         }
@@ -94,29 +97,37 @@ object Ktx2TextureLoader {
 
     private fun raw(texture: Ktx2Texture, formats: Set<CompressedTextureFormat>, filtering: TextureFiltering): Ktx2Upload? {
         val block = Ktx2Formats.blockFormat(texture.vkFormat)
+        val layers = texture.layerCount.coerceAtLeast(1)
         return when {
             texture.supercompression != Ktx2Supercompression.None -> null
             Ktx2Formats.isRgba8(texture.vkFormat) -> rgba(texture.levels.first().data, texture, filtering)
             block == null || block.first !in formats || !texture.bottomRowFirst -> null
             else -> Ktx2Upload.Compressed(
-                CompressedTextureImage(block.first, texture.width, texture.height, block.second, texture.levels.map { it.data }),
+                CompressedTextureImage(block.first, texture.width, texture.height, block.second, texture.levels.map { it.data }, layerCount = layers),
             )
         }
     }
 
     private fun rgba(pixels: ByteArray, texture: Ktx2Texture, filtering: TextureFiltering): Ktx2Upload.Rgba {
-        val expected = texture.width.toLong() * texture.height * RGBA_BYTES
+        val layers = texture.layerCount.coerceAtLeast(1)
+        val expected = texture.width.toLong() * texture.height * RGBA_BYTES * layers
         if (pixels.size.toLong() != expected) {
-            throw Ktx2FormatException("levels[0]", "a ${texture.width}x${texture.height} RGBA8 level is $expected bytes; was ${pixels.size}")
+            throw Ktx2FormatException("levels[0]", "a ${texture.width}x${texture.height} ($layers layer(s)) RGBA8 level is $expected bytes; was ${pixels.size}")
         }
-        val rows = if (texture.bottomRowFirst) pixels else flipped(pixels, texture.width, texture.height)
-        return Ktx2Upload.Rgba(TextureAsset(rows, texture.width, texture.height, filtering = filtering))
+        val rows = if (texture.bottomRowFirst) pixels else flipped(pixels, texture.width, texture.height, layers)
+        return Ktx2Upload.Rgba(TextureAsset(rows, texture.width, texture.height, layerCount = layers, filtering = filtering))
     }
 
-    private fun flipped(pixels: ByteArray, width: Int, height: Int): ByteArray {
+    private fun flipped(pixels: ByteArray, width: Int, height: Int, layers: Int): ByteArray {
         val row = width * RGBA_BYTES
+        val layerBytes = row * height
         return ByteArray(pixels.size).also { out ->
-            for (y in 0 until height) pixels.copyInto(out, (height - 1 - y) * row, y * row, (y + 1) * row)
+            for (layer in 0 until layers) {
+                val base = layer * layerBytes
+                for (y in 0 until height) {
+                    pixels.copyInto(out, base + (height - 1 - y) * row, base + y * row, base + (y + 1) * row)
+                }
+            }
         }
     }
 

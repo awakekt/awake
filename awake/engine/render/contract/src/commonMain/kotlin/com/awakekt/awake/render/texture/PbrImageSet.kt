@@ -36,6 +36,29 @@ class PbrImageSet(
     )
 }
 
+/**
+ * Block-compressed PBR maps resolved from a [PbrImageSet] for the active device's supported
+ * [CompressedTextureFormat] set. Channels without a compressed image remain null so the backend
+ * uploads the corresponding [PbrImageSet] entry (or a shared neutral placeholder when absent).
+ *
+ * @property metallicRoughness Compressed metallic-roughness map, or null.
+ * @property normal Compressed normal map, or null.
+ * @property occlusion Compressed ambient occlusion map, or null.
+ * @property emissive Compressed emissive map, or null.
+ */
+class PbrCompressedSet(
+    val metallicRoughness: CompressedTextureImage? = null,
+    val normal: CompressedTextureImage? = null,
+    val occlusion: CompressedTextureImage? = null,
+    val emissive: CompressedTextureImage? = null,
+) {
+    /** The compressed maps in [PbrTextureSet]'s order: metallic-roughness, normal, occlusion, emissive. */
+    val maps: List<CompressedTextureImage?> get() = listOf(metallicRoughness, normal, occlusion, emissive)
+
+    /** Whether no channel carries a compressed image. */
+    val isEmpty: Boolean get() = maps.all { it == null }
+}
+
 /** [GpuImageSource.readRgba8] as a [TextureAsset] of [filtering]: the CPU upload of this image. */
 fun GpuImageSource.toTextureAsset(filtering: TextureFiltering = TextureFiltering.Linear): TextureAsset =
     TextureAsset(readRgba8(), width, height, filtering = filtering)

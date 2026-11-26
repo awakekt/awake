@@ -206,7 +206,7 @@ class Renderer internal constructor(
     private val dynamicMeshes by lazy { WebGpuDynamicMeshes(this) }
 
     /** Fills textures from browser images on the GPU; see [ExternalImageUpload]. */
-    private val imageUpload by lazy { ExternalImageUpload(this) }
+    internal val imageUpload by lazy { ExternalImageUpload(this) }
 
     /** Uploads block-compressed textures in the families this device was granted. */
     private val compressedTextures by lazy { WebGpuCompressedTextures(this) }

@@ -8,6 +8,9 @@ package com.awakekt.awake.render.pipeline
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.CompressedTextureImage
+import com.awakekt.awake.render.texture.GpuImageSource
+import com.awakekt.awake.render.texture.PbrCompressedSet
+import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureFiltering
 
 /**
@@ -35,6 +38,25 @@ interface GpuCompressedTextures : GpuCapability {
         filtering: TextureFiltering,
         uniformFloatCount: Int,
     ): Material?
+
+    /**
+     * Builds a PBR material whose base colour and/or PBR channels (`metallicRoughness`, `normal`,
+     * `occlusion`, `emissive`) stay block-compressed wherever [baseCompressed] or [pbrCompressed]
+     * supplies a format this device accepts, falling back per channel to [baseColor] / [pbrImages]
+     * (or shared neutral placeholders when absent).
+     *
+     * Returns null when neither the base colour nor any PBR channel can be uploaded block-compressed
+     * on this device, letting [createImageMaterial] take the standard GPU-copy or CPU RGBA8 path.
+     */
+    @Suppress("LongParameterList") // Mirrors createImageMaterial plus resolved compressed channels.
+    fun createMaterial(
+        baseColor: GpuImageSource,
+        baseCompressed: CompressedTextureImage?,
+        filtering: TextureFiltering,
+        uniformFloatCount: Int,
+        pbrImages: PbrImageSet,
+        pbrCompressed: PbrCompressedSet,
+    ): Material? = null
 
     /** The key [GpuDevice.capability] answers with this device's compressed textures, when it has them. */
     companion object : GpuCapabilityKind<GpuCompressedTextures>

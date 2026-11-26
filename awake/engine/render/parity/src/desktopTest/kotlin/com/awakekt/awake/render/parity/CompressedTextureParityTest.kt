@@ -11,10 +11,14 @@ import com.awakekt.awake.asset.ktx.loader.LibKtxBasisTranscoder
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.GpuCompressedTextures
 import com.awakekt.awake.render.pipeline.compressedTextureFormats
+import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.render.texture.CompressedTextureFormat
+import com.awakekt.awake.render.texture.CompressedTextureImage
+import com.awakekt.awake.render.texture.GpuImageSource
+import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.TextureFiltering
 import org.junit.AfterClass
@@ -52,6 +56,49 @@ class CompressedTextureParityTest {
                 val psnr = psnr(reference, renderer.draw(upload))
                 assertTrue(psnr > MIN_PSNR, "$backend: $format draws ${"%.1f".format(psnr)} dB from the RGBA8 frame")
             }
+        }
+    }
+
+    @Test
+    fun aBlockCompressedPbrMaterialDrawsAsItsRgba8MapsDoOnBothBackends() {
+        for (backend in BACKEND_ORDER) {
+            val renderer = session(backend).renderer
+            val formats = renderer.compressedTextureFormats
+            val format = formats.first { it in LibKtxBasisTranscoder.formats }
+            val baseRgba = assertIs<Ktx2Upload.Rgba>(Ktx2TextureLoader.decode(ROCK, emptySet(), LibKtxBasisTranscoder)).texture
+            val baseCompressed = assertIs<Ktx2Upload.Compressed>(Ktx2TextureLoader.decode(ROCK, setOf(format), LibKtxBasisTranscoder)).image
+
+            val referenceMaterial = renderer.createMaterial(
+                texture = baseRgba,
+                uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
+                pbrTextures = PbrTextureSet(emissive = baseRgba),
+            )
+            val reference = try {
+                renderer.renderTexturedMaterialScene(referenceMaterial)
+            } finally {
+                referenceMaterial.destroy()
+            }
+
+            val compressedSource = object : GpuImageSource {
+                override val width: Int = baseCompressed.width
+                override val height: Int = baseCompressed.height
+                override val externalImage: Any? = null
+                override val compressed: CompressedTextureImage = baseCompressed
+                override fun readRgba8(): ByteArray = error("compressed PBR channel should not fall back to RGBA8")
+            }
+            val compressedMaterial = renderer.createImageMaterial(
+                image = compressedSource,
+                filtering = TextureFiltering.Linear,
+                uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
+                pbrImages = PbrImageSet(emissive = compressedSource),
+            )
+            val actual = try {
+                renderer.renderTexturedMaterialScene(compressedMaterial)
+            } finally {
+                compressedMaterial.destroy()
+            }
+            val psnr = psnr(reference, actual)
+            assertTrue(psnr > MIN_PSNR, "$backend: compressed PBR ($format) drew ${"%.1f".format(psnr)} dB from RGBA8 PBR")
         }
     }
 

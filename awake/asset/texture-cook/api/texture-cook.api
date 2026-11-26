@@ -1,6 +1,12 @@
 public final class com/awakekt/awake/asset/texturecook/TextureCook {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/texturecook/TextureCook;
+	public final fun cookArray (Ljava/io/File;Ljava/util/List;Ljava/lang/String;Ljava/io/File;Ljava/util/List;Lcom/awakekt/awake/asset/ktx/TextureCookSettings;Z)Ljava/lang/String;
+	public static synthetic fun cookArray$default (Lcom/awakekt/awake/asset/texturecook/TextureCook;Ljava/io/File;Ljava/util/List;Ljava/lang/String;Ljava/io/File;Ljava/util/List;Lcom/awakekt/awake/asset/ktx/TextureCookSettings;ZILjava/lang/Object;)Ljava/lang/String;
+	public final fun discover (Ljava/io/File;Ljava/util/List;)Ljava/util/List;
+	public static synthetic fun discover$default (Lcom/awakekt/awake/asset/texturecook/TextureCook;Ljava/io/File;Ljava/util/List;ILjava/lang/Object;)Ljava/util/List;
 	public final fun run (Ljava/io/File;Ljava/util/List;Ljava/io/File;)Ljava/util/List;
+	public final fun run (Ljava/io/File;Ljava/util/List;Ljava/io/File;ZZ)Ljava/util/List;
+	public static synthetic fun run$default (Lcom/awakekt/awake/asset/texturecook/TextureCook;Ljava/io/File;Ljava/util/List;Ljava/io/File;ZZILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/asset/texturecook/TextureCookMain {

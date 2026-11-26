@@ -137,6 +137,9 @@ class LoadedProject internal constructor(
     /** Where a switch reads its next scene: off the frame thread. A test passes one that runs at once. */
     internal var sceneLoads: CoroutineContext = ioDispatcher
 
+    /** Block formats supported by the active renderer, populated in [runProject]'s `onReady` hook. */
+    internal var compressedTextureFormats: Set<CompressedTextureFormat> = emptySet()
+
     /**
      * Releases the playing scene's decoded [SceneDocument.nodes] and [SceneDocument.extensions]
      * trees while preserving its header (`version` and `name`), freeing terrain sample lists and
@@ -532,6 +535,8 @@ fun SceneAppDsl.runProject(
     service(SceneSwitchStatus::class) { scenes }
     onReady {
         formats = renderer.compressedTextureFormats
+        project.compressedTextureFormats = formats
+        project.models.readProjectFiles(project.files) { project.compressedTextureFormats }
         showTouchControls = touchControls
         project.componentRegistry?.let { canvasBindings = it.bindings }
     }

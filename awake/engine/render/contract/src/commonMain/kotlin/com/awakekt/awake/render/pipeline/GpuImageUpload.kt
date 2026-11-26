@@ -10,6 +10,7 @@ import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.GpuImageSource
+import com.awakekt.awake.render.texture.PbrCompressedSet
 import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
@@ -50,14 +51,15 @@ interface GpuImageUpload : GpuCapability {
  * - **GPU direct**, when this device has [GpuImageUpload] and it accepts [image], meaning the image
  *   carries an [GpuImageSource.externalImage] the backend can copy: WebGPU in a browser. No pixel
  *   crosses to the CPU, and [TextureFiltering.Linear] mips are generated on the GPU.
- * - **Block-compressed**, when [pbrImages] is null and [image] comes in one of this device's
- *   [compressedTextureFormats] ([GpuImageSource.compressed]): uploaded as it is, with its own mips (#1211).
+ * - **Block-compressed**, when [image] or any map in [pbrImages] comes in one of this device's
+ *   [compressedTextureFormats] ([GpuImageSource.compressed]): each compressed channel is uploaded
+ *   as it is, with its own mips (#1211), while any uncompressed channel falls back per channel.
  * - **CPU**, otherwise: [GpuImageSource.readRgba8] into a [TextureAsset], uploaded as every texture is.
  *   This covers Vulkan, a test double, and a browser without the API.
  *
- * The PBR maps in [pbrImages] follow the base colour: on the GPU path each map that can be copied is,
- * and on the CPU path every map is read into the [com.awakekt.awake.render.texture.PbrTextureSet] a
- * `createMaterial(texture = ...)` call takes.
+ * The PBR maps in [pbrImages] follow the base colour: compressed channels stay block-compressed, on
+ * the GPU-copy path each remaining map that can be copied is, and on the CPU path every map is read
+ * into the [com.awakekt.awake.render.texture.PbrTextureSet] a `createMaterial(texture = ...)` call takes.
  *
  * Neither path is for a texture whose pixels a CPU consumer reads, a layer array or a cubemap. Those
  * keep a [TextureAsset].
@@ -80,25 +82,64 @@ fun GpuDevice.createImageMaterial(
     pbrImages: PbrImageSet?,
     label: String?,
 ): Material {
-    val cooked = image.takeIf { pbrImages == null }?.compressed(compressedTextureFormats)
-    val compressed = cooked?.let { capability(GpuCompressedTextures)?.createMaterial(it, filtering, uniformFloatCount) }
+    val compressedResult = createCompressedImageMaterial(image, filtering, uniformFloatCount, pbrImages)
+    val compressed = compressedResult?.first
+    val cookedBase = compressedResult?.second
     val copied = if (compressed == null) capability(GpuImageUpload)?.createMaterial(image, filtering, uniformFloatCount, pbrImages) else null
     val material = compressed ?: copied ?: createMaterial(
         texture = image.toTextureAsset(filtering),
         uniformFloatCount = uniformFloatCount,
         pbrTextures = pbrImages?.readTextures(),
     )
-    TextureUploads.observer?.let { observer ->
-        val path = when {
-            compressed != null -> TextureUploadPath.BlockCompressed
-            copied != null -> TextureUploadPath.GpuCopy
-            else -> TextureUploadPath.CpuRgba8
-        }
-        val format = if (compressed != null) cooked?.format else null
-        val uploaded = uploadedLevels(image, if (compressed != null) cooked else null, filtering)
-        observer.uploaded(TextureUpload(label, image.width, image.height, path, format, filtering, uploaded.width, uploaded.height, uploaded.levels))
-    }
+    reportImageUpload(label, image, filtering, cookedBase.takeIf { compressed != null }, copied != null)
     return material
+}
+
+private fun GpuDevice.createCompressedImageMaterial(
+    image: GpuImageSource,
+    filtering: TextureFiltering,
+    uniformFloatCount: Int,
+    pbrImages: PbrImageSet?,
+): Pair<Material, CompressedTextureImage?>? {
+    val formats = compressedTextureFormats
+    val cap = if (formats.isNotEmpty()) capability(GpuCompressedTextures) else null
+    if (cap == null) return null
+    val cookedBase = image.compressed(formats)
+    val material = if (pbrImages == null || pbrImages.isEmpty) {
+        cookedBase?.let { cap.createMaterial(it, filtering, uniformFloatCount) }
+    } else {
+        val cookedPbr = PbrCompressedSet(
+            metallicRoughness = pbrImages.metallicRoughness?.compressed(formats),
+            normal = pbrImages.normal?.compressed(formats),
+            occlusion = pbrImages.occlusion?.compressed(formats),
+            emissive = pbrImages.emissive?.compressed(formats),
+        )
+        if (cookedBase != null || !cookedPbr.isEmpty) {
+            cap.createMaterial(image, cookedBase, filtering, uniformFloatCount, pbrImages, cookedPbr)
+        } else {
+            null
+        }
+    }
+    return material?.let { it to cookedBase }
+}
+
+private fun GpuDevice.reportImageUpload(
+    label: String?,
+    image: GpuImageSource,
+    filtering: TextureFiltering,
+    cookedBase: CompressedTextureImage?,
+    usedGpuCopy: Boolean,
+) {
+    val observer = TextureUploads.observer ?: return
+    val path = when {
+        cookedBase != null -> TextureUploadPath.BlockCompressed
+        usedGpuCopy -> TextureUploadPath.GpuCopy
+        else -> TextureUploadPath.CpuRgba8
+    }
+    val uploaded = uploadedLevels(image, cookedBase, filtering)
+    observer.uploaded(
+        TextureUpload(label, image.width, image.height, path, cookedBase?.format, filtering, uploaded.width, uploaded.height, uploaded.levels),
+    )
 }
 
 private class UploadedLevels(val width: Int, val height: Int, val levels: Int)

@@ -6,10 +6,12 @@
 package com.awakekt.awake.asset.ktx.loader
 
 import com.awakekt.awake.asset.ktx.Ktx2Reader
+import com.awakekt.awake.asset.ktx.Ktx2Supercompression
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.texture.CompressedTextureFormat
+import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.asGpuImageSource
 import kotlin.concurrent.Volatile
@@ -57,29 +59,67 @@ class CookedTextureLoader(
     }
 
     /**
+     * Loads a cooked KTX2 `Texture2DArray` (such as a terrain layer array at `terrain/layers.ktx2`
+     * with optional `.astc.ktx2` / `.etc2.ktx2` mobile siblings) as a [CompressedTextureImage] in
+     * the best format [formats] accepts, or null when none exists or loads on this device.
+     */
+    suspend fun loadArray(source: String, formats: Set<CompressedTextureFormat>): CompressedTextureImage? {
+        if (formats.isEmpty()) return null
+        val basis = if (source.endsWith(".ktx2", ignoreCase = true)) source else "$source.ktx2"
+        return Ktx2Formats.variants(basis, formats).firstNotNullOfOrNull { path ->
+            val isBasis = path == basis
+            val codec = if (isBasis) transcoderOrNull() else null
+            val bytes = if (isBasis && codec == null) null else readCooked(path)
+            bytes?.let { (Ktx2TextureLoader.decode(it, formats, codec) as? Ktx2Upload.Compressed)?.image }
+        }
+    }
+
+    /**
      * [files], with each image that was cooked read from its Basis Universal `.ktx2` instead, when this
      * platform has a transcoder: for a model's images, which load before the device is known, so before
      * the mobile files can be picked. [decode] turns those bytes into an image.
      */
-    fun withCookedImages(): AssetSource = object : AssetSource {
-        override suspend fun read(path: AssetPath): Result<ByteArray> = cookedBytes(path.value) ?: files.read(path)
+    fun withCookedImages(): AssetSource = withCookedImages { emptySet() }
+
+    /**
+     * [files], with each cooked image substituted by the best cooked KTX2 variant for the device
+     * [formats] (trying `.astc.ktx2` and `.etc2.ktx2` on mobile without needing a Basis transcoder,
+     * then `.ktx2` when a platform transcoder is available). Falls back to the original source image
+     * whenever no cooked variant is present. [decode] turns those KTX2 bytes into a [GpuImageSource].
+     */
+    fun withCookedImages(formats: () -> Set<CompressedTextureFormat>): AssetSource = object : AssetSource {
+        override suspend fun read(path: AssetPath): Result<ByteArray> = cookedBytes(path.value, formats()) ?: files.read(path)
 
         override suspend fun exists(path: AssetPath): Boolean = files.exists(path)
     }
 
     /**
-     * [bytes] as an image when they are a Basis Universal KTX2 file this platform transcodes, which
-     * [GpuImageSource.compressed] puts in the device's block format when its material is made; null for
-     * any other file, which the caller decodes as before.
+     * [bytes] as an image when they are a KTX2 file this platform can consume:
+     * - **Pre-compressed block-format KTX2** (`.astc.ktx2`, `.etc2.ktx2`, `.bc7.ktx2`, etc., including
+     *   embedded `KHR_texture_basisu` images): loaded directly without a [BasisTranscoder] on every
+     *   platform including Android and iOS.
+     * - **Raw RGBA8 KTX2**: decoded directly without a transcoder.
+     * - **Basis Universal KTX2**: wrapped for on-upload transcoding when a platform [BasisTranscoder]
+     *   is available.
+     *
+     * Returns null for non-KTX2 bytes or unsupported encodings, so the caller decodes as a normal image.
      */
     suspend fun decode(bytes: ByteArray): GpuImageSource? {
         if (!Ktx2Reader.isKtx2(bytes)) return null
-        return transcoderOrNull()?.let { Ktx2BasisImageSource(bytes, it) }
+        val texture = Ktx2Reader.read(bytes)
+        return if (texture.needsTranscoding) {
+            transcoderOrNull()?.let { Ktx2BasisImageSource(bytes, it) }
+        } else {
+            decodeRaw2dKtx2(bytes, texture)
+        }
     }
 
-    private suspend fun cookedBytes(source: String): Result<ByteArray>? {
-        val basis = cookedPath(source)?.takeIf { transcoderOrNull() != null } ?: return null
-        return readCooked(basis)?.let { Result.success(it) }
+    private suspend fun cookedBytes(source: String, formats: Set<CompressedTextureFormat>): Result<ByteArray>? {
+        val basis = cookedPath(source) ?: return null
+        return Ktx2Formats.variants(basis, formats).firstNotNullOfOrNull { variant ->
+            val allowed = variant != basis || transcoderOrNull() != null
+            if (allowed) readCooked(variant)?.let { Result.success(it) } else null
+        }
     }
 
     /**
@@ -130,11 +170,6 @@ class CookedTextureLoader(
         }
     }
 
-    private fun rgba(bytes: ByteArray, codec: BasisTranscoder?): ByteArray {
-        val upload = Ktx2TextureLoader.decode(bytes, emptySet(), codec)
-        return checkNotNull(upload as? Ktx2Upload.Rgba) { "a mobile block file has no RGBA8 decoder here" }.texture.data
-    }
-
     private companion object {
         val log = Logger("texture-ktx-loader")
 
@@ -145,6 +180,25 @@ class CookedTextureLoader(
             val dot = source.lastIndexOf('.')
             if (dot <= source.lastIndexOf('/') || source.substring(dot + 1).lowercase() !in IMAGE_EXTENSIONS) return null
             return source.substring(0, dot) + ".ktx2"
+        }
+    }
+}
+
+private fun rgba(bytes: ByteArray, codec: BasisTranscoder?): ByteArray {
+    val upload = Ktx2TextureLoader.decode(bytes, emptySet(), codec)
+    return checkNotNull(upload as? Ktx2Upload.Rgba) { "a mobile block file has no RGBA8 decoder here" }.texture.data
+}
+
+private fun decodeRaw2dKtx2(bytes: ByteArray, texture: com.awakekt.awake.asset.ktx.Ktx2Texture): GpuImageSource? {
+    val single2d = texture.faceCount == 1 && texture.depth <= 1 && texture.layerCount <= 1
+    if (!single2d || texture.supercompression != Ktx2Supercompression.None) return null
+    return if (Ktx2Formats.isRgba8(texture.vkFormat)) {
+        (Ktx2TextureLoader.decode(bytes, emptySet(), transcoder = null) as? Ktx2Upload.Rgba)?.texture?.asGpuImageSource()
+    } else {
+        Ktx2Formats.blockFormat(texture.vkFormat)?.takeIf { texture.bottomRowFirst }?.let { block ->
+            Ktx2RawImageSource(
+                CompressedTextureImage(block.first, texture.width, texture.height, block.second, texture.levels.map { it.data }),
+            )
         }
     }
 }

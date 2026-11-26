@@ -193,23 +193,57 @@ class Texture internal constructor(
             // The top levels mip skip leaves out, while the new base is whole blocks (#1660).
             val skip = TextureSampling.levelsToSkip(image, filtering, graphicsDevice.mipSkip)
             val levels = image.levels.drop(skip)
-            var offset = 0L
-            val regions = levels.mapIndexed { level, bytes ->
-                ImageUpload.Region(image.levelWidth(level + skip), image.levelHeight(level + skip), offset, level).also { offset += bytes.size }
-            }
-            val data = ByteArray(offset.toInt())
-            var at = 0
-            levels.forEach { bytes ->
-                bytes.copyInto(data, at)
-                at += bytes.size
+            val layerCount = image.layerCount
+            val regions = ArrayList<ImageUpload.Region>(levels.size * layerCount)
+            val layerOffsets = LongArray(levels.size * layerCount)
+            var totalBytes = 0L
+            var regionIndex = 0
+            levels.forEachIndexed { levelIndex, _ ->
+                val sourceLevel = levelIndex + skip
+                val levelWidth = image.levelWidth(sourceLevel)
+                val levelHeight = image.levelHeight(sourceLevel)
+                val layerBytes = image.layerByteSize(sourceLevel).toLong()
+                repeat(layerCount) { layer ->
+                    // Align every block-compressed copy offset to 16 bytes (satisfies every 8- and 16-byte block format).
+                    totalBytes = (totalBytes + COMPRESSED_STAGING_ALIGNMENT - 1L) and (COMPRESSED_STAGING_ALIGNMENT - 1L).inv()
+                    layerOffsets[regionIndex++] = totalBytes
+                    regions += ImageUpload.Region(levelWidth, levelHeight, totalBytes, levelIndex, layer)
+                    totalBytes += layerBytes
+                }
             }
             val uploaded = ImageUpload.upload(
-                graphicsDevice, runOneTimeCommands, vkFormat(image.format), image.levelWidth(skip), image.levelHeight(skip),
-                mipLevels = levels.size, layerCount = 1, isCubemap = false,
-                data = data, regions = regions, samplerCreateInfo = VkSamplerCreateInfo(), filtering = filtering,
+                graphicsDevice = graphicsDevice,
+                runOneTimeCommands = runOneTimeCommands,
+                format = vkFormat(image.format),
+                width = image.levelWidth(skip),
+                height = image.levelHeight(skip),
+                mipLevels = levels.size,
+                layerCount = layerCount,
+                isCubemap = false,
+                byteSize = totalBytes,
+                writeStaging = { mappedPtr, stagingOffset ->
+                    var copyIndex = 0
+                    levels.forEachIndexed { levelIndex, bytes ->
+                        val layerBytes = image.layerByteSize(levelIndex + skip)
+                        repeat(layerCount) { layer ->
+                            VulkanBuffers.writeMappedMemoryBytes(
+                                mappedPtr,
+                                stagingOffset + layerOffsets[copyIndex++],
+                                bytes,
+                                layer * layerBytes,
+                                layerBytes,
+                            )
+                        }
+                    }
+                },
+                regions = regions,
+                samplerCreateInfo = VkSamplerCreateInfo(),
+                filtering = filtering,
             )
-            return Texture(graphicsDevice, uploaded, image.width, image.height, layerCount = 1, blockCompressed = true)
+            return Texture(graphicsDevice, uploaded, image.width, image.height, layerCount = layerCount, blockCompressed = true)
         }
+
+        private const val COMPRESSED_STAGING_ALIGNMENT = 16L
 
         /** The UNORM `VkFormat` of [format]. */
         fun vkFormat(format: CompressedTextureFormat): VkFormat = when (format) {
