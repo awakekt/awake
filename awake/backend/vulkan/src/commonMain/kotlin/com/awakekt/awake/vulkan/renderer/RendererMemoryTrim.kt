@@ -42,4 +42,6 @@ internal fun Renderer.performTrimMemory() {
         resetDrawPreparersAfterTrim()
     }
     graphicsDevice.deviceMemoryAllocator.trimEmptySlabs()
+    graphicsDevice.uniformMemoryPool.trimEmptySlabs()
+    graphicsDevice.descriptorSetPool.trimEmptyPools()
 }

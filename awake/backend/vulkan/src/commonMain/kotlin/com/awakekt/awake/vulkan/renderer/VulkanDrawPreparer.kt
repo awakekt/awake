@@ -15,6 +15,7 @@ import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.canInstance
+import com.awakekt.awake.render.pipeline.canInstanceSkinned
 import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
 import com.awakekt.awake.render.pipeline.instancedDrawKind
@@ -53,6 +54,9 @@ internal class VulkanDrawPreparer(
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
 
+    override fun canInstanceSkinned(format: VertexFormat, cullMode: CullMode): Boolean =
+        renderer.pipelines.canInstanceSkinned(format, cullMode)
+
     override fun canTintInstances(format: VertexFormat, cullMode: CullMode): Boolean =
         renderer.pipelines.resolveInstanced(format, InstancedDrawKind.Plain, cullMode = cullMode)?.readsInstanceTint == true
 
@@ -74,7 +78,7 @@ internal class VulkanDrawPreparer(
         if (sourceIndex == 0) startBatch(context)
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         if (edgePipeline != null) writeEdgeFrame(context)
-        val frameIndex = frameIndex()
+        val frameIndex = currentFrameIndex
         val instancedKind = request.instancedDrawKind()
         val prepared = renderer.prepareGpuDraw(
             cmd = request,
@@ -140,13 +144,13 @@ internal class VulkanDrawPreparer(
         }
     }
 
-    private fun frameIndex(): Int =
-        if (offscreen) renderer.commandBuffers.size else renderer.swapchainManager.currentFrame
+    private val currentFrameIndex: Int
+        get() = if (offscreen) renderer.commandBuffers.size else renderer.swapchainManager.currentFrame
 
     /** The batch's edges are a pass of their own: their view-projection and debug code, written once. */
     private fun writeEdgeFrame(context: GpuDrawPreparationContext) {
         if (edgeFrameWritten) return
-        renderer.graphicsDevice.frameUniforms.write(frameIndex(), context, context.cascades(), edges = true)
+        renderer.graphicsDevice.frameUniforms.write(currentFrameIndex, context, context.cascades(), edges = true)
         edgeFrameWritten = true
     }
 
@@ -163,7 +167,7 @@ internal class VulkanDrawPreparer(
         denseInstanceSlots.begin()
         sharedDepth.clear()
         edgeFrameWritten = false
-        val frameIndex = frameIndex()
+        val frameIndex = currentFrameIndex
         if (offscreen) {
             // Only wait for a previous offscreen capture sharing this slot, never blocking on or
             // stalling the presented swapchain frames (#1687, #1709).

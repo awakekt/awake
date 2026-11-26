@@ -207,8 +207,9 @@ private fun foldInstances(
 ): List<RenderDrawCommand> {
     val canInstance = batcher.canInstanceWith(preparer)
     val canTint = batcher.canTintWith(preparer)
-    if (stats != null) diagnoseInstanceFolds(drawCalls, canInstance, stats, canTint)
-    return batcher.batch(drawCalls, canInstance, canTint)
+    val canInstanceSkinned = batcher.canInstanceSkinnedWith(preparer)
+    if (stats != null) diagnoseInstanceFolds(drawCalls, canInstance, stats, canTint, canInstanceSkinned)
+    return batcher.batch(drawCalls, canInstance, canTint, canInstanceSkinned)
 }
 
 /** Counts the draws each pass of a compiled frame receives. */

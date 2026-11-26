@@ -101,6 +101,13 @@ fun interface GpuDrawPreparer {
     fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = cullMode == CullMode.None && canInstance(format)
 
     /**
+     * Whether [prepare] can fold separate single posed skinned draws of a [format] mesh with
+     * [cullMode] into one skinned-instanced draw carrying per-instance transforms, joint palettes,
+     * and optional RGBA tints. False, the default, leaves single skinned draws separate.
+     */
+    fun canInstanceSkinned(format: VertexFormat, cullMode: CullMode): Boolean = false
+
+    /**
      * Whether this backend's directional shadow depth pass clamps depth rather than clipping at
      * a cascade's near plane, so a caster in front of that plane is flattened onto it and still
      * casts. False, the default, has the scene compiler pull each cascade's near plane back to

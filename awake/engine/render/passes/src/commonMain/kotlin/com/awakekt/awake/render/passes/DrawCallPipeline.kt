@@ -34,8 +34,8 @@ fun RenderDrawCommand.instancedDrawKind(): InstancedDrawKind? =
     resolveInstancedDrawKind(mesh.format, instanceModels, instanceJointPalettes)
 
 /** Shared source-packet identity used to select the matching depth caster on both backends. */
-fun RenderDrawCommand.depthRenderKey(): DepthRenderKey = depthRenderKeyOf(
-    when {
+fun RenderDrawCommand.depthRenderKey(): DepthRenderKey {
+    val kind = when {
         instanceModels.isNullOrEmpty() && mesh.format.isSkinned -> DepthCasterKind.Skinned
         !instanceModels.isNullOrEmpty() && instanceJointPalettes != null ->
             DepthCasterKind.SkinnedInstanced
@@ -43,17 +43,14 @@ fun RenderDrawCommand.depthRenderKey(): DepthRenderKey = depthRenderKeyOf(
             DepthCasterKind.Particle
         !instanceModels.isNullOrEmpty() -> DepthCasterKind.Instanced
         else -> DepthCasterKind.Ordinary
-    },
-    alphaMode,
-)
+    }
+    return DEPTH_RENDER_KEYS[kind.ordinal * AlphaMode.entries.size + alphaMode.ordinal]
+}
 
 /** One key per kind and coverage, made once: asked for every draw of every planned frame (#1555). */
 private val DEPTH_RENDER_KEYS = Array(DepthCasterKind.entries.size * AlphaMode.entries.size) { index ->
     DepthRenderKey(DepthCasterKind.entries[index / AlphaMode.entries.size], AlphaMode.entries[index % AlphaMode.entries.size])
 }
-
-private fun depthRenderKeyOf(kind: DepthCasterKind, alphaMode: AlphaMode): DepthRenderKey =
-    DEPTH_RENDER_KEYS[kind.ordinal * AlphaMode.entries.size + alphaMode.ordinal]
 
 /**
  * Resolves the [InstancedDrawKind] given a vertex [format], optional list of [instanceModels],
@@ -141,6 +138,13 @@ fun <P> PipelineTable<P>.canInstance(format: VertexFormat, cullMode: CullMode): 
     CullMode.Back -> format in instancedBackCulledByFormat
     CullMode.Front -> false
 }
+
+/**
+ * Whether this table can draw skinned-instanced copies of a [format] mesh with [cullMode].
+ * Skinned-instanced pipelines are currently unculled (`CullMode.None`) only.
+ */
+fun <P> PipelineTable<P>.canInstanceSkinned(format: VertexFormat, cullMode: CullMode): Boolean =
+    format.isSkinned && cullMode == CullMode.None && format in skinnedInstancedByFormat
 
 /** Calculates the squared distance from this draw's model transform to the camera eye. */
 fun RenderDrawCommand.depthSortKey(cameraEye: Vec3f): Float =

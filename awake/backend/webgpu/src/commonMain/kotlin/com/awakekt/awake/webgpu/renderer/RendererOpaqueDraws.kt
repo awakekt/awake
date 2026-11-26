@@ -22,6 +22,7 @@ import com.awakekt.awake.render.passes.uniformFloats
 import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
+import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.pipeline.batchKey
 import com.awakekt.awake.render.pipeline.depthSortKey
 import com.awakekt.awake.render.pipeline.instancedDrawKind
@@ -309,7 +310,14 @@ private fun Renderer.prepareInstancedGpuDraw(
         InstancedDrawKind.Skinned -> {
             val slot = drawSlot ?: return null
             stageFor(slot)
-            materialBinding = slot.binding ?: untexturedMaterialError(mesh, material)
+            val samplesTexture = pipeline.texturedMaterialBindings.entries.any { it.kind == ResourceKind.SampledTexture }
+            materialBinding = if (material.hasTexture && samplesTexture) {
+                WebGpuBindGroupHandle(
+                    material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings),
+                )
+            } else {
+                slot.binding ?: untexturedMaterialError(mesh, material)
+            }
             jointPaletteBinding = cmd.instanceJointPalettes?.let { palettes ->
                 skinnedInstanceBufferForRun(instanceIndex).run {
                     update(palettes, cmd.instanceColors)
