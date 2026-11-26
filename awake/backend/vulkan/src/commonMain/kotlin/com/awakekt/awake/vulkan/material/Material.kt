@@ -11,9 +11,9 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.pipeline.ShaderStage
 import com.awakekt.awake.render.renderer.UniformFields
+import com.awakekt.awake.vulkan.device.DescriptorPoolChunk
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.device.SMALL_UBO_REBAR_MIN_HEAP_BYTES
-import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
+import com.awakekt.awake.vulkan.device.HostUniformAllocation
 import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -28,7 +28,6 @@ import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkDescriptorBufferInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorImageInfo
-import com.awakekt.awake.vulkan.models.info.VkDescriptorPoolCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorPoolSize
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutBinding
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
@@ -47,7 +46,7 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
  * Per-frame/per-draw uniform buffers and descriptor sets are created lazily as the renderer
  * requests specific frame/draw slots.
  */
-class Material(
+class Material internal constructor(
     graphicsDevice: GraphicsDevice,
     /** The declared size lets transitional preparation select the matching shared ABI without
      * inferring shader semantics from a vertex format alone. */
@@ -56,7 +55,13 @@ class Material(
      * shape every material had before the declaration existed, so a caller that does not care
      * gets exactly the previous layout. */
     private val bindings: GroupBindings = GroupBindings.StandardMaterial,
+    private val ownsDescriptorSetLayout: Boolean,
 ) : RenderMaterial {
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        uniformFloatCount: Int = DEFAULT_UNIFORM_FLOAT_COUNT,
+        bindings: GroupBindings = GroupBindings.StandardMaterial,
+    ) : this(graphicsDevice, uniformFloatCount, bindings, ownsDescriptorSetLayout = true)
     internal val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
     internal var onDestroy: (() -> Unit)? = null
@@ -140,7 +145,11 @@ class Material(
     private var pbrImageViews: PbrImageViews? = null
 
     init {
-        descriptorSetLayout = createDescriptorSetLayout(graphicsDevice, bindings)
+        descriptorSetLayout = if (ownsDescriptorSetLayout) {
+            createDescriptorSetLayout(graphicsDevice, bindings)
+        } else {
+            graphicsDevice.descriptorSetLayoutCache.layoutFor(bindings)
+        }
     }
 
     /** Creates the uniform buffer, descriptor pool, and descriptor set (written to bind
@@ -203,7 +212,7 @@ class Material(
         }
         val block = slotBlocks.last()
         val indexInBlock = slotsInLastBlock
-        val memoryOffset = indexInBlock * block.stride
+        val memoryOffset = block.memoryBaseOffset + indexInBlock * block.stride
         VulkanBuffers.vkBindBufferMemory(device, rawUniformBuffer, block.memory, memoryOffset)
         slotsInLastBlock += 1
         val rawDescriptorSet = createMaterialDescriptorSet(
@@ -361,7 +370,7 @@ class Material(
         }
         val blocksToDestroy = slotBlocks.toList()
         blocksToDestroy.forEach { it.destroyed = true }
-        val layoutToDestroy = descriptorSetLayout.handle
+        val layoutToDestroy = if (ownsDescriptorSetLayout) descriptorSetLayout.handle else 0L
         val release = onDestroy
         onDestroy = null
         // Update logical resource accounting (and enqueue owned texture retirement) immediately,
@@ -370,11 +379,23 @@ class Material(
         graphicsDevice.destroyOrRetire {
             buffersToDestroy.forEach { VulkanBuffers.vkDestroyBuffer(vkDevice, it) }
             blocksToDestroy.forEach { block ->
-                VulkanBuffers.vkUnmapMemory(vkDevice, block.memory)
-                VulkanBuffers.vkFreeMemory(vkDevice, block.memory)
-                VulkanDescriptors.vkDestroyDescriptorPool(vkDevice, block.descriptorPool)
+                val allocation = block.memoryAllocation
+                if (allocation != null) {
+                    graphicsDevice.uniformMemoryPool.free(allocation)
+                } else {
+                    VulkanBuffers.vkUnmapMemory(vkDevice, block.memory)
+                    VulkanBuffers.vkFreeMemory(vkDevice, block.memory)
+                }
+                val poolChunk = block.descriptorPoolChunk
+                if (poolChunk != null) {
+                    graphicsDevice.descriptorSetPool.releaseBlock(poolChunk)
+                } else {
+                    VulkanDescriptors.vkDestroyDescriptorPool(vkDevice, block.descriptorPool)
+                }
             }
-            VulkanDescriptors.vkDestroyDescriptorSetLayout(vkDevice, layoutToDestroy)
+            if (layoutToDestroy != 0L) {
+                VulkanDescriptors.vkDestroyDescriptorSetLayout(vkDevice, layoutToDestroy)
+            }
         }
     }
 
@@ -472,6 +493,13 @@ class Material(
                 .filter { it.kind == ResourceKind.SampledTexture && it.binding > BASE_COLOR_IMAGE_BINDING }
                 .map { it.binding }
 
+        /** Creates a runtime [Material] backed by the device-wide shared [GroupBindings] layout cache. */
+        internal fun createSharedLayout(
+            graphicsDevice: GraphicsDevice,
+            uniformFloatCount: Int = DEFAULT_UNIFORM_FLOAT_COUNT,
+            bindings: GroupBindings = GroupBindings.StandardMaterial,
+        ): Material = Material(graphicsDevice, uniformFloatCount, bindings, ownsDescriptorSetLayout = false)
+
         /** Builds just the descriptor set layout a [Material] would build, without allocating
          * a whole Material -- for callers (pipeline-layout construction) that need the layout's
          * shape before any real Material exists.
@@ -535,13 +563,16 @@ private fun bindFrameBlock(graphicsDevice: GraphicsDevice, descriptorSet: Long, 
     )
 }
 
-/** One persistently mapped memory allocation and descriptor pool shared by [slotCount] uniform slots. */
+/** One persistently mapped memory slice and shared descriptor pool chunk backing [slotCount] uniform slots. */
 internal class SlotBlock(
     val memory: Long,
     val mappedPtr: Long,
     val descriptorPool: Long,
     val stride: Long,
     val slotCount: Int = Material.SLOTS_PER_BLOCK,
+    val memoryBaseOffset: Long = 0L,
+    internal val memoryAllocation: HostUniformAllocation? = null,
+    internal val descriptorPoolChunk: DescriptorPoolChunk? = null,
 ) {
     val strideFloats: Int = (stride / Float.SIZE_BYTES).toInt()
     val stagedFloats: FloatArray = FloatArray(slotCount * strideFloats)
@@ -610,7 +641,7 @@ internal class SlotBlock(
     }
 }
 
-/** Memory for [slotCount] buffers shaped like [requirements], each at an aligned stride. */
+/** Memory slice and shared descriptor pool reservation for [slotCount] buffers shaped like [requirements]. */
 @Suppress("TooGenericExceptionCaught")
 private fun allocateSlotBlock(
     graphicsDevice: GraphicsDevice,
@@ -622,18 +653,23 @@ private fun allocateSlotBlock(
     val alignment = maxOf(requirements.alignment, Float.SIZE_BYTES.toLong())
     val stride = (requirements.size + alignment - 1) / alignment * alignment
     val totalSize = stride * slotCount
-    val memory = graphicsDevice.allocateHostVisibleBufferMemory(
+    val allocation = graphicsDevice.uniformMemoryPool.allocate(
         VkMemoryRequirements(totalSize, alignment, requirements.memoryTypeBits),
-        minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
     )
-    var mappedPtr = 0L
-    try {
-        mappedPtr = VulkanBuffers.vkMapMemory(graphicsDevice.device, memory, 0L, totalSize)
-        val pool = createMaterialDescriptorPool(graphicsDevice.device, bindings, maxSets = slotCount)
-        return SlotBlock(memory, mappedPtr, pool, stride, slotCount)
+    return try {
+        val poolChunk = graphicsDevice.descriptorSetPool.reserveBlock(bindings, slotCount)
+        SlotBlock(
+            memory = allocation.memory,
+            mappedPtr = allocation.mappedPtr,
+            descriptorPool = poolChunk.pool,
+            stride = stride,
+            slotCount = slotCount,
+            memoryBaseOffset = allocation.offset,
+            memoryAllocation = allocation,
+            descriptorPoolChunk = poolChunk,
+        )
     } catch (failure: Throwable) {
-        if (mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(graphicsDevice.device, memory)
-        VulkanBuffers.vkFreeMemory(graphicsDevice.device, memory)
+        graphicsDevice.uniformMemoryPool.free(allocation)
         throw failure
     }
 }
@@ -661,17 +697,6 @@ internal fun materialPoolSizes(bindings: GroupBindings): List<VkDescriptorPoolSi
         .map { (kind, count) ->
             VkDescriptorPoolSize(type = kind.toVkDescriptorType(), descriptorCount = count)
         }
-
-private fun createMaterialDescriptorPool(device: Long, bindings: GroupBindings, maxSets: Int): Long =
-    VulkanDescriptors.vkCreateDescriptorPool(
-        device,
-        VkDescriptorPoolCreateInfo(
-            maxSets = maxSets,
-            pPoolSizes = materialPoolSizes(bindings)
-                .map { VkDescriptorPoolSize(type = it.type, descriptorCount = it.descriptorCount * maxSets) }
-                .toTypedArray(),
-        ),
-    )
 
 private fun ResourceKind.toVkDescriptorType(): Int = when (this) {
     ResourceKind.UniformBuffer -> VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER

@@ -27,6 +27,16 @@ internal fun batchInstances(
     canInstance: (VertexFormat, CullMode) -> Boolean,
 ): List<RenderDrawCommand> = InstanceBatcher().batch(drawCalls, canInstance)
 
+internal fun batchInstances(
+    drawCalls: List<RenderDrawCommand>,
+    canInstance: (VertexFormat, CullMode) -> Boolean,
+    canInstanceSkinned: (VertexFormat, CullMode) -> Boolean,
+): List<RenderDrawCommand> = InstanceBatcher().batch(
+    drawCalls = drawCalls,
+    canInstance = canInstance,
+    canInstanceSkinned = canInstanceSkinned,
+)
+
 /**
  * Most copies one instanced draw carries: both backends' instance buffers hold 4096 matrices a
  * draw, so a larger set becomes several draws.
@@ -78,7 +88,7 @@ internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand, tints: Bo
         timeSeconds == other.timeSeconds &&
         sameRenderState(other, tints)
 
-private fun RenderDrawCommand.sameRenderState(other: RenderDrawCommand, tints: Boolean): Boolean =
+internal fun RenderDrawCommand.sameRenderState(other: RenderDrawCommand, tints: Boolean): Boolean =
     alphaMode == other.alphaMode &&
         alphaCutoff == other.alphaCutoff &&
         shadowsOnly == other.shadowsOnly &&
@@ -104,13 +114,20 @@ internal fun Vec3f.sameAnimation(other: Vec3f): Boolean = this === other || (x =
 private fun RenderDrawCommand.extrasAlike(other: RenderDrawCommand, tints: Boolean): Boolean =
     if (tints) InstanceTints.sameBesidesTint(extraUniformFloats, other.extraUniformFloats) else extraUniformFloats.contentEquals(other.extraUniformFloats)
 
-/** A map key for [instancesWith]: draws with equal keys render identically but for placement. */
-internal class InstanceKey(private val draw: RenderDrawCommand, private val tints: Boolean = false) {
-    private val hash: Int = draw.instanceHash()
+/** A map key for [instancesWith] (or [SkinnedInstanceFold.alike] when [skinned]): equal keys render alike. */
+internal class InstanceKey(
+    private val draw: RenderDrawCommand,
+    private val tints: Boolean = false,
+    private val skinned: Boolean = false,
+) {
+    private val hash: Int = if (skinned) SkinnedInstanceFold.hash(draw) else draw.instanceHash()
 
     override fun hashCode(): Int = hash
 
-    override fun equals(other: Any?): Boolean = other is InstanceKey && tints == other.tints && draw.instancesWith(other.draw, tints)
+    override fun equals(other: Any?): Boolean = other is InstanceKey &&
+        skinned == other.skinned &&
+        tints == other.tints &&
+        if (skinned) SkinnedInstanceFold.alike(draw, other.draw) else draw.instancesWith(other.draw, tints)
 }
 
 /** A hash equal for draws that [instancesWith] each other, tinted or not: the tint is left out of it. */
@@ -124,20 +141,43 @@ internal interface FoldRule {
 
     fun folds(draw: RenderDrawCommand, instances: Boolean): Boolean
 
+    /** Whether [draw] folds as a single posed skinned draw when [skinnedInstances] is true. */
+    fun foldsSkinned(draw: RenderDrawCommand, skinnedInstances: Boolean): Boolean = false
+
     /** Whether [first] and [second] draw alike; with [tints], their tint and fade may differ. */
     fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean): Boolean
 
+    /** Whether two single posed skinned draws can share one skinned-instanced batch. */
+    fun alikeSkinned(first: RenderDrawCommand, second: RenderDrawCommand): Boolean = false
+
     fun hash(draw: RenderDrawCommand): Int
+
+    /** Hash equal for two single skinned draws accepted by [alikeSkinned]. */
+    fun hashSkinned(draw: RenderDrawCommand): Int = hash(draw)
 }
 
-/** The scene pass's folding: draws that differ only in placement. */
+internal fun FoldRule.matches(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean, skinned: Boolean): Boolean =
+    if (skinned) alikeSkinned(first, second) else alike(first, second, tints)
+
+internal fun FoldRule.hashFor(draw: RenderDrawCommand, skinned: Boolean): Int =
+    if (skinned) hashSkinned(draw) else hash(draw)
+
+/** The scene pass's folding: draws that differ only in placement, plus posed skinned copies. */
 internal object SceneInstanceFold : FoldRule {
     override val keepsOthers = true
 
     override fun folds(draw: RenderDrawCommand, instances: Boolean) =
         instances && draw.instanceModels == null && draw.instanceJointPalettes == null && !draw.transparent
 
+    override fun foldsSkinned(draw: RenderDrawCommand, skinnedInstances: Boolean): Boolean =
+        skinnedInstances && SkinnedInstanceFold.canFold(draw)
+
     override fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean) = first.instancesWith(second, tints)
 
+    override fun alikeSkinned(first: RenderDrawCommand, second: RenderDrawCommand): Boolean =
+        SkinnedInstanceFold.alike(first, second)
+
     override fun hash(draw: RenderDrawCommand) = draw.instanceHash()
+
+    override fun hashSkinned(draw: RenderDrawCommand): Int = SkinnedInstanceFold.hash(draw)
 }

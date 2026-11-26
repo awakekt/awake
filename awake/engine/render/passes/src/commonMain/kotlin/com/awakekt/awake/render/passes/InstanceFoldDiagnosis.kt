@@ -29,9 +29,10 @@ internal fun diagnoseInstanceFolds(
     canInstance: (VertexFormat, CullMode) -> Boolean,
     stats: SceneDrawStats,
     canTint: (VertexFormat, CullMode) -> Boolean = { _, _ -> false },
+    canInstanceSkinned: (VertexFormat, CullMode) -> Boolean = { _, _ -> false },
 ) {
     stats.recordSource(drawCalls.size)
-    val groups = foldGroups(drawCalls, canInstance, stats, canTint)
+    val groups = foldGroups(drawCalls, canInstance, stats, canTint, canInstanceSkinned)
     val keysByMesh = HashMap<GpuMesh, Int>()
     val keysByMeshMaterial = HashMap<MeshMaterial, Int>()
     for (members in groups.values) {
@@ -67,13 +68,22 @@ private fun foldGroups(
     canInstance: (VertexFormat, CullMode) -> Boolean,
     stats: SceneDrawStats,
     canTint: (VertexFormat, CullMode) -> Boolean,
+    canInstanceSkinned: (VertexFormat, CullMode) -> Boolean,
 ): Map<FoldGroup, List<RenderDrawCommand>> {
     val groups = LinkedHashMap<FoldGroup, MutableList<RenderDrawCommand>>()
     for (draw in drawCalls) {
         if (draw.instanceModels != null) stats.recordAuthoredInstanced()
         if (draw.instanceModels != null || draw.shadowsOnly) continue
-        val miss = if (draw.foldsIntoInstances(canInstance)) null else draw.capabilityMiss(canInstance)
-        groups.getOrPut(FoldGroup(miss, InstanceKey(draw, canTint(draw.mesh.format, draw.cullMode)))) { ArrayList() } += draw
+        val plainFolds = draw.foldsIntoInstances(canInstance)
+        val foldableSkinned = !plainFolds && SkinnedInstanceFold.canFold(draw)
+        val skinnedFolds = foldableSkinned && canInstanceSkinned(draw.mesh.format, draw.cullMode)
+        val miss = if (plainFolds || skinnedFolds) null else draw.capabilityMiss(canInstance)
+        val key = InstanceKey(
+            draw = draw,
+            tints = if (foldableSkinned) false else canTint(draw.mesh.format, draw.cullMode),
+            skinned = foldableSkinned,
+        )
+        groups.getOrPut(FoldGroup(miss, key)) { ArrayList() } += draw
     }
     return groups
 }

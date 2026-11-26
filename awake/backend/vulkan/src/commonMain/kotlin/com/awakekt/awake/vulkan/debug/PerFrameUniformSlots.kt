@@ -12,21 +12,16 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
+import com.awakekt.awake.vulkan.device.DescriptorPoolChunk
 import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.device.SMALL_UBO_REBAR_MIN_HEAP_BYTES
-import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
+import com.awakekt.awake.vulkan.device.HostUniformAllocation
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
-import com.awakekt.awake.vulkan.material.materialLayoutBindings
-import com.awakekt.awake.vulkan.material.materialPoolSizes
+import com.awakekt.awake.vulkan.models.VkMemoryRequirements
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkDescriptorBufferInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorImageInfo
-import com.awakekt.awake.vulkan.models.info.VkDescriptorPoolCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkDescriptorPoolSize
-import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutBinding
-import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorType
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import com.awakekt.awake.vulkan.renderer.FrameBlockKind
@@ -103,67 +98,72 @@ internal class PerFrameUniformSlots(
     var descriptorSetLayout: Long = 0
         private set
     private val slots = mutableListOf<Slot>()
+    private val createdBuffers = mutableListOf<Long>()
+    private var memoryAllocation: HostUniformAllocation? = null
+    private var descriptorPoolChunk: DescriptorPoolChunk? = null
     val size: Int get() = slots.size
 
     // Same partial-creation-leak guard as RenderPipeline's own init -- if slot N throws, slots
-    // 0..N-1 (and the layout, if already built) would otherwise leak with nothing yet holding
+    // 0..N-1 (and the shared slab/pool reservations) would otherwise leak with nothing yet holding
     // this half-built instance to call destroy() on.
     init {
         require(framesInFlight > 0) { "framesInFlight must be positive." }
         try {
-            val layoutBindings = bindings?.let { materialLayoutBindings(it) } ?: listOf(
-                VkDescriptorSetLayoutBinding(
-                    binding = 0,
-                    descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    stageFlags = stageFlags,
-                ),
-            )
-            descriptorSetLayout = VulkanDescriptors.vkCreateDescriptorSetLayout(
-                device,
-                VkDescriptorSetLayoutCreateInfo(pBindings = layoutBindings.toTypedArray()),
-            )
+            descriptorSetLayout = if (bindings != null) {
+                graphicsDevice.descriptorSetLayoutCache.layoutFor(bindings).handle
+            } else {
+                graphicsDevice.descriptorSetLayoutCache.singleUniformLayoutFor(stageFlags).handle
+            }
             // One MORE than the frames in flight. The offscreen path (renderToTexture) indexes
             // one past the last frame -- `frameIndex = commandBuffers.size` -- so that an
             // offscreen render never overwrites a slot a queued frame still refers to. Material
             // already honours that index by growing its list on demand; these slots are fixed
             // size, so the extra one has to be allocated up front or the offscreen index is out
             // of range.
-            repeat(framesInFlight + OFFSCREEN_SLOTS) { slotIndex -> slots += createSlot(slotIndex) }
+            val totalSlots = framesInFlight + OFFSCREEN_SLOTS
+            createConsolidatedSlots(totalSlots)
         } catch (e: Throwable) {
             destroy()
             throw e
         }
     }
 
-    private fun createBuffer(): Triple<Long, Long, Long> {
-        val buffer = VulkanBuffers.vkCreateBuffer(
-            device,
-            VkBufferCreateInfo(
-                size = uniformBytes.toLong(),
-                usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            ),
+    private fun createConsolidatedSlots(totalSlots: Int) {
+        val rawBuffers = LongArray(totalSlots) {
+            VulkanBuffers.vkCreateBuffer(
+                device,
+                VkBufferCreateInfo(
+                    size = uniformBytes.toLong(),
+                    usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                ),
+            ).also { createdBuffers += it }
+        }
+        val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, rawBuffers[0])
+        val alignment = maxOf(requirements.alignment, Float.SIZE_BYTES.toLong())
+        val stride = (requirements.size + alignment - 1) / alignment * alignment
+        val allocation = graphicsDevice.uniformMemoryPool.allocate(
+            VkMemoryRequirements(stride * totalSlots, alignment, requirements.memoryTypeBits),
         )
-        val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
-        val memory = graphicsDevice.allocateHostVisibleBufferMemory(
-            requirements,
-            minRebarHeapBytes = SMALL_UBO_REBAR_MIN_HEAP_BYTES,
-        )
-        VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
-        val mappedPtr = VulkanBuffers.vkMapMemory(device, memory, 0L, requirements.size)
-        return Triple(buffer, memory, mappedPtr)
+        memoryAllocation = allocation
+        val poolChunk = if (bindings != null) {
+            graphicsDevice.descriptorSetPool.reserveBlock(bindings, totalSlots)
+        } else {
+            graphicsDevice.descriptorSetPool.reserveSingleUniformBlock(totalSlots)
+        }
+        descriptorPoolChunk = poolChunk
+        for (slotIndex in 0 until totalSlots) {
+            slots += bindSlot(slotIndex, rawBuffers[slotIndex], slotIndex * stride, allocation, poolChunk.pool)
+        }
     }
 
-    private fun createSlot(slotIndex: Int): Slot {
-        val (buffer, bufferMemory, mappedPtr) = createBuffer()
-        // Sized from the same declaration the layout came from -- see materialPoolSizes for why
-        // the two must not be counted separately.
-        val poolSizes = bindings?.let { materialPoolSizes(it) } ?: listOf(
-            VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
-        )
-        val descriptorPool = VulkanDescriptors.vkCreateDescriptorPool(
-            device,
-            VkDescriptorPoolCreateInfo(maxSets = 1, pPoolSizes = poolSizes.toTypedArray()),
-        )
+    private fun bindSlot(
+        slotIndex: Int,
+        buffer: Long,
+        slotOffset: Long,
+        allocation: HostUniformAllocation,
+        descriptorPool: Long,
+    ): Slot {
+        VulkanBuffers.vkBindBufferMemory(device, buffer, allocation.memory, allocation.offset + slotOffset)
         val descriptorSet = VulkanDescriptors.vkAllocateDescriptorSet(device, descriptorPool, descriptorSetLayout)
         VulkanDescriptors.vkUpdateDescriptorSetBuffer(
             device,
@@ -184,7 +184,7 @@ internal class PerFrameUniformSlots(
                 ),
             )
         }
-        return Slot(descriptorPool, descriptorSet, buffer, bufferMemory, mappedPtr)
+        return Slot(descriptorPool, descriptorSet, buffer, allocation.memory, allocation.mappedPtr + slotOffset)
     }
 
     operator fun get(frameIndex: Int): Slot {
@@ -313,12 +313,12 @@ internal class PerFrameUniformSlots(
     }
 
     fun destroy() {
-        slots.forEach { slot ->
-            VulkanBuffers.vkDestroyBuffer(device, slot.buffer)
-            if (slot.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, slot.bufferMemory)
-            VulkanBuffers.vkFreeMemory(device, slot.bufferMemory)
-            VulkanDescriptors.vkDestroyDescriptorPool(device, slot.descriptorPool)
-        }
-        VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout)
+        createdBuffers.forEach { VulkanBuffers.vkDestroyBuffer(device, it) }
+        createdBuffers.clear()
+        slots.clear()
+        memoryAllocation?.let { graphicsDevice.uniformMemoryPool.free(it) }
+        memoryAllocation = null
+        descriptorPoolChunk?.let { graphicsDevice.descriptorSetPool.releaseBlock(it) }
+        descriptorPoolChunk = null
     }
 }

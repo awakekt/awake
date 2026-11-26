@@ -49,7 +49,7 @@ internal fun Renderer.performCreateMaterial(
     pbrTextures: PbrTextureSet?,
 ): RenderMaterial {
     require(texture == null || renderTarget == null) { "Pass at most one of texture/renderTarget." }
-    val material = Material(graphicsDevice, uniformFloatCount)
+    val material = Material.createSharedLayout(graphicsDevice, uniformFloatCount)
     val ownedTextures = ArrayList<Texture>(MAX_MATERIAL_TEXTURES)
     val pbrViews = pbrImageViews(pbrTextures, ownedTextures)
     if (renderTarget != null) {

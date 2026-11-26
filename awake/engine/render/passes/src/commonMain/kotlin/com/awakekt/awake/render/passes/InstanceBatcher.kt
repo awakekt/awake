@@ -39,6 +39,8 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
     private var canInstance: (VertexFormat, CullMode) -> Boolean = { _, _ -> false }
     private var tintPreparer: GpuDrawPreparer? = null
     private var canTint: (VertexFormat, CullMode) -> Boolean = NO_TINTS
+    private var skinnedPreparer: GpuDrawPreparer? = null
+    private var canInstanceSkinned: (VertexFormat, CullMode) -> Boolean = NO_SKINNED
 
     /** [preparer]'s answer to whether a pipeline tints instances, as a function built once per preparer. */
     fun canTintWith(preparer: GpuDrawPreparer): (VertexFormat, CullMode) -> Boolean {
@@ -58,14 +60,24 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         return canInstance
     }
 
+    /** [preparer]'s answer to whether posed single skinned draws can batch, built once per preparer. */
+    fun canInstanceSkinnedWith(preparer: GpuDrawPreparer): (VertexFormat, CullMode) -> Boolean {
+        if (preparer !== skinnedPreparer) {
+            skinnedPreparer = preparer
+            canInstanceSkinned = { format, cullMode -> preparer.canInstanceSkinned(format, cullMode) }
+        }
+        return canInstanceSkinned
+    }
+
     /**
-     * Folds [drawCalls] as [canInstance] allows; where [canTint] says a draw's pipeline reads a
-     * tint per instance, copies that differ only in tint and fade fold too.
+     * Folds [drawCalls] as [canInstance] and [canInstanceSkinned] allow; where [canTint] says a
+     * draw's pipeline reads a tint per instance, copies that differ only in tint and fade fold too.
      */
     fun batch(
         drawCalls: List<RenderDrawCommand>,
         canInstance: (VertexFormat, CullMode) -> Boolean,
         canTint: (VertexFormat, CullMode) -> Boolean = NO_TINTS,
+        canInstanceSkinned: (VertexFormat, CullMode) -> Boolean = NO_SKINNED,
     ): List<RenderDrawCommand> {
         groupCount = 0
         table.fill(0)
@@ -76,6 +88,7 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         var askedCull = CullMode.None
         var instances = false
         var tinted = false
+        var skinnedInstances = false
         for (index in 0 until drawCalls.size) {
             val draw = drawCalls[index]
             val format = draw.mesh.format
@@ -84,13 +97,16 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
                 askedCull = draw.cullMode
                 instances = canInstance(format, askedCull)
                 tinted = canTint(format, askedCull)
+                skinnedInstances = canInstanceSkinned(format, askedCull)
             }
-            if (!rule.folds(draw, instances)) {
+            val foldsPlain = rule.folds(draw, instances)
+            val foldsSkinned = !foldsPlain && rule.foldsSkinned(draw, skinnedInstances)
+            if (!foldsPlain && !foldsSkinned) {
                 if (rule.keepsOthers) others.addSplitToCapacity(draw)
                 continue
             }
-            val tints = tinted
-            val group = last?.takeIf { it.tints == tints && rule.alike(it.members[it.members.size - 1], draw, tints) } ?: groupOf(draw, tints)
+            val tints = if (foldsSkinned) false else tinted
+            val group = resolveGroup(last, draw, tints, foldsSkinned)
             group.add(draw, index)
             last = group
         }
@@ -99,26 +115,42 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         return kept
     }
 
+    private fun resolveGroup(
+        last: InstanceGroup?,
+        draw: RenderDrawCommand,
+        tints: Boolean,
+        skinned: Boolean,
+    ): InstanceGroup {
+        val reuse = last != null &&
+            last.skinned == skinned &&
+            last.tints == tints &&
+            rule.matches(last.members[last.members.size - 1], draw, tints, skinned)
+        return if (reuse) last else groupOf(draw, tints, skinned)
+    }
+
     /** Calls [action] with the index, in the last [batch]'s input, of every draw folded with another. */
     inline fun forEachFolded(action: (Int) -> Unit) {
         for (index in 0 until groupCount) groups[index].forEachFoldedSource(action)
     }
 
-    private fun groupOf(draw: RenderDrawCommand, tints: Boolean): InstanceGroup {
+    private fun groupOf(draw: RenderDrawCommand, tints: Boolean, skinned: Boolean): InstanceGroup {
         if (groupCount * 2 >= table.size) growTable()
         val mask = table.size - 1
-        var slot = rule.hash(draw) and mask
+        var slot = rule.hashFor(draw, skinned) and mask
         while (true) {
             val stored = table[slot]
             if (stored == 0) break
             val group = groups[stored - 1]
-            if (group.tints == tints && rule.alike(group.members[0], draw, tints)) return group
+            if (group.skinned == skinned && group.tints == tints && rule.matches(group.members[0], draw, tints, skinned)) {
+                return group
+            }
             slot = (slot + 1) and mask
         }
         if (groupCount == groups.size) groups += InstanceGroup()
         val group = groups[groupCount++]
         group.clear()
         group.tints = tints
+        group.skinned = skinned
         table[slot] = groupCount
         return group
     }
@@ -127,7 +159,8 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         table = IntArray(table.size * 2)
         val mask = table.size - 1
         for (index in 0 until groupCount) {
-            var slot = rule.hash(groups[index].members[0]) and mask
+            val group = groups[index]
+            var slot = rule.hashFor(group.members[0], group.skinned) and mask
             while (table[slot] != 0) slot = (slot + 1) and mask
             table[slot] = index + 1
         }
@@ -136,6 +169,7 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
     private companion object {
         const val INITIAL_TABLE = 256
         val NO_TINTS: (VertexFormat, CullMode) -> Boolean = { _, _ -> false }
+        val NO_SKINNED: (VertexFormat, CullMode) -> Boolean = { _, _ -> false }
     }
 }
 
@@ -146,14 +180,22 @@ internal class InstanceGroup {
     /** Whether this frame's members may differ in tint and fade: their pipeline reads them per instance. */
     var tints = false
 
+    /** Whether this frame's members are single posed skinned draws folded into skinned-instanced chunks. */
+    var skinned = false
+
     var place = 0 // This frame's place in [InstanceGroupOrder].
     private val groupTints = GroupTints()
+    private val groupSkinned = GroupSkinnedData()
     private var sources = IntArray(INITIAL_SOURCES)
     private val models = ArrayList<Mat4>()
     private val instanced = ArrayList<RenderDrawCommand>()
     private val bounds = ArrayList<Aabb>()
 
-    fun clear() = members.clear()
+    fun clear() {
+        members.clear()
+        tints = false
+        skinned = false
+    }
 
     fun add(draw: RenderDrawCommand, source: Int) {
         if (members.size == sources.size) sources = sources.copyOf(sources.size * 2)
@@ -177,6 +219,10 @@ internal class InstanceGroup {
             if (keepsSingles) out += members[0]
             return
         }
+        if (skinned) {
+            emitSkinnedInto(out)
+            return
+        }
         models.clear()
         for (index in 0 until members.size) {
             val draw = members[index]
@@ -194,6 +240,28 @@ internal class InstanceGroup {
             val chunkModels = if (from == 0 && to == models.size) models else models.subList(from, to)
             val draw = if (perMember) instancedChunk(chunk++, from, to, chunkModels) else instancedChunk(chunk++, 0, members.size, chunkModels)
             if (colors != null) tint(draw, colors, from, to)
+            out += draw
+            from = to
+        }
+    }
+
+    /** Emits posed single skinned members as skinned-instanced chunks capped at [MAX_SKINNED_BATCHED_INSTANCES]. */
+    private fun emitSkinnedInto(out: MutableList<RenderDrawCommand>) {
+        models.clear()
+        for (index in 0 until members.size) models += members[index].model
+        val palettes = groupSkinned.palettesOf(members)
+        val colors = groupSkinned.colorsOf(members)
+        val sharedExtras = groupSkinned.sharedExtras(members[0])
+        var chunk = 0
+        var from = 0
+        while (from < models.size) {
+            val to = min(from + MAX_SKINNED_BATCHED_INSTANCES, models.size)
+            val whole = from == 0 && to == models.size
+            val chunkModels = if (whole) models else models.subList(from, to)
+            val draw = instancedChunk(chunk++, from, to, chunkModels)
+            draw.instanceJointPalettes = if (whole) palettes else palettes.subList(from, to)
+            draw.instanceColors = colors?.let { if (whole) it else it.subList(from, to) }
+            draw.extraUniformFloats = sharedExtras
             out += draw
             from = to
         }

@@ -20,6 +20,7 @@ import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.canInstance
+import com.awakekt.awake.render.pipeline.canInstanceSkinned
 import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
 import com.awakekt.awake.render.pipeline.resolveInstanced
@@ -59,6 +60,9 @@ internal class WebGpuDrawPreparer(
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelines
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
+
+    override fun canInstanceSkinned(format: VertexFormat, cullMode: CullMode): Boolean =
+        renderer.pipelines.canInstanceSkinned(format, cullMode)
 
     override fun canTintInstances(format: VertexFormat, cullMode: CullMode): Boolean =
         renderer.pipelines.resolveInstanced(format, InstancedDrawKind.Plain, cullMode = cullMode)?.readsInstanceTint == true
@@ -182,9 +186,6 @@ internal class WebGpuDrawPreparer(
         edgeFrameStaged = true
     }
 
-    /** A draw whose single block starts with its MVP, which reads the identity frame block in a camera-depth pass. */
-    private fun WebGpuPreparedDraw.packsWholeBlock(): Boolean = (pipeline as? WebGpuPipelineHandle)?.splitDrawBlockFloats == 0
-
     private fun startBatch(context: GpuDrawPreparationContext) {
         // A batch prepared and never drawn has its writes land now, so the stage holds one batch at most.
         renderer.flushUniformUploads()
@@ -221,6 +222,9 @@ internal class WebGpuDrawPreparer(
             ?.takeIf { request.drawsEdges(it.uniformFloatCount) }
             ?.let { renderer.pipelines.edges(request.mesh.format) }
 }
+
+/** A draw whose single block starts with its MVP, which reads the identity frame block in a camera-depth pass. */
+private fun WebGpuPreparedDraw.packsWholeBlock(): Boolean = (pipeline as? WebGpuPipelineHandle)?.splitDrawBlockFloats == 0
 
 /** A slot given back drops the groups its material built for the slot's buffers, so none outlives its draw (#1621). */
 private fun Renderer.dropMaterialGroups(material: Any, slot: Int) {

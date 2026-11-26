@@ -1,0 +1,1 @@
+- Automatically fold matching single posed skinned draws into skinned-instanced batches (up to 256 per draw, zero steady-state heap allocation) across Vulkan and WebGPU, and pool Vulkan `Material` and `PerFrameUniformSlots` host-visible UBO memory into shared slabs with ref-counted descriptor pool chunks and deduplicated descriptor set layouts.

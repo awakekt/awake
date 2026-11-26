@@ -57,6 +57,18 @@ class GraphicsDevice {
     internal var deviceMemoryAllocator = DeviceMemorySlabAllocator(this)
         private set
 
+    /** Pooled persistently mapped `HOST_VISIBLE` slab allocator for material and per-frame uniform buffers. */
+    internal var uniformMemoryPool = HostUniformMemoryPool(this)
+        private set
+
+    /** Ref-counted chunked `VkDescriptorPool` allocator shared by material slot blocks and per-frame slots. */
+    internal var descriptorSetPool = SharedDescriptorPoolAllocator(this)
+        private set
+
+    /** Device-wide cache of immutable `VkDescriptorSetLayout` handles deduplicated by binding shape. */
+    internal var descriptorSetLayoutCache = SharedDescriptorSetLayoutCache(this)
+        private set
+
     /** Active renderer reaper for frame-safe deferred destruction, or null when no presentable renderer runs. */
     internal var activeReaper: DeferredResourceReaper? = null
 
@@ -516,6 +528,12 @@ class GraphicsDevice {
             deviceMemoryAllocator.destroy()
             deviceMemoryAllocator = DeviceMemorySlabAllocator(this)
             frameUniformBuffers?.destroy()
+            uniformMemoryPool.destroy()
+            uniformMemoryPool = HostUniformMemoryPool(this)
+            descriptorSetPool.destroy()
+            descriptorSetPool = SharedDescriptorPoolAllocator(this)
+            descriptorSetLayoutCache.destroy()
+            descriptorSetLayoutCache = SharedDescriptorSetLayoutCache(this)
         }
         frameUniformBuffers = null
         if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)

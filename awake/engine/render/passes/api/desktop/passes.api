@@ -1034,6 +1034,7 @@ public final class com/awakekt/awake/render/passes/uniforms/WorldTextFieldsKt {
 public final class com/awakekt/awake/render/pipeline/DrawCallPipelineKt {
 	public static final fun batchKey (Lcom/awakekt/awake/render/command/GpuDrawRequest;)I
 	public static final fun canInstance (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
+	public static final fun canInstanceSkinned (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
 	public static final fun depthRenderKey (Lcom/awakekt/awake/render/command/GpuDrawRequest;)Lcom/awakekt/awake/render/pipeline/DepthRenderKey;
 	public static final fun depthSortKey (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Vec3f;)F
 	public static final fun instancedDrawKind (Lcom/awakekt/awake/render/command/GpuDrawRequest;)Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;
