@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    id("com.awakekt.awake.plugin.browser-tests")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
 }

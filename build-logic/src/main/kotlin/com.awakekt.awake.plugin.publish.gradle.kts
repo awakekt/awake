@@ -58,6 +58,7 @@ if (!HostOs.isMac) {
         ":awake:backend:jolt",
         ":awake:backend:vulkan:bindings",
         ":awake:backend:vulkan",
+        ":awake:player",
     )
     if (project.path in nonMacArchiveFallback) {
         pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
