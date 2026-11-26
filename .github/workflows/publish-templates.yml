@@ -67,11 +67,11 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           IN_TEMPLATE: ${{ inputs.template }}
         run: |
-          central=https://repo1.maven.org/maven2/com/awakekt/awake
-          newest() { curl -fsS "$central/$1/maven-metadata.xml" | sed -n 's:.*<release>\(.*\)</release>.*:\1:p'; }
+          latest_stable_tag() { git tag -l "$1" | grep -E "$2" | sort -V | tail -n 1; }
 
           if [[ "$EVENT" == workflow_dispatch ]]; then
-            core=$(newest project)
+            core_tag=$(latest_stable_tag 'v[0-9]*' '^v[0-9]+\.[0-9]+\.[0-9]+$')
+            core=${core_tag#v}
             templates="[\"$IN_TEMPLATE\"]"
             ref="$GITHUB_SHA"
           else
@@ -86,10 +86,11 @@ jobs:
             templates='["game","project","plugin"]'
             ref="$SHA"
           fi
-          vulkan=$(newest backend/vulkan)
+          vulkan_tag=$(latest_stable_tag 'vulkan-v[0-9]*' '^vulkan-v[0-9]+\.[0-9]+\.[0-9]+$')
+          vulkan=${vulkan_tag#vulkan-v}
           webgpu="$core-SNAPSHOT"
           if [[ -z "$core" || -z "$vulkan" ]]; then
-            echo "::error::Could not resolve a Core or Vulkan release from Maven Central." && exit 1
+            echo "::error::Could not resolve a Core or Vulkan release tag." && exit 1
           fi
           echo "Publishing $templates at Core $core, Vulkan $vulkan, WebGPU $webgpu (ref $ref)"
           {
