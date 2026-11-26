@@ -59,6 +59,19 @@ class WaterAndCloudParityTest {
     }
 
     @Test
+    fun vulkanAndWebGpuCloudLayerFastMatch() {
+        val vk = openHeadlessScene(HeadlessUiBackend.Vulkan).use {
+            it.renderer.renderCloudLayerScene(CloudLayerQuality.Fast, timeSeconds = 2.0f)
+        }
+        val wgpu = openHeadlessScene(HeadlessUiBackend.WebGpu).use {
+            it.renderer.renderCloudLayerScene(CloudLayerQuality.Fast, timeSeconds = 2.0f)
+        }
+        val diff = meanRgbDiff(vk, wgpu)
+        println("PARITY cloud-layer-fast Vulkan vs WebGPU mean RGB diff = $diff")
+        assertTrue(diff < MAX_BACKEND_DIFF, "Vulkan and WebGPU Fast cloud layer should match closely (diff=$diff)")
+    }
+
+    @Test
     fun vulkanStylizedWaterDepthFoamWrapsRockAndShore() = verifyWaterDepthFoam(HeadlessUiBackend.Vulkan)
 
     @Test
@@ -130,21 +143,25 @@ class WaterAndCloudParityTest {
         val fastT0 = r.renderCloudLayerScene(CloudLayerQuality.Fast, timeSeconds = 0f)
 
         val offDiff = meanRgbDiff(stdT0, off)
+        val fastOffDiff = meanRgbDiff(fastT0, off)
         val animDiff = meanRgbDiff(stdT0, stdT6)
         val tierDiff = meanRgbDiff(stdT0, fastT0)
         val spatialSpread = bandLumaStdDev(stdT0, SCENE_SIZE, yStart = SCENE_SIZE / 2, yEnd = SCENE_SIZE - 4)
+        val fastSpread = bandLumaStdDev(fastT0, SCENE_SIZE, yStart = SCENE_SIZE / 2, yEnd = SCENE_SIZE - 4)
         val nearContrast = bandMeanDiffFromRef(stdT0, off, SCENE_SIZE, yStart = (SCENE_SIZE * 3) / 4, yEnd = SCENE_SIZE - 4)
         val farContrast = bandMeanDiffFromRef(stdT0, off, SCENE_SIZE, yStart = SCENE_SIZE / 3, yEnd = SCENE_SIZE / 2)
         val maxStdJump = maxHorizontalJump(stdT0, SCENE_SIZE, yStart = (SCENE_SIZE * 3) / 4, yEnd = SCENE_SIZE - 4)
         val maxFastJump = maxHorizontalJump(fastT0, SCENE_SIZE, yStart = (SCENE_SIZE * 3) / 4, yEnd = SCENE_SIZE - 4)
 
         println(
-            "CLOUD[$backend] offDiff=$offDiff animDiff=$animDiff tierDiff=$tierDiff " +
-                "spread=$spatialSpread nearContrast=$nearContrast farContrast=$farContrast " +
+            "CLOUD[$backend] offDiff=$offDiff fastOffDiff=$fastOffDiff animDiff=$animDiff tierDiff=$tierDiff " +
+                "spread=$spatialSpread fastSpread=$fastSpread nearContrast=$nearContrast farContrast=$farContrast " +
                 "maxStdJump=$maxStdJump maxFastJump=$maxFastJump",
         )
         assertTrue(offDiff > 5f, "$backend: cloud layer draws visibly over sky backdrop (offDiff=$offDiff)")
+        assertTrue(fastOffDiff > 5f, "$backend: Fast analytic cloud layer draws visibly over sky backdrop (fastOffDiff=$fastOffDiff)")
         assertTrue(spatialSpread > 3f, "$backend: clouds form soft billowing variation instead of a flat sheet (spread=$spatialSpread)")
+        assertTrue(fastSpread > 3f, "$backend: Fast analytic clouds form soft billowing variation (fastSpread=$fastSpread)")
         assertTrue(animDiff > 1.0f, "$backend: clouds drift over time (animDiff=$animDiff)")
         assertTrue(tierDiff > 0.5f, "$backend: Standard dual-layer differs from Fast single-layer (tierDiff=$tierDiff)")
         assertTrue(nearContrast > farContrast, "$backend: clouds fade gently toward the horizon (near=$nearContrast far=$farContrast)")

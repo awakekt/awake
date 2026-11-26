@@ -13,6 +13,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.imagepass.ImagePassChain
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.UiPipelineSet
 import com.awakekt.awake.vulkan.pipeline.VulkanImagePassParentTarget
@@ -45,6 +46,7 @@ internal class VulkanFrameContext(
     override val lineMesh get() = renderer.lineMesh
     override val stats get() = renderer.statsCounter
     override val uiRuns get() = renderer.uiRuns
+    override val effectQuality: EffectQuality get() = renderer.effectQuality
 
     /** Copy targeting a scene pass whose extent differs from the swapchain's (scaled or offscreen). */
     fun withSurfaceSize(width: Int, height: Int): VulkanFrameContext =

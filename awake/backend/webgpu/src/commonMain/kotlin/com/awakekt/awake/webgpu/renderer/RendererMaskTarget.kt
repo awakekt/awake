@@ -9,10 +9,12 @@ import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuSubPass
+import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.maskExtentHeight
 import com.awakekt.awake.render.passes.maskExtentWidth
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.webgpu.pipeline.resetLayerState
 import com.awakekt.awake.webgpu.texture.DepthTarget
 import io.ygdrasil.webgpu.GPUCommandEncoder
@@ -65,25 +67,34 @@ private fun Renderer.needsCoveringExemptMask(environment: GpuEnvironmentState): 
 }
 
 private fun Renderer.filterMasksForFrame(masks: List<GpuSubPass>, environment: GpuEnvironmentState): List<GpuSubPass> {
-    if (masks.isEmpty() || needsCoveringExemptMask(environment)) return masks
-    var exemptCount = 0
+    val dropExempt = !needsCoveringExemptMask(environment)
+    val dropOutlines = effectQuality == EffectQuality.Off
+    if (masks.isEmpty() || (!dropExempt && !dropOutlines)) return masks
+    var skipped = 0
     for (i in masks.indices) {
-        if (masks[i].targetLayer == COVERING_EXEMPT_MASK_LAYER) exemptCount++
+        if (shouldSkipMaskLayer(masks[i].targetLayer, dropExempt, dropOutlines)) skipped++
     }
     return when {
-        exemptCount == 0 -> masks
-        exemptCount == masks.size -> emptyList()
-        else -> collectNonExemptMasks(masks, masks.size - exemptCount)
+        skipped == 0 -> masks
+        skipped == masks.size -> emptyList()
+        else -> collectKeptMasks(masks, dropExempt, dropOutlines)
     }
 }
 
-private fun collectNonExemptMasks(masks: List<GpuSubPass>, count: Int): List<GpuSubPass> {
-    val filtered = ArrayList<GpuSubPass>(count)
+private fun shouldSkipMaskLayer(layer: Int, dropExempt: Boolean, dropOutlines: Boolean): Boolean =
+    (dropExempt && layer == COVERING_EXEMPT_MASK_LAYER) || (dropOutlines && layer < MASK_LAYER_COUNT)
+
+private fun Renderer.collectKeptMasks(
+    masks: List<GpuSubPass>,
+    dropExempt: Boolean,
+    dropOutlines: Boolean,
+): List<GpuSubPass> {
+    filteredMasks.clear()
     for (i in masks.indices) {
         val subPass = masks[i]
-        if (subPass.targetLayer != COVERING_EXEMPT_MASK_LAYER) filtered.add(subPass)
+        if (!shouldSkipMaskLayer(subPass.targetLayer, dropExempt, dropOutlines)) filteredMasks.add(subPass)
     }
-    return filtered
+    return filteredMasks
 }
 
 private fun Renderer.currentScreenDepthTarget(): DepthTarget? =

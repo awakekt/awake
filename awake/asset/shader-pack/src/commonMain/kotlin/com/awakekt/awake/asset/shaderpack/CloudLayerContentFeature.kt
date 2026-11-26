@@ -23,6 +23,7 @@ import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineVariant
+import com.awakekt.awake.render.renderer.UniformWriter
 
 private const val VERTEX_BINDING = 0
 private const val DEFAULT_CLOUD_AMBIENT = 0.40f
@@ -93,29 +94,40 @@ class CloudLayerRenderFeature(
     override val pass = RenderPassSlot.Scene
 
     private val sun = Vec3f()
+    private var activeContext: RenderFrameContext? = null
+    private var activeLightR = 0f
+    private var activeLightG = 0f
+    private var activeLightB = 0f
+    private var activeAmbient = DEFAULT_CLOUD_AMBIENT
+    private val fillUniforms: UniformWriter.() -> Unit = {
+        val ctx = requireNotNull(activeContext)
+        val env = ctx.environment
+        put(CloudLayerFields.ViewProjection, ctx.viewProjection)
+        put(CloudLayerFields.CameraEye, ctx.cameraEye, look.timeSeconds)
+        put(CloudLayerFields.LightDirection, sun, look.quality.code.toFloat())
+        put(CloudLayerFields.LightColor, activeLightR, activeLightG, activeLightB, activeAmbient)
+        put(CloudLayerFields.HorizonColor, env.horizonColor.r, env.horizonColor.g, env.horizonColor.b, env.exposure)
+        put(CloudLayerFields.FogColor, env.fogColor.r, env.fogColor.g, env.fogColor.b, env.fogDensity)
+        put(CloudLayerFields.FogAndFade, env.fogStart, env.fogEnd, look.fadeStart, look.fadeEnd)
+        put(CloudLayerFields.CloudColor, look.cloudColor.r, look.cloudColor.g, look.cloudColor.b, look.scale)
+        put(CloudLayerFields.ShadowColor, look.shadowColor.r, look.shadowColor.g, look.shadowColor.b, look.opacity)
+        put(CloudLayerFields.CloudParams, look.driftSpeedX, look.driftSpeedZ, look.coverage, look.softness)
+        put(CloudLayerFields.Origin, look.origin, 0f)
+    }
 
     override fun recordCommands(context: RenderFrameContext): Unit = with(context) {
         if (!look.enabled || environment.debugView != GpuDebugView.Off) return
         writeSunDirection(sun)
         val lightOverride = look.lightColorOverride
-        val lightR = lightOverride?.r ?: light.color.x
-        val lightG = lightOverride?.g ?: light.color.y
-        val lightB = lightOverride?.b ?: light.color.z
-        val ambient = look.ambientOverride ?: light.ambient ?: DEFAULT_CLOUD_AMBIENT
-        val env = environment
-
-        uniforms.write(frameIndex) {
-            put(CloudLayerFields.ViewProjection, viewProjection)
-            put(CloudLayerFields.CameraEye, cameraEye, look.timeSeconds)
-            put(CloudLayerFields.LightDirection, sun, look.quality.code.toFloat())
-            put(CloudLayerFields.LightColor, lightR, lightG, lightB, ambient)
-            put(CloudLayerFields.HorizonColor, env.horizonColor.r, env.horizonColor.g, env.horizonColor.b, env.exposure)
-            put(CloudLayerFields.FogColor, env.fogColor.r, env.fogColor.g, env.fogColor.b, env.fogDensity)
-            put(CloudLayerFields.FogAndFade, env.fogStart, env.fogEnd, look.fadeStart, look.fadeEnd)
-            put(CloudLayerFields.CloudColor, look.cloudColor.r, look.cloudColor.g, look.cloudColor.b, look.scale)
-            put(CloudLayerFields.ShadowColor, look.shadowColor.r, look.shadowColor.g, look.shadowColor.b, look.opacity)
-            put(CloudLayerFields.CloudParams, look.driftSpeedX, look.driftSpeedZ, look.coverage, look.softness)
-            put(CloudLayerFields.Origin, look.origin, 0f)
+        activeLightR = lightOverride?.r ?: light.color.x
+        activeLightG = lightOverride?.g ?: light.color.y
+        activeLightB = lightOverride?.b ?: light.color.z
+        activeAmbient = look.ambientOverride ?: light.ambient ?: DEFAULT_CLOUD_AMBIENT
+        activeContext = context
+        try {
+            uniforms.write(frameIndex, fillUniforms)
+        } finally {
+            activeContext = null
         }
 
         val activePipeline = if (look.quality == CloudLayerQuality.Fast && fastPipeline != null) fastPipeline else pipeline

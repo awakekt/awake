@@ -16,6 +16,7 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.debug.LineMesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuCommandRecorder
@@ -57,6 +58,7 @@ internal class WebGpuFrameContext(
     override val frameIndex: Int get() = 0
 
     override val stats: RenderStatsCounter get() = renderer.statsCounter
+    override val effectQuality: EffectQuality get() = renderer.effectQuality
 
     override val recorder: CommandRecorder = WebGpuCommandRecorder(encoder, renderer.statsCounter, retained)
 

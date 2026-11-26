@@ -5,10 +5,12 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.clamp
+import com.awakekt.awake.asset.shaderdsl.cos
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
@@ -26,6 +28,7 @@ import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.smoothstep
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toU32
@@ -46,9 +49,10 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 /**
  * Builds the single-pass procedural cloud layer shader.
  *
- * When [fastOnly] is true, emits a dedicated lean [CloudLayerQuality.Fast] variant that omits the
- * 3-shell parallax volume math and `cumulusMacro` helper entirely so mobile tile-based GPUs avoid
- * compiling and allocating registers for the unused Standard branch.
+ * When [fastOnly] is true, emits a dedicated lean [CloudLayerQuality.Fast] variant backed by a
+ * 3-wave domain-warped analytic field (`sin`/`cos`, zero `mod289`/`permute`/`hash2d`/`valueNoise`
+ * and zero 3-shell parallax volume math) so mobile tile-based GPUs avoid both ALU-heavy lattice
+ * hashing and registering the unused Standard branch.
  */
 @Suppress("LongMethod")
 fun cloudLayerShader(fastOnly: Boolean = false): AslShaderDefinition = shader(
@@ -84,56 +88,60 @@ fun cloudLayerShader(fastOnly: Boolean = false): AslShaderDefinition = shader(
         vertexEdge set ins.input(VertexSemantic.Color).x
     }
 
-    // Exact integer-safe mod289 polynomial hash (Gustavson permute): zero trig/SFU ops and immune to
-    // GPU FMA reassociation seams across lattice corners (unlike fract(sin(dot) * 43758.5453)).
-    val mod289 = fn("mod289") {
-        val xVal by param(GpuDataShape.Float)
-        returnValue(xVal - floor((xVal + 0.25f.lit) / 289f.lit) * 289f.lit)
-    }
+    // Standard-tier polynomial lattice hash and 2-octave cumulus heightfield. Omitted completely
+    // when fastOnly = true so the mobile Fast shader carries zero mod289/permute/valueNoise code.
+    val standardHelpers = if (!fastOnly) {
+        // Exact integer-safe mod289 polynomial hash (Gustavson permute): zero trig/SFU ops and immune to
+        // GPU FMA reassociation seams across lattice corners (unlike fract(sin(dot) * 43758.5453)).
+        val mod289 = fn("mod289") {
+            val xVal by param(GpuDataShape.Float)
+            returnValue(xVal - floor((xVal + 0.25f.lit) / 289f.lit) * 289f.lit)
+        }
 
-    val permute = fn("permute") {
-        val xVal by param(GpuDataShape.Float)
-        returnValue(mod289((xVal * 34f.lit + 1f.lit) * xVal))
-    }
+        val permute = fn("permute") {
+            val xVal by param(GpuDataShape.Float)
+            returnValue(mod289((xVal * 34f.lit + 1f.lit) * xVal))
+        }
 
-    val hash2d = fn("hash2d") {
-        val p by param(GpuDataShape.Vec2)
-        val px = let("px", mod289(p.x))
-        val py = let("py", mod289(p.y))
-        returnValue(permute(permute(px) + py) / 289f.lit)
-    }
+        val hash2d = fn("hash2d") {
+            val p by param(GpuDataShape.Vec2)
+            val px = let("px", mod289(p.x))
+            val py = let("py", mod289(p.y))
+            returnValue(permute(permute(px) + py) / 289f.lit)
+        }
 
-    val valueNoise = fn("valueNoise") {
-        val p by param(GpuDataShape.Vec2)
-        val i = let("i", floor(p))
-        val f = let("f", p - i)
-        // Quintic Hermite (C2-continuous): eliminates grid-axis crease artifacts in billowing clouds.
-        val uSmooth = let(
-            "uSmooth",
-            f * f * f * (f * (f * 6f.lit - vec2(15f.lit)) + vec2(10f.lit)),
-        )
-        val a = let("a", hash2d(i))
-        val b = let("b", hash2d(i + vec2(1f.lit, 0f.lit)))
-        val c = let("c", hash2d(i + vec2(0f.lit, 1f.lit)))
-        val d = let("d", hash2d(i + vec2(1f.lit, 1f.lit)))
-        returnValue(mix(mix(a, b, uSmooth.x), mix(c, d, uSmooth.x), uSmooth.y))
-    }
+        val valueNoise = fn("valueNoise") {
+            val p by param(GpuDataShape.Vec2)
+            val i = let("i", floor(p))
+            val f = let("f", p - i)
+            // Quintic Hermite (C2-continuous): eliminates grid-axis crease artifacts in billowing clouds.
+            val uSmooth = let(
+                "uSmooth",
+                f * f * f * (f * (f * 6f.lit - vec2(15f.lit)) + vec2(10f.lit)),
+            )
+            val a = let("a", hash2d(i))
+            val b = let("b", hash2d(i + vec2(1f.lit, 0f.lit)))
+            val c = let("c", hash2d(i + vec2(0f.lit, 1f.lit)))
+            val d = let("d", hash2d(i + vec2(1f.lit, 1f.lit)))
+            returnValue(mix(mix(a, b, uSmooth.x), mix(c, d, uSmooth.x), uSmooth.y))
+        }
 
-    val rotateOctave = fn("rotateOctave", returns = AslType.Data(GpuDataShape.Vec2)) {
-        val p by param(GpuDataShape.Vec2)
-        // 2x scale rotated by atan(3/4) (~36.9 deg) breaks axis alignment between FBM octaves.
-        returnValue(vec2(p.x * 1.6f.lit - p.y * 1.2f.lit, p.x * 1.2f.lit + p.y * 1.6f.lit))
-    }
+        val rotateOctave = fn("rotateOctave", returns = AslType.Data(GpuDataShape.Vec2)) {
+            val p by param(GpuDataShape.Vec2)
+            // 2x scale rotated by atan(3/4) (~36.9 deg) breaks axis alignment between FBM octaves.
+            returnValue(vec2(p.x * 1.6f.lit - p.y * 1.2f.lit, p.x * 1.2f.lit + p.y * 1.6f.lit))
+        }
 
-    // Two-octave billowing cumulus heightfield: macro bank + smooth S-curved puff lobes (avoids flat plateaus).
-    val cumulusMacro = if (!fastOnly) {
-        fn("cumulusMacro") {
+        // Two-octave billowing cumulus heightfield: macro bank + smooth S-curved puff lobes (avoids flat plateaus).
+        val cumulusMacro = fn("cumulusMacro") {
             val p by param(GpuDataShape.Vec2)
             val n1 = let("n1", valueNoise(p))
             val n2 = let("n2", valueNoise(rotateOctave(p) + vec2(17.3f.lit, 9.2f.lit)))
             val puff2 = let("puff2", n2 * n2 * (3f.lit - 2f.lit * n2))
             returnValue(n1 * 0.60f.lit + puff2 * 0.40f.lit)
         }
+
+        Triple(valueNoise, rotateOctave, cumulusMacro)
     } else {
         null
     }
@@ -160,14 +168,12 @@ fun cloudLayerShader(fastOnly: Boolean = false): AslShaderDefinition = shader(
         val edgeNoise: AslExpr
 
         if (fastOnly) {
-            val n1 = let("n1", valueNoise(uvBase))
-            val n2 = let("n2", valueNoise(rotateOctave(uvBase) + vec2(13.7f.lit, 7.1f.lit)))
-            val fbm = let("fbmFast", n1 * 0.65f.lit + n2 * 0.35f.lit)
+            val fbm = fastAnalyticCloudField(uvBase)
             density = let("density", smoothstep(threshold, threshold + softness, fbm))
             litFactor = let("litFactor", clamp(0.45f.lit + fbm * 0.55f.lit, 0f.lit, 1f.lit))
             edgeNoise = fbm
         } else {
-            val macro = requireNotNull(cumulusMacro)
+            val (valueNoise, rotateOctave, macro) = requireNotNull(standardHelpers)
             val qualityCode = let("qualityCode", toU32(lightDirection.w + 0.5f.lit))
             val isStandard = qualityCode eq CloudLayerQuality.Standard.code.toUInt().lit
             val isFast = select(1u.lit, 0u.lit, isStandard) eq 1u.lit
@@ -177,9 +183,7 @@ fun cloudLayerShader(fastOnly: Boolean = false): AslShaderDefinition = shader(
             val edgeNoiseVar = variable("edgeNoise", 0.5f.lit)
 
             iff(isFast) {
-                val n1 = let("n1", valueNoise(uvBase))
-                val n2 = let("n2", valueNoise(rotateOctave(uvBase) + vec2(13.7f.lit, 7.1f.lit)))
-                val fbm = let("fbmFast", n1 * 0.65f.lit + n2 * 0.35f.lit)
+                val fbm = fastAnalyticCloudField(uvBase)
                 assign(densityVar, smoothstep(threshold, threshold + softness, fbm))
                 assign(litFactorVar, clamp(0.45f.lit + fbm * 0.55f.lit, 0f.lit, 1f.lit))
                 assign(edgeNoiseVar, fbm)
@@ -284,10 +288,36 @@ fun cloudLayerShader(fastOnly: Boolean = false): AslShaderDefinition = shader(
 }
 
 /**
+ * Low-ALU 3-layer domain-warped analytic cloud heightfield for [CloudLayerQuality.Fast].
+ *
+ * Replaces two octaves of `mod289`/`permute`/`hash2d` quintic `valueNoise` (~190 scalar ALU +
+ * 34 `floor`/div ops) with 6 trig ops (~26 ALU, 0 `floor`, 0 `div`) while matching world-space
+ * cloud feature scale and coverage range `[0, 1]`.
+ */
+private fun AslBlockBuilder.fastAnalyticCloudField(uvBase: AslExpr): AslExpr {
+    val p1x = let("fastP1x", uvBase.x * 2.15f.lit + uvBase.y * 1.27f.lit)
+    val p1y = let("fastP1y", uvBase.x * (-1.31f).lit + uvBase.y * 2.39f.lit)
+    val w1 = let("fastW1", (sin(p1x) + cos(p1y)) * 0.5f.lit)
+
+    val p2x = let("fastP2x", uvBase.x * 3.85f.lit - uvBase.y * 2.65f.lit + w1 * 1.45f.lit)
+    val p2y = let("fastP2y", uvBase.x * 2.75f.lit + uvBase.y * 4.05f.lit - w1 * 1.25f.lit)
+    val w2 = let("fastW2", (sin(p2x) + cos(p2y)) * 0.5f.lit)
+
+    val p3x = let("fastP3x", uvBase.x * 7.10f.lit + uvBase.y * 4.95f.lit - w2 * 1.35f.lit + w1 * 0.65f.lit)
+    val p3y = let("fastP3y", uvBase.x * (-5.20f).lit + uvBase.y * 6.85f.lit + w2 * 1.15f.lit)
+    val w3 = let("fastW3", (sin(p3x) + cos(p3y)) * 0.5f.lit)
+
+    return let("fbmFast", clamp(0.50f.lit + w1 * 0.28f.lit + w2 * 0.17f.lit + w3 * 0.10f.lit, 0f.lit, 1f.lit))
+}
+
+/**
  * Single-pass procedural cloud layer shader with zero texture fetches and a uniform quality switch
  * ([CloudLayerQuality.Fast] vs [CloudLayerQuality.Standard]).
  */
 val CloudLayerShader: AslShaderDefinition = cloudLayerShader(fastOnly = false)
 
-/** Lean [CloudLayerQuality.Fast]-only procedural cloud layer shader with reduced register footprint. */
+/**
+ * Lean [CloudLayerQuality.Fast]-only procedural cloud layer shader using a 3-wave domain-warped
+ * analytic field with zero `mod289`/`permute`/`hash2d`/`valueNoise` and reduced register footprint.
+ */
 val CloudLayerFastShader: AslShaderDefinition = cloudLayerShader(fastOnly = true)
