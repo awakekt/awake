@@ -1,6 +1,9 @@
 package com.awakekt.awake.template
 
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
+import com.awakekt.awake.player.pointerCursorImageOf
+import com.awakekt.awake.player.pointerCursorOf
+import com.awakekt.awake.project.runtime.ProjectRenderPlan
 import com.awakekt.awake.webgpu.application.WebGpuEngine
 import com.awakekt.awake.webgpu.application.launchWebGpuGame
 import kotlinx.coroutines.MainScope
@@ -12,7 +15,7 @@ fun main() {
         // The canvas shows the pointer shape, or the custom cursor image, the UI asks for only when it
         // is handed the request.
         launchWebGpuGame(cursor = pointerCursorOf(game), cursorImage = pointerCursorImageOf(game)) {
-            WebGpuEngine(appLifecycle = game, requestedPlan = AwakeRenderPlan)
+            WebGpuEngine(appLifecycle = game, requestedPlan = ProjectRenderPlan)
         }
     }
 }

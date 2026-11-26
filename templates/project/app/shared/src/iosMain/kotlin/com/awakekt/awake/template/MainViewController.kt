@@ -1,5 +1,6 @@
 package com.awakekt.awake.template
 
+import com.awakekt.awake.project.runtime.ProjectRenderPlan
 import com.awakekt.awake.vulkan.application.VulkanEngine
 import com.awakekt.awake.vulkan.application.makeVulkanGameViewController
 import kotlinx.coroutines.runBlocking
@@ -8,6 +9,6 @@ import kotlinx.coroutines.runBlocking
 fun MainViewController() = makeVulkanGameViewController(
     VulkanEngine(
         appLifecycle = createGame(runBlocking { loadGame() }, touchControls = true),
-        plan = AwakeRenderPlan,
+        plan = ProjectRenderPlan,
     ),
 )

@@ -24,15 +24,9 @@ cube. Replace the folder with a project saved from Awake Studio to play yours.
 
 | File | What it does |
 |---|---|
-| `app/shared/.../Game.kt` | Loads the project and starts the game |
+| `app/shared/.../Game.kt` | Thin wrapper around Awake Core's `com.awakekt.awake:player` runtime (`loadPlayerProject` / `createPlayerApp`) |
 | `app/shared/.../Hud.kt` | The text overlay, read from the string tables, with a button that switches language |
-| `app/shared/.../RenderPlan.kt` | Sets up drawing for everything a Studio project can contain |
 | `gradle/libs.versions.toml` | Pins Awake Core (`awake`), Vulkan (`awake-vulkan`), and the WebGPU snapshot (`awake-webgpu`) |
-
-The shared module selects a project runtime adapter from the Core version in the catalog:
-`core2Main` supports the older API; `core3Main` uses the renamed Core 0.3 API. This lets engine
-consumer checks build the template against newer Core artifacts while its default pin stays on a
-published release.
 
 The web build needs WebGPU in the browser, and serves the project next to `index.html`. The iOS build
 doesn't include the project yet.

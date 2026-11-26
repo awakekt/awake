@@ -48,13 +48,6 @@ kotlin {
     }
     
     sourceSets {
-        // Core 0.3 renamed the project runtime API. Keep the published 0.2 starter usable while
-        // the engine's consumer gate builds this same template against the newer Core artifacts.
-        val coreVersion = libs.versions.awake.asProvider().get().substringBefore('-').split('.').map(String::toInt)
-        val legacyProjectRuntime = coreVersion[0] == 0 && coreVersion[1] < 3
-        commonMain {
-            kotlin.srcDir(if (legacyProjectRuntime) "src/core2Main/kotlin" else "src/core3Main/kotlin")
-        }
         // The Android library packages only its own Java resources, so it takes the project from commonMain's.
         androidMain {
             resources.srcDir("src/commonMain/resources")
@@ -65,16 +58,9 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":core"))
-            implementation(libs.awake.engine.bootstrap)
-            implementation(libs.awake.asset.shaders)
-            implementation(libs.awake.asset.shader.pack)
-            implementation(libs.awake.core.host)
-            implementation(libs.awake.core.localization)
+            // api: loadGame and createGame hand AwakePlayer's LoadedPlayerGame, render plan, and cursor helpers to every app module.
+            api(libs.awake.player)
             implementation(libs.awake.compose.foundation)
-            implementation(libs.awake.scene.authoring)
-            // api: loadGame and createGame hand LoadedProject to every app module.
-            api(libs.awake.project.runtime)
-            implementation(libs.awake.backend.jolt)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
