@@ -15,6 +15,7 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.diagnostics.DebugRegistry
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.host.FixedStepReport
+import com.awakekt.awake.core.host.MemoryPressure
 import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.HostInputState
 import com.awakekt.awake.core.input.Input
@@ -542,6 +543,7 @@ class SceneAppLifecycleRuntime internal constructor(
 
         // 1. Simulation & infrastructure pump. Rendering systems stage the scene and any
         // backend-neutral 2D overlay before the runtime composites the frame below.
+        val pressureVersionBeforeAdvance = MemoryPressure.version
         session.schedule.timed = perfStatsEnabled
         session.schedule.observer = systemObserver
         installRenderStages()
@@ -550,6 +552,7 @@ class SceneAppLifecycleRuntime internal constructor(
                 runUpdateBlock(step, snapshot)
             }
         }
+        MemoryPressure.markFrameDrained(pressureVersionBeforeAdvance)
 
         // A scene's own canvas elements need the UI frame even when the app declares no `ui { }`.
         val uiFrame = Unit.takeIf { spec.hasUi || world.family<CanvasElement>().size > 0 }?.let {

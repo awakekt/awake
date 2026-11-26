@@ -5,9 +5,13 @@
  */
 package com.awakekt.awake.core.diagnostics
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class HeapGuardTest {
     @Test
@@ -139,5 +143,38 @@ class HeapGuardTest {
         assertEquals(HeapGuard.Action.None, guard.check(used = 499L, limit = 1_000L))
         assertEquals(HeapGuard.Action.Collect, guard.check(used = 550L, limit = 1_000L))
         assertEquals(HeapGuard.Action.Close, guard.check(used = 600L, limit = 1_000L))
+    }
+
+    @Test
+    fun checkSuspendingWaitsForAsyncReclamationBeforeMeasuringLiveHeap() = runTest {
+        val guard = HeapGuard()
+        var reclaimed = false
+
+        val action = guard.checkSuspending(used = 900L, limit = 1_000L) {
+            delay(20L)
+            reclaimed = true
+            450L
+        }
+
+        assertTrue(reclaimed)
+        assertEquals(HeapGuard.Action.Collect, action)
+        assertEquals(0, guard.consecutiveBreaches)
+
+        repeat(2) {
+            assertEquals(HeapGuard.Action.Collect, guard.checkSuspending(used = 900L, limit = 1_000L) { 850L })
+        }
+        assertEquals(HeapGuard.Action.Close, guard.checkSuspending(used = 900L, limit = 1_000L) { 850L })
+    }
+
+    @Test
+    fun isDeviceMemoryLowFlagsOsLowMemoryOrAvailableRamBelowFloor() {
+        val floor = HeapGuard.DEFAULT_LOW_AVAILABLE_BYTES
+        assertFalse(HeapGuard.isDeviceMemoryLow(availableMemoryBytes = null, isLowMemory = false))
+        assertFalse(HeapGuard.isDeviceMemoryLow(availableMemoryBytes = floor, isLowMemory = false))
+        assertFalse(HeapGuard.isDeviceMemoryLow(availableMemoryBytes = floor + 1L, isLowMemory = false))
+        assertFalse(HeapGuard.isDeviceMemoryLow(availableMemoryBytes = -1L, isLowMemory = false))
+        assertTrue(HeapGuard.isDeviceMemoryLow(availableMemoryBytes = floor - 1L, isLowMemory = false))
+        assertTrue(HeapGuard.isDeviceMemoryLow(availableMemoryBytes = null, isLowMemory = true))
+        assertTrue(HeapGuard.isDeviceMemoryLow(availableMemoryBytes = floor * 4L, isLowMemory = true))
     }
 }

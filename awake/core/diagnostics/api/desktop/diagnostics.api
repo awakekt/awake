@@ -480,11 +480,14 @@ public final class com/awakekt/awake/core/diagnostics/HeapGuard {
 	public static final field CLOSE_AT D
 	public static final field COLLECT_AT D
 	public static final field Companion Lcom/awakekt/awake/core/diagnostics/HeapGuard$Companion;
+	public static final field DEFAULT_LOW_AVAILABLE_BYTES J
 	public fun <init> ()V
 	public fun <init> (DDI)V
 	public synthetic fun <init> (DDIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun check (JJLkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
 	public static synthetic fun check$default (Lcom/awakekt/awake/core/diagnostics/HeapGuard;JJLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/HeapGuard$Action;
+	public final fun checkSuspending (JJLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun checkSuspending$default (Lcom/awakekt/awake/core/diagnostics/HeapGuard;JJLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun getCloseAfter ()I
 	public final fun getCloseAt ()D
 	public final fun getCollectAt ()D
@@ -502,6 +505,8 @@ public final class com/awakekt/awake/core/diagnostics/HeapGuard$Action : java/la
 }
 
 public final class com/awakekt/awake/core/diagnostics/HeapGuard$Companion {
+	public final fun isDeviceMemoryLow (Ljava/lang/Long;ZJ)Z
+	public static synthetic fun isDeviceMemoryLow$default (Lcom/awakekt/awake/core/diagnostics/HeapGuard$Companion;Ljava/lang/Long;ZJILjava/lang/Object;)Z
 }
 
 public final class com/awakekt/awake/core/diagnostics/InMemoryCrashStorage : com/awakekt/awake/core/diagnostics/CrashStorage {

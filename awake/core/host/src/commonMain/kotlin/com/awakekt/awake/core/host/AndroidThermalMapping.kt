@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.core.host
 
+internal fun sanitizeSocModel(raw: String?): String? =
+    raw?.trim()?.takeIf { it.isNotEmpty() && !it.equals("unknown", ignoreCase = true) }
+
 internal const val ANDROID_THERMAL_STATUS_NONE: Int = 0
 internal const val ANDROID_THERMAL_STATUS_LIGHT: Int = 1
 internal const val ANDROID_THERMAL_STATUS_MODERATE: Int = 2

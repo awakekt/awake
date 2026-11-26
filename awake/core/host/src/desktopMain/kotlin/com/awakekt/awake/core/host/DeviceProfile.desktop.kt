@@ -21,9 +21,15 @@ import java.lang.management.ManagementFactory
 actual fun readDeviceProfile(): DeviceProfile = DeviceProfile(
     totalMemoryBytes = readDesktopPhysicalMemoryBytes(),
     isTouchPrimary = false,
+    availableMemoryBytes = readDesktopAvailableMemoryBytes(),
 )
 
 private fun readDesktopPhysicalMemoryBytes(): Long? = runCatching {
     val bean = ManagementFactory.getOperatingSystemMXBean()
     (bean as? com.sun.management.OperatingSystemMXBean)?.totalMemorySize?.takeIf { it > 0L }
+}.getOrNull()
+
+private fun readDesktopAvailableMemoryBytes(): Long? = runCatching {
+    val bean = ManagementFactory.getOperatingSystemMXBean()
+    (bean as? com.sun.management.OperatingSystemMXBean)?.freeMemorySize?.takeIf { it >= 0L }
 }.getOrNull()

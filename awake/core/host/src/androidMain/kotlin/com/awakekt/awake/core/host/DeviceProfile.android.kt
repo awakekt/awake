@@ -12,6 +12,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.display.DisplayManager
 import android.os.BatteryManager
+import android.os.Build
 import android.os.PowerManager
 import android.view.Display
 import kotlin.concurrent.Volatile
@@ -66,13 +67,20 @@ actual fun readDeviceProfile(): DeviceProfile {
  */
 fun androidDeviceProfile(context: Context): DeviceProfile {
     val appContext = context.applicationContext ?: context
-    val totalMemoryBytes = runCatching {
-        val manager = appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-        manager?.let { am ->
-            val info = ActivityManager.MemoryInfo()
-            am.getMemoryInfo(info)
-            info.totalMem.takeIf { it > 0L }
-        }
+    val activityManager = runCatching {
+        appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+    }.getOrNull()
+    val memoryInfo = activityManager?.let { am ->
+        runCatching {
+            ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
+        }.getOrNull()
+    }
+    val totalMemoryBytes = memoryInfo?.totalMem?.takeIf { it > 0L }
+    val availableMemoryBytes = memoryInfo?.availMem?.takeIf { it >= 0L }
+    val isLowMemory = memoryInfo?.lowMemory == true
+    val isLowRamDevice = runCatching { activityManager?.isLowRamDevice == true }.getOrDefault(false)
+    val socModel = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) sanitizeSocModel(Build.SOC_MODEL) else null
     }.getOrNull()
 
     val displayRefreshHz = runCatching {
@@ -110,5 +118,9 @@ fun androidDeviceProfile(context: Context): DeviceProfile {
         batteryLevel = batteryLevel,
         lowPowerMode = lowPowerMode,
         isTouchPrimary = isTouchPrimary,
+        isLowRamDevice = isLowRamDevice,
+        availableMemoryBytes = availableMemoryBytes,
+        isLowMemory = isLowMemory,
+        socModel = socModel,
     )
 }
