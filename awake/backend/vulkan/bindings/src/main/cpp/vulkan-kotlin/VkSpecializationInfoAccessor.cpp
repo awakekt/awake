@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkSpecializationInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkSpecializationInfoAccessor::VkSpecializationInfoAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                        obj(obj) {
@@ -38,28 +39,24 @@ VkSpecializationInfoAccessor::getpMapEntries(VkSpecializationInfo &clazzInfo) {
     auto pMapEntriesArray = (jobjectArray) env->GetObjectField(obj, pMapEntriesField);
     if (pMapEntriesArray == nullptr) {
         clazzInfo.pMapEntries = nullptr;
-        env->DeleteLocalRef(pMapEntriesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pMapEntriesArray);
-    std::vector<VkSpecializationMapEntry> pMapEntries;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pMapEntriesArray,
-                                                            i); // actual type is VkSpecializationMapEntry[];
-        // experimental optimize accessor
-        VkSpecializationMapEntryAccessor accessor(env, element);
-        VkSpecializationMapEntry ref{};
-        accessor.fromObject(ref);
-        pMapEntries.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pMapEntries = nullptr;
+        env->DeleteLocalRef(pMapEntriesArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSpecializationMapEntry[size];
-    std::copy(pMapEntries.begin(), pMapEntries.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkSpecializationMapEntry>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pMapEntriesArray, i);
+        VkSpecializationMapEntryAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pMapEntries = copy;
-    env->DeleteLocalRef(pMapEntriesArray); // release reference
+    env->DeleteLocalRef(pMapEntriesArray);
 }
 
 void
@@ -67,24 +64,23 @@ VkSpecializationInfoAccessor::getpData(VkSpecializationInfo &clazzInfo) {
     auto pDataArray = (jobjectArray) env->GetObjectField(obj, pDataField);
     if (pDataArray == nullptr) {
         clazzInfo.pData = nullptr;
-        env->DeleteLocalRef(pDataArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pDataArray);
-    std::vector<void *> pData;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pDataArray,
-                                                            i); // actual type is Object[];
-        pData.push_back(element); // type is Any??
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pData = nullptr;
+        env->DeleteLocalRef(pDataArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new const void *[size];
-    std::copy(pData.begin(), pData.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<const void *>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pDataArray, i);
+        copy[i] = element;
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pData = copy;
-    env->DeleteLocalRef(pDataArray); // release reference
+    env->DeleteLocalRef(pDataArray);
 }
 
 VkSpecializationInfoAccessor::~VkSpecializationInfoAccessor() {

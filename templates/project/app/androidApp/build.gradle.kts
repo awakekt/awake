@@ -60,3 +60,10 @@ android {
         compose = true
     }
 }
+
+// Keep Khronos Vulkan validation layers in debug APKs, strip them from release builds.
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.packaging.jniLibs.excludes.add("**/libVkLayer_khronos_validation.so")
+    }
+}

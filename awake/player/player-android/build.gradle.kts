@@ -50,6 +50,13 @@ android {
     }
 }
 
+// Keep Khronos Vulkan validation layers in debug APKs, strip them (~80 MB) from release builds.
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.packaging.jniLibs.excludes.add("**/libVkLayer_khronos_validation.so")
+    }
+}
+
 dependencies {
     implementation(project(":awake:player"))
     implementation(project(":awake:backend:vulkan"))

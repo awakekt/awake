@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkSwapchainCreateInfoKHRAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkSwapchainCreateInfoKHRAccessor::VkSwapchainCreateInfoKHRAccessor(JNIEnv *env, jobject obj) : env(
         env), obj(obj) {
@@ -60,22 +61,21 @@ VkSwapchainCreateInfoKHRAccessor::getpQueueFamilyIndices(VkSwapchainCreateInfoKH
     if (pQueueFamilyIndicesArray == nullptr) {
         clazzInfo.queueFamilyIndexCount = 0;
         clazzInfo.pQueueFamilyIndices = nullptr;
-        env->DeleteLocalRef(pQueueFamilyIndicesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pQueueFamilyIndicesArray);
-    // primitive array?
-    std::vector<uint32_t> pQueueFamilyIndices(size);
-    env->GetIntArrayRegion(pQueueFamilyIndicesArray, 0, size,
-                           reinterpret_cast<jint *>(pQueueFamilyIndices.data()));
-    // processing array data
-    auto queueFamilyIndexCount = static_cast<uint32_t>(pQueueFamilyIndices.size());
-    clazzInfo.queueFamilyIndexCount = queueFamilyIndexCount;
-    // Make a copy of the primitive to ensure proper memory management;
-    auto copy = new uint32_t[size];
-    std::copy(pQueueFamilyIndices.begin(), pQueueFamilyIndices.end(), copy);
+    if (size <= 0) {
+        clazzInfo.queueFamilyIndexCount = 0;
+        clazzInfo.pQueueFamilyIndices = nullptr;
+        env->DeleteLocalRef(pQueueFamilyIndicesArray);
+        return;
+    }
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<uint32_t>(count);
+    env->GetIntArrayRegion(pQueueFamilyIndicesArray, 0, size, reinterpret_cast<jint *>(copy));
+    clazzInfo.queueFamilyIndexCount = static_cast<uint32_t>(count);
     clazzInfo.pQueueFamilyIndices = copy;
-    env->DeleteLocalRef(pQueueFamilyIndicesArray); // release reference
+    env->DeleteLocalRef(pQueueFamilyIndicesArray);
 }
 
 VkSurfaceTransformFlagBitsKHR

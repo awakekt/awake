@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkFramebufferCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkFramebufferCreateInfoAccessor::VkFramebufferCreateInfoAccessor(JNIEnv *env, jobject obj) : env(
         env), obj(obj) {
@@ -49,29 +50,29 @@ VkFramebufferCreateInfoAccessor::getpAttachments(VkFramebufferCreateInfo &clazzI
     if (pAttachmentsArray == nullptr) {
         clazzInfo.attachmentCount = 0;
         clazzInfo.pAttachments = nullptr;
-        env->DeleteLocalRef(pAttachmentsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pAttachmentsArray);
-    // vkhandle array?
-    std::vector<VkImageView> pAttachments;
+    if (size <= 0) {
+        clazzInfo.attachmentCount = 0;
+        clazzInfo.pAttachments = nullptr;
+        env->DeleteLocalRef(pAttachmentsArray);
+        return;
+    }
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkImageView>(count);
     for (int i = 0; i < size; ++i) {
         auto element = env->GetObjectArrayElement(pAttachmentsArray, i);
-        jmethodID getValueMethod = env->GetMethodID(env->GetObjectClass(element), "longValue",
-                                                    "()J");
+        jclass elementClass = env->GetObjectClass(element);
+        jmethodID getValueMethod = env->GetMethodID(elementClass, "longValue", "()J");
         jlong value = env->CallLongMethod(element, getValueMethod);
-        pAttachments.push_back(reinterpret_cast<VkImageView>(value)); //vkhandle
-        env->DeleteLocalRef(element); // release element reference
+        copy[i] = reinterpret_cast<VkImageView>(value);
+        env->DeleteLocalRef(elementClass);
+        env->DeleteLocalRef(element);
     }
-    // processing array data
-    auto attachmentCount = static_cast<uint32_t>(pAttachments.size());
-    clazzInfo.attachmentCount = attachmentCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkImageView[size];
-    std::copy(pAttachments.begin(), pAttachments.end(), copy);
+    clazzInfo.attachmentCount = static_cast<uint32_t>(count);
     clazzInfo.pAttachments = copy;
-    env->DeleteLocalRef(pAttachmentsArray); // release reference
+    env->DeleteLocalRef(pAttachmentsArray);
 }
 
 void

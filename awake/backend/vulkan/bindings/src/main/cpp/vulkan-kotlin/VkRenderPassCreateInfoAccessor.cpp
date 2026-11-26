@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkRenderPassCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkRenderPassCreateInfoAccessor::VkRenderPassCreateInfoAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                            obj(obj) {
@@ -45,30 +46,26 @@ VkRenderPassCreateInfoAccessor::getpAttachments(VkRenderPassCreateInfo &clazzInf
     if (pAttachmentsArray == nullptr) {
         clazzInfo.attachmentCount = 0;
         clazzInfo.pAttachments = nullptr;
-        env->DeleteLocalRef(pAttachmentsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pAttachmentsArray);
-    std::vector<VkAttachmentDescription> pAttachments;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pAttachmentsArray,
-                                                            i); // actual type is VkAttachmentDescription[];
-        // experimental optimize accessor
-        VkAttachmentDescriptionAccessor accessor(env, element);
-        VkAttachmentDescription ref{};
-        accessor.fromObject(ref);
-        pAttachments.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.attachmentCount = 0;
+        clazzInfo.pAttachments = nullptr;
+        env->DeleteLocalRef(pAttachmentsArray);
+        return;
     }
-    // processing array data
-    auto attachmentCount = static_cast<uint32_t>(pAttachments.size());
-    clazzInfo.attachmentCount = attachmentCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkAttachmentDescription[size];
-    std::copy(pAttachments.begin(), pAttachments.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkAttachmentDescription>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pAttachmentsArray, i);
+        VkAttachmentDescriptionAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.attachmentCount = static_cast<uint32_t>(count);
     clazzInfo.pAttachments = copy;
-    env->DeleteLocalRef(pAttachmentsArray); // release reference
+    env->DeleteLocalRef(pAttachmentsArray);
 }
 
 void
@@ -77,30 +74,26 @@ VkRenderPassCreateInfoAccessor::getpDependencies(VkRenderPassCreateInfo &clazzIn
     if (pDependenciesArray == nullptr) {
         clazzInfo.dependencyCount = 0;
         clazzInfo.pDependencies = nullptr;
-        env->DeleteLocalRef(pDependenciesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pDependenciesArray);
-    std::vector<VkSubpassDependency> pDependencies;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pDependenciesArray,
-                                                            i); // actual type is VkSubpassDependency[];
-        // experimental optimize accessor
-        VkSubpassDependencyAccessor accessor(env, element);
-        VkSubpassDependency ref{};
-        accessor.fromObject(ref);
-        pDependencies.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.dependencyCount = 0;
+        clazzInfo.pDependencies = nullptr;
+        env->DeleteLocalRef(pDependenciesArray);
+        return;
     }
-    // processing array data
-    auto dependencyCount = static_cast<uint32_t>(pDependencies.size());
-    clazzInfo.dependencyCount = dependencyCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSubpassDependency[size];
-    std::copy(pDependencies.begin(), pDependencies.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkSubpassDependency>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pDependenciesArray, i);
+        VkSubpassDependencyAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.dependencyCount = static_cast<uint32_t>(count);
     clazzInfo.pDependencies = copy;
-    env->DeleteLocalRef(pDependenciesArray); // release reference
+    env->DeleteLocalRef(pDependenciesArray);
 }
 
 void
@@ -119,30 +112,26 @@ VkRenderPassCreateInfoAccessor::getpSubpasses(VkRenderPassCreateInfo &clazzInfo)
     if (pSubpassesArray == nullptr) {
         clazzInfo.subpassCount = 0;
         clazzInfo.pSubpasses = nullptr;
-        env->DeleteLocalRef(pSubpassesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pSubpassesArray);
-    std::vector<VkSubpassDescription> pSubpasses;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pSubpassesArray,
-                                                            i); // actual type is VkSubpassDescription[];
-        // experimental optimize accessor
-        VkSubpassDescriptionAccessor accessor(env, element);
-        VkSubpassDescription ref{};
-        accessor.fromObject(ref);
-        pSubpasses.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.subpassCount = 0;
+        clazzInfo.pSubpasses = nullptr;
+        env->DeleteLocalRef(pSubpassesArray);
+        return;
     }
-    // processing array data
-    auto subpassCount = static_cast<uint32_t>(pSubpasses.size());
-    clazzInfo.subpassCount = subpassCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSubpassDescription[size];
-    std::copy(pSubpasses.begin(), pSubpasses.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkSubpassDescription>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pSubpassesArray, i);
+        VkSubpassDescriptionAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.subpassCount = static_cast<uint32_t>(count);
     clazzInfo.pSubpasses = copy;
-    env->DeleteLocalRef(pSubpassesArray); // release reference
+    env->DeleteLocalRef(pSubpassesArray);
 }
 
 VkRenderPassCreateInfoAccessor::~VkRenderPassCreateInfoAccessor() {

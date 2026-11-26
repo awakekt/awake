@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkExtensionPropertiesAccessor.h>
+#include <cstring>
 
 VkExtensionPropertiesAccessor::VkExtensionPropertiesAccessor(JNIEnv *env, jobject obj) : env(env),
                                                                                          obj(obj) {
@@ -21,10 +22,19 @@ VkExtensionPropertiesAccessor::fromObject(VkExtensionProperties &clazzInfo) {
 void
 VkExtensionPropertiesAccessor::getextensionName(VkExtensionProperties &clazzInfo) {
     auto extensionNameObj = (jstring) env->GetObjectField(obj, extensionNameField);
-    auto str = (const char *) env->GetStringUTFChars(extensionNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(extensionNameObj, str); // Release the local string reference
-    strncpy(clazzInfo.extensionName, result, VK_MAX_EXTENSION_NAME_SIZE);
+    if (extensionNameObj == nullptr) {
+        clazzInfo.extensionName[0] = '\0';
+        return;
+    }
+    auto str = env->GetStringUTFChars(extensionNameObj, nullptr);
+    if (str != nullptr) {
+        std::strncpy(clazzInfo.extensionName, str, VK_MAX_EXTENSION_NAME_SIZE - 1);
+        clazzInfo.extensionName[VK_MAX_EXTENSION_NAME_SIZE - 1] = '\0';
+        env->ReleaseStringUTFChars(extensionNameObj, str);
+    } else {
+        clazzInfo.extensionName[0] = '\0';
+    }
+    env->DeleteLocalRef(extensionNameObj);
 }
 
 uint32_t

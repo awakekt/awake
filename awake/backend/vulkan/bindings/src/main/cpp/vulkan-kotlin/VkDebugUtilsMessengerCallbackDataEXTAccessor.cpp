@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkDebugUtilsMessengerCallbackDataEXTAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkDebugUtilsMessengerCallbackDataEXTAccessor::VkDebugUtilsMessengerCallbackDataEXTAccessor(
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
@@ -47,10 +48,10 @@ void
 VkDebugUtilsMessengerCallbackDataEXTAccessor::getpMessage(
         VkDebugUtilsMessengerCallbackDataEXT &clazzInfo) {
     auto pMessageObj = (jstring) env->GetObjectField(obj, pMessageField);
-    auto str = (const char *) env->GetStringUTFChars(pMessageObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(pMessageObj, str); // Release the local string reference
-    clazzInfo.pMessage = result;
+    clazzInfo.pMessage = awake::VulkanAccessArena::current().copyJString(env, pMessageObj);
+    if (pMessageObj != nullptr) {
+        env->DeleteLocalRef(pMessageObj);
+    }
 }
 
 void
@@ -60,30 +61,26 @@ VkDebugUtilsMessengerCallbackDataEXTAccessor::getpQueueLabels(
     if (pQueueLabelsArray == nullptr) {
         clazzInfo.queueLabelCount = 0;
         clazzInfo.pQueueLabels = nullptr;
-        env->DeleteLocalRef(pQueueLabelsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pQueueLabelsArray);
-    std::vector<VkDebugUtilsLabelEXT> pQueueLabels;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pQueueLabelsArray,
-                                                            i); // actual type is VkDebugUtilsLabelEXT[];
-        // experimental optimize accessor
-        VkDebugUtilsLabelEXTAccessor accessor(env, element);
-        VkDebugUtilsLabelEXT ref{};
-        accessor.fromObject(ref);
-        pQueueLabels.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.queueLabelCount = 0;
+        clazzInfo.pQueueLabels = nullptr;
+        env->DeleteLocalRef(pQueueLabelsArray);
+        return;
     }
-    // processing array data
-    auto queueLabelCount = static_cast<uint32_t>(pQueueLabels.size());
-    clazzInfo.queueLabelCount = queueLabelCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkDebugUtilsLabelEXT[size];
-    std::copy(pQueueLabels.begin(), pQueueLabels.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkDebugUtilsLabelEXT>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pQueueLabelsArray, i);
+        VkDebugUtilsLabelEXTAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.queueLabelCount = static_cast<uint32_t>(count);
     clazzInfo.pQueueLabels = copy;
-    env->DeleteLocalRef(pQueueLabelsArray); // release reference
+    env->DeleteLocalRef(pQueueLabelsArray);
 }
 
 uint32_t
@@ -98,40 +95,36 @@ VkDebugUtilsMessengerCallbackDataEXTAccessor::getpCmdBufLabels(
     if (pCmdBufLabelsArray == nullptr) {
         clazzInfo.cmdBufLabelCount = 0;
         clazzInfo.pCmdBufLabels = nullptr;
-        env->DeleteLocalRef(pCmdBufLabelsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pCmdBufLabelsArray);
-    std::vector<VkDebugUtilsLabelEXT> pCmdBufLabels;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pCmdBufLabelsArray,
-                                                            i); // actual type is VkDebugUtilsLabelEXT[];
-        // experimental optimize accessor
-        VkDebugUtilsLabelEXTAccessor accessor(env, element);
-        VkDebugUtilsLabelEXT ref{};
-        accessor.fromObject(ref);
-        pCmdBufLabels.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.cmdBufLabelCount = 0;
+        clazzInfo.pCmdBufLabels = nullptr;
+        env->DeleteLocalRef(pCmdBufLabelsArray);
+        return;
     }
-    // processing array data
-    auto cmdBufLabelCount = static_cast<uint32_t>(pCmdBufLabels.size());
-    clazzInfo.cmdBufLabelCount = cmdBufLabelCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkDebugUtilsLabelEXT[size];
-    std::copy(pCmdBufLabels.begin(), pCmdBufLabels.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkDebugUtilsLabelEXT>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pCmdBufLabelsArray, i);
+        VkDebugUtilsLabelEXTAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.cmdBufLabelCount = static_cast<uint32_t>(count);
     clazzInfo.pCmdBufLabels = copy;
-    env->DeleteLocalRef(pCmdBufLabelsArray); // release reference
+    env->DeleteLocalRef(pCmdBufLabelsArray);
 }
 
 void
 VkDebugUtilsMessengerCallbackDataEXTAccessor::getpMessageIdName(
         VkDebugUtilsMessengerCallbackDataEXT &clazzInfo) {
     auto pMessageIdNameObj = (jstring) env->GetObjectField(obj, pMessageIdNameField);
-    auto str = (const char *) env->GetStringUTFChars(pMessageIdNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(pMessageIdNameObj, str); // Release the local string reference
-    clazzInfo.pMessageIdName = result;
+    clazzInfo.pMessageIdName = awake::VulkanAccessArena::current().copyJString(env, pMessageIdNameObj);
+    if (pMessageIdNameObj != nullptr) {
+        env->DeleteLocalRef(pMessageIdNameObj);
+    }
 }
 
 void
@@ -155,30 +148,26 @@ VkDebugUtilsMessengerCallbackDataEXTAccessor::getpObjects(
     if (pObjectsArray == nullptr) {
         clazzInfo.objectCount = 0;
         clazzInfo.pObjects = nullptr;
-        env->DeleteLocalRef(pObjectsArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pObjectsArray);
-    std::vector<VkDebugUtilsObjectNameInfoEXT> pObjects;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pObjectsArray,
-                                                            i); // actual type is VkDebugUtilsObjectNameInfoEXT[];
-        // experimental optimize accessor
-        VkDebugUtilsObjectNameInfoEXTAccessor accessor(env, element);
-        VkDebugUtilsObjectNameInfoEXT ref{};
-        accessor.fromObject(ref);
-        pObjects.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.objectCount = 0;
+        clazzInfo.pObjects = nullptr;
+        env->DeleteLocalRef(pObjectsArray);
+        return;
     }
-    // processing array data
-    auto objectCount = static_cast<uint32_t>(pObjects.size());
-    clazzInfo.objectCount = objectCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkDebugUtilsObjectNameInfoEXT[size];
-    std::copy(pObjects.begin(), pObjects.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkDebugUtilsObjectNameInfoEXT>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pObjectsArray, i);
+        VkDebugUtilsObjectNameInfoEXTAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.objectCount = static_cast<uint32_t>(count);
     clazzInfo.pObjects = copy;
-    env->DeleteLocalRef(pObjectsArray); // release reference
+    env->DeleteLocalRef(pObjectsArray);
 }
 
 VkDebugUtilsMessengerCallbackDataEXTAccessor::~VkDebugUtilsMessengerCallbackDataEXTAccessor() {

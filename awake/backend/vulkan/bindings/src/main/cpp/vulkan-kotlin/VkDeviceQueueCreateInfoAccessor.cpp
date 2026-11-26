@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkDeviceQueueCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkDeviceQueueCreateInfoAccessor::VkDeviceQueueCreateInfoAccessor(JNIEnv *env, jobject obj) : env(
         env), obj(obj) {
@@ -40,21 +41,19 @@ VkDeviceQueueCreateInfoAccessor::getpQueuePriorities(VkDeviceQueueCreateInfo &cl
     auto pQueuePrioritiesArray = (jfloatArray) env->GetObjectField(obj, pQueuePrioritiesField);
     if (pQueuePrioritiesArray == nullptr) {
         clazzInfo.pQueuePriorities = nullptr;
-        env->DeleteLocalRef(pQueuePrioritiesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pQueuePrioritiesArray);
-    // primitive array?
-    std::vector<float> pQueuePriorities(size);
-    env->GetFloatArrayRegion(pQueuePrioritiesArray, 0, size,
-                             reinterpret_cast<jfloat *>(pQueuePriorities.data()));
-    // processing array data
-    // no array size generated
-    // Make a copy of the primitive to ensure proper memory management;
-    auto copy = new float[size];
-    std::copy(pQueuePriorities.begin(), pQueuePriorities.end(), copy);
+    if (size <= 0) {
+        clazzInfo.pQueuePriorities = nullptr;
+        env->DeleteLocalRef(pQueuePrioritiesArray);
+        return;
+    }
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<float>(count);
+    env->GetFloatArrayRegion(pQueuePrioritiesArray, 0, size, reinterpret_cast<jfloat *>(copy));
     clazzInfo.pQueuePriorities = copy;
-    env->DeleteLocalRef(pQueuePrioritiesArray); // release reference
+    env->DeleteLocalRef(pQueuePrioritiesArray);
 }
 
 uint32_t

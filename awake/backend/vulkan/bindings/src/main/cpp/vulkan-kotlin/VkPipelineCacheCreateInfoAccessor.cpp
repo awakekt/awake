@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkPipelineCacheCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkPipelineCacheCreateInfoAccessor::VkPipelineCacheCreateInfoAccessor(JNIEnv *env, jobject obj)
         : env(env), obj(obj) {
@@ -42,26 +43,25 @@ VkPipelineCacheCreateInfoAccessor::getpInitialData(VkPipelineCacheCreateInfo &cl
     if (pInitialDataArray == nullptr) {
         clazzInfo.initialDataSize = 0;
         clazzInfo.pInitialData = nullptr;
-        env->DeleteLocalRef(pInitialDataArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pInitialDataArray);
-    std::vector<void *> pInitialData;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pInitialDataArray,
-                                                            i); // actual type is Object[];
-        pInitialData.push_back(element); // type is Any??
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.initialDataSize = 0;
+        clazzInfo.pInitialData = nullptr;
+        env->DeleteLocalRef(pInitialDataArray);
+        return;
     }
-    // processing array data
-    auto initialDataSize = static_cast<uint32_t>(pInitialData.size());
-    clazzInfo.initialDataSize = initialDataSize;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new const void *[size];
-    std::copy(pInitialData.begin(), pInitialData.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<const void *>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pInitialDataArray, i);
+        copy[i] = element;
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.initialDataSize = count;
     clazzInfo.pInitialData = copy;
-    env->DeleteLocalRef(pInitialDataArray); // release reference
+    env->DeleteLocalRef(pInitialDataArray);
 }
 
 void

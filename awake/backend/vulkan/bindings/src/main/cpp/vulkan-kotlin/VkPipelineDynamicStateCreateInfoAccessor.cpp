@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkPipelineDynamicStateCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkPipelineDynamicStateCreateInfoAccessor::VkPipelineDynamicStateCreateInfoAccessor(JNIEnv *env,
                                                                                    jobject obj)
@@ -43,26 +44,25 @@ VkPipelineDynamicStateCreateInfoAccessor::getpDynamicStates(
     if (pDynamicStatesArray == nullptr) {
         clazzInfo.dynamicStateCount = 0;
         clazzInfo.pDynamicStates = nullptr;
-        env->DeleteLocalRef(pDynamicStatesArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pDynamicStatesArray);
-    std::vector<VkDynamicState> pDynamicStates;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobjectArray) env->GetObjectArrayElement(pDynamicStatesArray,
-                                                                 i); // actual type is VkDynamicState[];
-        pDynamicStates.push_back(static_cast<VkDynamicState>(enum_utils::getEnumFromObject(env,
-                                                                                           element))); // type is enum
+    if (size <= 0) {
+        clazzInfo.dynamicStateCount = 0;
+        clazzInfo.pDynamicStates = nullptr;
+        env->DeleteLocalRef(pDynamicStatesArray);
+        return;
     }
-    // processing array data
-    auto dynamicStateCount = static_cast<uint32_t>(pDynamicStates.size());
-    clazzInfo.dynamicStateCount = dynamicStateCount;
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkDynamicState[size];
-    std::copy(pDynamicStates.begin(), pDynamicStates.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkDynamicState>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = env->GetObjectArrayElement(pDynamicStatesArray, i);
+        copy[i] = static_cast<VkDynamicState>(enum_utils::getEnumFromObject(env, element));
+        env->DeleteLocalRef(element);
+    }
+    clazzInfo.dynamicStateCount = static_cast<uint32_t>(count);
     clazzInfo.pDynamicStates = copy;
-    env->DeleteLocalRef(pDynamicStatesArray); // release reference
+    env->DeleteLocalRef(pDynamicStatesArray);
 }
 
 void

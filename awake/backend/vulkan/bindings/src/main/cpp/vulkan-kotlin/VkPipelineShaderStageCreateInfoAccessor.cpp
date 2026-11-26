@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkPipelineShaderStageCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkPipelineShaderStageCreateInfoAccessor::VkPipelineShaderStageCreateInfoAccessor(JNIEnv *env,
                                                                                  jobject obj) : env(
@@ -41,37 +42,33 @@ VkPipelineShaderStageCreateInfoAccessor::getpSpecializationInfo(
                                                                        pSpecializationInfoField);
     if (pSpecializationInfoArray == nullptr) {
         clazzInfo.pSpecializationInfo = nullptr;
-        env->DeleteLocalRef(pSpecializationInfoArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pSpecializationInfoArray);
-    std::vector<VkSpecializationInfo> pSpecializationInfo;
-    for (int i = 0; i < size; ++i) {
-        auto element = (jobject) env->GetObjectArrayElement(pSpecializationInfoArray,
-                                                            i); // actual type is VkSpecializationInfo[];
-        // experimental optimize accessor
-        VkSpecializationInfoAccessor accessor(env, element);
-        VkSpecializationInfo ref{};
-        accessor.fromObject(ref);
-        pSpecializationInfo.push_back(ref);
-        env->DeleteLocalRef(element); // release element reference
+    if (size <= 0) {
+        clazzInfo.pSpecializationInfo = nullptr;
+        env->DeleteLocalRef(pSpecializationInfoArray);
+        return;
     }
-    // processing array data
-    // Make a copy of the object to ensure proper memory management;
-    // jobjectArray
-    auto copy = new VkSpecializationInfo[size];
-    std::copy(pSpecializationInfo.begin(), pSpecializationInfo.end(), copy);
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<VkSpecializationInfo>(count);
+    for (int i = 0; i < size; ++i) {
+        auto element = (jobject) env->GetObjectArrayElement(pSpecializationInfoArray, i);
+        VkSpecializationInfoAccessor accessor(env, element);
+        accessor.fromObject(copy[i]);
+        env->DeleteLocalRef(element);
+    }
     clazzInfo.pSpecializationInfo = copy;
-    env->DeleteLocalRef(pSpecializationInfoArray); // release reference
+    env->DeleteLocalRef(pSpecializationInfoArray);
 }
 
 void
 VkPipelineShaderStageCreateInfoAccessor::getpName(VkPipelineShaderStageCreateInfo &clazzInfo) {
     auto pNameObj = (jstring) env->GetObjectField(obj, pNameField);
-    auto str = (const char *) env->GetStringUTFChars(pNameObj, nullptr);
-    auto result = strdup(str); // Allocate memory and copy the string
-    env->ReleaseStringUTFChars(pNameObj, str); // Release the local string reference
-    clazzInfo.pName = result;
+    clazzInfo.pName = awake::VulkanAccessArena::current().copyJString(env, pNameObj);
+    if (pNameObj != nullptr) {
+        env->DeleteLocalRef(pNameObj);
+    }
 }
 
 VkShaderModule

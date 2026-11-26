@@ -4,6 +4,7 @@
  *  Created by Ron June Valdoz */
 
 #include <includes/VkShaderModuleCreateInfoAccessor.h>
+#include <includes/VulkanAccessArena.h>
 
 VkShaderModuleCreateInfoAccessor::VkShaderModuleCreateInfoAccessor(JNIEnv *env, jobject obj) : env(
         env), obj(obj) {
@@ -29,21 +30,21 @@ VkShaderModuleCreateInfoAccessor::getpCode(VkShaderModuleCreateInfo &clazzInfo) 
     if (pCodeArray == nullptr) {
         clazzInfo.codeSize = 0;
         clazzInfo.pCode = nullptr;
-        env->DeleteLocalRef(pCodeArray); // release null reference
         return;
     }
     auto size = env->GetArrayLength(pCodeArray);
-    // primitive array?
-    std::vector<uint32_t> pCode(size);
-    env->GetIntArrayRegion(pCodeArray, 0, size, reinterpret_cast<jint *>(pCode.data()));
-    // processing array data
-    auto codeSize = static_cast<uint32_t>(pCode.size() * sizeof(uint32_t));
-    clazzInfo.codeSize = codeSize;
-    // Make a copy of the primitive to ensure proper memory management;
-    auto copy = new uint32_t[size];
-    std::copy(pCode.begin(), pCode.end(), copy);
+    if (size <= 0) {
+        clazzInfo.codeSize = 0;
+        clazzInfo.pCode = nullptr;
+        env->DeleteLocalRef(pCodeArray);
+        return;
+    }
+    auto count = static_cast<std::size_t>(size);
+    auto *copy = awake::VulkanAccessArena::current().allocArray<uint32_t>(count);
+    env->GetIntArrayRegion(pCodeArray, 0, size, reinterpret_cast<jint *>(copy));
+    clazzInfo.codeSize = count * sizeof(uint32_t);
     clazzInfo.pCode = copy;
-    env->DeleteLocalRef(pCodeArray); // release reference
+    env->DeleteLocalRef(pCodeArray);
 }
 
 uint32_t
