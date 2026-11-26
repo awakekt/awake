@@ -1,0 +1,1 @@
+- Add `RuntimePerfGuard` and `RuntimePerfGuardConfig` to `:awake:core:diagnostics` providing a zero-allocation rolling-quantile (`Normal` / `Slow` / `Severe`) frame-time degradation state machine with hysteresis, post-transition cooldown, exponential recovery backoff, and `forTargetFps(...)` presets.
