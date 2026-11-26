@@ -150,7 +150,7 @@ class Renderer internal constructor(
      * scene before UI (UI draws on top). Each feature owns and destroys its own pipelines --
      * see [destroy]. The depth pre-pass is not in this list: it owns its own pass, see
      * [depthPrePass]. */
-    private val renderFeatures: List<RenderFeature<VulkanRenderFrameContext>>,
+    internal val renderFeatures: List<RenderFeature<VulkanRenderFrameContext>>,
     internal val transferContext: TransferContext,
     /** The 4 UI shader pairs this renderer lazily builds pipelines from -- replaces the old
      * `uiShaders`/`uiGlyphShaders`/`uiTextureShaders`/`uiRoundedQuadShaders` flat params. */
@@ -384,6 +384,8 @@ class Renderer internal constructor(
 
     override val maskTargetBytes: Long get() = maskTarget?.allocatedBytes ?: 0L
 
+    override val sceneDepthTargetBytes: Long get() = sceneDepthTarget?.allocatedBytes ?: 0L
+
     /** The format the engine built the shadow depth pass for (#1698). */
     override val shadowDepthFormat: ShadowDepthFormat
         get() = depthTarget?.format ?: ShadowDepthFormat.Default
@@ -397,8 +399,19 @@ class Renderer internal constructor(
     /** When the shadow array is allocated and released (#1698). */
     internal val shadowResidency = ShadowArrayResidency()
 
+    /** When the camera-space scene-depth target is allocated and released back to its 1x1 stand-in. */
+    internal val sceneDepthResidency = ShadowArrayResidency()
+
+    /** When the mask target is allocated and released back to its 1x1x3 stand-in. */
+    internal val maskResidency = ShadowArrayResidency()
+
+    /** The scene-depth target's extent for the scene it is drawn over. */
+    internal val sceneDepthSizing = MaskTargetSizing()
+
     /** The mask target's edge for the scene it is drawn over (#1709): see [settleMaskTarget]. */
     internal val maskSizing = MaskTargetSizing()
+
+    internal val anyScenePipelineSamplesSceneDepth: Boolean = pipelines.anyDeclaresSceneDepth()
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary
@@ -799,8 +812,8 @@ class Renderer internal constructor(
      * The camera-space depth pass, recorded alongside [recordDepthPrePass] and under the same
      * rules: outside an active render pass, before the scene pass that samples it.
      *
-     * Not gated on the shadow flag -- that toggle is about shadows, and something reading scene
-     * depth for water or fog still needs it when shadows are off.
+     * Dynamically gated on [needsSceneDepth] so frames whose active features and pipelines do not
+     * read scene depth pay zero depth passes and zero barriers after the target initializes.
      */
     internal fun recordSceneDepthPass(
         commandBuffer: Long,
@@ -810,11 +823,17 @@ class Renderer internal constructor(
         environment: GpuEnvironmentState? = null,
     ): Boolean {
         val feature = sceneDepthPass ?: return false
-        // One "cascade": the camera's own view-projection. The pass machinery is the same, and
-        // saying so here is smaller than a second recording path that differs only in count.
-        feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, camera, environment)
-        return true
+        return if (!needsSceneDepth(environment)) {
+            feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat, clearDirty = true)
+            false
+        } else {
+            feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, camera, environment)
+            true
+        }
     }
+
+    internal fun hasEffectiveMasks(masks: List<GpuSubPass>, environment: GpuEnvironmentState): Boolean =
+        filterMasksForFrame(masks, environment).isNotEmpty()
 
     private val filteredMasks = ArrayList<GpuSubPass>(MASK_LAYER_COUNT)
 

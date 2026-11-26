@@ -163,6 +163,13 @@ class RenderPipeline(
      */
     internal var splitDrawBlockFloats: Int = UNKNOWN_DRAW_BLOCK
 
+    /**
+     * Whether this pipeline's shader explicitly declares the [BindingSemantic.SceneDepth] bind group.
+     * Distinct from [engineBoundSemantics], which can include the scene-depth set layout across all
+     * scene pipeline families on Vulkan for layout compatibility even when a shader does not sample it.
+     */
+    internal var declaresSceneDepthGroup: Boolean = false
+
     private val uniforms = uniforms
     private val framesInFlight = framesInFlight
     private val materialBindings = materialBindings

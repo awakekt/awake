@@ -15,6 +15,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.render.command.GpuDebugView
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentFeature
@@ -105,6 +106,12 @@ class StylizedWaterRenderFeature(
     override val pass = RenderPassSlot.Scene
 
     private val sun = Vec3f()
+
+    override fun needsSceneDepth(environment: GpuEnvironmentState): Boolean =
+        samplesDepth &&
+            look.enabled &&
+            environment.debugView == GpuDebugView.Off &&
+            !(look.quality == StylizedWaterQuality.Fast && fastPipeline != null)
 
     override fun recordCommands(context: RenderFrameContext): Unit = with(context) {
         if (!look.enabled || environment.debugView != GpuDebugView.Off) return

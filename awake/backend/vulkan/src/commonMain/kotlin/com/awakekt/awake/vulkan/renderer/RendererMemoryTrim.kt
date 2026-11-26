@@ -5,11 +5,14 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.renderer.RenderScale
+import com.awakekt.awake.vulkan.texture.DepthTarget
 
 /**
  * Reclaims temporary Vulkan staging buffers, retired resources, unused native-resolution swapchain
- * depth when scaled, idle transient render targets, pooled instance/UI buffers, and empty
+ * depth when scaled, idle transient render targets, scene-depth/mask targets (shrunk to dormant 1x1
+ * stand-ins until the next frame that needs them), pooled instance/UI buffers, and empty
  * `DEVICE_LOCAL` memory slabs without touching caller-owned meshes, materials, or textures.
  */
 internal fun Renderer.performTrimMemory() {
@@ -22,6 +25,8 @@ internal fun Renderer.performTrimMemory() {
     ) {
         retireSwapchainSceneFramebuffers()
     }
+    sceneDepthPassFeature?.resize(0, DepthTarget.DORMANT_SIZE, dormantLayers = 1)
+    maskPass?.resize(0, DepthTarget.DORMANT_SIZE, dormantLayers = MASK_TARGET_LAYER_COUNT)
     deferredResourceReaper.destroyAll()
     imagePassExecutor.releaseTransientTargets()
     transferContext.uploadBatcher.trimIdleChunks()

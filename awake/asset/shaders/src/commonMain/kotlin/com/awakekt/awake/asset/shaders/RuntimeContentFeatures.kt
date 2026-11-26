@@ -228,6 +228,9 @@ private class ContentFeaturePassGate(
     override fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean =
         environment.contentFeatures && feature.needsCoveringExemptMask(environment)
 
+    override fun needsSceneDepth(environment: GpuEnvironmentState): Boolean =
+        environment.contentFeatures && feature.needsSceneDepth(environment)
+
     override fun recordCommands(context: RenderFrameContext) {
         if (context.environment.contentFeatures) feature.recordCommands(context)
     }
@@ -262,6 +265,13 @@ class AttachedContentSlot : RenderFeature<RenderFrameContext> {
     override fun needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean {
         for (index in features.indices) {
             if (features[index].needsCoveringExemptMask(environment)) return true
+        }
+        return false
+    }
+
+    override fun needsSceneDepth(environment: GpuEnvironmentState): Boolean {
+        for (index in features.indices) {
+            if (features[index].needsSceneDepth(environment)) return true
         }
         return false
     }

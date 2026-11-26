@@ -7,9 +7,7 @@ package com.awakekt.awake.webgpu.renderer
 
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
-import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.PreparedDraw
-import com.awakekt.awake.render.command.allDraws
 import com.awakekt.awake.render.command.drawsForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.recordPassFeatures
@@ -50,7 +48,7 @@ internal class RendererGpuPassExecutor(
             val primary = PrimaryPipelineBinding(activeRenderPipeline.handle, useWireframe)
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
             settleShadowArray(input)
-            settleMaskTarget()
+            settleMaskTarget(input)
             val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
             val sceneInput = if (scaled == null) input else sceneScale.sceneInput(input, scaled, outputWidth, outputHeight)
             val sorted = input.drawsForRecording()
@@ -122,7 +120,7 @@ internal class RendererGpuPassExecutor(
         if (renderer.graphicsDevice.isDeviceLost) return
         check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
         renderer.ensureShadowLayers(input)
-        renderer.ensureMaskTarget(target.width, target.height)
+        renderer.ensureMaskTarget(target.width, target.height, input)
         renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, input)
         renderer.flushUniformUploads()
         renderer.imagePassExecutor.beginPass()
@@ -148,15 +146,7 @@ internal class RendererGpuPassExecutor(
         view: Any,
     ) {
         renderer.depthPrePass?.recordCommands(encoder, input.prePasses, input.environment, view)
-        renderer.sceneDepthPass?.recordCommands(
-            encoder,
-            sorted.allDraws,
-            GpuShadowCascadeData(
-                viewProjections = listOf(input.viewProjection),
-                splitDistances = floatArrayOf(Float.MAX_VALUE),
-            ),
-            input.environment,
-        )
+        renderer.recordSceneDepthPass(encoder, input, sorted)
         renderer.recordMaskPass(encoder, input)
     }
 

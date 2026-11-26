@@ -169,6 +169,8 @@ class RendererHeadlessSceneDepthTest {
     ) : RenderFeature<RenderFrameContext> {
         override val pass = RenderPassSlot.Scene
 
+        override fun needsSceneDepth(environment: com.awakekt.awake.render.command.GpuEnvironmentState): Boolean = true
+
         override fun recordCommands(context: RenderFrameContext) {
             val block = checkNotNull(pipeline.uniformBlock) {
                 "The probe pipeline was built with non-null uniforms, so a block must exist."

@@ -13,6 +13,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDebugView
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentFeature
@@ -74,6 +75,9 @@ class SunFlareRenderFeature(
     private val sun = Vec3f()
     private val geometryBuffer = FloatArray(MAX_SUN_FLARE_ELEMENTS * 4)
     private val colorBuffer = FloatArray(MAX_SUN_FLARE_ELEMENTS * 4)
+
+    override fun needsSceneDepth(environment: GpuEnvironmentState): Boolean =
+        occludeByDepth && canDraw(environment)
 
     override fun recordCommands(context: RenderFrameContext): Unit = with(context) {
         if (!canDraw(environment)) return

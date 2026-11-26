@@ -478,6 +478,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getOutputWidth ()I
 	public final fun getRedrawsStillFrames ()Z
 	public fun getRenderScale ()F
+	public fun getSceneDepthTargetBytes ()J
 	public fun getSceneUpscaling ()Lcom/awakekt/awake/render/renderer/SceneUpscaling;
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;

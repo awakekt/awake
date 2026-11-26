@@ -23,6 +23,7 @@ public final class com/awakekt/awake/asset/shaders/AttachedContentSlot : com/awa
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun needsCoveringExemptMask (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
+	public fun needsSceneDepth (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Z
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }

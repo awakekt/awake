@@ -8,36 +8,107 @@ package com.awakekt.awake.webgpu.renderer
 import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
+import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.command.SortedDraws
+import com.awakekt.awake.render.command.allDraws
 import com.awakekt.awake.render.passes.maskExtentHeight
 import com.awakekt.awake.render.passes.maskExtentWidth
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.EffectQuality
+import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.resetLayerState
 import com.awakekt.awake.webgpu.texture.DepthTarget
 import io.ygdrasil.webgpu.GPUCommandEncoder
+import io.ygdrasil.webgpu.GPURenderPipeline
 
 /**
- * Sizes the scene-depth and mask targets to the rectangular extent of the scene a presented frame
- * draws, [Renderer.surfaceWidth] by [Renderer.surfaceHeight] after the render scale, before the
- * frame is recorded (#1709). Sizing both axes independently in lockstep keeps fog's
- * mask-vs-scene-depth silhouette comparison aligned at one texel grid while cutting widescreen
- * frames (e.g. 1093x480 -> 1152x512) by 2.25x compared to a square target.
- * See [com.awakekt.awake.render.passes.MaskTargetSizing] for when they grow and shrink.
+ * Settles the scene-depth and mask targets before a presented frame's [input] is recorded (#1709):
+ * each stays at a dormant 1x1 stand-in until a frame actually needs it, grows immediately to the
+ * rectangular scene extent (`surfaceWidth x surfaceHeight`) on demand, and releases back to 1x1
+ * once a residency window passes with no active consumer.
  */
-internal fun Renderer.settleMaskTarget() {
-    val current = currentScreenDepthTarget() ?: return
-    val extent = maskSizing.presentedExtent(current.width, current.height, surfaceWidth, surfaceHeight)
-    resizeScreenDepthTargets(maskExtentWidth(extent), maskExtentHeight(extent))
+internal fun Renderer.settleMaskTarget(input: GpuPassInput) {
+    sceneDepthPass?.let { pass ->
+        val needed = if (needsSceneDepth(input.environment)) 1 else 0
+        val hold = sceneDepthResidency.frame(needed, if (pass.depthTarget.resident) 1 else 0)
+        val extent = if (hold > 0) {
+            sceneDepthSizing.presentedExtent(pass.depthTarget.width, pass.depthTarget.height, surfaceWidth, surfaceHeight)
+        } else {
+            0L
+        }
+        applyDepthTargetResize(pass, 1, BindingSemantic.SceneDepth, bufferPools.sceneDepthBindGroupSlots, hold, extent)
+    }
+    maskPass?.let { pass ->
+        val needed = if (filterMasksForFrame(input.maskPasses, input.environment).isNotEmpty()) 1 else 0
+        val hold = maskResidency.frame(needed, if (pass.depthTarget.resident) 1 else 0)
+        val extent = if (hold > 0) {
+            maskSizing.presentedExtent(pass.depthTarget.width, pass.depthTarget.height, surfaceWidth, surfaceHeight)
+        } else {
+            0L
+        }
+        if (applyDepthTargetResize(pass, MASK_TARGET_LAYER_COUNT, BindingSemantic.MaskDepth, bufferPools.maskBindGroupSlots, hold, extent)) {
+            maskCleared = false
+        }
+    }
 }
 
-/** Grows the scene-depth and mask targets for an offscreen render [width] x [height] pixels, never shrinking them. */
-internal fun Renderer.ensureMaskTarget(width: Int, height: Int) {
-    val current = currentScreenDepthTarget() ?: return
-    val extent = maskSizing.offscreenExtent(current.width, current.height, width, height)
-    resizeScreenDepthTargets(maskExtentWidth(extent), maskExtentHeight(extent))
+/**
+ * Grows the scene-depth and/or mask targets for an offscreen render of [input] at
+ * [width] x [height] pixels when needed, never shrinking either target.
+ */
+internal fun Renderer.ensureMaskTarget(width: Int, height: Int, input: GpuPassInput) {
+    sceneDepthPass?.let { pass ->
+        val needed = if (needsSceneDepth(input.environment)) 1 else 0
+        val hold = sceneDepthResidency.layersFor(needed, if (pass.depthTarget.resident) 1 else 0)
+        val extent = if (hold > 0) {
+            sceneDepthSizing.offscreenExtent(pass.depthTarget.width, pass.depthTarget.height, width, height)
+        } else {
+            0L
+        }
+        applyDepthTargetResize(pass, 1, BindingSemantic.SceneDepth, bufferPools.sceneDepthBindGroupSlots, hold, extent)
+    }
+    maskPass?.let { pass ->
+        val needed = if (filterMasksForFrame(input.maskPasses, input.environment).isNotEmpty()) 1 else 0
+        val hold = maskResidency.layersFor(needed, if (pass.depthTarget.resident) 1 else 0)
+        val extent = if (hold > 0) {
+            maskSizing.offscreenExtent(pass.depthTarget.width, pass.depthTarget.height, width, height)
+        } else {
+            0L
+        }
+        if (applyDepthTargetResize(pass, MASK_TARGET_LAYER_COUNT, BindingSemantic.MaskDepth, bufferPools.maskBindGroupSlots, hold, extent)) {
+            maskCleared = false
+        }
+    }
+}
+
+/**
+ * Records the camera-space scene-depth pre-pass only when an active feature or scene pipeline
+ * reads scene depth; otherwise initializes/clears any dirty layer once so idle frames pay zero
+ * render passes.
+ */
+internal fun Renderer.recordSceneDepthPass(
+    encoder: GPUCommandEncoder,
+    input: GpuPassInput,
+    sorted: SortedDraws<out PreparedDraw>,
+) {
+    val pass = sceneDepthPass ?: return
+    if (!needsSceneDepth(input.environment)) {
+        pass.clearLayers(encoder, onlyDirty = true)
+    } else {
+        pass.recordCommands(
+            encoder,
+            sorted.allDraws,
+            GpuShadowCascadeData(
+                viewProjections = listOf(input.viewProjection),
+                splitDistances = floatArrayOf(Float.MAX_VALUE),
+            ),
+            input.environment,
+        )
+    }
 }
 
 /**
@@ -59,6 +130,16 @@ internal fun Renderer.recordMaskPass(encoder: GPUCommandEncoder, input: GpuPassI
     }
 }
 
+internal fun Renderer.needsSceneDepth(environment: GpuEnvironmentState): Boolean {
+    var needed = anyScenePipelineSamplesSceneDepth
+    var i = 0
+    while (!needed && i < renderFeatures.size) {
+        needed = renderFeatures[i].needsSceneDepth(environment)
+        i += 1
+    }
+    return needed
+}
+
 private fun Renderer.needsCoveringExemptMask(environment: GpuEnvironmentState): Boolean {
     for (i in renderFeatures.indices) {
         if (renderFeatures[i].needsCoveringExemptMask(environment)) return true
@@ -72,7 +153,10 @@ private fun Renderer.filterMasksForFrame(masks: List<GpuSubPass>, environment: G
     if (masks.isEmpty() || (!dropExempt && !dropOutlines)) return masks
     var skipped = 0
     for (i in masks.indices) {
-        if (shouldSkipMaskLayer(masks[i].targetLayer, dropExempt, dropOutlines)) skipped++
+        val layer = masks[i].targetLayer
+        val skipExempt = dropExempt && layer == COVERING_EXEMPT_MASK_LAYER
+        val skipOutline = dropOutlines && layer < MASK_LAYER_COUNT
+        if (skipExempt || skipOutline) skipped++
     }
     return when {
         skipped == 0 -> masks
@@ -80,9 +164,6 @@ private fun Renderer.filterMasksForFrame(masks: List<GpuSubPass>, environment: G
         else -> collectKeptMasks(masks, dropExempt, dropOutlines)
     }
 }
-
-private fun shouldSkipMaskLayer(layer: Int, dropExempt: Boolean, dropOutlines: Boolean): Boolean =
-    (dropExempt && layer == COVERING_EXEMPT_MASK_LAYER) || (dropOutlines && layer < MASK_LAYER_COUNT)
 
 private fun Renderer.collectKeptMasks(
     masks: List<GpuSubPass>,
@@ -92,38 +173,38 @@ private fun Renderer.collectKeptMasks(
     filteredMasks.clear()
     for (i in masks.indices) {
         val subPass = masks[i]
-        if (!shouldSkipMaskLayer(subPass.targetLayer, dropExempt, dropOutlines)) filteredMasks.add(subPass)
+        val layer = subPass.targetLayer
+        val skipExempt = dropExempt && layer == COVERING_EXEMPT_MASK_LAYER
+        val skipOutline = dropOutlines && layer < MASK_LAYER_COUNT
+        if (!skipExempt && !skipOutline) {
+            filteredMasks.add(subPass)
+        }
     }
     return filteredMasks
 }
 
-private fun Renderer.currentScreenDepthTarget(): DepthTarget? =
-    sceneDepthPass?.depthTarget ?: maskPass?.depthTarget
-
-/**
- * Reallocates the scene-depth and mask targets at [width] x [height] when either differs. Old
- * textures are closed at once, as WebGPU lets submitted work finish; cached depth bind groups are
- * rebuilt over the new views, as the shadow array rebuilds its groups.
- */
-private fun Renderer.resizeScreenDepthTargets(width: Int, height: Int) {
-    val sceneTarget = sceneDepthPass?.depthTarget
-    if (sceneTarget != null && (sceneTarget.width != width || sceneTarget.height != height)) {
-        sceneTarget.reallocate(1, width, height)
-        sceneDepthPass?.resetLayerState()
-        rebuildDepthBindGroups(BindingSemantic.SceneDepth, bufferPools.sceneDepthBindGroupSlots, sceneTarget)
-    }
-    val maskTarget = maskPass?.depthTarget
-    if (maskTarget != null && (maskTarget.width != width || maskTarget.height != height)) {
-        maskTarget.reallocate(MASK_TARGET_LAYER_COUNT, width, height)
-        maskPass?.resetLayerState()
-        maskCleared = false
-        rebuildDepthBindGroups(BindingSemantic.MaskDepth, bufferPools.maskBindGroupSlots, maskTarget)
-    }
+@Suppress("LongParameterList")
+private fun Renderer.applyDepthTargetResize(
+    pass: DepthPrePassFeature,
+    layers: Int,
+    semantic: BindingSemantic,
+    slots: MutableMap<GPURenderPipeline, Int>,
+    hold: Int,
+    extent: Long,
+): Boolean {
+    val target = pass.depthTarget
+    val width = if (hold == 0) DepthTarget.DORMANT_SIZE else maskExtentWidth(extent)
+    val height = if (hold == 0) DepthTarget.DORMANT_SIZE else maskExtentHeight(extent)
+    if (target.width == width && target.height == height) return false
+    target.reallocate(layers, width, height)
+    pass.resetLayerState()
+    rebuildDepthBindGroups(semantic, slots, target)
+    return true
 }
 
 private fun Renderer.rebuildDepthBindGroups(
     semantic: BindingSemantic,
-    slots: Map<io.ygdrasil.webgpu.GPURenderPipeline, Int>,
+    slots: Map<GPURenderPipeline, Int>,
     target: DepthTarget,
 ) {
     val groups = bufferPools.shadowBindGroups[semantic].orEmpty()

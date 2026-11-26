@@ -35,7 +35,7 @@ internal class RendererGpuPassExecutor(
         // without a scene, never got there (#1687). Free when nothing is outstanding or it already waited.
         renderer.awaitSubmittedOffscreenCommandsFor(currentFrame)
         renderer.settleShadowArray(input)
-        renderer.settleMaskTarget()
+        renderer.settleMaskTarget(input)
         renderer.graphicsDevice.frameUniforms.write(currentFrame, input)
         val depthDraws = renderer.prepareDepthDraws(input)
         Vulkan.vkResetCommandBuffer(renderer.commandBuffers[currentFrame], 0)
@@ -66,7 +66,7 @@ internal class RendererGpuPassExecutor(
 private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput): (Long) -> Unit {
     ensureShadowLayers(input)
     val offscreen = target as OffscreenRenderTarget
-    ensureMaskTarget(offscreen.width, offscreen.height)
+    ensureMaskTarget(offscreen.width, offscreen.height, input)
     val sceneRect = input.viewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
     check(input.resolvedPath) { "Vulkan requires a resolved GpuPassInput." }
     val sorted = input.drawsForRecording()
@@ -127,7 +127,9 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
 }
 
 private fun Renderer.prepareDepthDraws(input: GpuPassInput): List<PreparedDraw> {
-    if (input.prePasses.isEmpty() && sceneDepthTarget == null) return emptyList()
+    val shadowActive = input.environment.shadowsEnabled && input.prePasses.isNotEmpty()
+    val sceneDepthActive = sceneDepthTarget != null && needsSceneDepth(input.environment)
+    if (!shadowActive && !sceneDepthActive) return emptyList()
     return input.resolvedDraws
 }
 

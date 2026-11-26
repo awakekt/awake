@@ -102,7 +102,12 @@ class VulkanPipelineFactory(
             multisample = rasterState?.copy(
                 alphaToCoverageEnabled = rasterState.count > 1 && spec.multisample.alphaToCoverageEnabled,
             ) ?: spec.multisample,
-        ).also { if (spec.bindingsMetadataAvailable) it.splitDrawBlockFloats = spec.splitDrawBlockFloats() }
+        ).also {
+            if (spec.bindingsMetadataAvailable) {
+                it.splitDrawBlockFloats = spec.splitDrawBlockFloats()
+                it.declaresSceneDepthGroup = spec.bindingLayout.slot(BindingSemantic.SceneDepth) in spec.bindingsByGroup
+            }
+        }
     }
 
     /** The draw block's floats when [this] shader reads the frame block beside it, else 0. */

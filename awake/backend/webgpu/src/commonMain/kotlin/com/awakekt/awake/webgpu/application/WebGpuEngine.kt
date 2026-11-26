@@ -215,8 +215,9 @@ open class WebGpuEngine(
                 plan = plan,
                 target = com.awakekt.awake.webgpu.texture.DepthTarget(
                     graphicsDevice,
-                    // The smallest edge: the first frame sizes it to the scene in lockstep with the mask (#1709).
-                    size = com.awakekt.awake.render.passes.MASK_TARGET_MIN_SIZE,
+                    // Dormant 1x1 stand-in until a frame's active feature or shader needs scene depth.
+                    size = com.awakekt.awake.webgpu.texture.DepthTarget.DORMANT_SIZE,
+                    format = shadowFormat,
                 ),
                 primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
@@ -226,6 +227,7 @@ open class WebGpuEngine(
                     fragmentEntryPoint = sceneDepthShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
                     bindingsByGroup = sceneDepthShaders.webGpu.bindingsByGroup,
                     bindingsMetadataAvailable = sceneDepthShaders.webGpu.bindingsMetadataAvailable,
+                    depthFormat = com.awakekt.awake.webgpu.texture.webGpuDepthFormat(shadowFormat),
                 ),
                 primaryFormat = vertexFormat,
                 cascadeCount = 1,
@@ -241,10 +243,11 @@ open class WebGpuEngine(
                 plan = plan,
                 target = com.awakekt.awake.webgpu.texture.DepthTarget(
                     graphicsDevice,
-                    // The smallest edge: the first frame sizes it to the scene (#1709).
-                    size = com.awakekt.awake.render.passes.MASK_TARGET_MIN_SIZE,
+                    // Dormant 1x1x3 stand-in until a frame draws an active mask layer.
+                    size = com.awakekt.awake.webgpu.texture.DepthTarget.DORMANT_SIZE,
                     layers = MASK_TARGET_LAYER_COUNT,
                     arrayed = true,
+                    format = shadowFormat,
                 ),
                 primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
@@ -254,6 +257,7 @@ open class WebGpuEngine(
                     fragmentEntryPoint = maskShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
                     bindingsByGroup = maskShaders.webGpu.bindingsByGroup,
                     bindingsMetadataAvailable = maskShaders.webGpu.bindingsMetadataAvailable,
+                    depthFormat = com.awakekt.awake.webgpu.texture.webGpuDepthFormat(shadowFormat),
                 ),
                 primaryFormat = vertexFormat,
                 cascadeCount = MASK_TARGET_LAYER_COUNT,

@@ -52,7 +52,7 @@ internal fun Renderer.recordCommandBuffer(
     prepareResources(frameIndex, commandBuffer)
     recordDepthPrePass(commandBuffer, frameIndex, drawCalls, cascades, true)
     // The camera's own depth, expressed as the one "cascade" this frame renders from the eye.
-    recordSceneDepthPass(commandBuffer, frameIndex, drawCalls, cameraDepthPass(viewProjection))
+    recordSceneDepthPass(commandBuffer, frameIndex, drawCalls, cameraDepthPass(viewProjection), environment)
     val outputWidth = swapchainManager.extent.width
     val outputHeight = swapchainManager.extent.height
     val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)

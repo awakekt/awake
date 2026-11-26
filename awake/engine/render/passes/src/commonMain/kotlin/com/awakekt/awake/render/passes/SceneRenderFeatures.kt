@@ -136,9 +136,21 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
             anyNeedsCoveringExemptMask(afterOpaque, environment) ||
             anyNeedsCoveringExemptMask(beforeTransparent, environment)
 
+    override fun needsSceneDepth(environment: GpuEnvironmentState): Boolean =
+        anyNeedsSceneDepth(opaqueGeometry, environment) ||
+            anyNeedsSceneDepth(afterOpaque, environment) ||
+            anyNeedsSceneDepth(beforeTransparent, environment)
+
     private fun anyNeedsCoveringExemptMask(features: List<RenderFeature<C>>, environment: GpuEnvironmentState): Boolean {
         for (i in features.indices) {
             if (features[i].needsCoveringExemptMask(environment)) return true
+        }
+        return false
+    }
+
+    private fun anyNeedsSceneDepth(features: List<RenderFeature<C>>, environment: GpuEnvironmentState): Boolean {
+        for (i in features.indices) {
+            if (features[i].needsSceneDepth(environment)) return true
         }
         return false
     }
