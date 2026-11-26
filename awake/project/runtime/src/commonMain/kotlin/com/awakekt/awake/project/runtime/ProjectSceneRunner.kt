@@ -390,23 +390,24 @@ internal class ProjectSceneRunner(
 
     /**
      * Gives the nodes spawned since the last frame their models, once those have loaded. A failure is
-     * reported once and the attaching is skipped until the next scene, as a system that throws is; with no
-     * handler registered it is thrown.
+     * reported once per scene (avoiding error-handler storms) while still allowing subsequent frames to
+     * attach newly loaded models; with no handler registered it is thrown.
      */
     // TooGenericExceptionCaught: whatever attaching a model throws must not end the frame systems.
     @Suppress("TooGenericExceptionCaught")
     private fun attachSpawnedModels() {
-        if (spawnedModelsFailed) return
         try {
             project.spawnedModels.attachLoaded(runtime)
         } catch (failure: Exception) {
-            // Before the handler runs, so a handler that steps the frame again does not report it twice.
-            spawnedModelsFailed = true
-            if (!runtime.reportError(AppErrorSource.System, failure, subject = SPAWNED_MODELS)) {
-                spawnedModelsFailed = false
-                throw failure
+            if (!spawnedModelsFailed) {
+                // Before the handler runs, so a handler that steps the frame again does not report it twice.
+                spawnedModelsFailed = true
+                if (!runtime.reportError(AppErrorSource.System, failure, subject = SPAWNED_MODELS)) {
+                    spawnedModelsFailed = false
+                    throw failure
+                }
             }
-            log.error(failure) { "Attaching spawned models failed and is skipped until the next scene: ${failure.message}" }
+            log.error(failure) { "Attaching spawned models failed: ${failure.message}" }
         }
     }
 

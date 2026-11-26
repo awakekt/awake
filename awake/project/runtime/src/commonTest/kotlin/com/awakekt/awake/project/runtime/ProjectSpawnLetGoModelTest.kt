@@ -67,6 +67,19 @@ class ProjectSpawnLetGoModelTest {
         game.dispose()
     }
 
+    @Test
+    fun aBrokenSpawnedModelDoesNotBlockSubsequentModelsFromAttaching() = runTest {
+        val (project, game, runtime) = play()
+
+        val broken = runtime.spawn(project, brokenModel())
+        val good = runtime.spawn(project, lantern())
+        game.updateUntil { runtime.world.get<MeshRenderer>(good.root) != null }
+
+        assertNull(runtime.world.get<MeshRenderer>(broken.root), "missing model fails cleanly without crashing")
+        assertNotNull(runtime.world.get<MeshRenderer>(good.root), "subsequent healthy models still attach and draw")
+        game.dispose()
+    }
+
     private suspend fun play(): Triple<LoadedProject, AwakeAppLifecycle, SceneAppLifecycleRuntime> {
         val files = mapOf("awake.project.json" to MANIFEST, "scenes/main.scene.json" to SCENE, HELD to triangleGltf())
         val project = loadProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } })
@@ -87,6 +100,8 @@ class ProjectSpawnLetGoModelTest {
     }
 
     private fun lantern(): SceneNode = SceneLoader.decode(NODE).nodes.single()
+
+    private fun brokenModel(): SceneNode = SceneLoader.decode(BROKEN_NODE).nodes.single()
 
     private class TestRenderer :
         NoopRenderer(),
@@ -134,9 +149,15 @@ class ProjectSpawnLetGoModelTest {
         const val HELD = "models/lantern.gltf"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
         const val SCENE = """{ "version": 1, "name": "harbor", "nodes": [ { "name": "Dock" } ] }"""
+        const val BROKEN = "models/missing.gltf"
         const val NODE = """
 { "version": 1, "nodes": [
   { "name": "Lantern", "components": [ { "component": "meshRenderer", "mesh": "$HELD", "material": "$MATERIAL" } ] }
+] }
+"""
+        const val BROKEN_NODE = """
+{ "version": 1, "nodes": [
+  { "name": "Broken", "components": [ { "component": "meshRenderer", "mesh": "$BROKEN", "material": "$MATERIAL" } ] }
 ] }
 """
     }

@@ -119,7 +119,7 @@ internal class SpawnedModels(
         // `loading -= path` has changed the map throws ConcurrentModificationException.
         for ((path, load) in loading.toList()) {
             if (attachedThisFrame >= maxAttachesPerFrame) break
-            if (load.poll()) {
+            if (pollLoad(runtime, path, load)) {
                 loading -= path
                 load.close()
                 val waiters = waitingByPath.remove(path).orEmpty()
@@ -129,6 +129,22 @@ internal class SpawnedModels(
                 }
             }
         }
+    }
+
+    // TooGenericExceptionCaught: one broken model load must not abort polling or attaching other models.
+    @Suppress("TooGenericExceptionCaught")
+    private fun pollLoad(runtime: SceneAppLifecycleRuntime, path: String, load: SceneMeshLoad): Boolean = try {
+        load.poll()
+    } catch (failure: Exception) {
+        loading -= path
+        try {
+            load.close()
+        } catch (_: Exception) {
+            // Ignore secondary close errors after poll already failed.
+        }
+        val waiters = waitingByPath.remove(path).orEmpty()
+        giveUp(runtime, path, waiters, failure)
+        false
     }
 
     override fun close() {
@@ -153,7 +169,13 @@ internal class SpawnedModels(
             }
         }
         val anyAttached = attached.isNotEmpty()
-        if (anyAttached) runtime.startSkinnedAnimations(models, attached)
+        if (anyAttached) {
+            try {
+                runtime.startSkinnedAnimations(models, attached)
+            } catch (failure: Exception) {
+                log.error(failure) { "Failed to start skinned animations for $path: ${failure.message}" }
+            }
+        }
         return anyAttached
     }
 
