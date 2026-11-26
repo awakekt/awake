@@ -10,13 +10,14 @@ name: Maven fallback
 # - Cloudflare R2 syncs additively (without deleting older versions) so consumers pinned to older
 #   Core or Vulkan releases never hit 404 when newer releases rotate out of GitHub Pages' 1 GB cap.
 #
-# It runs once a Publish run finishes, from the default branch: workflow_run always does, and the
-# github-pages environment deploys only from there, whatever tag the release ran on. A Publish run
-# Central refused still counts; its bundle is attached whenever it was built. A release-cut pull
-# request's rehearsal of Publish (a `pull_request` run) attaches nothing, so it starts nothing here.
+# It runs once a Publish or Prebuilt players run finishes, from the default branch: workflow_run
+# always does, and the github-pages environment deploys only from there, whatever tag the release
+# ran on. A Publish run Central refused still counts; its bundle is attached whenever it was built.
+# A release-cut pull request's rehearsal of Publish (a `pull_request` run) attaches nothing, so it
+# starts nothing here.
 on:
   workflow_run:
-    workflows: [Publish]
+    workflows: [Publish, Prebuilt players]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -35,14 +36,13 @@ permissions:
 
 # What the GitHub Pages site keeps, in one place. A deploy publishes the site whole, replacing the
 # one before, so these decide what stays served on awakekt.github.io/awake. GitHub Pages caps a
-# site at 1 GB. After bundle trimming, each Core release is ~75 MB unpacked (~91 MB on disk) and
-# each Vulkan release ~50 MB unpacked (~52 MB on disk): 3 Core + 3 Vulkan + 42 MB partial Core +
-# wgpu4k measured 501 MB total (`du -sm`, run 45509264986). Keeping 6 Core + 4 Vulkan + wgpu4k fits
-# around ~770 MB on disk — safely below ASSEMBLE_LIMIT_MB (900 MB) and SITE_LIMIT_MB (950 MB) while
-# keeping consumers several releases behind working during Central quota windows.
+# site at 1 GB. After bundle trimming, each Core release is ~69-75 MB unpacked, each Vulkan release
+# ~50 MB unpacked, and each prebuilt web-player.zip ~20 MB: keeping 5 Core + 4 Vulkan + wgpu4k +
+# 3 prebuilt web players stays safely below ASSEMBLE_LIMIT_MB (900 MB) and SITE_LIMIT_MB (950 MB).
 env:
-  CORE_RELEASES: 6
+  CORE_RELEASES: 5
   VULKAN_RELEASES: 4
+  WEB_PLAYER_RELEASES: 3
   ASSEMBLE_LIMIT_MB: 900
   SITE_LIMIT_MB: 950
   R2_BUCKET: awake-maven
@@ -54,7 +54,8 @@ jobs:
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||
-        (github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.head_branch, 'v'))
+        (github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.head_branch, 'v')) ||
+        (github.event.workflow_run.name == 'Prebuilt players' && github.event.workflow_run.conclusion == 'success')
       }}
     runs-on: ubuntu-latest
     permissions:
@@ -104,6 +105,24 @@ jobs:
           done
           # Fails the deploy, and so keeps the live site, if the site would lose a pinned build.
           scripts/check-ygdrasil-mirror.sh build/maven-fallback
+
+      # Prebuilt WebGPU players for browser Awake Studio exports (GitHub Pages sends CORS headers,
+      # unlike GitHub Release asset redirects). Served at https://awakekt.github.io/awake/player/<version>/web-player.zip.
+      - name: Add the prebuilt web players
+        if: steps.bundles.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tags="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate \
+            --jq '.[] | select((.draft | not) and any(.assets[]?; .name == "web-player.zip")) | .tag_name' \
+            | grep -E '^v[0-9]' | head -n "$WEB_PLAYER_RELEASES" || true)"
+          for tag in $tags; do
+            version="${tag#v}"
+            dest="build/maven-fallback/player/$version"
+            mkdir -p "$dest"
+            gh release download "$tag" --pattern 'web-player.zip' --dir "$dest" --clobber
+            echo "Serving prebuilt web player for $tag ($(du -sh "$dest/web-player.zip" | cut -f 1))"
+          done
 
       - name: Check the site's size
         if: steps.bundles.outputs.count != '0'
@@ -156,6 +175,19 @@ jobs:
             echo "$missing"
             exit 1
           fi
+          for zip in build/maven-fallback/player/*/web-player.zip; do
+            [ -e "$zip" ] || continue
+            rel="${zip#build/maven-fallback/}"
+            ok=""
+            for attempt in 1 2 3 4 5; do
+              if curl -fsSI -o /dev/null "${{ steps.deploy.outputs.page_url }}${rel}"; then ok=1; break; fi
+              sleep "$attempt"
+            done
+            if [ -z "$ok" ]; then
+              echo "::error::The deployed site does not serve $rel"
+              exit 1
+            fi
+          done
 
       # Additive mirror into Cloudflare R2 (https://maven.awakekt.com/): never deletes older versions,
       # so consumers pinned to older releases never break when GitHub Pages rotates past its 1 GB cap.
@@ -182,6 +214,9 @@ jobs:
               [ -e "$zip" ] || continue
               unzip -q -o "$zip" -d build/maven-r2
             done
+            if [ -d build/maven-fallback/player ]; then
+              cp -R build/maven-fallback/player build/maven-r2/player
+            fi
             r2_src="build/maven-r2"
           fi
 
