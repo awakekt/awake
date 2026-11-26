@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.78.1] - 2026-11-26
+
+### Fixed
+
+- **glTF texture-decode fallback and spawned-model error isolation.** `GltfAssetResolver` now falls back to a plain untextured material matching the preloaded mesh's vertex format when `preloadMaterials` fails after geometry preloads (instead of returning `null` and throwing on spawn), `SpawnedModels` isolates per-path `poll()` and skinned-animation failures, and `ProjectSceneRunner.attachSpawnedModels` reports an error once per scene without permanently disabling model attachment for subsequent frames.
+Raised Karma `browserNoActivityTimeout` (180 s) and `browserDisconnectTimeout` (60 s) in `com.awakekt.awake.plugin.browser-tests` above Mocha's 120 s timeout so heavy `wasmJsBrowserTest` suites no longer disconnect at Karma's 30 s default on busy CI runners.
+
 ## [0.78.0] - 2026-11-25
 
 ### Changed

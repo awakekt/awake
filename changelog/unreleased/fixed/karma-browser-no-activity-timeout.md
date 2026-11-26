@@ -1,1 +1,0 @@
-Raised Karma `browserNoActivityTimeout` (180 s) and `browserDisconnectTimeout` (60 s) in `com.awakekt.awake.plugin.browser-tests` above Mocha's 120 s timeout so heavy `wasmJsBrowserTest` suites no longer disconnect at Karma's 30 s default on busy CI runners.
