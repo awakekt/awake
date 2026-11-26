@@ -337,22 +337,29 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         blendMode: BlendMode = BlendMode.SourceOver,
         repeatX: Float = 1f,
         repeatY: Float = 1f,
+        edgeFade: com.awakekt.awake.core.graphics2d.EdgeFade? = null,
     ) {
         if (w <= 0f || h <= 0f) return
         val x0 = max(x, clipX0).toInt().coerceIn(0, width)
         val y0 = max(y, clipY0).toInt().coerceIn(0, height)
         val x1 = min(x + w, clipX1).toInt().coerceIn(0, width)
         val y1 = min(y + h, clipY1).toInt().coerceIn(0, height)
+        val activeFade = edgeFade?.takeUnless { it.isNone }
         for (py in y0 until y1) {
             for (px in x0 until x1) {
                 if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
-                // A repeating region wraps where the quad's fraction, counted in repeats, does: as the UI texture shader does.
-                val unwrappedU = (px + 0.5f - x) / w * repeatX
-                val unwrappedV = (py + 0.5f - y) / h * repeatY
-                val u = if (repeatX == 1f) unwrappedU else unwrappedU - floor(unwrappedU)
-                val v = if (repeatY == 1f) unwrappedV else unwrappedV - floor(unwrappedV)
-                val sampled = sampleImage(image, region, tint, alpha, u, v, premultiplied)
-                blendWithMode(px, py, sampled, blendMode)
+                val localU = (px + 0.5f - x) / w
+                val localV = (py + 0.5f - y) / h
+                val fadeAlpha = if (activeFade != null) alpha * activeFade.alphaAt(localU, localV) else alpha
+                if (fadeAlpha > 0f) {
+                    // A repeating region wraps where the quad's fraction, counted in repeats, does: as the UI texture shader does.
+                    val unwrappedU = localU * repeatX
+                    val unwrappedV = localV * repeatY
+                    val u = if (repeatX == 1f) unwrappedU else unwrappedU - floor(unwrappedU)
+                    val v = if (repeatY == 1f) unwrappedV else unwrappedV - floor(unwrappedV)
+                    val sampled = sampleImage(image, region, tint, fadeAlpha, u, v, premultiplied)
+                    blendWithMode(px, py, sampled, blendMode)
+                }
             }
         }
     }
@@ -379,9 +386,10 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         blendMode: BlendMode = BlendMode.SourceOver,
         repeatX: Float = 1f,
         repeatY: Float = 1f,
+        edgeFade: com.awakekt.awake.core.graphics2d.EdgeFade? = null,
     ) {
         if (rotationDegrees == 0f) {
-            fillImage(x, y, w, h, image, alpha, region, tint, premultiplied, blendMode, repeatX, repeatY)
+            fillImage(x, y, w, h, image, alpha, region, tint, premultiplied, blendMode, repeatX, repeatY, edgeFade)
             return
         }
         if (w <= 0f || h <= 0f) return
@@ -396,12 +404,18 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         val y0 = max(centerY - half, clipY0).toInt().coerceIn(0, height)
         val x1 = min(centerX + half, clipX1).toInt().coerceIn(0, width)
         val y1 = min(centerY + half, clipY1).toInt().coerceIn(0, height)
+        val activeFade = edgeFade?.takeUnless { it.isNone }
         for (py in y0 until y1) {
             for (px in x0 until x1) {
                 val local = unrotatedSample(px, py, centerX, centerY, cosine, sine, w, h)
                 if (!local.isWithin(w, h) || !passesPathClips(px + 0.5f, py + 0.5f)) continue
-                val sampled = sampleImage(image, region, tint, alpha, local.x / w, local.y / h, premultiplied)
-                blendWithMode(px, py, sampled, blendMode)
+                val localU = local.x / w
+                val localV = local.y / h
+                val fadeAlpha = if (activeFade != null) alpha * activeFade.alphaAt(localU, localV) else alpha
+                if (fadeAlpha > 0f) {
+                    val sampled = sampleImage(image, region, tint, fadeAlpha, localU, localV, premultiplied)
+                    blendWithMode(px, py, sampled, blendMode)
+                }
             }
         }
     }
@@ -1083,6 +1097,7 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
                             primitive.blendMode,
                             primitive.repeatX,
                             primitive.repeatY,
+                            primitive.edgeFade,
                         )
                         layerImage != null -> fillRotatedLayerImage(
                             x,

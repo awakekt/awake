@@ -239,6 +239,7 @@ public final class com/awakekt/awake/render/passes2d/TexturedDrawRun {
 	public final fun getCompositeMode ()Lcom/awakekt/awake/core/graphics2d/TextureCompositeMode;
 	public final fun getIndices ()[I
 	public final fun getPremultiplied ()Z
+	public final fun getRequiresUpload ()Z
 	public final fun getTexture ()Ljava/lang/Object;
 	public final fun getVertices ()[F
 	public fun hashCode ()I

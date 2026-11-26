@@ -10,10 +10,9 @@ import com.awakekt.awake.asset.shaderpack.MIP_DOWNSAMPLE_TRIANGLE
 import com.awakekt.awake.asset.shaderpack.MipDownsampleShader
 import com.awakekt.awake.asset.shaderpack.MipDownsampleWgsl
 import com.awakekt.awake.webgpu.device.submitAndRelease
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
-import com.awakekt.awake.webgpu.writeBufferData
+import com.awakekt.awake.webgpu.writeBufferFloats
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferDescriptor
@@ -157,7 +156,7 @@ internal class GpuMipmaps(private val device: GPUDevice) : AutoCloseable {
             size = (MIP_DOWNSAMPLE_TRIANGLE.size * Float.SIZE_BYTES).toULong(),
             usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
         ),
-    ).also { device.queue.writeBufferData(it, 0uL, fastArrayBufferOf(MIP_DOWNSAMPLE_TRIANGLE)) }
+    ).also { device.queue.writeBufferFloats(it, 0uL, MIP_DOWNSAMPLE_TRIANGLE) }
 
     private companion object {
         const val FLOATS_PER_VERTEX = 4

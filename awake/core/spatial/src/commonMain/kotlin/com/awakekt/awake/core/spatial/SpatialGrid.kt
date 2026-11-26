@@ -41,6 +41,7 @@ const val DEFAULT_SPATIAL_CELL_SIZE = 64f
  * @property cellSize Side of one column. Too small wastes work walking empty columns; too large
  * makes every query a near-linear scan. One or two per typical object is the useful range.
  */
+@Suppress("TooManyFunctions") // Symmetric MutableCollection<Int> and zero-boxing IntIdSet query overloads.
 class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
 
     /** Column key (packed x/z) to the ids in it. */
@@ -224,6 +225,19 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
      * at the column level would cull things the per-entry test would have kept.
      */
     fun queryFrustum(lens: Lens, aspect: Float, out: MutableCollection<Int>): MutableCollection<Int> {
+        forEachFrustumHit(lens, aspect) { out.add(it) }
+        return out
+    }
+
+    /**
+     * Non-boxing twin of [queryFrustum] that writes matching primitive IDs straight into [out].
+     */
+    fun queryFrustum(lens: Lens, aspect: Float, out: IntIdSet): IntIdSet {
+        forEachFrustumHit(lens, aspect) { out.add(it) }
+        return out
+    }
+
+    private inline fun forEachFrustumHit(lens: Lens, aspect: Float, onHit: (Int) -> Unit) {
         val corners = Frustum.corners(lens, aspect)
         var minX = Float.POSITIVE_INFINITY
         var minZ = Float.POSITIVE_INFINITY
@@ -247,11 +261,10 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
                 val id = column[index]
                 if (claim(id)) {
                     val bounds = entries[id]?.bounds ?: continue
-                    if (planes.intersects(bounds)) out.add(id)
+                    if (planes.intersects(bounds)) onHit(id)
                 }
             }
         }
-        return out
     }
 
     /**
@@ -263,12 +276,25 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
      * by where it meets the box around everything indexed ([BoundedVolume.bounds]).
      */
     fun queryVolume(volume: BoundedVolume, out: MutableCollection<Int>): MutableCollection<Int> {
+        forEachVolumeHit(volume) { out.add(it) }
+        return out
+    }
+
+    /**
+     * Non-boxing twin of [queryVolume] that writes matching primitive IDs straight into [out].
+     */
+    fun queryVolume(volume: BoundedVolume, out: IntIdSet): IntIdSet {
+        forEachVolumeHit(volume) { out.add(it) }
+        return out
+    }
+
+    private inline fun forEachVolumeHit(volume: BoundedVolume, onHit: (Int) -> Unit) {
         val hasContent = contentMinColumnX <= contentMaxColumnX
         if (hasContent) {
             contentBounds.min.set(contentMinColumnX * cellSize, contentMinY, contentMinColumnZ * cellSize)
             contentBounds.max.set((contentMaxColumnX + 1) * cellSize, contentMaxY, (contentMaxColumnZ + 1) * cellSize)
         }
-        if (!hasContent || !volume.bounds(contentBounds, volumeReach)) return out
+        if (!hasContent || !volume.bounds(contentBounds, volumeReach)) return
         stamp += 1
         forEachColumn(
             columnIndexOf(cellSize, volumeReach.min.x),
@@ -282,11 +308,10 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
                 val id = column[index]
                 if (claim(id)) {
                     val bounds = entries[id]?.bounds ?: continue
-                    if (volume.admits(bounds)) out.add(id)
+                    if (volume.admits(bounds)) onHit(id)
                 }
             }
         }
-        return out
     }
 
     private fun detach(entityId: Int, entry: Entry) {

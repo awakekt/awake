@@ -17,6 +17,7 @@ import com.awakekt.awake.core.math.intersects
 import com.awakekt.awake.core.math.isOccludedBy
 import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.core.math.screenBounds
+import com.awakekt.awake.core.spatial.IntIdSet
 import com.awakekt.awake.core.spatial.SpatialGrid
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.ShadowCasterVolume
@@ -41,11 +42,11 @@ private const val HALF = 0.5f
  */
 internal class FrameCulling(
     val camera: Camera,
-    val visible: Set<Int>?,
+    val visible: IntIdSet?,
     val planes: List<Plane>?,
     val occlusionViewProjection: Mat4?,
     val casters: ShadowCasterVolume? = null,
-    val casterIds: Set<Int>? = null,
+    val casterIds: IntIdSet? = null,
     val cullingCamera: Camera = camera,
     val aspect: Float = CONSERVATIVE_ASPECT,
 ) {
@@ -75,8 +76,8 @@ internal class SceneCullingCompiler(
     private val clipSpace: ClipSpace,
 ) {
     private val occluderBounds = ArrayList<ScreenBounds>()
-    private val visibleIds = HashSet<Int>()
-    private val casterIds = HashSet<Int>()
+    private val visibleIds = IntIdSet()
+    private val casterIds = IntIdSet()
     private val scratchBounds = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
 
     /**
@@ -279,13 +280,13 @@ internal class SceneCullingCompiler(
         return !occluded
     }
 
-    private fun visibleByIndex(grid: SpatialGrid, camera: Camera, aspect: Float): MutableSet<Int> {
+    private fun visibleByIndex(grid: SpatialGrid, camera: Camera, aspect: Float): IntIdSet {
         visibleIds.clear()
         grid.queryFrustum(camera.lens, aspect, visibleIds)
         return visibleIds
     }
 
-    private fun casterIdsByIndex(grid: SpatialGrid, casters: ShadowCasterVolume): MutableSet<Int> {
+    private fun casterIdsByIndex(grid: SpatialGrid, casters: ShadowCasterVolume): IntIdSet {
         casterIds.clear()
         grid.queryVolume(casters, casterIds)
         return casterIds

@@ -1,3 +1,15 @@
+public final class com/awakekt/awake/core/spatial/IntIdSet {
+	public static final field DEFAULT_CAPACITY I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (I)Z
+	public final fun clear ()V
+	public final fun contains (I)Z
+	public final fun getSize ()I
+	public final fun isEmpty ()Z
+}
+
 public final class com/awakekt/awake/core/spatial/PointGrid2D {
 	public static final field DEFAULT_CAPACITY I
 	public static final field FIBONACCI J
@@ -41,8 +53,10 @@ public final class com/awakekt/awake/core/spatial/SpatialGrid {
 	public final fun getSize ()I
 	public final fun insert (ILcom/awakekt/awake/core/math/Aabb;)V
 	public final fun queryAabb (Lcom/awakekt/awake/core/math/Aabb;Ljava/util/Collection;)Ljava/util/Collection;
+	public final fun queryFrustum (Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/spatial/IntIdSet;)Lcom/awakekt/awake/core/spatial/IntIdSet;
 	public final fun queryFrustum (Lcom/awakekt/awake/core/math/Lens;FLjava/util/Collection;)Ljava/util/Collection;
 	public final fun queryRange (Lcom/awakekt/awake/core/math/Vec3f;FLjava/util/Collection;)Ljava/util/Collection;
+	public final fun queryVolume (Lcom/awakekt/awake/core/math/BoundedVolume;Lcom/awakekt/awake/core/spatial/IntIdSet;)Lcom/awakekt/awake/core/spatial/IntIdSet;
 	public final fun queryVolume (Lcom/awakekt/awake/core/math/BoundedVolume;Ljava/util/Collection;)Ljava/util/Collection;
 	public final fun remove (I)V
 }

@@ -88,7 +88,7 @@ internal class WebGpuUiRunRecorder(
         val mesh = textureMeshForPrimitive(slotIndex)
         encoder.setPipeline(pipeline.pipeline)
         encoder.bindGroup(0u, pipeline.bindGroupFor(material))
-        mesh.update(primitive.vertices, primitive.indices)
+        mesh.update(primitive.vertices, primitive.indices, primitive.requiresUpload)
         drawMesh(mesh)
     }
 

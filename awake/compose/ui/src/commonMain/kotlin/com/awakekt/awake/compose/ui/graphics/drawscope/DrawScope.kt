@@ -17,6 +17,7 @@ import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.DrawStroke
+import com.awakekt.awake.core.graphics2d.EdgeFade
 import com.awakekt.awake.core.graphics2d.FilterQuality
 import com.awakekt.awake.core.graphics2d.GlyphDecoration
 import com.awakekt.awake.core.graphics2d.TextureRegion
@@ -348,6 +349,25 @@ interface DrawScope {
         premultiplied: Boolean = false,
         rotationDegrees: Float,
         blendMode: BlendMode = BlendMode.SourceOver,
+    ) = drawTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied)
+
+    /**
+     * Draws [region] of [material] with smooth per-edge alpha feathering ([edgeFade]) in one draw.
+     * Leaves existing [drawTexture] binary signatures untouched while defaulting custom [DrawScope]
+     * implementations to an unfaded draw.
+     */
+    @Suppress("LongParameterList")
+    fun drawTexture(
+        material: Any,
+        x: Float = 0f,
+        y: Float = 0f,
+        width: Float = this.width.toFloat(),
+        height: Float = this.height.toFloat(),
+        region: TextureRegion = TextureRegion.Whole,
+        tint: Color = Color.White,
+        filterQuality: FilterQuality = FilterQuality.Low,
+        premultiplied: Boolean = false,
+        edgeFade: EdgeFade,
     ) = drawTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied)
 
     /**
@@ -873,6 +893,23 @@ internal class PaintScope :
     ) = emitTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied, rotationDegrees, blendMode, 1f, 1f)
 
     @Suppress("LongParameterList")
+    override fun drawTexture(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        tint: Color,
+        filterQuality: FilterQuality,
+        premultiplied: Boolean,
+        edgeFade: EdgeFade,
+    ) = emitTexture(
+        material, x, y, width, height, region, tint, filterQuality, premultiplied, 0f, BlendMode.SourceOver, 1f, 1f,
+        edgeFade.takeUnless { it.isNone },
+    )
+
+    @Suppress("LongParameterList")
     override fun drawTextureRepeated(
         material: Any,
         x: Float,
@@ -902,6 +939,7 @@ internal class PaintScope :
         blendMode: BlendMode,
         repeatX: Float,
         repeatY: Float,
+        edgeFade: EdgeFade? = null,
     ) {
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
@@ -909,7 +947,8 @@ internal class PaintScope :
         val ph = height * transform.scaleY
         if (repeatX <= 0f || repeatY <= 0f || clips.isRotatedQuadOutside(px, py, pw, ph, rotationDegrees)) return
         output += UiDrawPrimitive.Texture(
-            px, py, pw, ph, material, alpha, rotationDegrees, blendMode, premultiplied, null, null, region, tint, filterQuality, repeatX, repeatY,
+            px, py, pw, ph, material, alpha, rotationDegrees, blendMode, premultiplied, null, null, region, tint, filterQuality,
+            repeatX, repeatY, edgeFade,
         )
     }
 

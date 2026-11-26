@@ -16,7 +16,6 @@ import com.awakekt.awake.render.passes2d.uiUniformFloats
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.material.refreshSamplers
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
@@ -24,6 +23,7 @@ import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.writeBufferFloats
+import com.awakekt.awake.webgpu.writeTextureBytes
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BlendComponent
@@ -53,8 +53,6 @@ import io.ygdrasil.webgpu.PrimitiveState
 import io.ygdrasil.webgpu.RenderPipelineDescriptor
 import io.ygdrasil.webgpu.SamplerDescriptor
 import io.ygdrasil.webgpu.ShaderModuleDescriptor
-import io.ygdrasil.webgpu.TexelCopyBufferLayout
-import io.ygdrasil.webgpu.TexelCopyTextureInfo
 import io.ygdrasil.webgpu.TextureDescriptor
 import io.ygdrasil.webgpu.TextureViewDescriptor
 import io.ygdrasil.webgpu.VertexAttribute
@@ -411,14 +409,13 @@ private fun GPUDevice.uploadFont(font: UiFont): UiRenderPipeline.FontBinding {
             dimension = GPUTextureDimension.TwoD,
         ),
     )
-    queue.writeTexture(
-        destination = TexelCopyTextureInfo(texture = texture),
-        data = fastArrayBufferOf(font.atlasPixelsRgba),
-        dataLayout = TexelCopyBufferLayout(
-            bytesPerRow = (font.atlasWidth * 4).toUInt(),
-            rowsPerImage = font.atlasHeight.toUInt(),
-        ),
-        size = size,
+    queue.writeTextureBytes(
+        texture = texture,
+        data = font.atlasPixelsRgba,
+        bytesPerRow = font.atlasWidth * 4,
+        rowsPerImage = font.atlasHeight,
+        width = font.atlasWidth,
+        height = font.atlasHeight,
     )
     // The texture has the atlas now: a font that can build its pixels again need not keep them.
     font.releaseAtlasPixels()

@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu
 import io.ygdrasil.webgpu.ArrayBuffer
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUQueue
+import io.ygdrasil.webgpu.GPUTexture
 
 /**
  * Faster replacement for wgpu4k's [ArrayBuffer.of] on every hot per-frame `writeBuffer` call
@@ -52,3 +53,24 @@ internal expect fun GPUQueue.writeBufferFloats(buffer: GPUBuffer, bufferOffset: 
 
 /** Writes the first [count] ints of [data] into [buffer] at [bufferOffset] without slicing on WebAssembly. */
 internal expect fun GPUQueue.writeBufferInts(buffer: GPUBuffer, bufferOffset: ULong, data: IntArray, count: Int = data.size)
+
+/**
+ * Writes raw texel [data] into [texture] at [mipLevel] and ([originX], [originY], [originZ]).
+ *
+ * On WebAssembly (`wasmJs`), stages into scoped linear memory and calls `queue.writeTexture`
+ * directly with a byte offset into `wasmMemory.buffer` -- zero JS `ArrayBuffer` `.slice()` copies.
+ */
+@Suppress("LongParameterList")
+internal expect fun GPUQueue.writeTextureBytes(
+    texture: GPUTexture,
+    data: ByteArray,
+    bytesPerRow: Int,
+    rowsPerImage: Int,
+    width: Int,
+    height: Int,
+    depthOrArrayLayers: Int = 1,
+    mipLevel: Int = 0,
+    originX: Int = 0,
+    originY: Int = 0,
+    originZ: Int = 0,
+)
