@@ -214,23 +214,41 @@ class Texture internal constructor(
             filtering: TextureFiltering,
             mipSkip: Int = 0,
         ): UploadedImage {
-            val chain = if (asset.isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
-            val levels = chain.drop(TextureSampling.levelsToSkip(filtering, chain.size, mipSkip))
-            val data = ByteArray(levels.sumOf { it.data.size })
-            val regions = mutableListOf<ImageUpload.Region>()
-            var offset = 0
+            val levels = if (asset.isCubemap || filtering != TextureFiltering.Linear) {
+                listOf(asset)
+            } else {
+                asset.mipChain(mipSkip)
+            }
+            val regions = ArrayList<ImageUpload.Region>(levels.size * asset.layerCount)
+            var totalBytes = 0L
             levels.forEachIndexed { index, level ->
-                level.data.copyInto(data, offset)
                 // One copy per layer per level, each at its stated offset: right whatever the packing.
                 repeat(asset.layerCount) { layer ->
-                    regions += ImageUpload.Region(level.width, level.height, (offset + level.layerOffset(layer)).toLong(), index, layer)
+                    regions += ImageUpload.Region(level.width, level.height, totalBytes + level.layerOffset(layer), index, layer)
                 }
-                offset += level.data.size
+                totalBytes += level.data.size
             }
             return ImageUpload.upload(
-                graphicsDevice, runOneTimeCommands, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, levels.first().width, levels.first().height,
-                mipLevels = levels.size, layerCount = asset.layerCount, isCubemap = asset.isCubemap,
-                data = data, regions = regions, samplerCreateInfo = samplerCreateInfo, filtering = filtering,
+                graphicsDevice = graphicsDevice,
+                runOneTimeCommands = runOneTimeCommands,
+                format = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,
+                width = levels.first().width,
+                height = levels.first().height,
+                mipLevels = levels.size,
+                layerCount = asset.layerCount,
+                isCubemap = asset.isCubemap,
+                byteSize = totalBytes,
+                writeStaging = { mappedPtr, stagingOffset ->
+                    var offset = 0L
+                    for (level in levels) {
+                        val bytes = level.data
+                        VulkanBuffers.writeMappedMemoryBytes(mappedPtr, stagingOffset + offset, bytes, 0, bytes.size)
+                        offset += bytes.size
+                    }
+                },
+                regions = regions,
+                samplerCreateInfo = samplerCreateInfo,
+                filtering = filtering,
             )
         }
     }

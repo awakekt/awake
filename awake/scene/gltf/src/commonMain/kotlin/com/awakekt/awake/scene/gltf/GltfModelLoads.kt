@@ -5,13 +5,18 @@
  */
 package com.awakekt.awake.scene.gltf
 
+import com.awakekt.awake.core.io.decodeDispatcher
+import com.awakekt.awake.core.io.ioDispatcher
 import com.awakekt.awake.scene.runtime.SceneMeshLoad
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * The model files [resolver] is loading for [GltfAssetResolver.loadModel]: one load a file, however many
@@ -41,7 +46,7 @@ internal class GltfModelLoads(
 
         // Set off the frame thread before the job completes, so a completed job's outcome is final.
         private val staged = AtomicReference<Result<GltfAssetResolver>?>(null)
-        private val job: Job = scope.launch { staged.store(read()) }
+        private val job: Job = scope.launch(boundedDecodeContext(scope)) { staged.store(read()) }
         var waiters = 0
         private var finished = false
 
@@ -93,5 +98,14 @@ internal class GltfModelLoads(
             closed = true
             shared.leave()
         }
+    }
+
+    private companion object {
+        // Bound concurrent glTF + image decodes on production pools while preserving injected test dispatchers.
+        fun boundedDecodeContext(scope: CoroutineScope) =
+            when (scope.coroutineContext[ContinuationInterceptor]) {
+                null, Dispatchers.Default, ioDispatcher -> decodeDispatcher
+                else -> EmptyCoroutineContext
+            }
     }
 }

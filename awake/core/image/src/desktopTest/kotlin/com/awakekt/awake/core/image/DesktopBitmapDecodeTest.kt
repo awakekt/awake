@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.core.image
 
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -23,5 +24,22 @@ class DesktopBitmapDecodeTest {
             assertEquals(image.height, decoded.height, image.name)
             assertContentEquals(image.expectedBottomUpArgb(), decoded.pixels, image.name)
         }
+    }
+
+    @Test
+    fun decodeImageWithMipSkipDownsamplesAndMatchesFullDecodeAtZero() = runTest {
+        val full = decodeImage(PngFixtures.alpha256.png, mipSkip = 0)
+        assertEquals(256, full.width)
+        assertEquals(256, full.height)
+        assertContentEquals(PngFixtures.alpha256.expectedBottomUpArgb(), full.toBitmap().pixels)
+        assertContentEquals(full.toBitmap().toRgba8Bytes(), full.toRgba8Bytes())
+
+        val half = decodeImage(PngFixtures.opaque256.png, mipSkip = 1)
+        assertEquals(128, half.width)
+        assertEquals(128, half.height)
+
+        val quarter = decodeImageBlocking(PngFixtures.opaque256.png, mipSkip = 2)
+        assertEquals(64, quarter.width)
+        assertEquals(64, quarter.height)
     }
 }

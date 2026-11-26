@@ -21,6 +21,18 @@ import kotlin.coroutines.coroutineContext
 expect val ioDispatcher: CoroutineDispatcher
 
 /**
+ * Bounded dispatcher for memory- and CPU-intensive asset decoding (images, models, terrain
+ * surfaces) off the render/main thread.
+ *
+ * Caps concurrent heavy decodes so streaming bursts cannot saturate all cores or multiply
+ * transient decode buffers into an out-of-memory kill on constrained devices:
+ * - Android and iOS: `Dispatchers.IO.limitedParallelism(2)`
+ * - Desktop JVM: `Dispatchers.IO.limitedParallelism(4)`
+ * - WasmJs: `Dispatchers.Default`
+ */
+expect val decodeDispatcher: CoroutineDispatcher
+
+/**
  * Runs [block] on [ioDispatcher] when the caller has a confined dispatcher (such as `Main` or
  * `Default`) that can resume back on the caller's thread afterwards.
  *

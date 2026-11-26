@@ -19,3 +19,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 )
 @JvmName("getIoDispatcher")
 fun ioDispatcherDesktopCompat(): CoroutineDispatcher = ioDispatcher
+
+/**
+ * Binary-compatibility bridge for [decodeDispatcher] from pure-JVM modules compiled against
+ * `com.awakekt.awake.core:io-desktop` when consumed on Android with `io-android`.
+ */
+@Deprecated(
+    "Binary compatibility bridge for pure-JVM modules compiled against io-desktop",
+    level = DeprecationLevel.HIDDEN,
+)
+@JvmName("getDecodeDispatcher")
+fun decodeDispatcherDesktopCompat(): CoroutineDispatcher = decodeDispatcher

@@ -12,6 +12,7 @@ import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.host.FixedStepReport
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.decodeDispatcher
 import com.awakekt.awake.core.io.ioDispatcher
 import com.awakekt.awake.core.localization.StringLayer
 import com.awakekt.awake.core.localization.StringTableSource
@@ -514,7 +515,8 @@ fun SceneAppDsl.runProject(
     // formats are known once the renderer is, before the first frame asks for a texture.
     var formats = emptySet<CompressedTextureFormat>()
     val cooked = CookedTextureLoader(project.files)
-    val textures = AssetSourceTextureResolver(project.files, project.sceneLoads) { name -> cooked.load(name, formats) }
+    val textureContext = if (project.sceneLoads === ioDispatcher) decodeDispatcher else project.sceneLoads
+    val textures = AssetSourceTextureResolver(project.files, textureContext) { name -> cooked.load(name, formats) }
     // Put in as the scene populates, as a document's entities are, so they exist before any onReady runs.
     scene(project.scene.name) { scenes.start() }
     assets {

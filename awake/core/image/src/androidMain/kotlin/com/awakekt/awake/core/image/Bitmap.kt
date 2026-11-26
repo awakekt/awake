@@ -6,7 +6,6 @@
 package com.awakekt.awake.core.image
 
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
 
 typealias NativeBitmap = android.graphics.Bitmap
 typealias NativeBitmapConfig = android.graphics.Bitmap.Config
@@ -34,44 +33,76 @@ class AndroidBitmap(
  */
 actual suspend fun createBitmap(bytes: ByteArray): Bitmap = decodeBitmap(bytes)
 
-private fun decodeBitmap(bytes: ByteArray): Bitmap {
-    val matrix = Matrix()
-    val bitmap =
-        BitmapFactory
-            .decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options())
-            .let { bitmap ->
-                matrix.reset()
-                // flip y axis
-                matrix.postScale(1f, -1f)
-                NativeBitmap.createBitmap(
-                    bitmap,
-                    0,
-                    0,
-                    bitmap.width,
-                    bitmap.height,
-                    matrix,
-                    true,
-                )
-            }
-
-    val width = bitmap.width
-    val height = bitmap.height
-    val pixels = IntArray(width * height)
-    bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-    bitmap.recycle()
-    return AndroidBitmap(
-        width = bitmap.width,
-        height = bitmap.height,
-        channel = 4,
-        pixels = pixels,
-    )
+private fun decodeNativeBitmap(bytes: ByteArray, mipSkip: Int): NativeBitmap {
+    val sampleSize = if (mipSkip > 0) {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        computeSubsampleFactor(bounds.outWidth, bounds.outHeight, mipSkip)
+    } else {
+        1
+    }
+    val options = BitmapFactory.Options().apply {
+        inPreferredConfig = NativeBitmapConfig.ARGB_8888
+        inScaled = false
+        inPremultiplied = false
+        if (sampleSize > 1) inSampleSize = sampleSize
+    }
+    return checkNotNull(BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)) {
+        "Failed to decode Android bitmap from ${bytes.size} byte(s)."
+    }
 }
 
-/** The CPU decode: [createBitmap], with no platform image to copy. */
-actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = createBitmap(bytes).asDecodedImage()
+private fun decodeBitmap(bytes: ByteArray, mipSkip: Int = 0): Bitmap {
+    val bitmap = decodeNativeBitmap(bytes, mipSkip)
+    return try {
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels = IntArray(width * height)
+        for (y in 0 until height) {
+            bitmap.getPixels(pixels, y * width, width, 0, height - 1 - y, width, 1)
+        }
+        AndroidBitmap(
+            width = width,
+            height = height,
+            channel = ANDROID_RGBA_CHANNELS,
+            pixels = pixels,
+        )
+    } finally {
+        bitmap.recycle()
+    }
+}
+
+private fun decodeRgba8Image(bytes: ByteArray, mipSkip: Int = 0): DecodedImage {
+    val bitmap = decodeNativeBitmap(bytes, mipSkip)
+    return try {
+        val width = bitmap.width
+        val height = bitmap.height
+        val rgba = ByteArray(width * height * ANDROID_RGBA_CHANNELS)
+        val row = IntArray(width)
+        val rowBytes = width * ANDROID_RGBA_CHANNELS
+        for (y in 0 until height) {
+            bitmap.getPixels(row, 0, width, 0, height - 1 - y, width, 1)
+            packArgbRowToRgba8(row, width, rgba, y * rowBytes)
+        }
+        Rgba8DecodedImage(width = width, height = height, rgba8 = rgba)
+    } finally {
+        bitmap.recycle()
+    }
+}
+
+/** Decodes straight to bottom-up RGBA8 bytes on Android without retaining a second Bitmap or full IntArray. */
+actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = decodeRgba8Image(bytes)
+
+/** Decodes straight to bottom-up RGBA8 bytes on Android with [BitmapFactory.Options.inSampleSize] subsampling. */
+actual suspend fun decodeImage(bytes: ByteArray, mipSkip: Int): DecodedImage = decodeRgba8Image(bytes, mipSkip)
 
 /** This platform decodes an image on the calling thread. */
 actual val canDecodeImageBlocking: Boolean = true
 
-/** [createBitmap]'s decode, which never suspends here. */
-actual fun decodeImageBlocking(bytes: ByteArray): DecodedImage = decodeBitmap(bytes).asDecodedImage()
+/** Blocking Android RGBA8 decode. */
+actual fun decodeImageBlocking(bytes: ByteArray): DecodedImage = decodeRgba8Image(bytes)
+
+/** Blocking Android RGBA8 decode with [BitmapFactory.Options.inSampleSize] subsampling. */
+actual fun decodeImageBlocking(bytes: ByteArray, mipSkip: Int): DecodedImage = decodeRgba8Image(bytes, mipSkip)
+
+private const val ANDROID_RGBA_CHANNELS = 4
