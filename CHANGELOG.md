@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.79.0] - 2026-11-26
+
+### Added
+
+Added `:awake:player` (`com.awakekt.awake:player`), a standalone Kotlin Multiplatform runtime for playing full Awake projects or single declarative `.scene.json` scenes without Awake Studio, along with Core-owned prebuilt player shells (`:awake:player:player-shell`, `:awake:player:player-android`), macOS packaging script, and the `Prebuilt players` release workflow.
+
 ## [0.78.1] - 2026-11-26
 
 ### Fixed
