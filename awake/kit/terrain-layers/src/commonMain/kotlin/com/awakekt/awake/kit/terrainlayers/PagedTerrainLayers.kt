@@ -139,9 +139,13 @@ class PagedTerrainLayers private constructor(
             val index = TerrainPageIndexCodec.decode(assets.read(indexPath).getOrThrow())
             val palettePath = indexPath.resolve(requireNotNull(index.palette))
             val palette = TerrainLayerPaletteCodec.decode(assets.read(palettePath).getOrThrow())
-            val albedo = palette.layers.map { decodeImage(assets.read(palettePath.resolve(it.albedo)).getOrThrow()) }
-            val heights = palette.layers.map { layer -> layer.height?.let { decodeImage(assets.read(palettePath.resolve(it)).getOrThrow()) } }
             require(palette.validate().isEmpty())
+            val packedLayers = packLayerArrayStreaming(palette.layers.size) { layerIndex ->
+                val layer = palette.layers[layerIndex]
+                val albedo = decodeImage(assets.read(palettePath.resolve(layer.albedo)).getOrThrow())
+                val height = layer.height?.let { decodeImage(assets.read(palettePath.resolve(it)).getOrThrow()) }
+                albedo to height
+            }
             val coarse = TerrainControlMapCodec.decode(assets.read(indexPath.resolve(requireNotNull(index.fallbackControl))).getOrThrow())
             validateControl(coarse, palette, index.controlSlots)
             val light = index.fallbackLightmap?.let { TerrainLightmapCodec.decode(assets.read(indexPath.resolve(it)).getOrThrow()) } ?: TerrainLightmap.Neutral
@@ -154,7 +158,7 @@ class PagedTerrainLayers private constructor(
                 mapOf(CONTROL_INDICES_BINDING to (FALLBACK_CONTROL_INDICES_BINDING to coarse.indicesTexture()), CONTROL_WEIGHTS_BINDING to (FALLBACK_CONTROL_WEIGHTS_BINDING to coarse.weightsTexture()), LIGHTMAP_BINDING to (FALLBACK_LIGHTMAP_BINDING to light.texture())),
                 maxUploadBytes,
             )
-            return PagedTerrainLayers(terrain, index, indexPath, assets, palette, mapOf(LAYER_ALBEDO_BINDING to packLayerArray(albedo, heights), LAYER_TABLE_BINDING to layerTable(palette)))
+            return PagedTerrainLayers(terrain, index, indexPath, assets, palette, mapOf(LAYER_ALBEDO_BINDING to packedLayers, LAYER_TABLE_BINDING to layerTable(palette)))
         }
 
         private fun validateControl(control: TerrainControlMap, palette: TerrainLayerPalette, slots: Int) {

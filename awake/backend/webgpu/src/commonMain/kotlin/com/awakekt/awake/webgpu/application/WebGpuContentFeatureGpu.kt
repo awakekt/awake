@@ -8,6 +8,8 @@ package com.awakekt.awake.webgpu.application
 import com.awakekt.awake.asset.shaders.ContentDepthCaster
 import com.awakekt.awake.asset.shaders.ContentFeatureGpu
 import com.awakekt.awake.asset.shaders.ContentGroupUpload
+import com.awakekt.awake.asset.shaders.ContentTextureHandle
+import com.awakekt.awake.asset.shaders.ContentTextureUpload
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.resolveBytes
@@ -20,6 +22,7 @@ import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.texture.GpuImageSource
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.toTextureAsset
 import com.awakekt.awake.webgpu.device.GraphicsDevice
@@ -47,35 +50,55 @@ internal class WebGpuContentFeatureGpu(
 ) : ContentFeatureGpu<RenderPipeline> {
     override val backend = RenderBackend.WebGpu
 
+    override val textureMipSkip: Int get() = graphicsDevice.mipSkip
+
     internal var onDestroyPipeline: (RenderPipeline) -> Unit = {}
 
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline.handle
 
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload =
-        upload(pipeline, feature, includeGeometry = true)
+        upload(pipeline, feature, includeGeometry = true, sharedTextures = emptyMap())
 
-    override fun upload(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentUpload {
-        val textures = uploadTextures(feature)
+    override fun upload(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentUpload =
+        upload(pipeline, feature, includeGeometry, sharedTextures = emptyMap())
+
+    override fun upload(
+        pipeline: RenderPipeline,
+        feature: ContentFeature,
+        includeGeometry: Boolean,
+        sharedTextures: Map<Int, ContentTextureHandle>,
+    ): ContentUpload {
+        val textures = uploadTextures(feature, sharedTextures)
+        val borrowed = sharedTextures.values.map { (it as WebGpuSharedTextureHandle).texture }.toHashSet()
         // Before anything binds the group: a GPUBindGroup is immutable once built, so unlike
         // Vulkan these have to arrive ahead of the first bind, not after.
         pipeline.writeContentTextures(textures, feature.samplerTextures)
-        return uploadFeatureGeometry(feature, textures, includeGeometry)
+        return uploadFeatureGeometry(feature, textures, borrowed, includeGeometry)
     }
 
     override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload =
-        uploadGroup(pipeline, feature, includeGeometry = true)
+        uploadGroup(pipeline, feature, includeGeometry = true, sharedTextures = emptyMap())
 
-    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentGroupUpload {
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentGroupUpload =
+        uploadGroup(pipeline, feature, includeGeometry, sharedTextures = emptyMap())
+
+    override fun uploadGroup(
+        pipeline: RenderPipeline,
+        feature: ContentFeature,
+        includeGeometry: Boolean,
+        sharedTextures: Map<Int, ContentTextureHandle>,
+    ): ContentGroupUpload {
         val layout = checkNotNull(feature.spec.uniforms) { "Content feature '${feature.name}' declares no uniforms." }
-        val textures = uploadTextures(feature)
+        val textures = uploadTextures(feature, sharedTextures)
+        val borrowed = sharedTextures.values.map { (it as WebGpuSharedTextureHandle).texture }.toHashSet()
         var built: WebGpuContentGroup? = null
         try {
             built = WebGpuContentGroup(graphicsDevice, pipeline, layout, textures, feature.samplerTextures)
         } finally {
-            if (built == null) textures.values.forEach(Texture::destroy)
+            if (built == null) textures.values.forEach { if (it !in borrowed) it.destroy() }
         }
         val group = checkNotNull(built)
-        val upload = uploadFeatureGeometry(feature, textures, includeGeometry)
+        val upload = uploadFeatureGeometry(feature, textures, borrowed, includeGeometry)
         return ContentGroupUpload(
             group,
             ContentUpload(upload.geometry, upload.prepare) {
@@ -92,15 +115,36 @@ internal class WebGpuContentFeatureGpu(
         }
     }
 
+    override fun uploadTexture(asset: TextureAsset): ContentTextureUpload {
+        val uploaded = Texture.skippingMips(graphicsDevice, asset)
+        return ContentTextureUpload(WebGpuSharedTextureHandle(uploaded)) {
+            uploaded.destroy()
+        }
+    }
+
     // A binding written after upload keeps every level, at the size its writes are in; the rest are
     // only sampled by UV and leave out the top levels mip skip asks for (#1660).
-    private fun uploadTextures(feature: ContentFeature): Map<Int, Texture> {
+    private fun uploadTextures(
+        feature: ContentFeature,
+        sharedTextures: Map<Int, ContentTextureHandle>,
+    ): Map<Int, Texture> {
         val written = feature.textureUpdates?.bindings.orEmpty()
         return feature.textures.mapValues { (binding, asset) ->
-            if (binding in written) {
-                Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap, asset.filtering)
-            } else {
-                Texture.skippingMips(graphicsDevice, asset)
+            val shared = sharedTextures[binding] as? WebGpuSharedTextureHandle
+            when {
+                shared != null -> shared.texture
+                binding in written -> Texture(
+                    graphicsDevice,
+                    {},
+                    asset.data,
+                    asset.width,
+                    asset.height,
+                    asset.layerCount,
+                    asset.isCubemap,
+                    asset.filtering,
+                    asset.pixelFormat,
+                )
+                else -> Texture.skippingMips(graphicsDevice, asset)
             }
         } + feature.images.mapValues { (_, image) -> uploadImage(image) }
     }
@@ -109,6 +153,7 @@ internal class WebGpuContentFeatureGpu(
     private fun uploadFeatureGeometry(
         feature: ContentFeature,
         textures: Map<Int, Texture>,
+        borrowed: Set<Texture>,
         includeGeometry: Boolean,
     ): ContentUpload {
         val mesh = if (includeGeometry) {
@@ -127,7 +172,7 @@ internal class WebGpuContentFeatureGpu(
                 uploads.write(textures.getValue(update.binding), update.region)
             }
         }) {
-            textures.values.forEach(Texture::destroy)
+            textures.values.forEach { if (it !in borrowed) it.destroy() }
             mesh?.destroy()
         }
     }
@@ -212,3 +257,5 @@ internal class WebGpuContentFeatureGpu(
      * submitted against it completes. */
     override fun awaitIdle() = Unit
 }
+
+private class WebGpuSharedTextureHandle(val texture: Texture) : ContentTextureHandle

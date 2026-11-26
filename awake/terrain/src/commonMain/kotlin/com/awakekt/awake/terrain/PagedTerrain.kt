@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.terrain.HeightmapSampleEdit
 import com.awakekt.awake.asset.terrain.PagedHeightmap
 import com.awakekt.awake.asset.terrain.TerrainPageCoord
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TexturePixelFormat
 
 /** Immutable loaded cell. Surface textures are base-level cell images, indexed by array binding. */
 data class TerrainPage(
@@ -129,15 +130,17 @@ class PagedTerrain(
         require(fallbackTextures.values.map { it.first }.toSet().size == fallbackTextures.size)
         require(fallbackTextures.values.none { it.first in pageTextureTemplates.keys })
         require((pageTextureTemplates.values + fallbackImages.values).all { it.layerCount == 1 && !it.isCubemap && it.width in 1..8192 && it.height in 1..8192 })
-        require(maxUploadBytes >= pageBytes + tableBytes + heights.fallback.width.toLong() * heights.fallback.depth * 4 + fallbackImages.values.sumOf { it.data.size.toLong() })
+        require(maxUploadBytes >= pageBytes + tableBytes + fallbackHeightBytes + fallbackImages.values.sumOf { it.data.size.toLong() })
     }
 
-    private val heightPageBytes: Long get() = layout.samplesPerPage.toLong() * layout.samplesPerPage * 4
+    private val heightBytesPerTexel: Long get() = TexturePixelFormat.Rg8Unorm.bytesPerTexel.toLong()
+    private val heightPageBytes: Long get() = layout.samplesPerPage.toLong() * layout.samplesPerPage * heightBytesPerTexel
+    private val fallbackHeightBytes: Long get() = heights.fallback.width.toLong() * heights.fallback.depth * heightBytesPerTexel
     private val pageBytes: Long get() = heightPageBytes + pageTextureTemplates.values.sumOf { it.data.size.toLong() }
     private val tableBytes: Long get() = layout.cellCountX.toLong() * layout.cellCountZ * 4
 
     /** Bytes per GPU frame slot, excluding the shared palette, geometry and staging. */
-    val textureBytesPerSlot: Long get() = pageBytes * capacity + tableBytes + heights.fallback.width.toLong() * heights.fallback.depth * 4 + fallbackTextures.values.sumOf { it.second.data.size.toLong() }
+    val textureBytesPerSlot: Long get() = pageBytes * capacity + tableBytes + fallbackHeightBytes + fallbackTextures.values.sumOf { it.second.data.size.toLong() }
 
     /** Snapshot of the currently resident cell coordinates. */
     val residentCoords: Set<TerrainPageCoord> get() = residents.keys.toSet()

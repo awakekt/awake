@@ -5,7 +5,7 @@
  */
 package com.awakekt.awake.render.texture
 
-/** Opaque sampled image whose base level can receive checked RGBA8 region updates. */
+/** Opaque sampled image whose base level can receive checked region updates. */
 interface WritableTexture {
     /** Base-level width in texels. */
     val width: Int
@@ -15,11 +15,15 @@ interface WritableTexture {
 
     /** Number of base-level array layers. */
     val layerCount: Int
+
+    /** Uncompressed texel storage format of this texture. */
+    val pixelFormat: TexturePixelFormat get() = TexturePixelFormat.Rgba8Unorm
 }
 
-/** Tightly packed RGBA8 rectangle in one base-level array layer. */
+/** Tightly packed rectangle in one base-level array layer matching [pixelFormat]. */
+@Suppress("LongParameterList") // Additive pixelFormat parameter preserves binary compatibility.
 class TextureRegion(
-    /** Tightly packed row-major RGBA8 source bytes. */
+    /** Tightly packed row-major source bytes matching [pixelFormat]. */
     val data: ByteArray,
     /** Rectangle width in texels. */
     val width: Int,
@@ -31,14 +35,30 @@ class TextureRegion(
     val y: Int = 0,
     /** Destination array layer. */
     val layer: Int = 0,
+    /** Texel format of [data]; must match the destination [WritableTexture.pixelFormat]. */
+    val pixelFormat: TexturePixelFormat = TexturePixelFormat.Rgba8Unorm,
 ) {
+    /** Constructor before [pixelFormat]; kept for compiled callers. */
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        data: ByteArray,
+        width: Int,
+        height: Int,
+        x: Int = 0,
+        y: Int = 0,
+        layer: Int = 0,
+    ) : this(data, width, height, x, y, layer, TexturePixelFormat.Rgba8Unorm)
+
     init {
         require(width > 0 && height > 0 && x >= 0 && y >= 0 && layer >= 0)
-        require(width.toLong() * height * 4 == data.size.toLong())
+        require(width.toLong() * height * pixelFormat.bytesPerTexel == data.size.toLong())
     }
 
-    /** Rejects a destination rectangle outside the texture base level or array layers. */
+    /** Rejects a destination rectangle outside the texture base level, array layers, or format. */
     fun validate(texture: WritableTexture) {
+        require(pixelFormat == texture.pixelFormat) {
+            "Texture region format $pixelFormat does not match destination format ${texture.pixelFormat}."
+        }
         require(x.toLong() + width <= texture.width && y.toLong() + height <= texture.height && layer < texture.layerCount) {
             "Texture update ($x, $y, $width, $height, layer $layer) exceeds ${texture.width} x ${texture.height} x ${texture.layerCount}."
         }

@@ -30,6 +30,7 @@ import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.TexturePixelFormat
 
 /** Grey the heightfield is shaded with. Terrain colour is authored world policy (D28); this is
  * the engine's neutral stand-in, not a design choice a consumer inherits. */
@@ -66,6 +67,8 @@ private const val VERTEX_BINDING = 0
  * @param samplerTextures Optional mapping from sampler binding to the texture binding whose
  * sampler it should use, overriding the default heightmap sampler for surface shaders that mix
  * single-level data textures with mipmapped albedo arrays.
+ * @param textureKeys Optional sharing keys for immutable surface textures (keyed by binding index)
+ * so neighbouring terrain chunks sharing a layer palette reuse one GPU texture upload.
  * @param origin Where the heightmap's centre lies in the world, read every frame like [isVisible],
  * so terrains drawn together can lie side by side. The rings follow the camera across the terrain
  * from there.
@@ -78,6 +81,7 @@ fun terrainContentFeature(
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     isVisible: () -> Boolean = { true },
     samplerTextures: Map<Int, Int>,
+    textureKeys: Map<Int, Any>,
     origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource {
     require(config.ringCount <= MAX_CLIPMAP_RINGS) {
@@ -129,10 +133,27 @@ fun terrainContentFeature(
             ),
             buildWithAlternate = ::buildTerrain,
             geometryKey = TerrainClipmapGeometryKey(config),
+            textureKeys = textureKeys,
             build = { pipeline, uniforms, geometry -> buildTerrain(pipeline, null, uniforms, geometry) },
         )
     }
 }
+
+/**
+ * [terrainContentFeature] without shared [textureKeys]; keeps existing 7-argument callers source-
+ * and binary-compatible.
+ */
+@Suppress("LongParameterList")
+fun terrainContentFeature(
+    shaders: ShaderSet,
+    heightmap: Heightmap,
+    config: TerrainClipmapConfig = TerrainClipmapConfig(),
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    isVisible: () -> Boolean = { true },
+    samplerTextures: Map<Int, Int>,
+    origin: () -> Vec3f = { AT_ORIGIN },
+): ContentFeatureSource =
+    terrainContentFeature(shaders, heightmap, config, surfaceTextures, isVisible, samplerTextures, emptyMap(), origin)
 
 /**
  * Immutable cache key identifying the merged clipmap mesh for [config], allowing attached terrain
@@ -196,36 +217,45 @@ internal class EncodedHeightmap(
 )
 
 internal fun Heightmap.encodeForSampling(): EncodedHeightmap {
-    val samples = copySamples()
-    val min = samples.min()
-    val max = samples.max()
+    val count = sampleCount
+    var min = sampleAt(0)
+    var max = min
+    for (i in 1 until count) {
+        val sample = sampleAt(i)
+        if (sample < min) min = sample
+        if (sample > max) max = sample
+    }
     // A flat heightmap has no range to normalise against; encoding it as a constant 0 with a
     // bias at its own height is correct and avoids dividing by zero.
     val range = max - min
-    val pixels = ByteArray(samples.size * RGBA)
-    samples.forEachIndexed { index, sample ->
-        val normalised = if (range == 0f) 0f else (sample - min) / range
-        val quantised = (normalised * SIXTEEN_BIT_MAX).toInt().coerceIn(0, SIXTEEN_BIT_MAX)
-        pixels[index * RGBA] = (quantised ushr Byte.SIZE_BITS).toByte()
-        pixels[index * RGBA + GREEN] = (quantised and BYTE_MASK).toByte()
-        pixels[index * RGBA + ALPHA] = BYTE_MASK.toByte()
+    val pixels = ByteArray(count * RG_BYTES)
+    val invRange = if (range == 0f) 0f else SIXTEEN_BIT_MAX / range
+    for (index in 0 until count) {
+        val quantised = if (range == 0f) 0 else ((sampleAt(index) - min) * invRange).toInt().coerceIn(0, SIXTEEN_BIT_MAX)
+        pixels[index * RG_BYTES] = (quantised ushr Byte.SIZE_BITS).toByte()
+        pixels[index * RG_BYTES + GREEN] = (quantised and BYTE_MASK).toByte()
     }
     // (width - 1) spans, not width: a 16-sample row covers 15 intervals of scale.x.
     val worldX = (width - 1) * scale.x
     val worldZ = (depth - 1) * scale.z
     return EncodedHeightmap(
-        // Base-level linear: heightmaps are sampled at mip 0 in the vertex stage and encode 16-bit
-        // elevations across R/G, so mip-chain generation and textureMipSkip must never downsample them.
-        texture = TextureAsset(pixels, width, depth, filtering = TextureFiltering.BaseLevelLinear),
+        // Base-level linear RG8: heightmaps are sampled at mip 0 in the vertex stage and encode
+        // 16-bit elevations across R/G at half the VRAM and staging cost of RGBA8.
+        texture = TextureAsset(
+            pixels,
+            width,
+            depth,
+            filtering = TextureFiltering.BaseLevelLinear,
+            pixelFormat = TexturePixelFormat.Rg8Unorm,
+        ),
         scale = range * scale.y,
         bias = min * scale.y,
         sampling = floatArrayOf(worldX, worldZ, 1f / width, 1f / depth),
     )
 }
 
-private const val RGBA = 4
+private const val RG_BYTES = 2
 private const val GREEN = 1
-private const val ALPHA = 3
 private const val BYTE_MASK = 0xFF
 private const val SIXTEEN_BIT_MAX = 0xFFFF
 

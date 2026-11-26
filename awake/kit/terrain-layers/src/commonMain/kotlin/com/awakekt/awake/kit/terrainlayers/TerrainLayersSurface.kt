@@ -22,6 +22,19 @@ fun terrainLayersSurface(
     albedo: TextureAsset,
     control: TerrainControlMap,
     lightmap: TerrainLightmap = TerrainLightmap.Neutral,
+): TerrainSurface = terrainLayersSurface(palette, albedo, control, lightmap, emptyMap())
+
+/**
+ * [terrainLayersSurface] with optional immutable [textureKeys] (such as [TerrainLayerArrayKey] for
+ * [LAYER_ALBEDO_BINDING]) so multiple terrains sharing one palette reuse a single uploaded GPU
+ * texture array.
+ */
+fun terrainLayersSurface(
+    palette: TerrainLayerPalette,
+    albedo: TextureAsset,
+    control: TerrainControlMap,
+    lightmap: TerrainLightmap = TerrainLightmap.Neutral,
+    textureKeys: Map<Int, Any>,
 ): TerrainSurface {
     val issues = palette.validate()
     require(issues.isEmpty()) { "Invalid terrain layer palette: ${issues.joinToString("; ")}" }
@@ -44,5 +57,6 @@ fun terrainLayersSurface(
         // Bind the shared layer sampler to the mipmapped, anisotropic albedo array rather than the
         // single-level heightmap sampler.
         samplerTextures = mapOf(LAYER_SAMPLER_BINDING to LAYER_ALBEDO_BINDING),
+        textureKeys = textureKeys,
     )
 }

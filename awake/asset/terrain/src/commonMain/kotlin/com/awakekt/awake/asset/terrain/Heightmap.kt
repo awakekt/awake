@@ -109,6 +109,12 @@ class Heightmap(
         return (near + (far - near) * fz) * ownedScale.y
     }
 
+    /** Total number of stored elevation samples (`width * depth`). */
+    val sampleCount: Int get() = ownedSamples.size
+
+    /** Returns the raw elevation sample at row-major [index] (`z * width + x`) without copying. */
+    fun sampleAt(index: Int): Float = ownedSamples[index]
+
     /** Returns an owned copy for an explicit consumer such as a physics adapter. */
     fun copySamples(): FloatArray = ownedSamples.copyOf()
 

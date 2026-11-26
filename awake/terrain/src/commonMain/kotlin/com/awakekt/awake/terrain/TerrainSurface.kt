@@ -33,18 +33,29 @@ data class TerrainSurfaceReference(
  * @property textures Texture assets bound to shader slots for the surface.
  * @property samplerTextures Optional mapping from sampler binding to the texture binding whose
  *   sampler it should use, when surface textures mix filtering modes.
+ * @property textureKeys Optional immutable deduplication keys for immutable entries in [textures]
+ *   (for example, a terrain layer `Texture2DArray` shared across multiple terrain chunks).
  */
 class TerrainSurface(
     val shaders: ShaderSet,
     val textures: Map<Int, TextureAsset> = emptyMap(),
     val samplerTextures: Map<Int, Int> = emptyMap(),
+    val textureKeys: Map<Int, Any> = emptyMap(),
 ) {
+    /** The constructor before [textureKeys]; kept so compiled callers still link. */
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        shaders: ShaderSet,
+        textures: Map<Int, TextureAsset> = emptyMap(),
+        samplerTextures: Map<Int, Int> = emptyMap(),
+    ) : this(shaders, textures, samplerTextures, emptyMap())
+
     /** The constructor before [samplerTextures]; kept so compiled callers still link. */
     @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
     constructor(
         shaders: ShaderSet,
         textures: Map<Int, TextureAsset> = emptyMap(),
-    ) : this(shaders, textures, emptyMap())
+    ) : this(shaders, textures, emptyMap(), emptyMap())
 }
 
 /**
