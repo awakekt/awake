@@ -6,21 +6,22 @@ SPDX-License-Identifier: Apache-2.0
 
 # Awake Core DI
 
-Lightweight, zero-reflection, multiplatform dependency injection container for Kotlin Multiplatform.
+Lightweight, zero-reflection, thread-safe, multiplatform dependency injection container for Kotlin Multiplatform.
 
 Designed for high-performance game engines, simulation runtimes, and desktop/web/mobile applications without GC churn or runtime bytecode analysis.
 
 ## Features
 
 - **Zero Reflection**: Uses Kotlin lambda factories and `KClass<T>` keys. 100% compatible with WasmJS, Native (iOS/Desktop), Android, and JVM.
-- **Idiomatic Naming**: Clean names (`container`, `module`, `inject`, `get`) without redundant `Di` prefixes.
+- **Idiomatic Naming**: Clean names (`container`, `module`, `inject`, `get`, `verify`, `close`) without redundant `Di` prefixes.
 - **Binding Strategies**:
-  - `singleton { ... }`: Lazy, thread-safe evaluation cached for the container lifecycle.
+  - `singleton { ... }`: Thread-safe lazy evaluation cached per container; `AutoCloseable` singletons are closed automatically in reverse creation order on `container.close()`.
   - `factory { ... }`: Evaluated fresh on every request.
-  - `instance(value)`: Pre-instantiated object.
-- **Hierarchical Scoping**: Child containers (`container.createChild { ... }`) inherit parent bindings and can override or provide local scoped bindings (ideal for scene or session scopes).
+  - `instance(value, closeOnDispose = false)`: Pre-instantiated object (opt-in `closeOnDispose = true` transfers `AutoCloseable` ownership to the container).
+- **Hierarchical Scoping & Teardown**: Child containers (`container.createChild { ... }`) inherit parent bindings, support overrides, and close before parent singletons when the parent closes.
+- **Fail-Fast Verification**: `container.verify()` validates that every binding in the container resolves without missing bindings or cycles.
 - **Property Delegation**: `val service: MyService by container.inject()`.
-- **Diagnostics**: Detects cyclic dependencies and missing bindings at resolution time.
+- **Diagnostics**: Detects cyclic dependencies (reporting the full cycle chain), missing bindings, and post-close access.
 
 ## Usage
 
@@ -39,6 +40,9 @@ val container = container(engineModule) {
     singleton<GameLoop> { GameLoop(get()) }
 }
 
+// Fail-fast graph verification in tests
+container.verify()
+
 // Direct resolution
 val physics = container.get<PhysicsEngine>()
 
@@ -47,8 +51,10 @@ class GameSession(di: Container) {
     val loop: GameLoop by di.inject()
 }
 
-// Child scope
-val sceneContainer = container.createChild {
+// Child scope with automatic AutoCloseable teardown
+container.createChild {
     singleton<SceneContext> { SceneContext() }
+}.use { sceneContainer ->
+    val context = sceneContainer.get<SceneContext>()
 }
 ```

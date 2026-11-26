@@ -2,16 +2,26 @@ public abstract interface class com/awakekt/awake/core/di/Binding {
 	public abstract fun resolve (Lcom/awakekt/awake/core/di/Container;)Ljava/lang/Object;
 }
 
-public abstract interface class com/awakekt/awake/core/di/Container {
+public abstract interface class com/awakekt/awake/core/di/Container : java/lang/AutoCloseable {
+	public fun close ()V
 	public abstract fun createChild (Lcom/awakekt/awake/core/di/Module;)Lcom/awakekt/awake/core/di/Container;
 	public abstract fun createChild (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/di/Container;
 	public static synthetic fun createChild$default (Lcom/awakekt/awake/core/di/Container;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/di/Container;
 	public abstract fun get (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
 	public abstract fun getOrNull (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
+	public fun isClosed ()Z
+	public fun verify ()V
 }
 
 public final class com/awakekt/awake/core/di/Container$DefaultImpls {
+	public static fun close (Lcom/awakekt/awake/core/di/Container;)V
 	public static synthetic fun createChild$default (Lcom/awakekt/awake/core/di/Container;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/di/Container;
+	public static fun isClosed (Lcom/awakekt/awake/core/di/Container;)Z
+	public static fun verify (Lcom/awakekt/awake/core/di/Container;)V
+}
+
+public final class com/awakekt/awake/core/di/ContainerClosedException : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;)V
 }
 
 public final class com/awakekt/awake/core/di/ContainerKt {
@@ -25,10 +35,13 @@ public final class com/awakekt/awake/core/di/CyclicDependencyException : java/la
 }
 
 public final class com/awakekt/awake/core/di/DefaultContainer : com/awakekt/awake/core/di/Container {
+	public fun close ()V
 	public fun createChild (Lcom/awakekt/awake/core/di/Module;)Lcom/awakekt/awake/core/di/Container;
 	public fun createChild (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/di/Container;
 	public fun get (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
 	public fun getOrNull (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
+	public fun isClosed ()Z
+	public fun verify ()V
 }
 
 public final class com/awakekt/awake/core/di/FactoryBinding : com/awakekt/awake/core/di/Binding {
@@ -38,6 +51,8 @@ public final class com/awakekt/awake/core/di/FactoryBinding : com/awakekt/awake/
 
 public final class com/awakekt/awake/core/di/InstanceBinding : com/awakekt/awake/core/di/Binding {
 	public fun <init> (Ljava/lang/Object;)V
+	public fun <init> (Ljava/lang/Object;Z)V
+	public final fun getCloseOnDispose ()Z
 	public fun resolve (Lcom/awakekt/awake/core/di/Container;)Ljava/lang/Object;
 }
 

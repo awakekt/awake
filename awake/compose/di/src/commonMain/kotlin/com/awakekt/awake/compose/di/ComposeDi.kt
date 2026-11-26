@@ -65,8 +65,10 @@ context(composer: Composer)
  * @param qualifier Optional identifier distinguishing bindings of type [T].
  * @return The resolved and remembered instance of [T].
  */
-inline fun <reified T : Any> rememberResolve(qualifier: String? = null): T =
-    remember(qualifier) { currentContainer().resolve(qualifier) }
+inline fun <reified T : Any> rememberResolve(qualifier: String? = null): T {
+    val container = currentContainer()
+    return remember(container, qualifier) { container.resolve(qualifier) }
+}
 
 context(composer: Composer)
 /**
@@ -76,8 +78,10 @@ context(composer: Composer)
  * @param qualifier Optional identifier distinguishing bindings of type [T].
  * @return The resolved and remembered instance of [T], or null if unbound or no container is available.
  */
-inline fun <reified T : Any> rememberResolveOrNull(qualifier: String? = null): T? =
-    remember(qualifier) { LocalContainer.current?.getOrNull(qualifier) }
+inline fun <reified T : Any> rememberResolveOrNull(qualifier: String? = null): T? {
+    val container = LocalContainer.current
+    return remember(container, qualifier) { container?.getOrNull(qualifier) }
+}
 
 context(composer: Composer)
 /**

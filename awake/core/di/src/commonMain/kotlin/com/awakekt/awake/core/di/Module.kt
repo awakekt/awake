@@ -8,6 +8,9 @@ package com.awakekt.awake.core.di
 /**
  * Encapsulates a collection of [Binding] definitions.
  *
+ * Modules are reusable blueprints: constructing multiple containers from the same [Module]
+ * gives each container its own isolated singleton cache and disposal lifecycle.
+ *
  * @property bindings Internal map of dependency keys to their corresponding bindings.
  */
 class Module internal constructor(
@@ -34,7 +37,10 @@ class ModuleBuilder {
     private val bindings = LinkedHashMap<Key<*>, Binding<*>>()
 
     /**
-     * Declares a lazy singleton binding evaluated once and cached.
+     * Declares a lazy singleton binding evaluated once and cached for the owning container lifecycle.
+     *
+     * If the created instance implements [AutoCloseable], it is closed automatically when the
+     * owning [Container] is closed.
      *
      * @param T The dependency type to bind.
      * @param qualifier Optional qualifier string to differentiate bindings.
@@ -64,15 +70,20 @@ class ModuleBuilder {
     /**
      * Declares a direct instance binding.
      *
+     * Pre-instantiated values remain owned by the caller by default ([closeOnDispose] = `false`).
+     * Pass `closeOnDispose = true` to close [value] automatically when the container closes.
+     *
      * @param T The dependency type to bind.
      * @param value The pre-existing instance to bind.
      * @param qualifier Optional qualifier string to differentiate bindings.
+     * @param closeOnDispose Whether closing the container should close [value] if it implements [AutoCloseable].
      */
     inline fun <reified T : Any> instance(
         value: T,
         qualifier: String? = null,
+        closeOnDispose: Boolean = false,
     ) {
-        bind(Key(T::class, qualifier), InstanceBinding(value))
+        bind(Key(T::class, qualifier), InstanceBinding(value, closeOnDispose))
     }
 
     /**

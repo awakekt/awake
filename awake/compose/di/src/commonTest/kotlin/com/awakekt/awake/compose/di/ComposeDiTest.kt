@@ -93,6 +93,34 @@ class ComposeDiTest {
     }
 
     @Test
+    fun rememberResolveReResolvesWhenAmbientContainerChanges() {
+        val firstContainer = container {
+            singleton<GreetingService> { EnglishGreetingService() }
+        }
+        val secondContainer = container {
+            singleton<GreetingService> { EnglishGreetingService() }
+        }
+
+        val root = TestNode()
+        var firstInstance: GreetingService? = null
+        var secondInstance: GreetingService? = null
+
+        compose(root) {
+            ProvideContainer(firstContainer) {
+                firstInstance = rememberResolve<GreetingService>()
+            }
+        }
+        compose(root) {
+            ProvideContainer(secondContainer) {
+                secondInstance = rememberResolve<GreetingService>()
+            }
+        }
+
+        kotlin.test.assertNotSame(firstInstance, secondInstance)
+        kotlin.test.assertSame(secondContainer.get(com.awakekt.awake.core.di.Key(GreetingService::class)), secondInstance)
+    }
+
+    @Test
     fun currentContainerThrowsWhenNotProvided() {
         assertFailsWith<IllegalStateException> {
             compose {

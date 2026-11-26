@@ -79,16 +79,17 @@ class AppDiDslTest {
             // Second service registered after first
             di(
                 container {
-                    instance(probe2)
+                    singleton { probe2 }
                 },
             )
             dispose { events += "disposeCallback" }
         }.createLifecycle()
 
+        lifecycle.requireService<AppServiceLookup>().requireService<CloseProbe>()
         lifecycle.dispose()
 
         // Callbacks run first, then services close in reverse order of registration
-        kotlin.test.assertTrue(events.contains("disposeCallback"))
+        assertEquals(listOf("disposeCallback", "service2", "service1"), events)
     }
 
     @Test
