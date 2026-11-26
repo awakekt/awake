@@ -26,6 +26,9 @@ open class NoOpAudioPlayer(
 
     override fun playMusic(clip: AudioClip, volume: Float, loop: Boolean) {}
 
+    override fun playMusicStream(source: MusicStreamSource, volume: Float, loop: Boolean): Boolean =
+        source.isValidSource()
+
     override fun stopMusic() {}
 
     override fun dispose() {}

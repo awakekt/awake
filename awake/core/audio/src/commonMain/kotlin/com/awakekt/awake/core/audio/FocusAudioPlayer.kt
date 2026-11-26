@@ -39,13 +39,12 @@ class FocusAudioPlayer private constructor(
         initiallyFocused: Boolean = true,
     ) : this(delegate, focusProvider = null, initiallyFocused = initiallyFocused)
 
-    private data class MusicState(
-        val clip: AudioClip,
-        val volume: Float,
-        val loop: Boolean,
-    )
+    private sealed interface ActiveMusic {
+        data class Clip(val clip: AudioClip, val volume: Float, val loop: Boolean) : ActiveMusic
+        data class Stream(val source: MusicStreamSource, val volume: Float, val loop: Boolean) : ActiveMusic
+    }
 
-    private var music: MusicState? = null
+    private var music: ActiveMusic? = null
     private val sounds = ArrayList<SoundHandle>()
     private var disposed = false
 
@@ -58,7 +57,7 @@ class FocusAudioPlayer private constructor(
             if (field == value || disposed) return
             field = value
             if (value) {
-                music?.let { delegate.playMusic(it.clip, it.volume, it.loop) }
+                resumeRememberedMusic()
             } else {
                 delegate.stopMusic()
                 stopAndClearSounds()
@@ -103,9 +102,23 @@ class FocusAudioPlayer private constructor(
     override fun playMusic(clip: AudioClip, volume: Float, loop: Boolean) {
         if (disposed) return
         syncFocus()
-        music = MusicState(clip, volume, loop)
+        music = ActiveMusic.Clip(clip, volume, loop)
         if (focused) {
             delegate.playMusic(clip, volume, loop)
+        }
+    }
+
+    override fun playMusicStream(source: MusicStreamSource, volume: Float, loop: Boolean): Boolean {
+        if (disposed || !source.isValidSource()) return false
+        syncFocus()
+        val remembered = ActiveMusic.Stream(source, volume, loop)
+        return if (focused) {
+            val started = delegate.playMusicStream(source, volume, loop)
+            music = if (started) remembered else null
+            started
+        } else {
+            music = remembered
+            true
         }
     }
 
@@ -120,6 +133,14 @@ class FocusAudioPlayer private constructor(
         music = null
         stopAndClearSounds()
         delegate.dispose()
+    }
+
+    private fun resumeRememberedMusic() {
+        when (val remembered = music) {
+            is ActiveMusic.Clip -> delegate.playMusic(remembered.clip, remembered.volume, remembered.loop)
+            is ActiveMusic.Stream -> delegate.playMusicStream(remembered.source, remembered.volume, remembered.loop)
+            null -> Unit
+        }
     }
 
     private fun pruneStoppedSounds() {

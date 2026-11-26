@@ -19,6 +19,8 @@ internal external interface WebAudioVoice : JsAny {
     val playing: Boolean
 }
 
+internal external interface WebMusicStreamHandle : JsAny
+
 @JsFun(
     """
 (context, output) => {

@@ -153,6 +153,25 @@ class WebAudioPlayerTest {
         removeAudioUnlock(unlock)
     }
 
+    @Test
+    fun playMusicStreamRejectsInvalidSourcesAndStopsCleanly() {
+        val player = WebAudioPlayer(offlineContext())
+        assertFalse(player.playMusicStream(MusicStreamSource.EncodedBytes("empty.mp3", byteArrayOf())))
+        assertFalse(player.playMusicStream(MusicStreamSource.FilePath("blank", "   ")))
+
+        val started = player.playMusicStream(
+            MusicStreamSource.EncodedBytes("bgm/town.ogg", byteArrayOf(0x4F, 0x67, 0x67, 0x53)),
+            volume = 0.5f,
+            loop = true,
+        )
+        assertTrue(started, "Browser environment must accept encoded audio bytes via Blob HTMLAudioElement")
+        player.musicVolume = 0.4f
+        player.masterVolume = 0.8f
+        player.stopMusic()
+        player.dispose()
+        assertFalse(player.playMusicStream(MusicStreamSource.FilePath("bgm/town.mp3", "bgm/town.mp3")))
+    }
+
     private fun pcm(vararg samples: Int): AudioClip = AudioClip(
         id = "browser-pcm",
         name = "Browser PCM",

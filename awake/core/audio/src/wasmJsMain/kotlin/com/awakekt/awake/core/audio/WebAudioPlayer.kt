@@ -30,12 +30,15 @@ class WebAudioPlayer internal constructor(
     private val buffers = mutableMapOf<AudioClip, JsAny>()
     private val sounds = mutableSetOf<WebSoundHandle>()
     private var music: WebSoundHandle? = null
+    private var musicStream: WebMusicStreamHandle? = null
+    private var musicStreamVolume: Float = 1f
     private var disposed = false
 
     override var masterVolume: Float = 1f
         set(value) {
             field = value.coerceIn(0f, 1f)
             setAudioGain(graph.master, field)
+            updateMusicStreamVolume()
         }
 
     override var sfxVolume: Float = 1f
@@ -48,6 +51,7 @@ class WebAudioPlayer internal constructor(
         set(value) {
             field = value.coerceIn(0f, 1f)
             setAudioGain(graph.music, field)
+            updateMusicStreamVolume()
         }
 
     init {
@@ -62,20 +66,38 @@ class WebAudioPlayer internal constructor(
         music = play(clip, graph.music, volume, 0f, loop)
     }
 
+    override fun playMusicStream(source: MusicStreamSource, volume: Float, loop: Boolean): Boolean {
+        if (disposed || !source.isValidSource()) return false
+        stopMusic()
+        musicStreamVolume = volume.coerceIn(0f, 1f)
+        val started = startWebMusicStream(source, effectiveMusicStreamVolume(), loop)
+        musicStream = started
+        return started != null
+    }
+
     override fun stopMusic() {
         music?.stop()
         music = null
+        musicStream?.let(::stopWebMusicStream)
+        musicStream = null
     }
 
     override fun dispose() {
         if (disposed) return
         disposed = true
+        stopMusic()
         sounds.toList().forEach { it.stop() }
-        music = null
         buffers.clear()
         unlock?.let(::removeAudioUnlock)
         disconnectAudioGraph(graph)
         if (ownsContext) closeAudioContext(context)
+    }
+
+    private fun effectiveMusicStreamVolume(): Float =
+        (masterVolume * musicVolume * musicStreamVolume).coerceIn(0f, 1f)
+
+    private fun updateMusicStreamVolume() {
+        musicStream?.let { setWebMusicStreamVolume(it, effectiveMusicStreamVolume()) }
     }
 
     private fun play(clip: AudioClip, bus: JsAny, volume: Float, pan: Float, loop: Boolean): WebSoundHandle? {
