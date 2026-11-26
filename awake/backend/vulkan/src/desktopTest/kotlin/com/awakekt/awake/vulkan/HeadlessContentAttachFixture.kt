@@ -51,7 +51,8 @@ internal class HeadlessContentAttachFixture private constructor(
     val attacher: ContentFeatureAttacher<RenderPipeline>,
     /** Where attached features' pipelines are registered, to check when one is released. */
     val registry: PipelineRegistry<RenderPipeline>,
-    private val device: GraphicsDevice,
+    internal val device: GraphicsDevice,
+    internal val transferContext: TransferContext,
     private val cleanup: () -> Unit,
 ) {
     /** One frame through `draw`, into the stand-in swapchain images; needs a presentable fixture. */
@@ -148,7 +149,7 @@ internal class HeadlessContentAttachFixture private constructor(
             ) { vertex, _ -> compileWgsl(vertex) }
             if (presentable) swapchainManager.createSyncObjects()
             val headless = headlessCleanup(graphicsDevice, transferContext, sceneRenderPass, material.descriptorSetLayout, primary)
-            return HeadlessContentAttachFixture(renderer, attacher, registry, graphicsDevice) {
+            return HeadlessContentAttachFixture(renderer, attacher, registry, graphicsDevice, transferContext) {
                 registry.destroyAll { it.destroy() }
                 attacher.releaseAll()
                 shadowPlaceholder.destroy()

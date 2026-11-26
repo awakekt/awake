@@ -18,7 +18,7 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
         graphicsDevice.wgpuContext.device.queue.writeTextureBytes(
             texture = (texture as Texture).texture,
             data = region.data,
-            bytesPerRow = region.width * 4,
+            bytesPerRow = region.width * region.pixelFormat.bytesPerTexel,
             rowsPerImage = region.height,
             width = region.width,
             height = region.height,

@@ -40,12 +40,12 @@ class PagedTerrainUploadsTest {
     private fun List<ContentTextureUpdate>.table() = single { it.binding == TERRAIN_PAGE_TABLE_BINDING }.region.data
 
     @Test fun partialUploadsPublishOnlyCompleteCellsAndEveryFrameSlotCatchesUp() {
-        val terrain = terrain(uploadBytes = 156) // 100-byte page + 16-byte table + 40-byte fallback.
+        val terrain = terrain(uploadBytes = 86) // 50-byte RG8 page + 16-byte table + 20-byte RG8 fallback.
         val uploads = PagedTerrainUploads(terrain)
         terrain.put(TerrainPageCoord(-1, 0), page())
         terrain.put(TerrainPageCoord(0, 0), page())
         val first = uploads.updates(0)
-        assertTrue(first.sumOf { it.region.data.size } <= 156)
+        assertTrue(first.sumOf { it.region.data.size } <= 86)
         assertEquals(1, first.count { it.binding == TERRAIN_HEIGHT_PAGES_BINDING })
         assertEquals(1, first.table()[0].toInt())
         assertEquals(0, first.table()[4].toInt())

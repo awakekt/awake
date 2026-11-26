@@ -8,10 +8,11 @@ package com.awakekt.awake.render.texture
 /**
  * Raw pixel data a game supplies to a backend's game-application bootstrap (see
  * `VulkanEngine`) -- backend-neutral input, not a rendering abstraction itself.
- * [data] is expected in the same tightly-packed RGBA8 layout the existing demo texture uses
- * today. Both Vulkan and WebGPU's `Material` implementations support real textures.
+ * [data] is tightly packed according to [pixelFormat] ([TexturePixelFormat.Rgba8Unorm] by default,
+ * or compact 2-byte [TexturePixelFormat.Rg8Unorm] for split 16-bit data maps such as heightmaps).
  */
-data class TextureAsset(
+@Suppress("LongParameterList", "TooManyFunctions") // Binary-compatible data-class replacement with explicit components/copy.
+class TextureAsset(
     val data: ByteArray,
     /** Width of the texture image in pixels. */
     val width: Int,
@@ -30,16 +31,30 @@ data class TextureAsset(
     val isCubemap: Boolean = false,
     /** Nearest keeps individual texels and uploads only the base level (no atlas mip bleeding). */
     val filtering: TextureFiltering = TextureFiltering.Linear,
+    /** Uncompressed texel channel layout in [data] (4-byte RGBA8 by default, or compact 2-byte RG8). */
+    val pixelFormat: TexturePixelFormat = TexturePixelFormat.Rgba8Unorm,
 ) {
+    /** Constructor before [pixelFormat]; kept for compiled callers. */
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        data: ByteArray,
+        width: Int,
+        height: Int,
+        layerCount: Int = 1,
+        isCubemap: Boolean = false,
+        filtering: TextureFiltering = TextureFiltering.Linear,
+    ) : this(data, width, height, layerCount, isCubemap, filtering, TexturePixelFormat.Rgba8Unorm)
+
     init {
         require(layerCount >= 1) { "A texture holds at least one layer; was $layerCount." }
         if (isCubemap) {
             require(layerCount == 6) { "A cubemap texture must have exactly 6 layers; was $layerCount." }
             require(width == height) { "Cubemap faces must be square; was ${width}x$height." }
         }
-        require(data.size == width * height * RGBA_BYTES * layerCount) {
-            "A ${width}x$height RGBA8 texture of $layerCount layer(s) needs " +
-                "${width * height * RGBA_BYTES * layerCount} bytes, got ${data.size}. A size " +
+        val expectedBytes = width.toLong() * height * pixelFormat.bytesPerTexel * layerCount
+        require(data.size.toLong() == expectedBytes) {
+            "A ${width}x$height $pixelFormat texture of $layerCount layer(s) needs " +
+                "$expectedBytes bytes, got ${data.size}. A size " +
                 "mismatch here uploads one layer's worth of another layer's pixels."
         }
     }
@@ -47,8 +62,51 @@ data class TextureAsset(
     /** Byte offset of [layer] within [data]. */
     fun layerOffset(layer: Int): Int {
         require(layer in 0 until layerCount) { "Layer $layer is outside 0..${layerCount - 1}." }
-        return layer * width * height * RGBA_BYTES
+        return layer * width * height * pixelFormat.bytesPerTexel
     }
+
+    /** Destructuring component for [data]. */
+    operator fun component1(): ByteArray = data
+
+    /** Destructuring component for [width]. */
+    operator fun component2(): Int = width
+
+    /** Destructuring component for [height]. */
+    operator fun component3(): Int = height
+
+    /** Destructuring component for [layerCount]. */
+    operator fun component4(): Int = layerCount
+
+    /** Destructuring component for [isCubemap]. */
+    operator fun component5(): Boolean = isCubemap
+
+    /** Destructuring component for [filtering]. */
+    operator fun component6(): TextureFiltering = filtering
+
+    /** Destructuring component for [pixelFormat]. */
+    operator fun component7(): TexturePixelFormat = pixelFormat
+
+    /** Copies this texture asset with updated properties. */
+    fun copy(
+        data: ByteArray = this.data,
+        width: Int = this.width,
+        height: Int = this.height,
+        layerCount: Int = this.layerCount,
+        isCubemap: Boolean = this.isCubemap,
+        filtering: TextureFiltering = this.filtering,
+        pixelFormat: TexturePixelFormat = this.pixelFormat,
+    ): TextureAsset = TextureAsset(data, width, height, layerCount, isCubemap, filtering, pixelFormat)
+
+    /** Binary-compatible 6-parameter copy overload prior to [pixelFormat]. */
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        data: ByteArray = this.data,
+        width: Int = this.width,
+        height: Int = this.height,
+        layerCount: Int = this.layerCount,
+        isCubemap: Boolean = this.isCubemap,
+        filtering: TextureFiltering = this.filtering,
+    ): TextureAsset = copy(data, width, height, layerCount, isCubemap, filtering, pixelFormat)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -58,7 +116,8 @@ data class TextureAsset(
             height == other.height &&
             layerCount == other.layerCount &&
             isCubemap == other.isCubemap &&
-            filtering == other.filtering
+            filtering == other.filtering &&
+            pixelFormat == other.pixelFormat
     }
 
     override fun hashCode(): Int {
@@ -68,8 +127,13 @@ data class TextureAsset(
         result = 31 * result + layerCount
         result = 31 * result + isCubemap.hashCode()
         result = 31 * result + filtering.hashCode()
+        result = 31 * result + pixelFormat.hashCode()
         return result
     }
+
+    override fun toString(): String =
+        "TextureAsset(width=$width, height=$height, layerCount=$layerCount, isCubemap=$isCubemap, " +
+            "filtering=$filtering, pixelFormat=$pixelFormat, bytes=${data.size})"
 }
 
 /**
@@ -131,4 +195,19 @@ enum class TextureFiltering {
 
     /** Linear sampling of the base level only; suitable for mutable data textures. */
     BaseLevelLinear,
+}
+
+/**
+ * Uncompressed texel storage format for [TextureAsset] and [TextureRegion].
+ *
+ * Both formats are filterable with linear sampling across Vulkan 1.0 core and WebGPU core.
+ *
+ * @property bytesPerTexel Tightly packed byte stride of one texel.
+ */
+enum class TexturePixelFormat(val bytesPerTexel: Int) {
+    /** Standard 4-channel 8-bit unsigned normalized RGBA (`VK_FORMAT_R8G8B8A8_UNORM` / `rgba8unorm`). */
+    Rgba8Unorm(4),
+
+    /** Compact 2-channel 8-bit unsigned normalized RG (`VK_FORMAT_R8G8_UNORM` / `rg8unorm`), halving VRAM for split 16-bit data maps. */
+    Rg8Unorm(2),
 }

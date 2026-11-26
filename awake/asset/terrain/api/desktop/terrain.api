@@ -8,11 +8,13 @@ public final class com/awakekt/awake/asset/terrain/Heightmap {
 	public final fun getMinX ()F
 	public final fun getMinZ ()F
 	public final fun getOrigin ()Lcom/awakekt/awake/core/math/GridOrigin;
+	public final fun getSampleCount ()I
 	public final fun getScale ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getWidth ()I
 	public final fun heightAt (II)F
 	public final fun heightAtWorld (FF)F
 	public final fun mutableCopy ()Lcom/awakekt/awake/asset/terrain/MutableHeightmap;
+	public final fun sampleAt (I)F
 	public final fun withOrigin (Lcom/awakekt/awake/core/math/GridOrigin;)Lcom/awakekt/awake/asset/terrain/Heightmap;
 }
 

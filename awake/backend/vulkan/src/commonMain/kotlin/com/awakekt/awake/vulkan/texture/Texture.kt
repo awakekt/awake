@@ -10,6 +10,7 @@ import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.TexturePixelFormat
 import com.awakekt.awake.render.texture.mipChain
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -44,9 +45,11 @@ class Texture internal constructor(
     override val layerCount: Int,
     /** Whether the image is in a GPU block format, which [TextureUploads] can't write regions into. */
     internal val blockCompressed: Boolean,
+    override val pixelFormat: TexturePixelFormat = TexturePixelFormat.Rgba8Unorm,
 ) : com.awakekt.awake.render.texture.WritableTexture {
     private val device get() = graphicsDevice.device
 
+    @Suppress("LongParameterList")
     constructor(
         graphicsDevice: GraphicsDevice,
         runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
@@ -58,13 +61,46 @@ class Texture internal constructor(
         layerCount: Int = 1,
         isCubemap: Boolean = false,
         filtering: TextureFiltering = TextureFiltering.Linear,
+        pixelFormat: TexturePixelFormat = TexturePixelFormat.Rgba8Unorm,
     ) : this(
         graphicsDevice,
-        uploadRgba(graphicsDevice, runOneTimeCommands, TextureAsset(data, width, height, layerCount, isCubemap), samplerCreateInfo, filtering),
+        uploadPixels(
+            graphicsDevice,
+            runOneTimeCommands,
+            TextureAsset(data, width, height, layerCount, isCubemap, filtering, pixelFormat),
+            samplerCreateInfo,
+            filtering,
+        ),
         width,
         height,
         layerCount,
         blockCompressed = false,
+        pixelFormat = pixelFormat,
+    )
+
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    @Suppress("LongParameterList")
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+        data: ByteArray,
+        width: Int,
+        height: Int,
+        samplerCreateInfo: VkSamplerCreateInfo = VkSamplerCreateInfo(),
+        layerCount: Int = 1,
+        isCubemap: Boolean = false,
+        filtering: TextureFiltering = TextureFiltering.Linear,
+    ) : this(
+        graphicsDevice,
+        runOneTimeCommands,
+        data,
+        width,
+        height,
+        samplerCreateInfo,
+        layerCount,
+        isCubemap,
+        filtering,
+        TexturePixelFormat.Rgba8Unorm,
     )
 
     /** The device-local `VkImage` holding every layer and mip level. */
@@ -199,14 +235,27 @@ class Texture internal constructor(
             asset: TextureAsset,
         ): Texture = Texture(
             graphicsDevice,
-            uploadRgba(graphicsDevice, runOneTimeCommands, asset, VkSamplerCreateInfo(), asset.filtering, graphicsDevice.mipSkip),
+            uploadPixels(graphicsDevice, runOneTimeCommands, asset, VkSamplerCreateInfo(), asset.filtering, graphicsDevice.mipSkip),
             asset.width,
             asset.height,
             asset.layerCount,
             blockCompressed = false,
+            pixelFormat = asset.pixelFormat,
         )
 
-        private fun uploadRgba(
+        private fun vkFormat(pixelFormat: TexturePixelFormat): VkFormat = when (pixelFormat) {
+            TexturePixelFormat.Rgba8Unorm -> VkFormat.VK_FORMAT_R8G8B8A8_UNORM
+            TexturePixelFormat.Rg8Unorm -> VkFormat.VK_FORMAT_R8G8_UNORM
+        }
+
+        private class LayerStagingCopy(
+            val data: ByteArray,
+            val sourceOffset: Int,
+            val byteCount: Int,
+            val stagingOffset: Long,
+        )
+
+        private fun uploadPixels(
             graphicsDevice: GraphicsDevice,
             runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
             asset: TextureAsset,
@@ -220,18 +269,22 @@ class Texture internal constructor(
                 asset.mipChain(mipSkip)
             }
             val regions = ArrayList<ImageUpload.Region>(levels.size * asset.layerCount)
+            val copies = ArrayList<LayerStagingCopy>(levels.size * asset.layerCount)
             var totalBytes = 0L
             levels.forEachIndexed { index, level ->
-                // One copy per layer per level, each at its stated offset: right whatever the packing.
+                val layerBytes = level.width * level.height * level.pixelFormat.bytesPerTexel
+                // Align every layer's bufferOffset to 16 bytes so odd-sized RG8 arrays satisfy Vulkan copy rules.
                 repeat(asset.layerCount) { layer ->
-                    regions += ImageUpload.Region(level.width, level.height, totalBytes + level.layerOffset(layer), index, layer)
+                    totalBytes = (totalBytes + LAYER_STAGING_ALIGNMENT - 1L) and (LAYER_STAGING_ALIGNMENT - 1L).inv()
+                    regions += ImageUpload.Region(level.width, level.height, totalBytes, index, layer)
+                    copies += LayerStagingCopy(level.data, level.layerOffset(layer), layerBytes, totalBytes)
+                    totalBytes += layerBytes
                 }
-                totalBytes += level.data.size
             }
             return ImageUpload.upload(
                 graphicsDevice = graphicsDevice,
                 runOneTimeCommands = runOneTimeCommands,
-                format = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,
+                format = vkFormat(asset.pixelFormat),
                 width = levels.first().width,
                 height = levels.first().height,
                 mipLevels = levels.size,
@@ -239,11 +292,14 @@ class Texture internal constructor(
                 isCubemap = asset.isCubemap,
                 byteSize = totalBytes,
                 writeStaging = { mappedPtr, stagingOffset ->
-                    var offset = 0L
-                    for (level in levels) {
-                        val bytes = level.data
-                        VulkanBuffers.writeMappedMemoryBytes(mappedPtr, stagingOffset + offset, bytes, 0, bytes.size)
-                        offset += bytes.size
+                    for (copy in copies) {
+                        VulkanBuffers.writeMappedMemoryBytes(
+                            mappedPtr,
+                            stagingOffset + copy.stagingOffset,
+                            copy.data,
+                            copy.sourceOffset,
+                            copy.byteCount,
+                        )
                     }
                 },
                 regions = regions,
@@ -251,5 +307,7 @@ class Texture internal constructor(
                 filtering = filtering,
             )
         }
+
+        private const val LAYER_STAGING_ALIGNMENT = 16L
     }
 }

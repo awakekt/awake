@@ -8,6 +8,7 @@ package com.awakekt.awake.asset.shaderpack
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.TexturePixelFormat
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -40,11 +41,13 @@ class HeightmapEncodingTest {
 
         var worstError = 0f
         samples.forEachIndexed { index, expected ->
-            val red = encoded.texture.data[index * RGBA].toInt() and 0xFF
-            val green = encoded.texture.data[index * RGBA + GREEN].toInt() and 0xFF
+            val red = encoded.texture.data[index * RG_BYTES].toInt() and 0xFF
+            val green = encoded.texture.data[index * RG_BYTES + GREEN].toInt() and 0xFF
             worstError = maxOf(worstError, abs(decode(red, green) - expected))
         }
 
+        assertEquals(TexturePixelFormat.Rg8Unorm, encoded.texture.pixelFormat)
+        assertEquals(size * size * RG_BYTES, encoded.texture.data.size)
         assertTrue(
             worstError < EIGHT_BIT_STEP,
             "Worst round-trip error was $worstError, which an 8-bit encoding ($EIGHT_BIT_STEP " +
@@ -63,7 +66,7 @@ class HeightmapEncodingTest {
             val red = encoded.texture.data[index].toInt() and 0xFF
             val green = encoded.texture.data[index + GREEN].toInt() and 0xFF
             states += (red shl Byte.SIZE_BITS) or green
-            index += RGBA
+            index += RG_BYTES
         }
 
         assertEquals(32 * 32, states.size, "A strictly increasing ramp should encode no duplicates.")
@@ -81,7 +84,8 @@ class HeightmapEncodingTest {
 
         val encoded = flat.encodeForSampling()
 
-        assertTrue(encoded.texture.data.none { it != 0.toByte() && it != 0xFF.toByte() })
+        assertEquals(TexturePixelFormat.Rg8Unorm, encoded.texture.pixelFormat)
+        assertTrue(encoded.texture.data.all { it == 0.toByte() })
         assertEquals(0f, encoded.scale)
         assertEquals(14f, encoded.bias, "7 units at a y scale of 2.")
     }
@@ -92,10 +96,11 @@ class HeightmapEncodingTest {
         val encoded = rampHeightmap(65).encodeForSampling()
 
         assertEquals(TextureFiltering.BaseLevelLinear, encoded.texture.filtering)
+        assertEquals(TexturePixelFormat.Rg8Unorm, encoded.texture.pixelFormat)
     }
 
     private companion object {
-        const val RGBA = 4
+        const val RG_BYTES = 2
         const val GREEN = 1
         const val BYTE_MAX = 255f
         const val BYTE_STEP = 256f

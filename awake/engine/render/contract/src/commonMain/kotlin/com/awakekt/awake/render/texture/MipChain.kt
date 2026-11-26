@@ -64,29 +64,45 @@ private fun mipLevelCount(width: Int, height: Int): Int {
 }
 
 private fun TextureAsset.downsampleLayers(newWidth: Int, newHeight: Int): TextureAsset {
-    val layerBytes = newWidth * newHeight * 4
+    val channels = pixelFormat.bytesPerTexel
+    val layerBytes = newWidth * newHeight * channels
     val out = ByteArray(layerBytes * layerCount)
-    for (layer in 0 until layerCount) boxDownsample(layerOffset(layer), newWidth, newHeight, out, layer * layerBytes)
-    return TextureAsset(out, newWidth, newHeight, layerCount, isCubemap, filtering)
+    for (layer in 0 until layerCount) boxDownsample(layerOffset(layer), newWidth, newHeight, channels, out, layer * layerBytes)
+    return TextureAsset(out, newWidth, newHeight, layerCount, isCubemap, filtering, pixelFormat)
 }
 
-private fun TextureAsset.boxDownsample(source: Int, newWidth: Int, newHeight: Int, out: ByteArray, target: Int) {
+private fun TextureAsset.boxDownsample(
+    source: Int,
+    newWidth: Int,
+    newHeight: Int,
+    channels: Int,
+    out: ByteArray,
+    target: Int,
+) {
     for (y in 0 until newHeight) {
         val srcY0 = (y * height) / newHeight
         val srcY1 = (((y + 1) * height) / newHeight).coerceAtLeast(srcY0 + 1).coerceAtMost(height)
         for (x in 0 until newWidth) {
             val srcX0 = (x * width) / newWidth
             val srcX1 = (((x + 1) * width) / newWidth).coerceAtLeast(srcX0 + 1).coerceAtMost(width)
-            averageBlock(source, srcX0 until srcX1, srcY0 until srcY1, out, target + (y * newWidth + x) * 4)
+            averageBlock(source, srcX0 until srcX1, srcY0 until srcY1, channels, out, target + (y * newWidth + x) * channels)
         }
     }
 }
 
-/** Averages each RGBA channel over one source block into [out] at [outOffset]. */
-private fun TextureAsset.averageBlock(source: Int, columns: IntRange, rows: IntRange, out: ByteArray, outOffset: Int) {
-    for (channel in 0 until 4) {
+/** Averages each channel over one source block into [out] at [outOffset]. */
+private fun TextureAsset.averageBlock(
+    source: Int,
+    columns: IntRange,
+    rows: IntRange,
+    channels: Int,
+    out: ByteArray,
+    outOffset: Int,
+) {
+    val count = columns.count() * rows.count()
+    for (channel in 0 until channels) {
         var sum = 0
-        for (sy in rows) for (sx in columns) sum += data[source + (sy * width + sx) * 4 + channel].toInt() and 0xFF
-        out[outOffset + channel] = (sum / (columns.count() * rows.count())).toByte()
+        for (sy in rows) for (sx in columns) sum += data[source + (sy * width + sx) * channels + channel].toInt() and 0xFF
+        out[outOffset + channel] = (sum / count).toByte()
     }
 }

@@ -33,8 +33,11 @@ import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.TexturePixelFormat
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.material.Material
+import com.awakekt.awake.vulkan.texture.Texture
 import kotlinx.coroutines.runBlocking
 import org.junit.AfterClass
 import java.lang.ref.WeakReference
@@ -171,6 +174,100 @@ class RendererHeadlessContentAttachTest {
 
         assertTrue(frame.covered > MIN_COVERED, "The surface covered only ${frame.covered} pixels.")
         assertEquals(frame.covered, frame.green, "Every covered pixel should be layer 1's green.")
+    }
+
+    /**
+     * Terrains sharing an immutable `textureKeys` entry reuse one GPU `Texture2DArray` until the
+     * last terrain referencing that key detaches.
+     */
+    @Test
+    fun terrainsSharingLayerArrayKeepDrawingAfterFirstDetaches() {
+        val attacher = shared().attacher
+        val keys = mapOf<Int, Any>(TERRAIN_SURFACE_FIRST_BINDING to "shared-two-layer-palette")
+        val first = runBlocking {
+            attacher.attachContentFeature(
+                terrainContentFeature(
+                    SECOND_LAYER_SURFACE,
+                    dome(1f),
+                    CONFIG,
+                    surfaceTextures = mapOf(TERRAIN_SURFACE_FIRST_BINDING to TWO_LAYERS),
+                    samplerTextures = emptyMap(),
+                    textureKeys = keys,
+                ),
+            )
+        }
+        var second: com.awakekt.awake.asset.shaders.AttachedContentFeature? = null
+        try {
+            second = runBlocking {
+                attacher.attachContentFeature(
+                    terrainContentFeature(
+                        SECOND_LAYER_SURFACE,
+                        dome(2f),
+                        CONFIG,
+                        surfaceTextures = mapOf(TERRAIN_SURFACE_FIRST_BINDING to TWO_LAYERS),
+                        samplerTextures = emptyMap(),
+                        textureKeys = keys,
+                    ),
+                )
+            }
+            val both = render()
+            assertTrue(both.covered > MIN_COVERED)
+            assertEquals(both.covered, both.green)
+
+            first.detach()
+            val remaining = render()
+            assertTrue(remaining.covered > MIN_COVERED, "Second terrain must keep drawing via shared array after first detaches.")
+            assertEquals(remaining.covered, remaining.green)
+
+            second.detach()
+            second = null
+            assertEquals(0, render().covered)
+        } finally {
+            first.detach()
+            second?.detach()
+        }
+    }
+
+    /**
+     * Odd-sized RG8_UNORM multi-layer heightmap arrays (e.g. 65x65x3) align every layer's staging
+     * copy offset cleanly and halve GPU bytes relative to RGBA8.
+     */
+    @Test
+    fun oddSizedRg8ArrayUploadsCleanlyWithHalfTheBytesOfRgba8() {
+        val fixture = shared()
+        val width = 65
+        val height = 65
+        val layers = 3
+        val rg8 = Texture(
+            fixture.device,
+            fixture.transferContext::runOneTimeCommands,
+            ByteArray(width * height * TexturePixelFormat.Rg8Unorm.bytesPerTexel * layers),
+            width,
+            height,
+            layerCount = layers,
+            filtering = TextureFiltering.BaseLevelLinear,
+            pixelFormat = TexturePixelFormat.Rg8Unorm,
+        )
+        val rgba8 = Texture(
+            fixture.device,
+            fixture.transferContext::runOneTimeCommands,
+            ByteArray(width * height * TexturePixelFormat.Rgba8Unorm.bytesPerTexel * layers),
+            width,
+            height,
+            layerCount = layers,
+            filtering = TextureFiltering.BaseLevelLinear,
+            pixelFormat = TexturePixelFormat.Rgba8Unorm,
+        )
+        try {
+            assertEquals(TexturePixelFormat.Rg8Unorm, rg8.pixelFormat)
+            assertTrue(
+                rg8.estimatedGpuBytes < rgba8.estimatedGpuBytes * 2 / 3,
+                "Expected RG8 (${rg8.estimatedGpuBytes}) to be roughly half of RGBA8 (${rgba8.estimatedGpuBytes})",
+            )
+        } finally {
+            rg8.destroy()
+            rgba8.destroy()
+        }
     }
 
     private class Frame(val covered: Int, val green: Int)

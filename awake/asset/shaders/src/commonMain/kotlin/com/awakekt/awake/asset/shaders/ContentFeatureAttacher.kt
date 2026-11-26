@@ -46,6 +46,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     private val shared = HashMap<PipelineSpec, SharedPipeline>()
     private val sharedAlternates = HashMap<PipelineSpec, Int>()
     private val sharedGeometries = HashMap<Any, SharedGeometry>()
+    private val sharedTextures = HashMap<SharedTextureKey, SharedTexture>()
 
     /** Attaches register and build across suspensions; one at a time, so two of one spec share. */
     private val attaching = Mutex()
@@ -65,10 +66,12 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         val pipeline = acquire(feature)
         val uploads = mutableListOf<ContentUpload>()
         var sharedGeometry: SharedGeometry? = null
+        val acquiredTextures = mutableListOf<SharedTexture>()
         var builtWhole = false
         val built = try {
             sharedGeometry = acquireGeometry(feature)
-            build(pipeline, feature, sharedGeometry?.upload?.geometry, uploads).also {
+            val textureHandles = acquireTextures(feature, acquiredTextures)
+            build(pipeline, feature, sharedGeometry?.upload?.geometry, textureHandles, uploads).also {
                 require(it.pass == RenderPassSlot.Scene) {
                     "Content feature '${feature.name}' records in ${it.pass}; attached features " +
                         "record in the scene pass."
@@ -81,6 +84,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             if (!builtWhole) {
                 release(pipeline)
                 sharedGeometry?.let(::releaseGeometry)
+                acquiredTextures.forEach(::releaseTexture)
                 uploads.forEach(ContentUpload::release)
             }
         }
@@ -92,16 +96,18 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             ContentPaint.AfterGeometry -> afterGeometry
         }
         slot.add(built)
-        Attachment(pipeline, sharedGeometry, built, slot, uploads).also { attached += it }
+        Attachment(pipeline, sharedGeometry, acquiredTextures, built, slot, uploads).also { attached += it }
     }
 
-    /** Frees every still-attached feature's uploads, shared geometry and shared depth pipelines. For engine
+    /** Frees every still-attached feature's uploads, shared geometry, shared textures, and depth pipelines. For engine
      * teardown, after the renderer destroyed its features and the registry its pipelines. */
     fun releaseAll() {
         attached.forEach { it.uploads.forEach(ContentUpload::release) }
         attached.clear()
         sharedGeometries.values.forEach { it.upload.release() }
         sharedGeometries.clear()
+        sharedTextures.values.forEach { it.upload.release() }
+        sharedTextures.clear()
         shared.values.forEach { it.destroyDepth() }
         shared.clear()
         sharedAlternates.clear()
@@ -183,16 +189,44 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         entry.upload.release()
     }
 
+    private fun acquireTextures(
+        feature: ContentFeature,
+        acquired: MutableList<SharedTexture>,
+    ): Map<Int, ContentTextureHandle> {
+        if (feature.textureKeys.isEmpty()) return emptyMap()
+        val mipSkip = gpu.textureMipSkip
+        return buildMap(feature.textureKeys.size) {
+            for ((binding, rawKey) in feature.textureKeys) {
+                val cacheKey = SharedTextureKey(rawKey, mipSkip)
+                val entry = sharedTextures[cacheKey]?.also { it.users++ }
+                    ?: gpu.uploadTexture(feature.textures.getValue(binding))?.let { upload ->
+                        SharedTexture(cacheKey, upload).also { sharedTextures[cacheKey] = it }
+                    }
+                    ?: continue
+                acquired += entry
+                put(binding, entry.upload.texture)
+            }
+        }
+    }
+
+    private fun releaseTexture(entry: SharedTexture) {
+        if (--entry.users > 0) return
+        sharedTextures.remove(entry.key)
+        entry.upload.release()
+    }
+
     private suspend fun build(
         entry: SharedPipeline,
         feature: ContentFeature,
         sharedGeometry: ContentGeometry?,
+        sharedTextureHandles: Map<Int, ContentTextureHandle>,
         uploads: MutableList<ContentUpload>,
     ): RenderFeature<RenderFrameContext> {
-        val group = if (sharedGeometry == null) {
-            gpu.uploadGroup(entry.pipeline, feature)
+        val includeGeometry = sharedGeometry == null
+        val group = if (sharedTextureHandles.isEmpty()) {
+            if (includeGeometry) gpu.uploadGroup(entry.pipeline, feature) else gpu.uploadGroup(entry.pipeline, feature, includeGeometry = false)
         } else {
-            gpu.uploadGroup(entry.pipeline, feature, includeGeometry = false)
+            gpu.uploadGroup(entry.pipeline, feature, includeGeometry = includeGeometry, sharedTextures = sharedTextureHandles)
         }
         val block: UniformBlock
         val upload: ContentUpload
@@ -208,10 +242,10 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
                 "Content feature '${feature.name}' declares uniforms, so the factory must have " +
                     "allocated a block for its pipeline."
             }
-            upload = if (sharedGeometry == null) {
-                gpu.upload(entry.pipeline, feature)
+            upload = if (sharedTextureHandles.isEmpty()) {
+                if (includeGeometry) gpu.upload(entry.pipeline, feature) else gpu.upload(entry.pipeline, feature, includeGeometry = false)
             } else {
-                gpu.upload(entry.pipeline, feature, includeGeometry = false)
+                gpu.upload(entry.pipeline, feature, includeGeometry = includeGeometry, sharedTextures = sharedTextureHandles)
             }
         }
         uploads += upload
@@ -232,6 +266,16 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     private class SharedGeometry(
         val key: Any,
         val upload: ContentUpload,
+    ) {
+        var users = 1
+    }
+
+    private data class SharedTextureKey(val key: Any, val mipSkip: Int)
+
+    /** Immutable uploaded GPU texture shared across features declaring the same [key] and mip skip. */
+    private class SharedTexture(
+        val key: SharedTextureKey,
+        val upload: ContentTextureUpload,
     ) {
         var users = 1
     }
@@ -258,6 +302,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     private inner class Attachment(
         val pipeline: SharedPipeline,
         val sharedGeometry: SharedGeometry?,
+        val sharedTextures: List<SharedTexture>,
         val built: RenderFeature<RenderFrameContext>,
         val slot: AttachedContentSlot,
         val uploads: List<ContentUpload>,
@@ -270,6 +315,7 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
             built.destroy()
             release(pipeline)
             sharedGeometry?.let(::releaseGeometry)
+            sharedTextures.forEach(::releaseTexture)
             uploads.forEach(ContentUpload::release)
         }
     }

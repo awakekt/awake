@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.texture
 import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.TexturePixelFormat
 import com.awakekt.awake.render.texture.mipChain
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.writeTextureBytes
@@ -67,6 +68,7 @@ class Texture private constructor(
     val uploadedHeight: Int = height,
     /** Estimated GPU bytes held by this texture across all uploaded mip levels and array layers. */
     internal val estimatedGpuBytes: Long = estimateRgbaBytes(uploadedWidth, uploadedHeight, layerCount, mipLevels),
+    override val pixelFormat: TexturePixelFormat = TexturePixelFormat.Rgba8Unorm,
 ) : com.awakekt.awake.render.texture.WritableTexture {
     /** Mip levels the GPU image holds, fewer than the source's chain by any levels mip skip left out. */
     val uploadedMipLevels: Int get() = mipLevels
@@ -103,6 +105,7 @@ class Texture private constructor(
         return true
     }
 
+    @Suppress("LongParameterList")
     constructor(
         graphicsDevice: GraphicsDevice,
         @Suppress("UNUSED_PARAMETER") runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
@@ -112,7 +115,25 @@ class Texture private constructor(
         layerCount: Int = 1,
         isCubemap: Boolean = false,
         filtering: TextureFiltering = TextureFiltering.Linear,
-    ) : this(graphicsDevice, uploadBytes(graphicsDevice, TextureAsset(data, width, height, layerCount, isCubemap), filtering), filtering)
+        pixelFormat: TexturePixelFormat = TexturePixelFormat.Rgba8Unorm,
+    ) : this(
+        graphicsDevice,
+        uploadBytes(graphicsDevice, TextureAsset(data, width, height, layerCount, isCubemap, filtering, pixelFormat), filtering),
+        filtering,
+    )
+
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    @Suppress("LongParameterList")
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        @Suppress("UNUSED_PARAMETER") runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+        data: ByteArray,
+        width: Int,
+        height: Int,
+        layerCount: Int = 1,
+        isCubemap: Boolean = false,
+        filtering: TextureFiltering = TextureFiltering.Linear,
+    ) : this(graphicsDevice, runOneTimeCommands, data, width, height, layerCount, isCubemap, filtering, TexturePixelFormat.Rgba8Unorm)
 
     private constructor(graphicsDevice: GraphicsDevice, filled: FilledTexture, filtering: TextureFiltering) : this(
         texture = filled.texture,
@@ -139,6 +160,7 @@ class Texture private constructor(
         uploadedHeight = filled.uploadedHeight,
         estimatedGpuBytes = filled.estimatedGpuBytes.takeIf { it > 0L }
             ?: estimateRgbaBytes(filled.uploadedWidth, filled.uploadedHeight, filled.layerCount, filled.mipLevelCount),
+        pixelFormat = filled.pixelFormat,
     )
 
     /** A GPU texture whose levels are already written, and how to view it. */
@@ -154,6 +176,7 @@ class Texture private constructor(
         val uploadedHeight: Int = height,
         /** Exact uploaded GPU byte count when known; 0 falls back to RGBA8 mip-chain estimation. */
         val estimatedGpuBytes: Long = 0L,
+        val pixelFormat: TexturePixelFormat = TexturePixelFormat.Rgba8Unorm,
     )
 
     internal companion object {
@@ -186,7 +209,10 @@ class Texture private constructor(
                         height = base.height.toUInt(),
                         depthOrArrayLayers = layerCount.toUInt(),
                     ),
-                    format = GPUTextureFormat.RGBA8Unorm,
+                    format = when (asset.pixelFormat) {
+                        TexturePixelFormat.Rgba8Unorm -> GPUTextureFormat.RGBA8Unorm
+                        TexturePixelFormat.Rg8Unorm -> GPUTextureFormat.RG8Unorm
+                    },
                     // CopySrc so a texture can be read back for verification, as render targets can.
                     usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst or GPUTextureUsage.CopySrc,
                     // Still TwoD: an array or cubemap texture is a 2D texture with layers, and only the view
@@ -195,13 +221,14 @@ class Texture private constructor(
                     mipLevelCount = mipLevels.size.toUInt(),
                 ),
             )
+            val bytesPerTexel = asset.pixelFormat.bytesPerTexel
             mipLevels.forEachIndexed { index, level ->
                 // Layers are already packed back to back, which is exactly what `rowsPerImage` means,
                 // so one write covers all of them without an intermediate JS ArrayBuffer copy on web.
                 device.queue.writeTextureBytes(
                     texture = texture,
                     data = level.data,
-                    bytesPerRow = level.width * 4,
+                    bytesPerRow = level.width * bytesPerTexel,
                     rowsPerImage = level.height,
                     width = level.width,
                     height = level.height,
@@ -219,6 +246,7 @@ class Texture private constructor(
                 base.width,
                 base.height,
                 estimatedGpuBytes = mipLevels.sumOf { it.data.size.toLong() },
+                pixelFormat = asset.pixelFormat,
             )
         }
 

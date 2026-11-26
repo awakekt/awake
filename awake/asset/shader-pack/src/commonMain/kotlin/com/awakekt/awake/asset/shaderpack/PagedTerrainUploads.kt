@@ -11,6 +11,7 @@ import com.awakekt.awake.render.passes.ContentTextureUpdate
 import com.awakekt.awake.render.passes.ContentTextureUpdates
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.TexturePixelFormat
 import com.awakekt.awake.render.texture.TextureRegion
 import com.awakekt.awake.terrain.PagedTerrain
 import com.awakekt.awake.terrain.ResidentTerrainPage
@@ -39,7 +40,7 @@ class PagedTerrainUploads(private val terrain: PagedTerrain) : ContentTextureUpd
     private val fallbackRevisions = HashMap<Int, Long>()
     private val surfaceFallbackRevisions = HashMap<Int, Long>()
     private val layout get() = terrain.layout
-    private val heightPageBytes: Long get() = layout.samplesPerPage.toLong() * layout.samplesPerPage * 4
+    private val heightPageBytes: Long get() = layout.samplesPerPage.toLong() * layout.samplesPerPage * 2
     private val tableBytes: Long get() = layout.cellCountX.toLong() * layout.cellCountZ * 4
 
     init {
@@ -52,10 +53,30 @@ class PagedTerrainUploads(private val terrain: PagedTerrain) : ContentTextureUpd
     /** Fixed-shape arrays, an empty page table and the current coarse images. */
     fun initialImages(): Map<Int, TextureAsset> = buildMap {
         put(COARSE_HEIGHT_BINDING, encode(terrain.heights.fallback))
-        put(TERRAIN_HEIGHT_PAGES_BINDING, TextureAsset(ByteArray((heightPageBytes * terrain.capacity).also { require(it <= Int.MAX_VALUE) }.toInt()), layout.samplesPerPage, layout.samplesPerPage, terrain.capacity, filtering = TextureFiltering.BaseLevelLinear))
+        put(
+            TERRAIN_HEIGHT_PAGES_BINDING,
+            TextureAsset(
+                ByteArray((heightPageBytes * terrain.capacity).also { require(it <= Int.MAX_VALUE) }.toInt()),
+                layout.samplesPerPage,
+                layout.samplesPerPage,
+                terrain.capacity,
+                filtering = TextureFiltering.BaseLevelLinear,
+                pixelFormat = TexturePixelFormat.Rg8Unorm,
+            ),
+        )
         put(TERRAIN_PAGE_TABLE_BINDING, TextureAsset(ByteArray(tableBytes.toInt()), layout.cellCountX, layout.cellCountZ, filtering = TextureFiltering.Nearest))
         for ((binding, template) in terrain.pageTextureTemplates) {
-            put(binding, TextureAsset(ByteArray((template.data.size.toLong() * terrain.capacity).also { require(it <= Int.MAX_VALUE) }.toInt()), template.width, template.height, terrain.capacity, filtering = TextureFiltering.BaseLevelLinear))
+            put(
+                binding,
+                TextureAsset(
+                    ByteArray((template.data.size.toLong() * terrain.capacity).also { require(it <= Int.MAX_VALUE) }.toInt()),
+                    template.width,
+                    template.height,
+                    terrain.capacity,
+                    filtering = TextureFiltering.BaseLevelLinear,
+                    pixelFormat = template.pixelFormat,
+                ),
+            )
         }
         for ((binding, fallback) in terrain.surfaceFallbacks) put(binding, fallback.copy(filtering = TextureFiltering.BaseLevelLinear))
     }
@@ -86,13 +107,13 @@ class PagedTerrainUploads(private val terrain: PagedTerrain) : ContentTextureUpd
         var bytes = 0L
         if (fallbackRevisions[frameIndex] != terrain.fallbackRevision) {
             val image = encode(terrain.heights.fallback)
-            result += ContentTextureUpdate(COARSE_HEIGHT_BINDING, TextureRegion(image.data, image.width, image.height))
+            result += ContentTextureUpdate(COARSE_HEIGHT_BINDING, TextureRegion(image.data, image.width, image.height, pixelFormat = image.pixelFormat))
             bytes += image.data.size
             fallbackRevisions[frameIndex] = terrain.fallbackRevision
         }
         if (surfaceFallbackRevisions[frameIndex] != terrain.surfaceFallbackRevision) {
             for ((binding, image) in terrain.surfaceFallbacks) {
-                result += ContentTextureUpdate(binding, TextureRegion(image.data, image.width, image.height))
+                result += ContentTextureUpdate(binding, TextureRegion(image.data, image.width, image.height, pixelFormat = image.pixelFormat))
                 bytes += image.data.size
             }
             surfaceFallbackRevisions[frameIndex] = terrain.surfaceFallbackRevision
@@ -114,7 +135,10 @@ class PagedTerrainUploads(private val terrain: PagedTerrain) : ContentTextureUpd
             resident.forEachImage { binding, revision ->
                 if (uploaded[binding] != revision) {
                     val image = if (binding == TERRAIN_HEIGHT_PAGES_BINDING) encode(resident.page.height) else resident.page.textures.getValue(binding)
-                    result += ContentTextureUpdate(binding, TextureRegion(image.data, image.width, image.height, layer = resident.layer))
+                    result += ContentTextureUpdate(
+                        binding,
+                        TextureRegion(image.data, image.width, image.height, layer = resident.layer, pixelFormat = image.pixelFormat),
+                    )
                     uploaded[binding] = revision
                 }
             }
@@ -147,16 +171,24 @@ class PagedTerrainUploads(private val terrain: PagedTerrain) : ContentTextureUpd
     private fun imageBytes(binding: Int): Long =
         if (binding == TERRAIN_HEIGHT_PAGES_BINDING) heightPageBytes else terrain.pageTextureTemplates.getValue(binding).data.size.toLong()
 
-    /** Unsigned 16-bit heights over the lattice's elevation range, high byte in red and low in green. */
+    /** Unsigned 16-bit heights over the lattice's elevation range, high byte in red and low in green (`RG8_UNORM`). */
     private fun encode(map: Heightmap): TextureAsset {
-        val pixels = ByteArray(map.width * map.depth * 4)
-        map.copySamples().forEachIndexed { i, height ->
-            val value = (((height - layout.minElevation) / (layout.maxElevation - layout.minElevation)) * 65535f + 0.5f).toInt().coerceIn(0, 65535)
-            pixels[i * 4] = (value ushr 8).toByte()
-            pixels[i * 4 + 1] = value.toByte()
-            pixels[i * 4 + 3] = 255.toByte()
+        val count = map.sampleCount
+        val pixels = ByteArray(count * 2)
+        val minElevation = layout.minElevation
+        val invSpan = 65535f / (layout.maxElevation - minElevation)
+        for (i in 0 until count) {
+            val value = ((map.sampleAt(i) - minElevation) * invSpan + 0.5f).toInt().coerceIn(0, 65535)
+            pixels[i * 2] = (value ushr 8).toByte()
+            pixels[i * 2 + 1] = value.toByte()
         }
-        return TextureAsset(pixels, map.width, map.depth, filtering = TextureFiltering.BaseLevelLinear)
+        return TextureAsset(
+            pixels,
+            map.width,
+            map.depth,
+            filtering = TextureFiltering.BaseLevelLinear,
+            pixelFormat = TexturePixelFormat.Rg8Unorm,
+        )
     }
 }
 

@@ -58,11 +58,34 @@ class TerrainLayersSurfaceProvider(
         val payload = payloadJson.decodeFromJsonElement(TerrainLayersPayload.serializer(), reference.payload)
         val palettePath = AssetPath(payload.palette)
         val palette = TerrainLayerPaletteCodec.decode(read(palettePath))
-        val albedo = palette.layers.map { decodeImage(read(palettePath.resolve(it.albedo))) }
-        val heights = palette.layers.map { layer -> layer.height?.let { decodeImage(read(palettePath.resolve(it))) } }
+        val layerSpecs = palette.layers.map { layer ->
+            val albedoPath = palettePath.resolve(layer.albedo)
+            val heightPath = layer.height?.let { palettePath.resolve(it) }
+            albedoPath to heightPath
+        }
+        val packedArray = packLayerArrayStreaming(layerSpecs.size) { index ->
+            val (albedoPath, heightPath) = layerSpecs[index]
+            val albedo = decodeImage(read(albedoPath))
+            val height = heightPath?.let { decodeImage(read(it)) }
+            albedo to height
+        }
+        val arrayKey = TerrainLayerArrayKey(
+            layerSpecs.map { (albedoPath, heightPath) ->
+                TerrainLayerArrayKey.LayerSourceKey(albedoPath.value, heightPath?.value)
+            },
+        )
         val control = TerrainControlMapCodec.decode(read(AssetPath(payload.control)))
         val lightmap = payload.lightmap?.let { TerrainLightmapCodec.decode(read(AssetPath(it))) } ?: TerrainLightmap.Neutral
-        return terrainLayersSurface(palette, packLayerArray(albedo, heights), control, lightmap)
+        return terrainLayersSurface(
+            palette = palette,
+            albedo = packedArray,
+            control = control,
+            lightmap = lightmap,
+            textureKeys = mapOf(
+                LAYER_ALBEDO_BINDING to arrayKey,
+                LAYER_TABLE_BINDING to TerrainLayerTableKey(palette),
+            ),
+        )
     }
 
     private suspend fun read(path: AssetPath): ByteArray =

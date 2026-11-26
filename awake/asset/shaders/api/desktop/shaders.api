@@ -59,21 +59,29 @@ public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureGp
 	public abstract fun getBackend ()Lcom/awakekt/awake/asset/shaders/RenderBackend;
 	public abstract fun getRegistry ()Lcom/awakekt/awake/render/pipeline/PipelineRegistry;
 	public fun getSupportsSceneDepth ()Z
+	public fun getTextureMipSkip ()I
 	public abstract fun handle (Lcom/awakekt/awake/render/command/UniformBlockOwner;)Lcom/awakekt/awake/render/command/PipelineHandle;
 	public abstract fun upload (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
 	public fun upload (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentUpload;
+	public fun upload (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;ZLjava/util/Map;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
 	public fun uploadGeometry (Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
 	public fun uploadGroup (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
 	public fun uploadGroup (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
+	public fun uploadGroup (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;ZLjava/util/Map;)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
+	public fun uploadTexture (Lcom/awakekt/awake/render/texture/TextureAsset;)Lcom/awakekt/awake/asset/shaders/ContentTextureUpload;
 }
 
 public final class com/awakekt/awake/asset/shaders/ContentFeatureGpu$DefaultImpls {
 	public static fun createDepthCaster (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun getSupportsSceneDepth (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;)Z
+	public static fun getTextureMipSkip (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;)I
 	public static fun upload (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentUpload;
+	public static fun upload (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;ZLjava/util/Map;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
 	public static fun uploadGeometry (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
 	public static fun uploadGroup (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
 	public static fun uploadGroup (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;Z)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
+	public static fun uploadGroup (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;ZLjava/util/Map;)Lcom/awakekt/awake/asset/shaders/ContentGroupUpload;
+	public static fun uploadTexture (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/texture/TextureAsset;)Lcom/awakekt/awake/asset/shaders/ContentTextureUpload;
 }
 
 public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureHost {
@@ -93,6 +101,15 @@ public final class com/awakekt/awake/asset/shaders/ContentGroupUpload {
 	public fun <init> (Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/asset/shaders/ContentUpload;)V
 	public final fun getUniformBlock ()Lcom/awakekt/awake/render/command/UniformBlock;
 	public final fun getUpload ()Lcom/awakekt/awake/asset/shaders/ContentUpload;
+}
+
+public abstract interface class com/awakekt/awake/asset/shaders/ContentTextureHandle {
+}
+
+public final class com/awakekt/awake/asset/shaders/ContentTextureUpload {
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentTextureHandle;Lkotlin/jvm/functions/Function0;)V
+	public final fun getTexture ()Lcom/awakekt/awake/asset/shaders/ContentTextureHandle;
+	public final fun release ()V
 }
 
 public final class com/awakekt/awake/asset/shaders/ContentUpload {

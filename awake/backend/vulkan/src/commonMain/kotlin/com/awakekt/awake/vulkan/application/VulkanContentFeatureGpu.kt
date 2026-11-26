@@ -8,6 +8,8 @@ package com.awakekt.awake.vulkan.application
 import com.awakekt.awake.asset.shaders.ContentDepthCaster
 import com.awakekt.awake.asset.shaders.ContentFeatureGpu
 import com.awakekt.awake.asset.shaders.ContentGroupUpload
+import com.awakekt.awake.asset.shaders.ContentTextureHandle
+import com.awakekt.awake.asset.shaders.ContentTextureUpload
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.core.geometry.MeshGeometry
@@ -37,6 +39,7 @@ import com.awakekt.awake.vulkan.texture.Texture
  * takes the engine's [framesInFlight] for its cascade slots and compiles through [loadShaders], as
  * the registry's factory compiles a spec.
  */
+@Suppress("TooManyFunctions") // Implements ContentFeatureGpu binary-compatible upload overloads and depth casters.
 internal class VulkanContentFeatureGpu(
     private val graphicsDevice: GraphicsDevice,
     private val transferContext: TransferContext,
@@ -49,25 +52,43 @@ internal class VulkanContentFeatureGpu(
 ) : ContentFeatureGpu<RenderPipeline> {
     override val backend = RenderBackend.Vulkan
 
+    override val textureMipSkip: Int get() = graphicsDevice.mipSkip
+
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline
 
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload =
-        upload(pipeline, feature, includeGeometry = true)
+        upload(pipeline, feature, includeGeometry = true, sharedTextures = emptyMap())
 
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentUpload =
-        uploadInto(pipeline.contentFrameSlotCount, feature, includeGeometry) { index, frame ->
+        upload(pipeline, feature, includeGeometry, sharedTextures = emptyMap())
+
+    override fun upload(
+        pipeline: RenderPipeline,
+        feature: ContentFeature,
+        includeGeometry: Boolean,
+        sharedTextures: Map<Int, ContentTextureHandle>,
+    ): ContentUpload =
+        uploadInto(pipeline.contentFrameSlotCount, feature, includeGeometry, sharedTextures) { index, frame ->
             pipeline.writeContentTextureSlot(index, frame, feature.samplerTextures)
         }
 
     override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload =
-        uploadGroup(pipeline, feature, includeGeometry = true)
+        uploadGroup(pipeline, feature, includeGeometry = true, sharedTextures = emptyMap())
 
-    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentGroupUpload {
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature, includeGeometry: Boolean): ContentGroupUpload =
+        uploadGroup(pipeline, feature, includeGeometry, sharedTextures = emptyMap())
+
+    override fun uploadGroup(
+        pipeline: RenderPipeline,
+        feature: ContentFeature,
+        includeGeometry: Boolean,
+        sharedTextures: Map<Int, ContentTextureHandle>,
+    ): ContentGroupUpload {
         val layout = checkNotNull(feature.spec.uniforms) { "Content feature '${feature.name}' declares no uniforms." }
         val slots = pipeline.newContentGroup()
         var uploaded: ContentUpload? = null
         try {
-            uploaded = uploadInto(slots.size, feature, includeGeometry) { index, frame ->
+            uploaded = uploadInto(slots.size, feature, includeGeometry, sharedTextures) { index, frame ->
                 slots.writeTextures(frame, index, feature.samplerTextures)
             }
         } finally {
@@ -96,11 +117,19 @@ internal class VulkanContentFeatureGpu(
         }
     }
 
+    override fun uploadTexture(asset: TextureAsset): ContentTextureUpload {
+        val uploaded = Texture.skippingMips(graphicsDevice, transferContext::runOneTimeCommands, asset)
+        return ContentTextureUpload(VulkanSharedTextureHandle(uploaded)) {
+            uploaded.destroy()
+        }
+    }
+
     /** [feature]'s textures, one copy per frame slot of the mutable ones, written by [writeSlot]; and optionally its geometry. */
     private fun uploadInto(
         slotCount: Int,
         feature: ContentFeature,
         includeGeometry: Boolean,
+        sharedTextures: Map<Int, ContentTextureHandle>,
         writeSlot: (Int, Map<Int, Texture>) -> Unit,
     ): ContentUpload {
         fun create(asset: TextureAsset): Texture =
@@ -113,14 +142,22 @@ internal class VulkanContentFeatureGpu(
                 layerCount = asset.layerCount,
                 isCubemap = asset.isCubemap,
                 filtering = asset.filtering,
+                pixelFormat = asset.pixelFormat,
             )
         // A binding written after upload keeps every level, at the size its writes are in; the rest are
         // only sampled by UV and leave out the top levels mip skip asks for (#1660).
         val written = feature.textureUpdates?.bindings.orEmpty()
         fun sampled(asset: TextureAsset): Texture = Texture.skippingMips(graphicsDevice, transferContext::runOneTimeCommands, asset)
+        val borrowed = sharedTextures.values.map { (it as VulkanSharedTextureHandle).texture }.toHashSet()
         // Images take the CPU path here: Vulkan has no platform image to copy (awakekt/awake#1184).
-        val textures = feature.textures.mapValues { (binding, asset) -> if (binding in written) create(asset) else sampled(asset) } +
-            feature.images.mapValues { (_, image) -> sampled(image.toTextureAsset()) }
+        val textures = feature.textures.mapValues { (binding, asset) ->
+            val shared = sharedTextures[binding] as? VulkanSharedTextureHandle
+            when {
+                shared != null -> shared.texture
+                binding in written -> create(asset)
+                else -> sampled(asset)
+            }
+        } + feature.images.mapValues { (_, image) -> sampled(image.toTextureAsset()) }
         // After the registry compiled the pipeline, because the layout comes from a spec and the
         // pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
         // Held on its own: the upload outlives this call, and must not keep the feature's pixels with it (#1619).
@@ -157,7 +194,9 @@ internal class VulkanContentFeatureGpu(
                 uploads.write(frame.getValue(update.binding), update.region)
             }
         }) {
-            frames.flatMap { it.values }.distinct().forEach(Texture::destroy)
+            frames.flatMap { it.values }.distinct().forEach { texture ->
+                if (texture !in borrowed) texture.destroy()
+            }
             mesh?.destroy()
         }
     }
@@ -218,3 +257,5 @@ internal class VulkanContentFeatureGpu(
         VulkanBuffers.vkDeviceWaitIdle(graphicsDevice.device)
     }
 }
+
+private class VulkanSharedTextureHandle(val texture: Texture) : ContentTextureHandle

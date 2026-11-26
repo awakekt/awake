@@ -19,6 +19,7 @@ import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureUploadRecorder
 
 /**
@@ -68,7 +69,24 @@ class ContentUpload(
     fun release() = release.invoke()
 }
 
+/** Opaque backend handle for an immutable GPU texture shared across attached content features. */
+interface ContentTextureHandle
+
+/**
+ * Shared GPU texture uploaded once via [ContentFeatureGpu.uploadTexture], released when the last
+ * attached feature referencing its [ContentFeature.textureKeys] entry detaches.
+ */
+class ContentTextureUpload(
+    /** Opaque backend handle passed back into [ContentFeatureGpu.upload] / [ContentFeatureGpu.uploadGroup]. */
+    val texture: ContentTextureHandle,
+    private val release: () -> Unit,
+) {
+    /** Releases the underlying GPU texture once no attached feature references it. */
+    fun release() = release.invoke()
+}
+
 /** The backend half of building a content feature: uploads and pipeline teardown. */
+@Suppress("TooManyFunctions") // Binary-compatible overloads for shared geometry and texture uploads.
 interface ContentFeatureGpu<P : UniformBlockOwner> {
     /** The target render backend providing hardware pipeline resources. */
     val backend: RenderBackend
@@ -78,6 +96,9 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
 
     /** Whether the engine provides a camera-space scene-depth pass for dynamically attached features. */
     val supportsSceneDepth: Boolean get() = false
+
+    /** Current mip-skip setting used to partition shared [ContentFeature.textureKeys] caches cleanly. */
+    val textureMipSkip: Int get() = 0
 
     /**
      * Resolves the low-level pipeline handle for the specified pipeline object.
@@ -97,6 +118,17 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
      */
     fun upload(pipeline: P, feature: ContentFeature, includeGeometry: Boolean): ContentUpload =
         upload(pipeline, feature)
+
+    /**
+     * Variant of [upload] binding pre-uploaded [sharedTextures] (keyed by shader binding index)
+     * without duplicating their GPU texture uploads or freeing them when this feature detaches.
+     */
+    fun upload(
+        pipeline: P,
+        feature: ContentFeature,
+        includeGeometry: Boolean,
+        sharedTextures: Map<Int, ContentTextureHandle>,
+    ): ContentUpload = upload(pipeline, feature, includeGeometry)
 
     /**
      * Draws [source]'s draw into this backend's depth pass through a pipeline built from [depth]
@@ -136,6 +168,17 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
         uploadGroup(pipeline, feature)
 
     /**
+     * Variant of [uploadGroup] binding pre-uploaded [sharedTextures] (keyed by shader binding
+     * index) without duplicating their GPU texture uploads or freeing them when this feature detaches.
+     */
+    fun uploadGroup(
+        pipeline: P,
+        feature: ContentFeature,
+        includeGeometry: Boolean,
+        sharedTextures: Map<Int, ContentTextureHandle>,
+    ): ContentGroupUpload? = uploadGroup(pipeline, feature, includeGeometry)
+
+    /**
      * Uploads immutable [geometry] on its own so [ContentFeatureAttacher] can share one uploaded
      * vertex/index buffer pair across every attached feature declaring the same
      * [ContentFeature.geometryKey].
@@ -143,6 +186,15 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
      * @return null when this backend uploads geometry only inside [upload] / [uploadGroup].
      */
     fun uploadGeometry(geometry: MeshGeometry): ContentUpload? = null
+
+    /**
+     * Uploads an immutable [TextureAsset] on its own so [ContentFeatureAttacher] can share one
+     * GPU texture (such as a terrain layer `Texture2DArray`) across every attached feature
+     * declaring an equal [ContentFeature.textureKeys] entry at the same [textureMipSkip].
+     *
+     * @return null when this backend uploads textures only inside [upload] / [uploadGroup].
+     */
+    fun uploadTexture(asset: TextureAsset): ContentTextureUpload? = null
 
     /**
      * A depth pipeline built from [depth] over [pipeline]'s group 0, for every feature drawing

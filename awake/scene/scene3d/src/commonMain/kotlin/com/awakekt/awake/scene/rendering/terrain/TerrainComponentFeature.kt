@@ -29,11 +29,13 @@ import com.awakekt.awake.render.texture.TextureAsset
  * Lives in the scene layer rather than the shader pack because it is the only piece that knows
  * about ECS components; the pack takes a plain heightmap and a visibility lambda.
  */
+@Suppress("LongParameterList") // Public entry point kept additive for binary compatibility.
 fun terrainContentFeature(
     shaders: ShaderSet,
     terrain: TerrainComponent,
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     samplerTextures: Map<Int, Int>,
+    textureKeys: Map<Int, Any>,
     origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource =
     terrainContentFeature(
@@ -43,8 +45,22 @@ fun terrainContentFeature(
         surfaceTextures = surfaceTextures,
         isVisible = { terrain.isVisible },
         samplerTextures = samplerTextures,
+        textureKeys = textureKeys,
         origin = origin,
     )
+
+/**
+ * [terrainContentFeature] without shared [textureKeys]; keeps existing 5-argument callers source-
+ * and binary-compatible.
+ */
+fun terrainContentFeature(
+    shaders: ShaderSet,
+    terrain: TerrainComponent,
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    samplerTextures: Map<Int, Int>,
+    origin: () -> Vec3f = { AT_ORIGIN },
+): ContentFeatureSource =
+    terrainContentFeature(shaders, terrain, surfaceTextures, samplerTextures, emptyMap(), origin)
 
 /**
  * [terrainContentFeature] with default sampler bindings only; keeps trailing-lambda [origin]
