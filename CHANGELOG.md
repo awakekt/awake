@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.80.0] - 2026-11-26
+
+### Added
+
+- **Memory lifecycle, cancellation, and reactive network bus primitives.** Added `MemoryPressureWatcher` / `MemoryPressure.watch(...)` in `:awake:core:host`, Kotlin/Wasm-safe `BoundedLruCache` in `:awake:core:pool`, structured-concurrency-safe `runCancellableCatching` in `:awake:core:state`, and typed coroutine/`Flow` `NetMessageBus` (+ `asClientNetFeature`) in `:awake:net:api` so games can implement Clean Architecture repositories and remote data sources without tunneling RPCs through ECS components.
+- **Zero-copy WebGPU texture uploads, primitive spatial culling sets, pooled 2D texture runs, and smooth `EdgeFade` texture feathering.** Eliminated intermediate JS `ArrayBuffer` `.slice()` copies in WebGPU texture uploads (`writeTextureBytes` from Wasm linear memory), replaced boxed `HashSet<Int>` culling sets in `SceneCullingCompiler` with a zero-boxing stamp-based `IntIdSet` in `SpatialGrid`, pooled dynamic `TextureRun` vertex/index staging arrays through `DynamicRunArrayPool` (honoring `requiresUpload` on Vulkan and WebGPU), and added smooth per-vertex `EdgeFade` support to `DrawCommand.Texture`, `DrawScope.drawTexture`/`drawImage`, `DrawRunCoalescer`, and `UiRasterizer`.
+
+### Changed
+
+- **EffectQuality-aware outlines and low-ALU mobile `CloudLayerFastShader`.** `RenderFrameContext` now exposes `effectQuality` (default `EffectQuality.High`), allowing `OutlineRenderFeature` to skip overlay draws at `EffectQuality.Off` and downgrade 64-tap soft Gaussian glows (`softness > 0`) to crisp 16-tap 2 px silhouettes at `EffectQuality.Low` while both Vulkan and WebGPU skip outline mask sub-passes at `EffectQuality.Off`; `OutlineRenderFeature` and `CloudLayerRenderFeature` also eliminate per-frame allocations (`0 B/frame` under `-XX:-DoEscapeAnalysis`). `CloudLayerFastShader` (and the `Fast` branch of `CloudLayerShader`) replaces two-octave `mod289`/`permute`/`hash2d` quintic `valueNoise` (~190 scalar ALU, 34 `floor`/div ops) with a scale-matched 3-layer domain-warped analytic trig cloud field (~26 ALU, 0 `floor`/div/hash ops) for mobile tile-based GPUs.
+
 ## [0.79.0] - 2026-11-26
 
 ### Added
