@@ -7,9 +7,12 @@ package com.awakekt.awake.core.io
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -20,6 +23,22 @@ class IoDispatcherDesktopTest {
     @Test
     fun ioDispatcherResolvesToDispatchersIoOnDesktop() {
         assertSame(Dispatchers.IO, ioDispatcher)
+    }
+
+    @Test
+    fun decodeDispatcherCapsConcurrencyOnDesktop() = runBlocking {
+        val active = AtomicInteger(0)
+        val peak = AtomicInteger(0)
+        val jobs = List(16) {
+            launch(decodeDispatcher) {
+                val now = active.incrementAndGet()
+                peak.accumulateAndGet(now, ::maxOf)
+                Thread.sleep(15)
+                active.decrementAndGet()
+            }
+        }
+        jobs.joinAll()
+        assertTrue(peak.get() in 1..4, "Desktop decodeDispatcher peak concurrency should stay <= 4, got ${peak.get()}")
     }
 
     @Test

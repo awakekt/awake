@@ -177,8 +177,7 @@ class Texture private constructor(
             val isCubemap = asset.isCubemap
             // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
             // without one. Cubemaps stay single-level; the sky samples its base level only.
-            val chain = if (isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
-            val mipLevels = chain.drop(TextureSampling.levelsToSkip(filtering, chain.size, mipSkip))
+            val mipLevels = if (isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain(mipSkip)
             val base = mipLevels.first()
             val texture = device.createTexture(
                 TextureDescriptor(

@@ -391,6 +391,7 @@ public final class com/awakekt/awake/core/io/InMemoryFileSystem : com/awakekt/aw
 }
 
 public final class com/awakekt/awake/core/io/IoDispatcher_desktopKt {
+	public static final fun getDecodeDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
 	public static final fun getIoDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
 }
 

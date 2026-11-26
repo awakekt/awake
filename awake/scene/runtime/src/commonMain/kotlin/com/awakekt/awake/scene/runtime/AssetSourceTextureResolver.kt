@@ -8,7 +8,7 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
-import com.awakekt.awake.core.io.ioDispatcher
+import com.awakekt.awake.core.io.decodeDispatcher
 import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.asReleasingGpuImageSource
@@ -49,7 +49,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * decoded when it answers null.
  *
  * @param files Where the textures are read from.
- * @param context Where files are read and decoded, added to the session's scope; [ioDispatcher]
+ * @param context Where files are read and decoded, added to the session's scope; [decodeDispatcher]
  *   by default. It holds no `Job`.
  * @param cooked Loads a texture another way before its file is decoded, or answers null to decode it.
  */
@@ -60,7 +60,7 @@ class AssetSourceTextureResolver(
 ) : SceneAssetResolver,
     AutoCloseable {
     /** Reads each texture from [files] in [context] and decodes it, with no [cooked] loader. */
-    constructor(files: AssetSource, context: CoroutineContext = ioDispatcher) : this(files, context, null)
+    constructor(files: AssetSource, context: CoroutineContext = decodeDispatcher) : this(files, context, null)
 
     /**
      * Reads each texture from [files] in a child of [scope], on its dispatcher, for a resolver used

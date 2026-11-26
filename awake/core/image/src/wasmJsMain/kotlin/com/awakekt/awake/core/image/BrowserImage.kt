@@ -75,9 +75,16 @@ suspend fun decodeBrowserImage(bytes: ByteArray): BrowserImage =
 /** The browser decode: [decodeBrowserImage], whose `ImageBitmap` a WebGPU backend copies on the GPU. */
 actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = decodeBrowserImage(bytes)
 
+/** Browser decode; the WebGPU uploader applies mip skip during GPU mipmap generation. */
+actual suspend fun decodeImage(bytes: ByteArray, mipSkip: Int): DecodedImage = decodeBrowserImage(bytes)
+
 /** A browser has no decode that returns on the calling thread. */
 actual val canDecodeImageBlocking: Boolean = false
 
 /** A browser decodes an image only asynchronously, so this always throws. */
 actual fun decodeImageBlocking(bytes: ByteArray): DecodedImage =
+    throw UnsupportedOperationException("A browser decodes images asynchronously; use decodeImage.")
+
+/** A browser decodes an image only asynchronously, so this always throws. */
+actual fun decodeImageBlocking(bytes: ByteArray, mipSkip: Int): DecodedImage =
     throw UnsupportedOperationException("A browser decodes images asynchronously; use decodeImage.")

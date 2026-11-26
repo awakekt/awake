@@ -8,8 +8,10 @@ public abstract interface class com/awakekt/awake/core/image/Bitmap {
 public final class com/awakekt/awake/core/image/BitmapKt {
 	public static final fun createBitmap ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun decodeBitmap ([B)Lcom/awakekt/awake/core/image/Bitmap;
+	public static final fun decodeImage ([BILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun decodeImage ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun decodeImageBlocking ([B)Lcom/awakekt/awake/core/image/DecodedImage;
+	public static final fun decodeImageBlocking ([BI)Lcom/awakekt/awake/core/image/DecodedImage;
 	public static final fun getCanDecodeImageBlocking ()Z
 }
 
@@ -23,10 +25,12 @@ public abstract interface class com/awakekt/awake/core/image/DecodedImage : java
 	public abstract fun getPlatformImage ()Ljava/lang/Object;
 	public abstract fun getWidth ()I
 	public abstract fun toBitmap ()Lcom/awakekt/awake/core/image/Bitmap;
+	public fun toRgba8Bytes ()[B
 }
 
 public final class com/awakekt/awake/core/image/DecodedImage$DefaultImpls {
 	public static fun close (Lcom/awakekt/awake/core/image/DecodedImage;)V
+	public static fun toRgba8Bytes (Lcom/awakekt/awake/core/image/DecodedImage;)[B
 }
 
 public final class com/awakekt/awake/core/image/DecodedImageKt {

@@ -9,7 +9,6 @@ import com.awakekt.awake.core.image.DecodedImage
 import com.awakekt.awake.core.image.canDecodeImageBlocking
 import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.image.decodeImageBlocking
-import com.awakekt.awake.core.image.toRgba8Bytes
 import kotlin.concurrent.Volatile
 
 /**
@@ -89,7 +88,7 @@ private class DecodedImageSource(private val image: DecodedImage) : GpuImageSour
     override val height: Int get() = image.height
     override val externalImage: Any? get() = image.platformImage
 
-    override fun readRgba8(): ByteArray = image.toBitmap().toRgba8Bytes()
+    override fun readRgba8(): ByteArray = image.toRgba8Bytes()
 }
 
 private class ReleasingImageSource(decoded: DecodedImage, encoded: ByteArray) : GpuImageSource {
@@ -127,7 +126,7 @@ private class ReleasingImageSource(decoded: DecodedImage, encoded: ByteArray) : 
             checkNotNull(encoded) { "This image was released once uploaded; read its file again to make another material from it." },
         )
         decoded = null
-        return image.toBitmap().toRgba8Bytes()
+        return image.toRgba8Bytes()
     }
 }
 

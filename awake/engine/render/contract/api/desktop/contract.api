@@ -2870,6 +2870,7 @@ public final class com/awakekt/awake/render/texture/GpuImageSourceKt {
 
 public final class com/awakekt/awake/render/texture/MipChainKt {
 	public static final fun mipChain (Lcom/awakekt/awake/render/texture/TextureAsset;)Ljava/util/List;
+	public static final fun mipChain (Lcom/awakekt/awake/render/texture/TextureAsset;I)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/render/texture/NeutralPbrTextures {

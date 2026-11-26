@@ -111,8 +111,14 @@ fun createBitmap(image: UIImage, flipY: Boolean): Bitmap {
 /** The CPU decode: [createBitmap], with no platform image to copy. */
 actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = createBitmap(bytes).asDecodedImage()
 
+/** Decodes on Apple platforms; native subsampled decode is not yet implemented here so full size is decoded. */
+actual suspend fun decodeImage(bytes: ByteArray, mipSkip: Int): DecodedImage = decodeImage(bytes)
+
 /** This platform decodes an image on the calling thread. */
 actual val canDecodeImageBlocking: Boolean = true
 
 /** [createBitmap]'s decode, which never suspends here. */
 actual fun decodeImageBlocking(bytes: ByteArray): DecodedImage = decodeBitmap(bytes).asDecodedImage()
+
+/** Blocking decode on Apple platforms; decodes at full size. */
+actual fun decodeImageBlocking(bytes: ByteArray, mipSkip: Int): DecodedImage = decodeImageBlocking(bytes)

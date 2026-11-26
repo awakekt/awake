@@ -85,6 +85,44 @@ internal object ImageUpload {
         regions: List<Region>,
         samplerCreateInfo: VkSamplerCreateInfo,
         filtering: TextureFiltering,
+    ): UploadedImage = upload(
+        graphicsDevice = graphicsDevice,
+        runOneTimeCommands = runOneTimeCommands,
+        format = format,
+        width = width,
+        height = height,
+        mipLevels = mipLevels,
+        layerCount = layerCount,
+        isCubemap = isCubemap,
+        byteSize = data.size.toLong(),
+        writeStaging = { mappedPtr, stagingOffset ->
+            VulkanBuffers.writeMappedMemoryBytes(mappedPtr, stagingOffset, data, 0, data.size)
+        },
+        regions = regions,
+        samplerCreateInfo = samplerCreateInfo,
+        filtering = filtering,
+    )
+
+    /**
+     * Streaming variant of [upload] that writes [byteSize] bytes directly into mapped staging
+     * memory through [writeStaging], avoiding an intermediate flattened heap `ByteArray` when
+     * uploading multi-level mip chains.
+     */
+    @Suppress("LongParameterList") // One parameter per property of the image; grouping them hides which.
+    fun upload(
+        graphicsDevice: GraphicsDevice,
+        runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+        format: VkFormat,
+        width: Int,
+        height: Int,
+        mipLevels: Int,
+        layerCount: Int,
+        isCubemap: Boolean,
+        byteSize: Long,
+        writeStaging: (mappedPtr: Long, stagingOffset: Long) -> Unit,
+        regions: List<Region>,
+        samplerCreateInfo: VkSamplerCreateInfo,
+        filtering: TextureFiltering,
     ): UploadedImage {
         val device = graphicsDevice.device
         // Whatever exists when the upload doesn't finish is released, so a failed upload leaks no GPU
@@ -105,19 +143,17 @@ internal object ImageUpload {
             if (batcher != null) {
                 val targetImage = image
                 pendingUpload = batcher.enqueue(
-                    byteSize = data.size.toLong(),
+                    byteSize = byteSize,
                     alignment = IMAGE_STAGING_ALIGNMENT,
                     flushSync = runOneTimeCommands,
-                    writeStaging = { mappedPtr, stagingOffset ->
-                        VulkanBuffers.writeMappedMemoryBytes(mappedPtr, stagingOffset, data, 0, data.size)
-                    },
+                    writeStaging = writeStaging,
                     recordCopy = { commandBuffer, stagingBuffer, stagingOffset ->
                         copy(commandBuffer, stagingBuffer, stagingOffset, targetImage, regions)
                     },
                 )
             } else {
-                graphicsDevice.stagingBufferPool.withStaging(data.size.toLong()) { staging ->
-                    VulkanBuffers.writeMappedMemoryBytes(staging.mappedPtr, 0L, data, 0, data.size)
+                graphicsDevice.stagingBufferPool.withStaging(byteSize) { staging ->
+                    writeStaging(staging.mappedPtr, 0L)
                     runOneTimeCommands { commandBuffer -> copy(commandBuffer, staging.buffer, 0L, image, regions) }
                 }
             }
@@ -132,7 +168,7 @@ internal object ImageUpload {
                 mipLevels,
                 width,
                 height,
-                byteSize = data.size.toLong(),
+                byteSize = byteSize,
                 memoryAllocation = allocated,
                 pendingUpload = pendingUpload,
             )
