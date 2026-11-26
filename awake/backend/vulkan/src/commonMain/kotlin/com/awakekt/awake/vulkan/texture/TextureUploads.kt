@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.texture
 
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.texture.TextureRegion
 import com.awakekt.awake.render.texture.TextureUploadRecorder
 import com.awakekt.awake.render.texture.WritableTexture
@@ -21,9 +22,10 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 private const val MIN_STAGING_BYTES = 64L * 1024
 
 /**
- * Staging buffers belong to a frame slot until that slot's next fence, then return to a shared
- * pool, so steady streaming allocates nothing. Every image written in a frame changes layout once:
- * [write] moves it to transfer on first use, and [endFrame] returns all of them to shader reads.
+ * Staging buffers belong to a frame slot until that slot's next fence, then return to a bounded
+ * shared pool, so steady streaming allocates nothing while transient upload bursts never pin
+ * unbounded staging memory. Every image written in a frame changes layout once: [write] moves it
+ * to transfer on first use, and [endFrame] returns all of them to shader reads.
  */
 internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : TextureUploadRecorder {
     private class Staging(val buffer: Long, val memory: Long, val mappedPtr: Long, val size: Long)
@@ -33,10 +35,29 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
     private var frameIndex = 0
     private var commandBuffer = 0L
     private var flushPendingUploads: (Long) -> Unit = {}
+    private var wroteSinceLastBeginFrame = false
+    private var idleFrames = 0
     private val device get() = graphicsDevice.device
 
+    /** Quiet frames with zero writes and no in-use staging before idle buffers auto-reclaim. */
+    var idleReclaimFrames: Int = DEFAULT_IDLE_RECLAIM_FRAMES
+
+    private val isMobile: Boolean
+        get() = graphicsDevice.deviceClass == GpuDeviceClass.Mobile
+
+    private val maxFreeBuffers: Int
+        get() = if (isMobile) MOBILE_MAX_FREE_BUFFERS else MAX_FREE_BUFFERS
+
+    private val maxFreeBytes: Long
+        get() = if (isMobile) MOBILE_MAX_FREE_BYTES else MAX_FREE_BYTES
+
     fun beginFrame(frameIndex: Int, commandBuffer: Long, flushPendingUploads: (Long) -> Unit = {}) {
-        inUse.remove(frameIndex)?.let(free::addAll)
+        inUse.remove(frameIndex)?.let { completed ->
+            free.addAll(completed)
+            enforceFreeBounds()
+        }
+        reclaimIfIdle()
+        wroteSinceLastBeginFrame = false
         touched.clear()
         this.frameIndex = frameIndex
         this.commandBuffer = commandBuffer
@@ -50,6 +71,8 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
         if (graphicsDevice.activeUploadBatcher?.hasPending == true) {
             flushPendingUploads(commandBuffer)
         }
+        wroteSinceLastBeginFrame = true
+        idleFrames = 0
         val staging = acquire(region.data.size.toLong())
         inUse.getOrPut(frameIndex) { mutableListOf() } += staging
         VulkanBuffers.writeMappedMemoryBytes(staging.mappedPtr, 0L, region.data, 0, region.data.size)
@@ -79,6 +102,37 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
             )
         }
         touched.clear()
+    }
+
+    /** Evicts largest idle staging buffers when [free] exceeds device-class count or byte caps. */
+    private fun enforceFreeBounds() {
+        val countCap = maxFreeBuffers
+        val byteCap = maxFreeBytes
+        var totalBytes = 0L
+        for (index in free.indices) totalBytes += free[index].size
+        while (free.isNotEmpty() && (free.size > countCap || totalBytes > byteCap)) {
+            var largestIndex = 0
+            for (index in 1 until free.size) {
+                if (free[index].size > free[largestIndex].size) largestIndex = index
+            }
+            val evicted = free.removeAt(largestIndex)
+            totalBytes -= evicted.size
+            release(evicted)
+        }
+    }
+
+    /** Reclaims all idle [free] staging buffers once [idleReclaimFrames] quiet frames elapse. */
+    private fun reclaimIfIdle() {
+        if (wroteSinceLastBeginFrame || inUse.isNotEmpty() || free.isEmpty()) {
+            idleFrames = 0
+            return
+        }
+        idleFrames += 1
+        if (idleFrames >= idleReclaimFrames) {
+            idleFrames = 0
+            free.forEach(::release)
+            free.clear()
+        }
     }
 
     /** The smallest pooled buffer that fits, or a new one rounded up so later frames can reuse it. */
@@ -131,6 +185,8 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
 
     /** Frees all idle and completed staging buffers. Caller must have waited for device idle. */
     fun trimIdle() {
+        idleFrames = 0
+        wroteSinceLastBeginFrame = false
         inUse.values.forEach { it.forEach(::release) }
         inUse.clear()
         free.forEach(::release)
@@ -138,9 +194,14 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
     }
 
     fun destroy() {
-        inUse.values.forEach { it.forEach(::release) }
-        inUse.clear()
-        free.forEach(::release)
-        free.clear()
+        trimIdle()
+    }
+
+    internal companion object {
+        const val MAX_FREE_BUFFERS: Int = 8
+        const val MAX_FREE_BYTES: Long = 8L * 1024L * 1024L
+        const val MOBILE_MAX_FREE_BUFFERS: Int = 4
+        const val MOBILE_MAX_FREE_BYTES: Long = 2L * 1024L * 1024L
+        const val DEFAULT_IDLE_RECLAIM_FRAMES: Int = 120
     }
 }

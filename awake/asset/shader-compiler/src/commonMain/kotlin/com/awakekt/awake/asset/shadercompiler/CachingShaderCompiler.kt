@@ -35,6 +35,11 @@ class CachingShaderCompiler(
     /** How many texts are cached right now. */
     val size: Int get() = compiled.size
 
+    /** Drops all cached SPIR-V byte arrays to reclaim CPU memory; later requests recompile on demand. */
+    fun clear() {
+        compiled.clear()
+    }
+
     override fun wgslToSpirv(wgsl: String): ByteArray {
         compiled.remove(wgsl)?.let { hit ->
             compiled[wgsl] = hit

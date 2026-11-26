@@ -2,6 +2,7 @@ public final class com/awakekt/awake/asset/shadercompiler/CachingShaderCompiler 
 	public static final field DEFAULT_MAX_ENTRIES I
 	public fun <init> (Lcom/awakekt/awake/asset/shadercompiler/RuntimeShaderCompiler;I)V
 	public synthetic fun <init> (Lcom/awakekt/awake/asset/shadercompiler/RuntimeShaderCompiler;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
 	public final fun getSize ()I
 	public fun validate (Ljava/lang/String;)Ljava/lang/String;
 	public fun wgslToSpirv (Ljava/lang/String;)[B

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.commands
 
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.device.QueueLock
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
@@ -37,6 +38,22 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
     private var activeChunk: StagingChunk? = null
     private var pendingBytes: Long = 0L
     private var framesSubmitted: Long = 0L
+    private var idleFrames: Int = 0
+
+    /** Quiet frames with no pending/in-flight uploads before idle staging chunks auto-reclaim. */
+    var idleReclaimFrames: Int = DEFAULT_IDLE_RECLAIM_FRAMES
+
+    private val isMobile: Boolean
+        get() = graphicsDevice.deviceClass == GpuDeviceClass.Mobile
+
+    private val maxPooledChunkBytes: Long
+        get() = if (isMobile) MOBILE_MAX_POOLED_CHUNK_BYTES else MAX_POOLED_CHUNK_BYTES
+
+    private val maxPooledChunks: Int
+        get() = if (isMobile) MOBILE_MAX_POOLED_CHUNKS else MAX_POOLED_CHUNKS
+
+    private val maxPendingBytes: Long
+        get() = if (isMobile) MOBILE_MAX_PENDING_BYTES else MAX_PENDING_BYTES
 
     private var batchDepth: Int = 0
     private var deferToFrame: Boolean = false
@@ -148,7 +165,8 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
             pendingCopies.add(pending)
             pendingBytes += byteSize
             batchedUploadCount += 1L
-            pending to (pendingBytes >= MAX_PENDING_BYTES)
+            idleFrames = 0
+            pending to (pendingBytes >= maxPendingBytes)
         }
         if (needAutoFlush) {
             flushSynchronously(flushSync)
@@ -230,11 +248,21 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
         return if (detached.copies.isEmpty()) null else detached.copies to detached.chunks
     }
 
-    /** Advances the submitted-frame counter and recycles staging chunks from completed frames. */
+    /** Advances the submitted-frame counter, recycles completed chunks, and reclaims idle chunks after quiet frames. */
     fun frameSubmitted(framesInFlight: Int, awaitOffscreen: () -> Unit) {
+        var idleToFree: List<StagingChunk> = emptyList()
         val hasReady = lock.withLock {
             framesSubmitted += 1L
-            inFlightBatches.isNotEmpty() && framesSubmitted - inFlightBatches[0].submittedAt > framesInFlight
+            val ready = inFlightBatches.isNotEmpty() && framesSubmitted - inFlightBatches[0].submittedAt > framesInFlight
+            if (!ready && inFlightBatches.isEmpty() && pendingCopies.isEmpty()) {
+                idleToFree = maybeReclaimIdleLocked()
+            } else {
+                idleFrames = 0
+            }
+            ready
+        }
+        if (idleToFree.isNotEmpty()) {
+            destroyChunks(idleToFree)
         }
         if (!hasReady) return
         awaitOffscreen()
@@ -253,6 +281,20 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
             extra
         }
         destroyChunks(toFree)
+    }
+
+    private fun maybeReclaimIdleLocked(): List<StagingChunk> {
+        if (activeChunk != null || freeChunks.isEmpty()) {
+            idleFrames = 0
+            return emptyList()
+        }
+        idleFrames += 1
+        return if (idleFrames >= idleReclaimFrames) {
+            idleFrames = 0
+            ArrayList(freeChunks).also { freeChunks.clear() }
+        } else {
+            emptyList()
+        }
     }
 
     /** Returns [chunks] to the warm pool (or destroys oversized/excess chunks) once their GPU fence completed. */
@@ -341,8 +383,9 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
 
     private fun recycleChunkLocked(chunk: StagingChunk, overflowOut: MutableList<StagingChunk>) {
         chunk.cursor = 0L
-        if (chunk.capacity <= MAX_POOLED_CHUNK_BYTES && freeChunks.size < MAX_POOLED_CHUNKS) {
+        if (chunk.capacity <= maxPooledChunkBytes && freeChunks.size < maxPooledChunks) {
             freeChunks.add(chunk)
+            idleFrames = 0
         } else {
             overflowOut.add(chunk)
         }
@@ -422,12 +465,16 @@ internal class UploadBatcher(private val graphicsDevice: GraphicsDevice) {
         val chunks: List<StagingChunk>,
     )
 
-    private companion object {
+    internal companion object {
         const val MIN_STAGING_ALIGNMENT: Long = 16L
         const val DEFAULT_CHUNK_BYTES: Long = 1L * 1024L * 1024L
         const val MAX_POOLED_CHUNK_BYTES: Long = 8L * 1024L * 1024L
         const val MAX_POOLED_CHUNKS: Int = 4
         const val MAX_PENDING_BYTES: Long = 32L * 1024L * 1024L
+        const val MOBILE_MAX_POOLED_CHUNK_BYTES: Long = 2L * 1024L * 1024L
+        const val MOBILE_MAX_POOLED_CHUNKS: Int = 2
+        const val MOBILE_MAX_PENDING_BYTES: Long = 8L * 1024L * 1024L
+        const val DEFAULT_IDLE_RECLAIM_FRAMES: Int = 120
 
         fun alignUp(value: Long, alignment: Long): Long {
             val remainder = value % alignment

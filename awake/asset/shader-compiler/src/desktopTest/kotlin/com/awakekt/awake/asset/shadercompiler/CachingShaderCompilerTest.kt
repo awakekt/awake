@@ -141,4 +141,19 @@ class CachingShaderCompilerTest {
         assertSame(first, second, "the same SPIR-V comes back without a second naga run")
         assertEquals(1, real.size)
     }
+
+    @Test
+    fun clearReleasesCachedEntriesAndRecompilesOnNextRequest() {
+        cache.wgslToSpirv("fn a() {}")
+        cache.wgslToSpirv("fn b() {}")
+        assertEquals(2, cache.size)
+        assertEquals(2, counting.compiles)
+
+        cache.clear()
+        assertEquals(0, cache.size)
+
+        cache.wgslToSpirv("fn a() {}")
+        assertEquals(1, cache.size)
+        assertEquals(3, counting.compiles, "clearing cache forces a fresh compile on demand")
+    }
 }

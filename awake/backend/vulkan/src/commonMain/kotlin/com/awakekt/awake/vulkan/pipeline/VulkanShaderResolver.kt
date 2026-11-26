@@ -24,6 +24,18 @@ class VulkanShaderResolver(compiler: RuntimeShaderCompiler = NagaShaderCompiler)
     private val compiler = CachingShaderCompiler(compiler)
     private val compiledWgsl = mutableMapOf<String, ByteArray>()
 
+    /** Number of compiled SPIR-V entries currently retained across inline and resource caches. */
+    internal val cachedEntryCount: Int get() = compiler.size + compiledWgsl.size
+
+    /**
+     * Releases all cached WGSL-to-SPIR-V compilation outputs to reclaim CPU heap after warmup or
+     * under memory pressure; subsequent resolves recompile on demand.
+     */
+    fun clearCache() {
+        compiler.clear()
+        compiledWgsl.clear()
+    }
+
     override suspend fun resolve(source: ShaderSource): ResolvedShader = when (source) {
         is ShaderSource.PrecompiledBinary -> ResolvedShader.SpirV(source.bytes, source.entryPoint)
         is ShaderSource.InlineText -> ResolvedShader.SpirV(

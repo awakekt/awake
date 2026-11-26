@@ -13,6 +13,7 @@ import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.render.renderer.SkinnedInstanceLayout
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.device.allocateHostVisibleBufferMemory
+import com.awakekt.awake.vulkan.device.destroyOrRetire
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
@@ -29,15 +30,16 @@ import com.awakekt.awake.vulkan.models.info.VkDescriptorPoolSize
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutBinding
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorType
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import com.awakekt.awake.vulkan.renderer.sameBitsAs
 
 /**
  * The per-instance joint palettes and tints behind one animated instanced draw call -- [InstanceBuffer]'s
- * animated companion, with the same HOST_VISIBLE|HOST_COHERENT, fixed-capacity,
- * rewritten-wholesale-per-frame-slot lifecycle. Two things differ:
+ * animated companion, with the same HOST_VISIBLE|HOST_COHERENT, grow-on-demand lifecycle. Each frame slot
+ * starts unallocated and grows in powers of two from [MIN_CAPACITY] up to [maxInstances], retiring
+ * outgrown storage buffers and descriptor pools through the device reaper once frames in flight complete.
  *
+ * Two things differ from [InstanceBuffer]:
  * - it is a STORAGE buffer bound through a descriptor set, not an instance-rate vertex buffer.
  *   A vertex attribute can't carry 64 matrices, and a uniform buffer can't hold enough of them
  *   (64 `mat4` = 4 KB per instance blows the 64 KB uniform limit after 16 copies). See
@@ -61,7 +63,6 @@ class SkinnedInstanceBuffer(
     framesInFlight: Int = 1,
 ) {
     private val device get() = graphicsDevice.device
-    private val physicalDevice get() = graphicsDevice.physicalDevice
 
     /** Layout-compatible with (a separate instance of) the one the skinned-instanced pipeline's
      * layout was built from -- see [createDescriptorSetLayout]. */
@@ -95,46 +96,47 @@ class SkinnedInstanceBuffer(
         val mappedPtr: Long,
         val descriptorPool: DescriptorPoolHandle,
         val descriptorSet: DescriptorSetHandle,
+        val capacity: Int,
+        val paletteByteSize: Long,
+        val tintByteSize: Long,
     ) : VulkanMaterialBinding {
         override val descriptorSetHandle: Long get() = descriptorSet.handle
         val residentPalettes = ResidentFloatSlice()
         val residentTints = ResidentFloatSlice()
+        val totalByteSize: Long get() = paletteByteSize + tintByteSize
+
+        fun free(vkDevice: Long) {
+            if (vkDevice == 0L) return
+            VulkanBuffers.vkDestroyBuffer(vkDevice, buffer.handle)
+            if (mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(vkDevice, memory.handle)
+            VulkanBuffers.vkFreeMemory(vkDevice, memory.handle)
+            VulkanDescriptors.vkDestroyDescriptorPool(vkDevice, descriptorPool.handle)
+        }
     }
 
     /** Palette and tint buffer uploads made, for tests: unchanged static/idle skeletons skip upload. */
     internal var uploads = 0L
         private set
 
-    private val byteSize = (maxInstances.toLong() * FLOATS_PER_INSTANCE * Float.SIZE_BYTES)
-    private val tintByteSize = maxInstances.toLong() * SkinnedInstanceLayout.TINT_FLOATS * Float.SIZE_BYTES
-    private val tintPacker = InstanceTintPacker()
+    /** Outgrown slot buffers handed to the deferred reaper so far, for tests. */
+    internal var retiredCount = 0L
+        private set
 
-    private val frameResources: Array<FrameResources> = Array(framesInFlight) {
-        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer(byteSize + tintByteSize)
-        val pool = createDescriptorPool()
-        val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout.handle)
-        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
-            device,
-            set,
-            SkinnedInstanceLayout.PALETTE_BINDING,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            VkDescriptorBufferInfo(buffer = buffer, range = byteSize),
-        )
-        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
-            device,
-            set,
-            SkinnedInstanceLayout.TINT_BINDING,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            VkDescriptorBufferInfo(buffer = buffer, offset = byteSize, range = tintByteSize),
-        )
-        FrameResources(
-            BufferHandle(buffer),
-            DeviceMemoryHandle(memory),
-            mappedPtr,
-            DescriptorPoolHandle(pool),
-            DescriptorSetHandle(set),
-        )
-    }
+    private val tintPacker = InstanceTintPacker()
+    private val frameResources = arrayOfNulls<FrameResources>(framesInFlight)
+
+    /** Current allocated instance capacity for [frameIndex], or 0 before first use. */
+    internal fun capacityFor(frameIndex: Int): Int = frameResources.getOrNull(frameIndex)?.capacity ?: 0
+
+    /** Total requested GPU buffer bytes currently held across live frame slots, for tests. */
+    internal val allocatedBytes: Long
+        get() {
+            var total = 0L
+            for (i in frameResources.indices) {
+                total += frameResources[i]?.totalByteSize ?: 0L
+            }
+            return total
+        }
 
     // Reused across frames so a steady instance count allocates nothing per frame.
 
@@ -166,14 +168,14 @@ class SkinnedInstanceBuffer(
      */
     fun update(frameIndex: Int, palettes: List<FloatArray>) = update(frameIndex, palettes, null)
 
-    /** Uploads index-aligned tints, defaulting to white when omitted. */
+    /** Uploads index-aligned tints, defaulting to white when omitted, growing that slot on demand. */
     fun update(frameIndex: Int, palettes: List<FloatArray>, colors: List<Vec4>?) {
         val tintCount = tintPacker.packSlice(colors, palettes.size, maxInstances)
         val paletteCount = packer.packSlice(palettes, maxInstances)
         if (tintCount == 0 || paletteCount == 0) return
-        val resources = resourcesFor(frameIndex)
+        val resources = resourcesFor(frameIndex, palettes.size)
         uploadSliceIfChanged(resources.mappedPtr, 0L, packer.buffer, paletteCount, resources.residentPalettes)
-        uploadSliceIfChanged(resources.mappedPtr, byteSize, tintPacker.buffer, tintCount, resources.residentTints)
+        uploadSliceIfChanged(resources.mappedPtr, resources.paletteByteSize, tintPacker.buffer, tintCount, resources.residentTints)
     }
 
     private fun uploadSliceIfChanged(
@@ -210,24 +212,67 @@ class SkinnedInstanceBuffer(
     }
 
     /**
-     * Destroys every frame slot's buffer, memory and descriptor pool, and this buffer's descriptor
-     * set layout. Call once, after the GPU has finished with them.
+     * Destroys every live frame slot's buffer, memory and descriptor pool, and this buffer's
+     * descriptor set layout. Call once, after the GPU has finished with them.
      */
     fun destroy() {
-        frameResources.forEach { frame ->
-            VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
-            if (frame.mappedPtr != 0L) VulkanBuffers.vkUnmapMemory(device, frame.memory.handle)
-            VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
-            VulkanDescriptors.vkDestroyDescriptorPool(device, frame.descriptorPool.handle)
+        val vkDevice = device
+        for (i in frameResources.indices) {
+            val frame = frameResources[i] ?: continue
+            frameResources[i] = null
+            frame.free(vkDevice)
         }
-        VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout.handle)
+        VulkanDescriptors.vkDestroyDescriptorSetLayout(vkDevice, descriptorSetLayout.handle)
     }
 
-    private fun resourcesFor(frameIndex: Int): FrameResources {
+    private fun resourcesFor(frameIndex: Int, instances: Int = 1): FrameResources {
         require(frameIndex in frameResources.indices) {
             "SkinnedInstanceBuffer frame index $frameIndex is outside 0..${frameResources.lastIndex}."
         }
-        return frameResources[frameIndex]
+        val current = frameResources[frameIndex]
+        if (current != null && current.capacity >= instances) return current
+        current?.let(::retireFrameResources)
+        var capacity = MIN_CAPACITY.coerceAtMost(maxInstances)
+        while (capacity < instances) capacity *= 2
+        capacity = capacity.coerceAtMost(maxInstances)
+        // paletteByteSize = capacity * 4096 bytes, always aligned to max Vulkan minStorageBufferOffsetAlignment (256B).
+        val paletteByteSize = capacity.toLong() * FLOATS_PER_INSTANCE * Float.SIZE_BYTES
+        val tintByteSize = capacity.toLong() * SkinnedInstanceLayout.TINT_FLOATS * Float.SIZE_BYTES
+        val (buffer, memory, mappedPtr) = allocateHostVisibleBuffer(paletteByteSize + tintByteSize)
+        val pool = createDescriptorPool()
+        val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout.handle)
+        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+            device,
+            set,
+            SkinnedInstanceLayout.PALETTE_BINDING,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VkDescriptorBufferInfo(buffer = buffer, range = paletteByteSize),
+        )
+        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+            device,
+            set,
+            SkinnedInstanceLayout.TINT_BINDING,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VkDescriptorBufferInfo(buffer = buffer, offset = paletteByteSize, range = tintByteSize),
+        )
+        return FrameResources(
+            BufferHandle(buffer),
+            DeviceMemoryHandle(memory),
+            mappedPtr,
+            DescriptorPoolHandle(pool),
+            DescriptorSetHandle(set),
+            capacity,
+            paletteByteSize,
+            tintByteSize,
+        ).also { frameResources[frameIndex] = it }
+    }
+
+    private fun retireFrameResources(old: FrameResources) {
+        val vkDevice = device
+        retiredCount += 1L
+        graphicsDevice.destroyOrRetire {
+            old.free(vkDevice)
+        }
     }
 
     private fun createDescriptorPool(): Long = VulkanDescriptors.vkCreateDescriptorPool(
@@ -269,6 +314,9 @@ class SkinnedInstanceBuffer(
         /** 256 * 4 KB = 1 MB per frame slot. Far lower than [InstanceBuffer]'s 4096 because an
          * animated instance costs 16x a static one -- 4096 here would be 16 MB per slot. */
         const val DEFAULT_MAX_INSTANCES = 256
+
+        /** Initial per-slot capacity (4 * 4096B = 16 KiB instead of 1 MiB) before power-of-two growth. */
+        internal const val MIN_CAPACITY = 4
 
         /** Descriptor set 1 -- set 0 is the material's. See this class's own doc comment. */
         const val PALETTE_SET = 1
