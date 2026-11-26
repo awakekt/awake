@@ -727,14 +727,45 @@ class GltfAssetResolver(
                     createImageMaterial(skinnedPartTextures.getValue(key), TextureFiltering.Linear, SkinnedUniformLayout.total, skinnedPartPbr[key], label = name)
                 }
             }
-        name.startsWith("gltf-material:") -> loadedMaterials[name.removePrefix("gltf-material:")]?.let { loaded ->
-            renderer.imageMaterialOrPlain(name, TexturedUniformLayout.total) {
-                createImageMaterial(loaded.texture, TextureFiltering.Linear, TexturedUniformLayout.total, loaded.pbrImages, label = name)
-            }
-        } ?: name.removePrefix("gltf-material:").takeIf { it in untexturedMaterials }?.let {
-            renderer.createMaterial(LitShadowUniformLayout)
+        name.startsWith("gltf-material:") -> {
+            val key = name.removePrefix("gltf-material:")
+            loadedMaterials[key]?.let { loaded ->
+                renderer.imageMaterialOrPlain(name, TexturedUniformLayout.total) {
+                    createImageMaterial(loaded.texture, TextureFiltering.Linear, TexturedUniformLayout.total, loaded.pbrImages, label = name)
+                }
+            } ?: key.takeIf { it in untexturedMaterials }?.let {
+                renderer.createMaterial(LitShadowUniformLayout)
+            } ?: fallbackUntexturedMaterial(renderer, key)
         }
         else -> null
+    }
+
+    /**
+     * When [preloadMaterials] failed (for example, low-memory texture decode failure) while geometry still
+     * preloaded into [loadedScenes] or [loadedStaticMeshes], resolve the expected `gltf-material:` slot to a
+     * plain untextured material matching the mesh's vertex format instead of returning null and throwing on spawn.
+     */
+    private fun fallbackUntexturedMaterial(renderer: Renderer, key: String): Material? {
+        val path = materialModelPath(key)
+        return if (path in loadedScenes) {
+            when (val part = part("$PRIMITIVE_MESH_PREFIX$key")) {
+                is GltfPart.Skinned -> if (part.textured) {
+                    renderer.createMaterial(texture = PLAIN_TEXTURE, uniformFloatCount = SkinnedUniformLayout.total)
+                } else {
+                    renderer.createMaterial(SkinnedUniformLayout)
+                }
+                is GltfPart.Static -> renderer.createMaterial(LitShadowUniformLayout)
+                null -> null
+            }
+        } else {
+            val staticMesh = loadedStaticMeshes[key] ?: loadedStaticMeshes[path]
+            when (staticMesh?.format) {
+                null -> null
+                VertexFormat.PositionNormalColorUv ->
+                    renderer.createMaterial(texture = PLAIN_TEXTURE, uniformFloatCount = TexturedUniformLayout.total)
+                else -> renderer.createMaterial(LitShadowUniformLayout)
+            }
+        }
     }
 
     /**
