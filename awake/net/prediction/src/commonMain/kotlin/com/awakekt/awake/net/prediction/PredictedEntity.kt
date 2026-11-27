@@ -69,6 +69,27 @@ class PredictedEntity(
     }
 
     /**
+     * Zero-allocation form of [apply]: consumes the reusable [correction] filled by [reconcileInto].
+     */
+    fun apply(correction: MutableCorrection, history: PredictionHistory) {
+        speedScale = if (correction.kind == CorrectionKind.Wait) correction.speedScale else 1f
+        when (correction.kind) {
+            CorrectionKind.Blend -> owed.set(correction.x, correction.y, correction.z)
+            CorrectionKind.Shift -> {
+                move(correction.x, correction.y, correction.z, history)
+                glide.add(-correction.x, -correction.y, -correction.z)
+                owed.set(0f, 0f, 0f)
+            }
+            CorrectionKind.Snap -> {
+                move(correction.x - position.x, correction.y - position.y, correction.z - position.z, history)
+                glide.clear()
+                owed.set(0f, 0f, 0f)
+            }
+            CorrectionKind.None, CorrectionKind.Wait -> Unit
+        }
+    }
+
+    /**
      * Puts part of the [owed] drift right after a step that moved the entity [walked] metres: at most
      * [blendShare] of it, so a standing entity is never slid. Moves [history] with it.
      */
@@ -85,6 +106,14 @@ class PredictedEntity(
 
     /** Fades the glide by [dt] seconds. */
     fun update(dt: Float) = glide.update(dt)
+
+    /** Clears pose, owed drift, glide offset, and cap slowdown back to defaults for component reuse. */
+    fun reset() {
+        position.set(0f, 0f, 0f)
+        owed.set(0f, 0f, 0f)
+        speedScale = 1f
+        glide.clear()
+    }
 
     private fun move(dx: Float, dy: Float, dz: Float, history: PredictionHistory) {
         position.set(position.x + dx, position.y + dy, position.z + dz)

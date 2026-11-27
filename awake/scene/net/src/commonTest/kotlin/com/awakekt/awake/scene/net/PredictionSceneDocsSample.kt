@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.net
 
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.net.prediction.PredictionClock
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.abs
 import kotlin.test.Test
@@ -20,7 +21,7 @@ class ScenePredictionClient {
     val prediction = PredictedTransform()
     private var now = 0.0
     private var sequence = 0L
-    private val reconcile = PredictionSystem { now }
+    private val reconcile = PredictionSystem(PredictionClock { now })
 
     init {
         world.add(player, transform)

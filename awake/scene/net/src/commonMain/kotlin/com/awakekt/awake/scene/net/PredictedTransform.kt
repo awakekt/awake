@@ -5,13 +5,16 @@
  */
 package com.awakekt.awake.scene.net
 
+import com.awakekt.awake.ecs.Poolable
 import com.awakekt.awake.net.prediction.Correction
+import com.awakekt.awake.net.prediction.CorrectionKind
+import com.awakekt.awake.net.prediction.MutableCorrection
 import com.awakekt.awake.net.prediction.PredictedEntity
 import com.awakekt.awake.net.prediction.PredictionHistory
 import com.awakekt.awake.net.prediction.ReconcileConfig
 import com.awakekt.awake.net.prediction.ReconcileInput
 import com.awakekt.awake.net.prediction.ReconcileRules
-import com.awakekt.awake.net.prediction.reconcile
+import com.awakekt.awake.net.prediction.reconcileInto
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.sqrt
 
@@ -23,7 +26,8 @@ import kotlin.math.sqrt
  *
  * Snapshots and input timestamps are supplied by game code on the world thread. Positions use the
  * scene's coordinate space; convert world-absolute wire positions at the boundary if using an origin.
- * A component belongs to one entity; replace it on reconnect to discard the previous session's state.
+ * Implements [Poolable]: call [reset] on reconnect or entity reuse to discard all session state
+ * without reallocating the component.
  *
  * @property config Reconciliation thresholds, also authored by [ScenePredictedEntity].
  * @property historyCapacity Number of sent input poses retained.
@@ -37,7 +41,7 @@ class PredictedTransform(
     val glideHalfLifeSeconds: Float = 0.05f,
     val blendShare: Float = 0.2f,
     var rules: ReconcileRules = ReconcileRules.None,
-) {
+) : Poolable {
     init {
         require(glideHalfLifeSeconds.isFinite() && glideHalfLifeSeconds >= 0f)
         require(blendShare.isFinite() && blendShare in 0f..1f)
@@ -50,6 +54,8 @@ class PredictedTransform(
     val history: PredictionHistory = PredictionHistory(historyCapacity)
     private val pose = PredictedEntity(glideHalfLifeSeconds, blendShare)
     private val input = ReconcileInput()
+    private val correction = MutableCorrection()
+    private var cachedCorrection: Correction? = Correction.None
     private var readAck = -1L
     private var initialized = false
     private var lastUpdateSeconds = Double.NaN
@@ -57,9 +63,18 @@ class PredictedTransform(
     /** Movement's allowed speed multiplier, updated before each fixed step. */
     val speedScale: Float get() = pose.speedScale
 
-    /** Latest decision, available for diagnostics without another reconciliation. */
-    var lastCorrection: Correction = Correction.None
-        private set
+    /** Zero-allocation discriminator for the latest reconciliation decision. */
+    val correctionKind: CorrectionKind get() = correction.kind
+
+    /** Zero-allocation reusable carrier holding the latest reconciliation decision. */
+    val lastCorrectionView: MutableCorrection get() = correction
+
+    /**
+     * Latest decision as an immutable [Correction], materialized lazily on read so hot ticks that
+     * inspect [correctionKind] or [lastCorrectionView] allocate nothing.
+     */
+    val lastCorrection: Correction
+        get() = cachedCorrection ?: correction.toCorrection().also { cachedCorrection = it }
 
     /** Simulated position plus the remaining visual glide, in scene coordinates. */
     val drawnX: Float get() = pose.drawnX
@@ -95,7 +110,7 @@ class PredictedTransform(
      * and use the same monotonic clock. Recording before the first system update requires one.
      */
     fun recordInput(transform: Transform, seq: Long, timeSeconds: Double = lastUpdateSeconds, walked: Float = displacementTo(transform)) {
-        require(seq > history.newestSeq) { "input sequences must increase; replace the component on reconnect" }
+        require(seq > history.newestSeq) { "input sequences must increase; replace or reset the component on reconnect" }
         require(timeSeconds.isFinite()) { "timeSeconds must be finite; run PredictionSystem before using its default clock" }
         require(walked.isFinite() && walked >= 0f) { "walked must be finite and non-negative" }
         require(transform.parent == null) { "predicted transforms must be scene roots" }
@@ -129,6 +144,28 @@ class PredictedTransform(
         input.server(input.serverX + dx, input.serverY + dy, input.serverZ + dz)
     }
 
+    /** Clears all live session history, snapshot state, glide, and rules for reconnect or ECS pooling. */
+    override fun reset() {
+        history.clear()
+        pose.reset()
+        input.server(0f, 0f, 0f).drawn(0f, 0f, 0f)
+        input.ackSeq = -1L
+        input.ackFresh = false
+        input.ackUnread = false
+        input.guessedTicks = 0
+        input.ackKnown = false
+        input.ackX = 0f
+        input.ackY = 0f
+        input.ackZ = 0f
+        input.secondsSinceOldestUnheard = 0.0
+        correction.reset()
+        cachedCorrection = Correction.None
+        readAck = -1L
+        initialized = false
+        lastUpdateSeconds = Double.NaN
+        rules = ReconcileRules.None
+    }
+
     internal fun update(transform: Transform, nowSeconds: Double, delta: Float) {
         require(transform.parent == null) { "predicted transforms must be scene roots" }
         lastUpdateSeconds = nowSeconds
@@ -138,11 +175,11 @@ class PredictedTransform(
         if (input.ackSeq < 0L) return
         input.ackUnread = input.ackSeq > readAck
         input.drawn(pose.position.x, pose.position.y, pose.position.z).lookUp(history, nowSeconds)
-        val correction = reconcile(input, config, rules)
-        if (correction is Correction.Blend || correction.corrects) readAck = input.ackSeq
+        reconcileInto(input, config, correction, rules)
+        if (correction.kind == CorrectionKind.Blend || correction.corrects) readAck = input.ackSeq
         input.ackFresh = false
         pose.apply(correction, history)
         transform.position.set(pose.position)
-        lastCorrection = correction
+        cachedCorrection = if (correction.kind == CorrectionKind.None) Correction.None else null
     }
 }

@@ -263,6 +263,32 @@ fun reconcile(input: ReconcileInput, config: ReconcileConfig, rules: ReconcileRu
 }
 
 /**
+ * Zero-allocation form of [reconcile]: evaluates the same rules and precedence into the reusable
+ * [out] carrier without allocating a [Correction] wrapper for blends, shifts, snaps, or easing
+ * waits, and returns [out].
+ */
+fun reconcileInto(
+    input: ReconcileInput,
+    config: ReconcileConfig,
+    out: MutableCorrection,
+    rules: ReconcileRules = ReconcileRules.None,
+): MutableCorrection {
+    val forced = rules.forceSnap(input)
+    val trusted = input.guessedTicks <= config.trustedGuessedTicks
+    val diverged = input.ackFresh && trusted && diverged(input, config)
+    val snap = forced ?: if (diverged) driftSnap(input, config) else null
+    val scale = speedScale(input.secondsSinceOldestUnheard, config)
+    return when {
+        snap != null -> out.setSnap(input.serverX, input.serverY, input.serverZ, snap)
+        scale < 1f -> out.setWait(scale)
+        diverged -> out.setShift(input.serverX - input.ackX, dy(input, config), input.serverZ - input.ackZ)
+        input.ackUnread && trusted && input.ackKnown ->
+            out.setBlend(input.serverX - input.ackX, dy(input, config), input.serverZ - input.ackZ)
+        else -> out.setNone()
+    }
+}
+
+/**
  * Whether both the pose drawn and the drift at the acknowledgement are past the correct distance. NaN,
  * an unknown drift, is never within it.
  */

@@ -18,6 +18,7 @@ public final class com/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline {
 	public final fun advance (F)V
 	public final fun getClampedInputs ()J
 	public final fun getDelaySeconds ()D
+	public final fun getHeadroomSeconds ()D
 	public final fun getInitialIntervalSeconds ()D
 	public final fun getInputMode ()Lcom/awakekt/awake/net/prediction/TimelineInputMode;
 	public final fun getIntervalSeconds ()D
@@ -31,6 +32,7 @@ public final class com/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline {
 	public final fun playbackTime (D)D
 	public final fun reset ()V
 	public final fun serverTime (D)D
+	public final fun setHeadroomSeconds (D)V
 	public final fun setInputMode (Lcom/awakekt/awake/net/prediction/TimelineInputMode;)V
 }
 
@@ -120,11 +122,57 @@ public final class com/awakekt/awake/net/prediction/Correction$Wait$Companion {
 	public final fun getStopped ()Lcom/awakekt/awake/net/prediction/Correction$Wait;
 }
 
+public final class com/awakekt/awake/net/prediction/CorrectionKind : java/lang/Enum {
+	public static final field Blend Lcom/awakekt/awake/net/prediction/CorrectionKind;
+	public static final field None Lcom/awakekt/awake/net/prediction/CorrectionKind;
+	public static final field Shift Lcom/awakekt/awake/net/prediction/CorrectionKind;
+	public static final field Snap Lcom/awakekt/awake/net/prediction/CorrectionKind;
+	public static final field Wait Lcom/awakekt/awake/net/prediction/CorrectionKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/prediction/CorrectionKind;
+	public static fun values ()[Lcom/awakekt/awake/net/prediction/CorrectionKind;
+}
+
+public final class com/awakekt/awake/net/prediction/InputCadence {
+	public static final field STEP_ROUNDING D
+	public fun <init> ()V
+	public final fun clearUnstepped ()V
+	public final fun droppedSteps (FIFILjava/lang/Integer;)I
+	public static synthetic fun droppedSteps$default (Lcom/awakekt/awake/net/prediction/InputCadence;FIFILjava/lang/Integer;ILjava/lang/Object;)I
+	public final fun ensureStepsPerInput (FI)V
+	public final fun getDebtSteps ()I
+	public final fun getOpen ()Z
+	public final fun getStepsInInput ()I
+	public final fun getStepsPerInput ()I
+	public final fun getTargetSteps ()I
+	public final fun isAckAhead (JJ)Z
+	public final fun lastCompletedSeq (J)J
+	public final fun onLatched (Z)V
+	public final fun onStepCompleted ()Z
+	public final fun remainingSteps ()I
+	public final fun reset ()V
+	public final fun tryRealignFromRest (Z)Z
+}
+
+public final class com/awakekt/awake/net/prediction/MutableCorrection {
+	public fun <init> ()V
+	public final fun getCorrects ()Z
+	public final fun getKind ()Lcom/awakekt/awake/net/prediction/CorrectionKind;
+	public final fun getSnapReason ()Lcom/awakekt/awake/net/prediction/SnapReason;
+	public final fun getSpeedScale ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public final fun reset ()V
+	public final fun toCorrection ()Lcom/awakekt/awake/net/prediction/Correction;
+}
+
 public final class com/awakekt/awake/net/prediction/PredictedEntity {
 	public fun <init> ()V
 	public fun <init> (FF)V
 	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun apply (Lcom/awakekt/awake/net/prediction/Correction;Lcom/awakekt/awake/net/prediction/PredictionHistory;)V
+	public final fun apply (Lcom/awakekt/awake/net/prediction/MutableCorrection;Lcom/awakekt/awake/net/prediction/PredictionHistory;)V
 	public final fun blend (FLcom/awakekt/awake/net/prediction/PredictionHistory;)V
 	public final fun getBlendShare ()F
 	public final fun getDrawnX ()F
@@ -134,7 +182,12 @@ public final class com/awakekt/awake/net/prediction/PredictedEntity {
 	public final fun getOwed ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getSpeedScale ()F
+	public final fun reset ()V
 	public final fun update (F)V
+}
+
+public abstract interface class com/awakekt/awake/net/prediction/PredictionClock {
+	public abstract fun nowSeconds ()D
 }
 
 public final class com/awakekt/awake/net/prediction/PredictionHistory {
@@ -231,6 +284,8 @@ public final class com/awakekt/awake/net/prediction/ReconcileInput {
 public final class com/awakekt/awake/net/prediction/ReconcileKt {
 	public static final fun reconcile (Lcom/awakekt/awake/net/prediction/ReconcileInput;Lcom/awakekt/awake/net/prediction/ReconcileConfig;Lcom/awakekt/awake/net/prediction/ReconcileRules;)Lcom/awakekt/awake/net/prediction/Correction;
 	public static synthetic fun reconcile$default (Lcom/awakekt/awake/net/prediction/ReconcileInput;Lcom/awakekt/awake/net/prediction/ReconcileConfig;Lcom/awakekt/awake/net/prediction/ReconcileRules;ILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/Correction;
+	public static final fun reconcileInto (Lcom/awakekt/awake/net/prediction/ReconcileInput;Lcom/awakekt/awake/net/prediction/ReconcileConfig;Lcom/awakekt/awake/net/prediction/MutableCorrection;Lcom/awakekt/awake/net/prediction/ReconcileRules;)Lcom/awakekt/awake/net/prediction/MutableCorrection;
+	public static synthetic fun reconcileInto$default (Lcom/awakekt/awake/net/prediction/ReconcileInput;Lcom/awakekt/awake/net/prediction/ReconcileConfig;Lcom/awakekt/awake/net/prediction/MutableCorrection;Lcom/awakekt/awake/net/prediction/ReconcileRules;ILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/MutableCorrection;
 	public static final fun speedScale (DLcom/awakekt/awake/net/prediction/ReconcileConfig;)F
 }
 
@@ -241,6 +296,49 @@ public abstract interface class com/awakekt/awake/net/prediction/ReconcileRules 
 
 public final class com/awakekt/awake/net/prediction/ReconcileRules$Companion {
 	public final fun getNone ()Lcom/awakekt/awake/net/prediction/ReconcileRules;
+}
+
+public final class com/awakekt/awake/net/prediction/RemotePoseBuffer {
+	public static final field BLEND_SECONDS D
+	public static final field Companion Lcom/awakekt/awake/net/prediction/RemotePoseBuffer$Companion;
+	public static final field DEFAULT_CAPACITY I
+	public static final field DEFAULT_EXTRAPOLATION_SECONDS D
+	public static final field WARP_METRES F
+	public static final field WARP_METRES_PER_SECOND D
+	public fun <init> ()V
+	public fun <init> (DIDFD)V
+	public synthetic fun <init> (DIDFDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun cadenceDelay (DF)D
+	public final fun getArrivalGap ()D
+	public final fun getBlendSeconds ()D
+	public final fun getCapacity ()I
+	public final fun getExtrapolationSeconds ()D
+	public final fun getGrounded ()Z
+	public final fun getHasSamples ()Z
+	public final fun getNewestTime ()D
+	public final fun getPitch ()F
+	public final fun getPlanarSpeed ()F
+	public final fun getRenderError ()F
+	public final fun getSpeed ()F
+	public final fun getUnderrun ()Z
+	public final fun getUnderruns ()J
+	public final fun getVelocityX ()F
+	public final fun getVelocityY ()F
+	public final fun getVelocityZ ()F
+	public final fun getWarpMetres ()F
+	public final fun getWarpSpeedMetresPerSecond ()D
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getYaw ()F
+	public final fun getZ ()F
+	public final fun noteSkipped (D)V
+	public final fun push (DFFFFFZD)V
+	public static synthetic fun push$default (Lcom/awakekt/awake/net/prediction/RemotePoseBuffer;DFFFFFZDILjava/lang/Object;)V
+	public final fun reset ()V
+	public final fun sample (D)Z
+}
+
+public final class com/awakekt/awake/net/prediction/RemotePoseBuffer$Companion {
 }
 
 public abstract interface class com/awakekt/awake/net/prediction/SnapReason {

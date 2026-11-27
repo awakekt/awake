@@ -118,10 +118,15 @@ hundred milliseconds. Set your own for anything else.
 
 ## Allocation
 
-Keep one `ReconcileInput` and fill it each frame. `PredictionHistory` is a fixed ring that allocates
-nothing after construction. `reconcile` returns shared instances for `None` and a stopped `Wait`; it
-allocates only a correction that does something, at most once per snapshot, and a `Wait` during its
-ease.
+Keep one `ReconcileInput` and one `MutableCorrection` per predicted entity and call
+`reconcileInto(input, config, out, rules)` alongside `PredictedEntity.apply(out, history)`: every
+decision (`None`, `Blend`, `Shift`, `Snap`, and easing `Wait`), `PredictionHistory`, `InputCadence`,
+`AdaptiveSnapshotTimeline`, and `RemotePoseBuffer` allocates **0 bytes per frame** after
+construction. For ECS scenes, `PredictedTransform` + `PredictionSystem`, `PredictedBody` +
+`PredictedBodySystem` (for physics controllers and rigid bodies), and `RemotePose` +
+`RemotePoseSystem` (with `PredictionPaused` / `RemotePosePaused` `EcsTag` exclusion and `Poolable`
+`reset()`) all use this zero-allocation path internally. The legacy `reconcile(...)` returning a
+sealed `Correction` remains available for diagnostics and non-hot code.
 
 ## See also
 

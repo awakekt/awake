@@ -82,3 +82,127 @@ interface SnapReason {
      */
     data object NoHistory : SnapReason
 }
+
+/**
+ * Discriminator for [MutableCorrection], mirroring the cases of [Correction] without allocating
+ * wrapper objects on hot per-frame reconciliation paths.
+ */
+enum class CorrectionKind {
+    /** Nothing to correct: the prediction stands at full speed. */
+    None,
+
+    /** A small drift owed and blended into subsequent movement. */
+    Blend,
+
+    /** A real divergence shifted immediately while preserving unacknowledged steps. */
+    Shift,
+
+    /** An immediate snap onto the authoritative server pose. */
+    Snap,
+
+    /** Prediction cap slowdown scaling movement speed by [MutableCorrection.speedScale]. */
+    Wait,
+}
+
+/**
+ * Reusable zero-allocation decision carrier filled by [reconcileInto].
+ *
+ * Keep one instance per predicted entity and pass it to [reconcileInto] each tick instead of
+ * allocating a [Correction] object per snapshot. For [CorrectionKind.Blend] and
+ * [CorrectionKind.Shift], [x], [y], and [z] hold the drift delta (`dx`, `dy`, `dz`). For
+ * [CorrectionKind.Snap], [x], [y], and [z] hold the target server pose and [snapReason] is
+ * non-null. For [CorrectionKind.Wait], [speedScale] holds the cap speed multiplier in `[0, 1]`.
+ */
+class MutableCorrection {
+    /** The active decision kind. */
+    var kind: CorrectionKind = CorrectionKind.None
+        private set
+
+    /** Drift `dx` for [CorrectionKind.Blend]/[CorrectionKind.Shift], or target `x` for [CorrectionKind.Snap]. */
+    var x: Float = 0f
+        private set
+
+    /** Drift `dy` for [CorrectionKind.Blend]/[CorrectionKind.Shift], or target `y` for [CorrectionKind.Snap]. */
+    var y: Float = 0f
+        private set
+
+    /** Drift `dz` for [CorrectionKind.Blend]/[CorrectionKind.Shift], or target `z` for [CorrectionKind.Snap]. */
+    var z: Float = 0f
+        private set
+
+    /** Allowed speed multiplier: in `[0, 1]` for [CorrectionKind.Wait], `1f` otherwise. */
+    var speedScale: Float = 1f
+        private set
+
+    /** Non-null iff [kind] is [CorrectionKind.Snap]. */
+    var snapReason: SnapReason? = null
+        private set
+
+    /** Whether this decision moves the entity immediately ([CorrectionKind.Shift] or [CorrectionKind.Snap]). */
+    val corrects: Boolean
+        get() = kind == CorrectionKind.Shift || kind == CorrectionKind.Snap
+
+    /** Resets all fields back to [CorrectionKind.None]. */
+    fun reset() {
+        kind = CorrectionKind.None
+        x = 0f
+        y = 0f
+        z = 0f
+        speedScale = 1f
+        snapReason = null
+    }
+
+    internal fun setNone(): MutableCorrection {
+        reset()
+        return this
+    }
+
+    internal fun setBlend(dx: Float, dy: Float, dz: Float): MutableCorrection {
+        kind = CorrectionKind.Blend
+        x = dx
+        y = dy
+        z = dz
+        speedScale = 1f
+        snapReason = null
+        return this
+    }
+
+    internal fun setShift(dx: Float, dy: Float, dz: Float): MutableCorrection {
+        kind = CorrectionKind.Shift
+        x = dx
+        y = dy
+        z = dz
+        speedScale = 1f
+        snapReason = null
+        return this
+    }
+
+    internal fun setSnap(targetX: Float, targetY: Float, targetZ: Float, reason: SnapReason): MutableCorrection {
+        kind = CorrectionKind.Snap
+        x = targetX
+        y = targetY
+        z = targetZ
+        speedScale = 1f
+        snapReason = reason
+        return this
+    }
+
+    internal fun setWait(scale: Float): MutableCorrection {
+        kind = CorrectionKind.Wait
+        x = 0f
+        y = 0f
+        z = 0f
+        speedScale = scale
+        snapReason = null
+        return this
+    }
+
+    /** Materializes an immutable [Correction] value for diagnostics or legacy callers. */
+    fun toCorrection(): Correction = when (kind) {
+        CorrectionKind.None -> Correction.None
+        CorrectionKind.Blend -> Correction.Blend(x, y, z)
+        CorrectionKind.Shift -> Correction.Shift(x, y, z)
+        CorrectionKind.Snap -> Correction.Snap(x, y, z, requireNotNull(snapReason))
+        CorrectionKind.Wait -> if (speedScale <= 0f) Correction.Wait.Stopped else Correction.Wait(speedScale)
+    }
+}

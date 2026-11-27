@@ -83,6 +83,20 @@ class AdaptiveSnapshotTimeline(
     var clampedInputs: Long = 0L
         private set
 
+    /**
+     * Optional fixed headroom in seconds added to one [intervalSeconds] when targeting steady-state
+     * [delaySeconds] (`intervalSeconds + headroomSeconds + jitterSeconds`). When `Double.NaN`
+     * (the default), targets two full intervals (`2 * intervalSeconds + jitterSeconds`).
+     */
+    var headroomSeconds: Double = Double.NaN
+        set(value) {
+            require(value.isNaN() || (value.isFinite() && value >= 0.0)) {
+                "headroomSeconds must be NaN or finite and non-negative, was $value."
+            }
+            field = value
+            if (!ready) delaySeconds = computeTargetDelay()
+        }
+
     /** Learned median snapshot interval in seconds of server time. */
     var intervalSeconds: Double = initialIntervalSeconds
         private set
@@ -231,8 +245,10 @@ class AdaptiveSnapshotTimeline(
         return false
     }
 
-    private fun computeTargetDelay(): Double =
-        (2.0 * intervalSeconds + jitterSeconds).coerceIn(minDelaySeconds, maxDelaySeconds)
+    private fun computeTargetDelay(): Double {
+        val base = if (headroomSeconds.isNaN()) 2.0 * intervalSeconds else intervalSeconds + headroomSeconds
+        return (base + jitterSeconds).coerceIn(minDelaySeconds, maxDelaySeconds)
+    }
 
     private fun clearWindows(keepInterval: Boolean) {
         offsetCount = 0
