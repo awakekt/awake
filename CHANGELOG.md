@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.85.0] - 2026-11-28
+
+### Added
+
+- Added `CoreSceneContent.TerrainClipmapConfig`, an additive `TerrainContentSystem` / `terrainContentFeature` clipmap override, and `PagedTerrainLayers.contentFor(quality, clipmapConfig, includeSurfaceDeposit)` so projects can opt into lighter mobile clipmap presets (`TerrainClipmapConfig.Mobile` / `Compact`) while preserving authored level-0 `baseSpacing` for heightfield collider parity.
+- **Zero-allocation client prediction & ECS networking boilerplate.** `:awake:net:prediction` adds `CorrectionKind`, reusable `MutableCorrection` with `reconcileInto(...)`, `PredictedEntity.apply(MutableCorrection, ...)`, primitive-returning `PredictionClock`, `InputCadence` (fixed-step windowing, debt-balanced rest realignment, and dropped-step rounding), configurable `AdaptiveSnapshotTimeline.headroomSeconds`, and primitive-ring `RemotePoseBuffer` (with derived `velocityX`/`velocityY`/`velocityZ`/`speed`/`planarSpeed` and configurable blend/warp thresholds). `:awake:scene:net` makes `PredictedTransform` `Poolable` and 0 B/frame via `reconcileInto` + `PredictionClock`, adds `PredictionPaused` / `RemotePosePaused` `EcsTag` markers, `PredictedBody` + `PredictedBodySystem` (`Family1System`) for physics-controller entities, and `RemotePose` + `RemotePoseSystem` (`Family2System`) for remote entity interpolation, verified with zero-allocation gates.
+
 ## [0.84.0] - 2026-11-27
 
 ### Added
