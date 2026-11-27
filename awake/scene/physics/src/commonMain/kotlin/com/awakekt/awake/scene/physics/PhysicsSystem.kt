@@ -15,9 +15,11 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.ContactEvent
+import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.physics.PhysicsBody
+import kotlin.math.abs
 
 /**
  * Bridges [PhysicsBody]/[Transform] ECS components to a live [physicsWorld]. This is
@@ -58,6 +60,9 @@ class PhysicsSystem(
      * Found per step by entity slot and by handle id, never by hashing a boxed handle (#1428).
      */
     private val bodies = PhysicsBodyRecords()
+    private val poseResolver = PhysicsWorldPoseResolver()
+    private val scratchWorldPosition = Vec3f()
+    private val scratchWorldRotation = Quat()
 
     // Resolved once per world generation, so the per-body readback does not find `Transform` by class.
     private var transformWorld: World? = null
@@ -79,6 +84,13 @@ class PhysicsSystem(
         val record = bodies.forHandle(BodyHandle(handleId))
         if (record != null) {
             val transform = steppingWorld?.get<Transform>(record.entity, transformTypeId)
+            if (record.motionType == MotionType.KINEMATIC) {
+                record.lastKinematicPosition.set(position)
+                record.lastKinematicRotation.set(rotation)
+                // A parented kinematic collider's Transform is in local space under the parent that
+                // drives it; writing world coordinates back into it would double-translate it.
+                if (transform?.parent != null) return@BodyTransformVisitor
+            }
             if (transform != null) {
                 transform.position.x = position.x
                 transform.position.y = position.y
@@ -176,17 +188,23 @@ class PhysicsSystem(
                     physicsBody.handle = null
                 }
                 if (physicsBody.handle == null) {
+                    poseResolver.resolve(world, transform, transformTypeId, scratchWorldPosition, scratchWorldRotation)
                     val handle = physicsWorld.createBody(
                         physicsBody.shape,
-                        transform.position,
-                        Quat.fromEuler(transform.rotation),
+                        scratchWorldPosition,
+                        scratchWorldRotation,
                         physicsBody.motionType,
                         physicsBody.layer,
                         physicsBody.sensor,
                         physicsBody.degreesOfFreedom,
                     )
                     physicsBody.handle = handle
-                    bodies.add(entity, handle, physicsBody.motionType)
+                    val record = bodies.add(entity, handle, physicsBody.motionType)
+                    if (physicsBody.motionType == MotionType.KINEMATIC) {
+                        record.lastKinematicPosition.set(scratchWorldPosition)
+                        record.lastKinematicRotation.set(scratchWorldRotation)
+                        record.wasKinematicMoving = false
+                    }
                 }
             }
             syncedWorld = world
@@ -194,6 +212,10 @@ class PhysicsSystem(
             syncedFamilyChanges = family.changes
             syncedMotionEdits = physicsBodyMotionTypeEdits
             syncedHandleEdits = physicsBodyHandleEdits
+        }
+
+        if (bodies.kinematicCount > 0 && delta > 0f) {
+            syncKinematicBodies(world, delta)
         }
 
         physicsWorld.step(delta)
@@ -226,4 +248,43 @@ class PhysicsSystem(
             pose.blendInto(transform, alpha)
         }
     }
+
+    /**
+     * Drives kinematic bodies whose ECS world pose changed since the last step (e.g. moved by
+     * `KeyframeAnimationSystem` or a parent transform) via [PhysicsWorld.moveKinematic], so Jolt
+     * derives true velocity and carries standing characters/dynamic bodies cleanly. Callers that
+     * drive [PhysicsWorld.moveKinematic] directly without editing `Transform` first see no
+     * mismatch and are left untouched.
+     */
+    private fun syncKinematicBodies(world: World, delta: Float) {
+        bodies.forEachKinematic { record ->
+            if (!world.isAlive(record.entity)) return@forEachKinematic
+            val transform = world.get<Transform>(record.entity, transformTypeId) ?: return@forEachKinematic
+            poseResolver.resolve(world, transform, transformTypeId, scratchWorldPosition, scratchWorldRotation)
+            val moved = !samePose(
+                scratchWorldPosition,
+                scratchWorldRotation,
+                record.lastKinematicPosition,
+                record.lastKinematicRotation,
+            )
+            if (moved || record.wasKinematicMoving) {
+                physicsWorld.moveKinematic(record.handle, scratchWorldPosition, scratchWorldRotation, delta)
+                record.lastKinematicPosition.set(scratchWorldPosition)
+                record.lastKinematicRotation.set(scratchWorldRotation)
+                record.wasKinematicMoving = moved
+            }
+        }
+    }
+
+    private fun samePose(posA: Vec3f, rotA: Quat, posB: Vec3f, rotB: Quat): Boolean {
+        val dx = posA.x - posB.x
+        val dy = posA.y - posB.y
+        val dz = posA.z - posB.z
+        if (dx * dx + dy * dy + dz * dz > POSITION_EPSILON_SQ) return false
+        val dot = abs(rotA.x * rotB.x + rotA.y * rotB.y + rotA.z * rotB.z + rotA.w * rotB.w)
+        return dot >= 1f - ROTATION_DOT_EPSILON
+    }
 }
+
+private const val POSITION_EPSILON_SQ = 1e-10f
+private const val ROTATION_DOT_EPSILON = 1e-5f

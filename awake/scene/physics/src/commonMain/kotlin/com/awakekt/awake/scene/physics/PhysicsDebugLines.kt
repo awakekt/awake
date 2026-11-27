@@ -9,14 +9,13 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.diagnostics.DebugLines
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.debug.PhysicsShapeWireframe
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.scene.core.transform.Transform
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * World-space wireframes of what physics is actually colliding against.
@@ -62,38 +61,24 @@ fun physicsDebugLines(world: World): List<LineSegment> {
  */
 internal class PhysicsDebugWriter {
     private val shapes = PhysicsShapeWireframe()
+    private val poseResolver = PhysicsWorldPoseResolver()
+    private val position = Vec3f()
     private val rotation = Quat()
+    private var transformWorld: World? = null
+    private var transformGeneration = -1
+    private var transformTypeId = ComponentTypeId(0)
 
     /** Writes the wireframe of every entity with a [Transform] and a [PhysicsBody] into [out]. */
     fun write(world: World, out: DebugLines) {
-        world.queryEach(Transform::class, PhysicsBody::class) { _, transform, body ->
-            setFromEuler(transform.rotation)
-            shapes.write(body.shape, transform.position, rotation, colorOf(body.motionType), out)
+        if (transformWorld !== world || transformGeneration != world.generation) {
+            transformTypeId = world.typeId(Transform::class)
+            transformWorld = world
+            transformGeneration = world.generation
         }
-    }
-
-    /**
-     * [rotation] set to [Quat.fromEuler] of [radians] without its five quaternions: the axis rotations
-     * X = (sin hx, 0, 0, cos hx), Y = (0, sin hy, 0, cos hy) and Z = (0, 0, sin hz, cos hz), multiplied
-     * as `(X * Y) * Z` by the formula [Quat.times] uses, with the terms that are zero left out.
-     */
-    private fun setFromEuler(radians: Vec3f) {
-        val sx = sin(radians.x * HALF)
-        val cx = cos(radians.x * HALF)
-        val sy = sin(radians.y * HALF)
-        val cy = cos(radians.y * HALF)
-        val sz = sin(radians.z * HALF)
-        val cz = cos(radians.z * HALF)
-        // X * Y.
-        val x = cy * sx
-        val y = sy * cx
-        val z = -sy * sx
-        val w = cy * cx
-        // (X * Y) * Z.
-        rotation.x = cz * x - sz * y
-        rotation.y = cz * y + sz * x
-        rotation.z = cz * z + sz * w
-        rotation.w = cz * w - sz * z
+        world.queryEach(Transform::class, PhysicsBody::class) { _, transform, body ->
+            poseResolver.resolve(world, transform, transformTypeId, position, rotation)
+            shapes.write(body.shape, position, rotation, colorOf(body.motionType), out)
+        }
     }
 
     companion object {
@@ -103,7 +88,5 @@ internal class PhysicsDebugWriter {
             MotionType.DYNAMIC -> PhysicsDebugSource.DYNAMIC
             MotionType.KINEMATIC -> PhysicsDebugSource.KINEMATIC
         }
-
-        private const val HALF = 0.5f
     }
 }
