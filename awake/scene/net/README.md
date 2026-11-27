@@ -5,27 +5,36 @@
 
 - `ScenePredictedEntity` (`predicted_entity`) saves reconciliation settings, ring capacity,
   glide half-life and blend share. `PredictedTransformBinding.kt` maps every option to the capability.
-- `PredictedTransform` holds one entity's history, acknowledgement state and game-owned rules.
-- `PredictionSystem` reconciles a root `Transform` before fixed-step movement. The game's movement
-  reads `speedScale`, moves, then calls `recordInput` with the input sequence. The timestamp
-  defaults to that system's last sampled time. Keep recording and sending while the cap stops movement.
+- `PredictedTransform` (`Poolable`) holds one entity's history, acknowledgement state and game-owned
+  rules, reconciling in place through `MutableCorrection` + `reconcileInto` with zero per-frame allocations.
+- `PredictionSystem` reconciles active root `Transform` entities (excluding `PredictionPaused` at the
+  `FamilySpec` storage level) before fixed-step movement. The game's movement reads `speedScale`,
+  moves, then calls `recordInput` with the input sequence.
+- `PredictedBody` (`Poolable`) and `PredictedBodySystem` (`Family1System`) provide the same
+  zero-allocation reconciliation, `InputCadence` fixed-step windowing, and `PredictionPaused` tag
+  filtering for entities owned by a physics character controller or rigid body, invoking a
+  game-supplied `PredictedBodyApplier` without mutating `Transform` directly.
+- `RemotePose` (`Poolable`) and `RemotePoseSystem` (`Family2System`) drive `RemotePoseBuffer`
+  interpolation over a shared `AdaptiveSnapshotTimeline`, excluding `RemotePosePaused` entities at
+  the ECS storage level with zero per-frame allocations.
 
 Register `NetSceneComponents` with the project's `SceneComponentRegistry` (`registerNet()`), and
 use that registry's `sceneJson` for decoding. Loading attaches settings, not live session state.
-The system is explicitly installed by the host, before movement and `TransformSystem`.
+The systems are explicitly installed by the host before movement (for prediction) and before
+`TransformSystem` (for remote poses).
 
-The root transform is always simulation state. The optional visual glide is exposed as
-`drawnX/Y/Z`, decayed on each fixed update; a separate root visual entity can copy those coordinates.
-Do not copy them back into the simulation transform or the input history. Reconciliation and game
-rules also read only the simulation pose. Rotation and scale stay
-under their existing systems' ownership. Parented transforms are rejected because their local
-position is not a scene position. Loading rejects a parented prediction component during attachment;
-a node can declare at most one `predicted_entity`.
+For `PredictedTransform`, the root transform is always simulation state. The optional visual glide
+is exposed as `drawnX/Y/Z`, decayed on each fixed update; a separate root visual entity can copy
+those coordinates. Do not copy them back into the simulation transform or the input history.
+Reconciliation and game rules also read only the simulation pose. Rotation and scale stay under
+their existing systems' ownership. Parented transforms are rejected because their local position is
+not a scene position. Loading rejects a parented prediction component during attachment; a node can
+declare at most one `predicted_entity`.
 
-This binding is for movement that owns a transform. A physics character or rigid body owns its
-position elsewhere and must use `net:prediction` with that controller's movement API instead.
-There is no controller integration in this module. No movement, gravity, packet schema or input
-sequence policy is chosen here.
+`PredictedTransform` is for movement that owns a transform. A physics character or rigid body owns
+its position elsewhere and should use `PredictedBody` + `PredictedBodySystem` (or `net:prediction`
+directly) and apply `MutableCorrection` through that controller's movement API. No movement,
+gravity, packet schema or input sequence policy is chosen here.
 
 
 `recordInput(..., walked = distance)` supplies the self-directed movement eligible to repay a small
