@@ -73,7 +73,7 @@ const val AWAKE_ARTIFACT_GROUP: String = "com.awakekt.awake"
  * @property logoPath Optional safe project-relative path to a logo image (`.png`, `.jpg`, `.jpeg`, `.svg`, `.webp`).
  * @property backgroundColor Optional CSS hex background color (`#RGB` or `#RRGGBB`).
  * @property accentColor Optional CSS hex progress-bar accent color (`#RGB` or `#RRGGBB`).
- * @property showEngineAttribution Whether to show the engine attribution badge (`Made with AwakeKt`). Defaults to `true`.
+ * @property showEngineAttribution Whether to show the engine attribution stamp (`Powered by AwakeKt`). Defaults to `true`.
  */
 @Serializable
 data class AwakeLoadingScreen(
