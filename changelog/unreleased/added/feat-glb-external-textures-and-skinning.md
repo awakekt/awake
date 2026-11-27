@@ -1,0 +1,1 @@
+- **GLB external textures and skeletal skinning.** `GltfParser` now exposes `ByteArray` overloads of `externalUris`, `loadExternalResources`, and `parseSkinned`, and `GltfAssetResolver` loads sidecar textures (such as Kenney `Textures/colormap.png`) and rigged/skinned meshes from binary `.glb` files just like `.gltf` files.

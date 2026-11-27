@@ -199,37 +199,35 @@ class GltfAssetResolver(
 
     /** Registers model bytes after external resources have been fetched by the suspendable API. */
     private fun preload(path: String, bytes: ByteArray, externalResources: Map<String, ByteArray>) {
-        if (bytes.isGlb()) {
-            if (path !in loadedStaticMeshes) {
-                val scene = GltfParser.parseScene(bytes, externalResources)
-                loadedStaticMeshes[path] = scene.toStaticGeometry()
-                scene.defaultCullMode()?.let { loadedCullModes[path] = it }
+        // Keep the skeletal scene when the file (whether `.gltf` or `.glb`) contains skin data;
+        // static geometry is only retained as a fallback when no usable skin is present.
+        if (path !in loadedScenes) {
+            parseSkinnedScene(bytes, externalResources)?.takeIf { it.skinnedNodes.isNotEmpty() }?.let { scene ->
+                loadedScenes[path] = scene
+                sceneRetention.recordLoaded(path)
+                scene.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
             }
+        }
+        val hasSkin = loadedScenes[path]?.skinnedNodes?.isNotEmpty() == true
+        if (hasSkin || path in loadedStaticMeshes) return
+
+        if (bytes.isGlb()) {
+            val scene = GltfParser.parseScene(bytes, externalResources)
+            loadedStaticMeshes[path] = scene.toStaticGeometry()
+            scene.defaultCullMode()?.let { loadedCullModes[path] = it }
         } else {
             val json = bytes.decodeToString()
-            // Keep the skeletal scene when the file contains skin data; static geometry is only
-            // retained as a fallback for a model whose first scene has no usable skin.
-            if (path !in loadedScenes) {
-                runCatching { GltfParser.parseSkinned(json, externalResources) }.onSuccess { scene ->
-                    loadedScenes[path] = scene
-                    sceneRetention.recordLoaded(path)
-                    scene.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
-                }
-            }
-            val hasSkin = loadedScenes[path]?.skinnedNodes?.isNotEmpty() == true
-            if (!hasSkin && path !in loadedStaticMeshes) {
-                loadedStaticMeshes[path] = runCatching {
-                    val scene = GltfParser.parseScene(json.toEmbeddedGlb(), externalResources)
-                    if (path !in loadedCullModes) scene.defaultCullMode()?.let { loadedCullModes[path] = it }
-                    scene.toStaticGeometry()
-                }.getOrElse {
-                    // A valid document may omit a scene graph. Preserve the parser's first-primitive
-                    // fallback for that narrow shape, while still supporting all scene primitives
-                    // when the document provides nodes/scenes.
-                    val mesh = GltfParser.parse(json, externalResources)
-                    if (path !in loadedCullModes) loadedCullModes[path] = mesh.doubleSided.toCullMode()
-                    mesh.toStaticGeometry()
-                }
+            loadedStaticMeshes[path] = runCatching {
+                val scene = GltfParser.parseScene(json.toEmbeddedGlb(), externalResources)
+                if (path !in loadedCullModes) scene.defaultCullMode()?.let { loadedCullModes[path] = it }
+                scene.toStaticGeometry()
+            }.getOrElse {
+                // A valid document may omit a scene graph. Preserve the parser's first-primitive
+                // fallback for that narrow shape, while still supporting all scene primitives
+                // when the document provides nodes/scenes.
+                val mesh = GltfParser.parse(json, externalResources)
+                if (path !in loadedCullModes) loadedCullModes[path] = mesh.doubleSided.toCullMode()
+                mesh.toStaticGeometry()
             }
         }
     }
@@ -408,10 +406,12 @@ class GltfAssetResolver(
 
     private suspend fun preloadMaterials(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
         if (path in loadedMaterialSlots) return
-        val skinned = loadedScenes[path] ?: parseSkinnedScene(bytes, external)?.also {
-            loadedScenes[path] = it
-            sceneRetention.recordLoaded(path)
-        }
+        val skinned = loadedScenes[path] ?: parseSkinnedScene(bytes, external)
+            ?.takeIf { it.skinnedNodes.isNotEmpty() }
+            ?.also {
+                loadedScenes[path] = it
+                sceneRetention.recordLoaded(path)
+            }
         if (skinned != null && skinned.skinnedNodes.isNotEmpty()) {
             preloadSkinnedParts(path, bytes, external)
         } else {
@@ -419,9 +419,21 @@ class GltfAssetResolver(
         }
     }
 
-    /** The `.bin` and image files a `.gltf` [bytes] names, read next to [path]; none for a `.glb`. */
+    /**
+     * The `.bin` and image files a `.gltf` or `.glb` [bytes] names, read next to [path].
+     * For `.glb` files (such as low-poly kits referencing external `Textures/colormap.png`),
+     * missing external sidecars degrade cleanly to an empty map with a warning so standalone
+     * `.glb` geometry still loads untextured.
+     */
     private suspend fun externalResourcesOf(path: String, bytes: ByteArray): Map<String, ByteArray> =
-        if (bytes.isGlb()) emptyMap() else GltfParser.loadExternalResources(bytes.decodeToString(), AssetPath(path), assetSource).getOrThrow()
+        if (bytes.isGlb()) {
+            GltfParser.loadExternalResources(bytes, AssetPath(path), assetSource).getOrElse { failure ->
+                log.warn { "External sidecars for '$path' could not be loaded (${failure.message}); drawing untextured" }
+                emptyMap()
+            }
+        } else {
+            GltfParser.loadExternalResources(bytes.decodeToString(), AssetPath(path), assetSource).getOrThrow()
+        }
 
     private suspend fun preloadStaticSlots(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
         val scene = parseStaticScene(bytes, external)
@@ -1030,12 +1042,16 @@ private fun LoadedSkinnedScene.parts(): List<GltfPart> {
 
 private val GltfMesh.isTextured: Boolean get() = uvs != null && baseColorImageBytes != null
 
-/** The skinned scene in a `.gltf` [bytes], or null for a `.glb` or a file this parser cannot skin. */
+/** The skinned scene in a `.gltf` or `.glb` [bytes], or null when this parser cannot skin it. */
 private fun parseSkinnedScene(bytes: ByteArray, external: Map<String, ByteArray>): LoadedSkinnedScene? =
-    if (bytes.isGlb()) null else runCatching { GltfParser.parseSkinned(bytes.decodeToString(), external) }.getOrNull()
+    if (bytes.isGlb()) {
+        runCatching { GltfParser.parseSkinned(bytes, external) }.getOrNull()
+    } else {
+        runCatching { GltfParser.parseSkinned(bytes.decodeToString(), external) }.getOrNull()
+    }
 
 private fun parseStaticScene(bytes: ByteArray, external: Map<String, ByteArray>): LoadedScene =
-    if (bytes.isGlb()) GltfParser.parseScene(bytes) else GltfParser.parseScene(bytes.decodeToString().toEmbeddedGlb(), external)
+    if (bytes.isGlb()) GltfParser.parseScene(bytes, external) else GltfParser.parseScene(bytes.decodeToString().toEmbeddedGlb(), external)
 
 /**
  * Reads the model at [path] from [source] as a [LoadedScene]: a `.glb`, or a `.gltf` with its `.bin`
@@ -1046,7 +1062,8 @@ suspend fun readGltfScene(path: String, source: AssetSource): LoadedScene =
 
 private suspend fun parseGltfScene(path: String, bytes: ByteArray, source: AssetSource): LoadedScene =
     if (bytes.isGlb()) {
-        GltfParser.parseScene(bytes)
+        val external = GltfParser.loadExternalResources(bytes, AssetPath(path), source).getOrDefault(emptyMap())
+        GltfParser.parseScene(bytes, external)
     } else {
         val json = bytes.decodeToString()
         GltfParser.parseScene(json.toEmbeddedGlb(), GltfParser.loadExternalResources(json, AssetPath(path), source).getOrThrow())
