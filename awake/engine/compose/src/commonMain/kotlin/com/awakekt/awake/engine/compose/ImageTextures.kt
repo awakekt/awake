@@ -57,9 +57,16 @@ internal class ImageTextures(
             markUsed(existing)
             return existing.material
         }
-        val material = renderer.createMaterial(
-            texture = TextureAsset(image.pixels, image.width, image.height, filtering = filtering),
-        )
+        // UI images always upload at full resolution, exempt from Renderer.textureMipSkip (#1660).
+        val previousMipSkip = renderer.textureMipSkip
+        if (previousMipSkip != 0) renderer.textureMipSkip = 0
+        val material = try {
+            renderer.createMaterial(
+                texture = TextureAsset(image.pixels, image.width, image.height, filtering = filtering),
+            )
+        } finally {
+            if (previousMipSkip != 0) renderer.textureMipSkip = previousMipSkip
+        }
         val byteSize = image.width.toLong() * image.height.toLong() * ImageBitmap.BYTES_PER_PIXEL
         val created = Entry(material, byteSize, frame)
         entries[key] = created
