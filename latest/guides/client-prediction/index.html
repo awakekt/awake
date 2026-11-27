@@ -3272,7 +3272,7 @@ acknowledgements and consumes each correction once.</p>
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">prediction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PredictedTransform</span><span class="p">()</span>
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="nv">now</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.0</span>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="nv">sequence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0L</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">reconcile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PredictionSystem</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">now</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">reconcile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PredictionSystem</span><span class="p">(</span><span class="n">PredictionClock</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">now</span><span class="w"> </span><span class="p">})</span>
 </span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
 </span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="k">init</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">        </span><span class="n">world</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">player</span><span class="p">,</span><span class="w"> </span><span class="n">transform</span><span class="p">)</span>
@@ -3380,10 +3380,15 @@ correction at all and a drift of under a metre, blended away. A server that neve
 <p>The defaults suit a world in metres, entities at a person's running speed and round trips under a few
 hundred milliseconds. Set your own for anything else.</p>
 <h2 id="allocation">Allocation</h2>
-<p>Keep one <code>ReconcileInput</code> and fill it each frame. <code>PredictionHistory</code> is a fixed ring that allocates
-nothing after construction. <code>reconcile</code> returns shared instances for <code>None</code> and a stopped <code>Wait</code>; it
-allocates only a correction that does something, at most once per snapshot, and a <code>Wait</code> during its
-ease.</p>
+<p>Keep one <code>ReconcileInput</code> and one <code>MutableCorrection</code> per predicted entity and call
+<code>reconcileInto(input, config, out, rules)</code> alongside <code>PredictedEntity.apply(out, history)</code>: every
+decision (<code>None</code>, <code>Blend</code>, <code>Shift</code>, <code>Snap</code>, and easing <code>Wait</code>), <code>PredictionHistory</code>, <code>InputCadence</code>,
+<code>AdaptiveSnapshotTimeline</code>, and <code>RemotePoseBuffer</code> allocates <strong>0 bytes per frame</strong> after
+construction. For ECS scenes, <code>PredictedTransform</code> + <code>PredictionSystem</code>, <code>PredictedBody</code> +
+<code>PredictedBodySystem</code> (for physics controllers and rigid bodies), and <code>RemotePose</code> +
+<code>RemotePoseSystem</code> (with <code>PredictionPaused</code> / <code>RemotePosePaused</code> <code>EcsTag</code> exclusion and <code>Poolable</code>
+<code>reset()</code>) all use this zero-allocation path internally. The legacy <code>reconcile(...)</code> returning a
+sealed <code>Correction</code> remains available for diagnostics and non-hot code.</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="../web-networking/">Networking in the browser</a></li>
