@@ -228,6 +228,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -274,3 +275,18 @@ jobs:
             --no-progress \
             --cache-control "public, max-age=31536000, immutable"
           echo "Mirrored prebuilt players to ${R2_PUBLIC_URL}player/${VERSION}/"
+
+      # Delete the transient per-platform handoff artifacts once they are attached to the GitHub
+      # Release and R2 mirror so they do not occupy the org's Actions artifact storage quota.
+      - name: Delete transient player handoff artifacts
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ids="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[] | select((.expired == false) and (.name == "web-player" or .name == "android-player" or .name == "macos-arm64-player")) | .id' || true)"
+          for id in $ids; do
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+            echo "Deleted transient player handoff artifact ($id)."
+          done

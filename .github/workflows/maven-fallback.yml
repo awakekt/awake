@@ -38,11 +38,11 @@ permissions:
 # one before, so these decide what stays served on awakekt.github.io/awake. GitHub Pages caps a
 # site at 1 GB. After bundle trimming, each Core release is ~69-75 MB unpacked, each Vulkan release
 # ~50 MB unpacked, and each prebuilt web-player.zip ~20 MB: keeping 5 Core + 4 Vulkan + wgpu4k +
-# 3 prebuilt web players stays safely below ASSEMBLE_LIMIT_MB (900 MB) and SITE_LIMIT_MB (950 MB).
+# 5 prebuilt web players stays safely below ASSEMBLE_LIMIT_MB (900 MB) and SITE_LIMIT_MB (950 MB).
 env:
   CORE_RELEASES: 5
   VULKAN_RELEASES: 4
-  WEB_PLAYER_RELEASES: 3
+  WEB_PLAYER_RELEASES: 5
   ASSEMBLE_LIMIT_MB: 900
   SITE_LIMIT_MB: 950
   R2_BUCKET: awake-maven
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read     # lists this run's artifacts, to wait for the site's before deploying it
+      actions: write    # lists and deletes this run's transient Pages handoff artifact once deployed
       pages: write      # deploy-pages publishes the site
       id-token: write   # deploy-pages proves the run's identity to Pages
     environment:
@@ -137,11 +137,13 @@ jobs:
       # One artifact name per attempt: a re-run uploads its own, and deploy-pages refuses a run that
       # holds two of one name, so under the default name a failed deploy could never be re-run
       # (run 44811365365, attempt 2: "Multiple artifacts named github-pages").
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+      - id: pages-artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: steps.bundles.outputs.count != '0'
         with:
           path: build/maven-fallback
           name: github-pages-${{ github.run_attempt }}
+          retention-days: 1
 
       # deploy-pages looks the artifact up once, at once. GitHub can list it a moment after its upload
       # is finalized: run 44811365365's first attempt asked 0.4 s later and found none.
@@ -230,3 +232,24 @@ jobs:
             --exclude "*" --include "index.html" --include "*/maven-metadata.xml*" \
             --cache-control "public, max-age=60"
           echo "Mirrored Maven fallback additively to ${R2_PUBLIC_URL} (bucket ${R2_BUCKET})."
+
+      # Delete the ~650 MB Pages handoff tarball once deploy-pages has consumed it (or failed),
+      # so repeated Publish / Prebuilt players runs never exhaust the org's Actions storage quota.
+      - name: Delete transient Pages artifact
+        if: always() && steps.bundles.outputs.count != '0'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: github-pages-${{ github.run_attempt }}
+          ARTIFACT_ID: ${{ steps.pages-artifact.outputs.artifact_id }}
+        run: |
+          if [ -n "$ARTIFACT_ID" ]; then
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID"
+            echo "Deleted transient artifact $ARTIFACT ($ARTIFACT_ID)."
+            exit 0
+          fi
+          ids="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=$ARTIFACT" --jq '.artifacts[] | select(.expired == false) | .id' || true)"
+          for id in $ids; do
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+            echo "Deleted transient artifact $ARTIFACT ($id)."
+          done
