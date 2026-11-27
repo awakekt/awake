@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.AttachedContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.ComponentTypeId
@@ -61,6 +62,24 @@ class TerrainContentSystem(
     private val baseShaders: ShaderSet = PackShaderSets.Terrain,
     private val surfacedOnly: Boolean = false,
 ) : System {
+    private var clipmapConfigOverride: TerrainClipmapConfig? = null
+
+    /**
+     * Creates a [TerrainContentSystem] that overrides every attached terrain's clipmap ring count
+     * and resolution with [clipmapConfigOverride] while preserving each terrain's authored
+     * [TerrainClipmapConfig.baseSpacing] so level-0 vertex geometry matches heightfield colliders.
+     */
+    @Suppress("LongParameterList") // Additive secondary constructor kept for binary compatibility.
+    constructor(
+        host: ContentFeatureHost,
+        scope: CoroutineScope,
+        providers: Map<String, TerrainSurfaceProvider>,
+        baseShaders: ShaderSet,
+        surfacedOnly: Boolean,
+        clipmapConfigOverride: TerrainClipmapConfig?,
+    ) : this(host, scope, providers, baseShaders, surfacedOnly) {
+        this.clipmapConfigOverride = clipmapConfigOverride
+    }
     private val log = Logger("scene-terrain")
 
     private val tracked = ArrayList<Tracked>()
@@ -239,6 +258,8 @@ class TerrainContentSystem(
     // TooGenericExceptionCaught: whatever stops one terrain attaching must not stop the frame.
     @Suppress("TooGenericExceptionCaught")
     private fun startAttach(entry: Tracked, epoch: Int, surface: TerrainSurface) {
+        val effectiveClipmap = clipmapConfigOverride?.copy(baseSpacing = entry.terrain.clipmapConfig.baseSpacing)
+            ?: entry.terrain.clipmapConfig
         entry.job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 val feature = host.attachContentFeature(
@@ -248,6 +269,7 @@ class TerrainContentSystem(
                         surface.textures,
                         surface.samplerTextures,
                         surface.textureKeys,
+                        effectiveClipmap,
                     ) { entry.origin },
                 )
                 attached.trySend(Attached(entry.entity, entry.terrain, epoch, feature))

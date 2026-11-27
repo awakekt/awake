@@ -17,6 +17,7 @@ import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.rendering.animation.AnimationUpdateRate
 import com.awakekt.awake.scene.shader.ShaderEffectAssets
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig as TerrainMeshClipmapConfig
 import com.awakekt.awake.kit.terrainlayers.TerrainQuality as TerrainShadingQuality
 
 /**
@@ -98,4 +99,15 @@ object CoreSceneContent {
      * tiers, without colliding with [TerrainSurfaces].
      */
     val TerrainQuality: SceneContentKey<TerrainShadingQuality> = SceneContentKey("terrain quality")
+
+    /**
+     * Optional clipmap LOD ring layout override for terrain drawing (`terrain` and `paged_terrain`),
+     * as [TerrainFeature] and [StreamedTerrainFeature] read it when planning terrain drawing. Core
+     * loads none, so each terrain keeps its authored clipmap config; a game opts into a lighter
+     * preset such as [TerrainMeshClipmapConfig.Mobile] or [TerrainMeshClipmapConfig.Compact] from
+     * its own feature's load when targeting mobile or low-spec tiers. Each terrain's authored
+     * [TerrainMeshClipmapConfig.baseSpacing] is preserved so level-0 rendering matches heightfield
+     * colliders.
+     */
+    val TerrainClipmapConfig: SceneContentKey<TerrainMeshClipmapConfig> = SceneContentKey("terrain clipmap config")
 }

@@ -12,6 +12,7 @@ import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.terrain.PagedHeightmap
 import com.awakekt.awake.asset.terrain.TerrainPageCoord
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
@@ -69,19 +70,28 @@ internal object StreamedTerrainFeature : SceneFeature {
             // A headless host, such as a game server, still streams cells and their collision; it only draws nothing.
             val host = if (services.hasRenderer) services.renderer as? ContentFeatureHost else null
             val quality = services.content[CoreSceneContent.TerrainQuality] ?: TerrainQuality.Standard
-            StreamedTerrainSystem(assets, host, physics, services.backgroundScope("paged_terrain"), quality)
+            val clipmapConfig = services.content[CoreSceneContent.TerrainClipmapConfig]
+            StreamedTerrainSystem(
+                assets,
+                host,
+                physics,
+                services.backgroundScope("paged_terrain"),
+                quality,
+                clipmapConfig,
+            )
         }
     }
 }
 
 /**
  * A scene's paged terrain, loaded: its configuration, the residency it streams into, the draw that
- * reads that residency for a requested [TerrainQuality], and how to read one cell from the project's files.
+ * reads that residency for a requested [TerrainQuality] and optional [TerrainClipmapConfig], and
+ * how to read one cell from the project's files.
  */
 internal class StreamedTerrainAssets(
     val config: ScenePagedTerrain,
     val terrain: PagedTerrain,
-    val contentFor: (TerrainQuality) -> ContentFeatureSource,
+    val contentFor: (TerrainQuality, TerrainClipmapConfig?) -> ContentFeatureSource,
     val read: suspend (TerrainPageCoord) -> TerrainPage?,
 )
 
@@ -109,16 +119,27 @@ internal suspend fun loadStreamedTerrain(config: ScenePagedTerrain, files: Asset
         val index = TerrainPageIndexCodec.decode(files.read(path).getOrThrow())
         if (index.palette != null) {
             val layers = PagedTerrainLayers.load(files, path, config.capacity, config.maxUploadBytes)
-            StreamedTerrainAssets(config, layers.terrain, { quality -> layers.contentFor(quality) }, layers::read)
+            StreamedTerrainAssets(
+                config,
+                layers.terrain,
+                { quality, clipmapConfig -> layers.contentFor(quality, clipmapConfig) },
+                layers::read,
+            )
         } else {
             val reader = TerrainPageHeightReader(index, path, files)
             val terrain = PagedTerrain(PagedHeightmap(index.layout(), reader.fallback()), config.capacity, maxUploadBytes = config.maxUploadBytes)
             val standardContent = pagedTerrainContentFeature(terrain)
-            val contentFor: (TerrainQuality) -> ContentFeatureSource = { quality ->
-                if (quality == TerrainQuality.Fast) {
-                    pagedTerrainContentFeature(terrain, shaders = PackShaderSets.PagedTerrainFast)
-                } else {
+            val contentFor: (TerrainQuality, TerrainClipmapConfig?) -> ContentFeatureSource = { quality, clipmapConfig ->
+                if (quality == TerrainQuality.Standard && clipmapConfig == null) {
                     standardContent
+                } else {
+                    val effectiveConfig = clipmapConfig?.copy(baseSpacing = terrain.layout.sampleSpacing)
+                        ?: TerrainClipmapConfig(baseSpacing = terrain.layout.sampleSpacing)
+                    if (quality == TerrainQuality.Fast) {
+                        pagedTerrainContentFeature(terrain, config = effectiveConfig, shaders = PackShaderSets.PagedTerrainFast)
+                    } else {
+                        pagedTerrainContentFeature(terrain, config = effectiveConfig)
+                    }
                 }
             }
             StreamedTerrainAssets(config, terrain, contentFor) { coord -> reader.read(coord)?.let { TerrainPage(it) } }
@@ -145,6 +166,7 @@ internal class StreamedTerrainSystem(
     physics: PhysicsSystem?,
     private val scope: CoroutineScope,
     private val quality: TerrainQuality = TerrainQuality.Standard,
+    private val clipmapConfig: TerrainClipmapConfig? = null,
 ) : System,
     AutoCloseable {
     private val log = Logger("streamed-terrain")
@@ -193,7 +215,7 @@ internal class StreamedTerrainSystem(
         // Unconfined, so an attach that completes at once lands in the channel before the next update reads it.
         attaching = scope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
             try {
-                val attachedFeature = host.attachContentFeature(assets.contentFor(quality))
+                val attachedFeature = host.attachContentFeature(assets.contentFor(quality, clipmapConfig))
                 // A system closed while this attached has closed the channel: detach straight away.
                 if (attached.trySend(attachedFeature).isFailure) attachedFeature.detach()
             } catch (cancelled: CancellationException) {

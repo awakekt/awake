@@ -11,6 +11,8 @@ import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.ShaderStage
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapGeometry
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.io.AssetSource
@@ -227,6 +229,58 @@ class ProjectTerrainTest {
             withContext(Dispatchers.Default) { delay(WAIT_MILLIS) }
         }
         fail("The fast layered terrain was not drawn")
+    }
+
+    @Test
+    fun terrainClipmapConfigHookReducesClipmapGeometryAndPreservesAuthoredBaseSpacing() = runTest {
+        installProjectComponents()
+        val authoredScene = """
+{ "version": 1, "name": "ground", "nodes": [
+  { "name": "Ground", "components": [
+    { "component": "terrain", "width": 2, "depth": 2, "samples": [0.0, 0.0, 0.0, 0.0],
+      "clipmapRings": 6, "clipmapRingResolution": 64, "clipmapBaseSpacing": 4.0 }
+  ] }
+] }
+"""
+        val compactFeature = object : SceneFeature {
+            override val id = "test.compact-clipmap"
+
+            override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
+                if (content.hasRenderer) content[CoreSceneContent.TerrainClipmapConfig] = TerrainClipmapConfig.Compact
+            }
+
+            override fun plan(scene: SceneDocument, plan: SceneSystemPlan) = Unit
+        }
+        val defaultProject = loadProject(files(authoredScene))
+        val compactProject = loadProject(files(authoredScene), capabilities = listOf(compactFeature))
+        assertEquals(TerrainClipmapConfig.Compact, compactProject.content[CoreSceneContent.TerrainClipmapConfig])
+
+        val defaultRenderer = HostRenderer()
+        val defaultSystems = sceneSystemsFor(defaultProject.scene, services(defaultRenderer, defaultProject.content))
+        val defaultWorld = World().also { SceneLoader.instantiate(defaultProject.scene, it) }
+        repeat(2) { defaultSystems.frame.forEach { system -> system.update(defaultWorld, DELTA) } }
+        val defaultMesh = defaultRenderer.sources.single().resolve(RenderBackend.Vulkan).geometry!!
+        defaultSystems.close()
+
+        val compactRenderer = HostRenderer()
+        val compactSystems = sceneSystemsFor(
+            compactProject.scene,
+            services(compactRenderer, compactProject.content),
+            capabilities = listOf(compactFeature),
+        )
+        val compactWorld = World().also { SceneLoader.instantiate(compactProject.scene, it) }
+        repeat(2) { compactSystems.frame.forEach { system -> system.update(compactWorld, DELTA) } }
+        val compactFeatureResolved = compactRenderer.sources.single().resolve(RenderBackend.Vulkan)
+        val compactMesh = compactFeatureResolved.geometry!!
+        val expectedCompact = TerrainClipmapGeometry.buildMergedClipmapMesh(
+            TerrainClipmapConfig.Compact.copy(baseSpacing = 4.0f),
+        )
+        assertEquals(expectedCompact.indices.size, compactMesh.indices.size)
+        assertEquals(expectedCompact.vertices.size, compactMesh.vertices.size)
+        assertTrue(compactMesh.indices.size * 4 < defaultMesh.indices.size, "Compact clipmap should cut triangles >4x")
+        // Verify level-0 authored baseSpacing (4.0m) was preserved rather than overwritten by Compact's 2.0m default.
+        assertEquals(expectedCompact.vertices.toList(), compactMesh.vertices.toList())
+        compactSystems.close()
     }
 
     private class HostRenderer :

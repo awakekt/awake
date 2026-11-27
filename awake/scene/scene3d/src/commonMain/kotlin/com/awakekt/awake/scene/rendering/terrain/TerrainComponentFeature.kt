@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.terrain
 import com.awakekt.awake.asset.shaderpack.terrainContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.texture.TextureAsset
 
@@ -36,16 +37,40 @@ fun terrainContentFeature(
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     samplerTextures: Map<Int, Int>,
     textureKeys: Map<Int, Any>,
+    clipmapConfig: TerrainClipmapConfig,
     origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource =
     terrainContentFeature(
         shaders = shaders,
         heightmap = terrain.heightmap,
-        config = terrain.clipmapConfig,
+        config = clipmapConfig,
         surfaceTextures = surfaceTextures,
         isVisible = { terrain.isVisible },
         samplerTextures = samplerTextures,
         textureKeys = textureKeys,
+        origin = origin,
+    )
+
+/**
+ * [terrainContentFeature] using [terrain]'s own [TerrainComponent.clipmapConfig]; keeps existing
+ * 6-argument callers source- and binary-compatible.
+ */
+@Suppress("LongParameterList") // Public entry point kept additive for binary compatibility.
+fun terrainContentFeature(
+    shaders: ShaderSet,
+    terrain: TerrainComponent,
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    samplerTextures: Map<Int, Int>,
+    textureKeys: Map<Int, Any>,
+    origin: () -> Vec3f = { AT_ORIGIN },
+): ContentFeatureSource =
+    terrainContentFeature(
+        shaders = shaders,
+        terrain = terrain,
+        surfaceTextures = surfaceTextures,
+        samplerTextures = samplerTextures,
+        textureKeys = textureKeys,
+        clipmapConfig = terrain.clipmapConfig,
         origin = origin,
     )
 
