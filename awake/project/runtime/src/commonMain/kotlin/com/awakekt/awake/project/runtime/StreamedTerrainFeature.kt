@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.pagedTerrainContentFeature
 import com.awakekt.awake.asset.shaders.AttachedContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
@@ -18,6 +19,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.kit.terrainlayers.PagedTerrainLayers
+import com.awakekt.awake.kit.terrainlayers.TerrainQuality
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.physics.PhysicsSystem
@@ -66,19 +68,20 @@ internal object StreamedTerrainFeature : SceneFeature {
             val physics = if (config.collider && services.physics != null) plan.physicsSystem(services) else null
             // A headless host, such as a game server, still streams cells and their collision; it only draws nothing.
             val host = if (services.hasRenderer) services.renderer as? ContentFeatureHost else null
-            StreamedTerrainSystem(assets, host, physics, services.backgroundScope("paged_terrain"))
+            val quality = services.content[CoreSceneContent.TerrainQuality] ?: TerrainQuality.Standard
+            StreamedTerrainSystem(assets, host, physics, services.backgroundScope("paged_terrain"), quality)
         }
     }
 }
 
 /**
  * A scene's paged terrain, loaded: its configuration, the residency it streams into, the draw that
- * reads that residency, and how to read one cell from the project's files.
+ * reads that residency for a requested [TerrainQuality], and how to read one cell from the project's files.
  */
 internal class StreamedTerrainAssets(
     val config: ScenePagedTerrain,
     val terrain: PagedTerrain,
-    val content: ContentFeatureSource,
+    val contentFor: (TerrainQuality) -> ContentFeatureSource,
     val read: suspend (TerrainPageCoord) -> TerrainPage?,
 )
 
@@ -106,11 +109,19 @@ internal suspend fun loadStreamedTerrain(config: ScenePagedTerrain, files: Asset
         val index = TerrainPageIndexCodec.decode(files.read(path).getOrThrow())
         if (index.palette != null) {
             val layers = PagedTerrainLayers.load(files, path, config.capacity, config.maxUploadBytes)
-            StreamedTerrainAssets(config, layers.terrain, layers.content, layers::read)
+            StreamedTerrainAssets(config, layers.terrain, { quality -> layers.contentFor(quality) }, layers::read)
         } else {
             val reader = TerrainPageHeightReader(index, path, files)
             val terrain = PagedTerrain(PagedHeightmap(index.layout(), reader.fallback()), config.capacity, maxUploadBytes = config.maxUploadBytes)
-            StreamedTerrainAssets(config, terrain, pagedTerrainContentFeature(terrain)) { coord -> reader.read(coord)?.let { TerrainPage(it) } }
+            val standardContent = pagedTerrainContentFeature(terrain)
+            val contentFor: (TerrainQuality) -> ContentFeatureSource = { quality ->
+                if (quality == TerrainQuality.Fast) {
+                    pagedTerrainContentFeature(terrain, shaders = PackShaderSets.PagedTerrainFast)
+                } else {
+                    standardContent
+                }
+            }
+            StreamedTerrainAssets(config, terrain, contentFor) { coord -> reader.read(coord)?.let { TerrainPage(it) } }
         }
     } catch (cancelled: CancellationException) {
         throw cancelled
@@ -133,6 +144,7 @@ internal class StreamedTerrainSystem(
     private val host: ContentFeatureHost?,
     physics: PhysicsSystem?,
     private val scope: CoroutineScope,
+    private val quality: TerrainQuality = TerrainQuality.Standard,
 ) : System,
     AutoCloseable {
     private val log = Logger("streamed-terrain")
@@ -181,7 +193,7 @@ internal class StreamedTerrainSystem(
         // Unconfined, so an attach that completes at once lands in the channel before the next update reads it.
         attaching = scope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
             try {
-                val attachedFeature = host.attachContentFeature(assets.content)
+                val attachedFeature = host.attachContentFeature(assets.contentFor(quality))
                 // A system closed while this attached has closed the channel: detach straight away.
                 if (attached.trySend(attachedFeature).isFailure) attachedFeature.detach()
             } catch (cancelled: CancellationException) {

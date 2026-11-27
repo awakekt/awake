@@ -22,7 +22,7 @@ fun terrainLayersSurface(
     albedo: TextureAsset,
     control: TerrainControlMap,
     lightmap: TerrainLightmap = TerrainLightmap.Neutral,
-): TerrainSurface = terrainLayersSurface(palette, albedo, control, lightmap, emptyMap())
+): TerrainSurface = terrainLayersSurface(palette, albedo, control, lightmap, emptyMap(), TerrainQuality.Standard)
 
 /**
  * [terrainLayersSurface] with optional immutable [textureKeys] (such as [TerrainLayerArrayKey] for
@@ -35,6 +35,21 @@ fun terrainLayersSurface(
     control: TerrainControlMap,
     lightmap: TerrainLightmap = TerrainLightmap.Neutral,
     textureKeys: Map<Int, Any>,
+): TerrainSurface = terrainLayersSurface(palette, albedo, control, lightmap, textureKeys, TerrainQuality.Standard)
+
+/**
+ * [terrainLayersSurface] configured for [quality] and optional [includeSurfaceDeposit], preserving
+ * shared [textureKeys] and matching [control]'s slot count.
+ */
+@Suppress("LongParameterList")
+fun terrainLayersSurface(
+    palette: TerrainLayerPalette,
+    albedo: TextureAsset,
+    control: TerrainControlMap,
+    lightmap: TerrainLightmap = TerrainLightmap.Neutral,
+    textureKeys: Map<Int, Any> = emptyMap(),
+    quality: TerrainQuality,
+    includeSurfaceDeposit: Boolean = quality == TerrainQuality.Standard,
 ): TerrainSurface {
     val issues = palette.validate()
     require(issues.isEmpty()) { "Invalid terrain layer palette: ${issues.joinToString("; ")}" }
@@ -46,7 +61,12 @@ fun terrainLayersSurface(
         "The control map uses layer $highest; the palette has ${palette.layers.size} layers."
     }
     return TerrainSurface(
-        shaders = if (control.slots == CONTROL_SLOTS) TerrainLayersShaders else WideTerrainLayersShaders,
+        shaders = terrainLayersShaderSet(
+            slots = control.slots,
+            quality = quality,
+            paged = false,
+            includeSurfaceDeposit = includeSurfaceDeposit,
+        ),
         textures = mapOf(
             LAYER_ALBEDO_BINDING to albedo,
             LAYER_TABLE_BINDING to layerTable(palette),

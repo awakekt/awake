@@ -7,15 +7,20 @@ package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.asset.shaderdsl.bindingsForGroup
 import com.awakekt.awake.asset.shaders.ShaderStage
+import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.terrain.TerrainSurfaceReference
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class TerrainQualityFastShaderTest {
@@ -73,11 +78,13 @@ class TerrainQualityFastShaderTest {
     }
 
     @Test
-    fun terrainSurfaceWithTerrainQualitySwitchesShaderSetCleanly() {
+    fun terrainSurfaceWithTerrainQualitySwitchesShaderSetCleanlyAndPreservesTextureKeys() {
+        val sharedKeys = mapOf(LAYER_ALBEDO_BINDING to Any(), LAYER_TABLE_BINDING to Any())
         val surface = terrainLayersSurface(
             palette = TerrainLayerPalette(layers = listOf(TerrainLayer(id = "grass", albedo = "grass.png"))),
             albedo = packLayerArray(listOf(TextureAsset(ByteArray(2 * 2 * 4) { -1 }, 2, 2))),
             control = TerrainControlMap(1, 1, ByteArray(4), byteArrayOf(-1, 0, 0, 0)),
+            textureKeys = sharedKeys,
         )
         assertEquals(TerrainLayersShaders, surface.shaders)
 
@@ -85,11 +92,45 @@ class TerrainQualityFastShaderTest {
         assertEquals(TerrainLayersFastShaders, fastSurface.shaders)
         assertEquals(surface.textures, fastSurface.textures)
         assertEquals(surface.samplerTextures, fastSurface.samplerTextures)
+        assertEquals(sharedKeys, fastSurface.textureKeys, "withTerrainQuality must preserve cross-chunk textureKeys")
         assertNotNull(fastSurface.shaders.solidOpaque, "Fast shader set must include Early-Z core companion")
 
         val fastWithDeposit = surface.withTerrainQuality(TerrainQuality.Fast, includeSurfaceDeposit = true)
         val wgsl = (fastWithDeposit.shaders.vulkan[ShaderStage.FRAGMENT] as ShaderSource.InlineText).sourceCode
         assertTrue("0.1031" in wgsl, "opt-in deposit flag must include procedural surface deposit noise on Fast terrain")
         assertFalse("tap1Layers" in wgsl, "opt-in deposit on Fast terrain must stay single-tap")
+    }
+
+    @Test
+    fun terrainLayersSurfaceProviderWithQualityResolvesFastShadersAndPreservesKeys() = runTest {
+        val palette = TerrainLayerPalette(layers = listOf(TerrainLayer(id = "grass", albedo = "grass.png")))
+        val control = TerrainControlMap(1, 1, ByteArray(4), byteArrayOf(-1, 0, 0, 0))
+        val files = AssetSource { path ->
+            runCatching {
+                when (path.value) {
+                    "terrain/harbor.terrainpalette.json" -> TerrainLayerPaletteCodec.encode(palette)
+                    "terrain/harbor.terrainctl" -> TerrainControlMapCodec.encode(control)
+                    "terrain/grass.png" -> ByteArray(4) { 1 }
+                    else -> error("unexpected asset: ${path.value}")
+                }
+            }
+        }
+        val ref = TerrainSurfaceReference(
+            provider = TERRAIN_LAYERS_PROVIDER,
+            version = 1,
+            payload = Json.encodeToJsonElement(
+                TerrainLayersPayload.serializer(),
+                TerrainLayersPayload(palette = "terrain/harbor.terrainpalette.json", control = "terrain/harbor.terrainctl"),
+            ),
+        )
+        val standardProvider = TerrainLayersSurfaceProvider(files, decodeImage = { TextureAsset(ByteArray(2 * 2 * 4) { -1 }, 2, 2) })
+        val fastProvider = standardProvider.withQuality(TerrainQuality.Fast)
+
+        val standard = standardProvider.resolve(ref)
+        val fast = fastProvider.resolve(ref)
+
+        assertSame(TerrainLayersShaders, standard.shaders)
+        assertSame(TerrainLayersFastShaders, fast.shaders)
+        assertEquals(standard.textureKeys, fast.textureKeys, "Fast provider must keep identical cross-chunk deduplication keys")
     }
 }

@@ -43,9 +43,9 @@ kotlin {
             // paged_terrain: the scene binding, the residency it streams, and the layered surface an index
             // or a terrain's surface can name.
             implementation(project(":awake:scene:worldstream"))
-            // CoreSceneContent.TerrainSurfaces names TerrainSurfaceProvider.
+            // CoreSceneContent.TerrainSurfaces names TerrainSurfaceProvider; CoreSceneContent.TerrainQuality names TerrainQuality.
             api(project(":awake:terrain"))
-            implementation(project(":awake:kit:terrain-layers"))
+            api(project(":awake:kit:terrain-layers"))
             implementation(project(":awake:core:logging"))
             // A SceneFeature lists the bindings of the components it adds, so their type is in this API.
             api(project(":awake:scene:binding"))

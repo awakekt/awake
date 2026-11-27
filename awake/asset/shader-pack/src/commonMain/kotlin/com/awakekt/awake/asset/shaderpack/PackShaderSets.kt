@@ -160,6 +160,13 @@ object PackShaderSets {
     /** Clipmap terrain shader set with height sampling and texture splatting. */
     val Terrain = aslShaderSet(::terrainShader).withSolidOpaque(aslShaderSet(::terrainCoreShader))
 
+    /** Lean mobile clipmap terrain shader set (`TerrainQuality.Fast`, no surface-deposit noise or `pow()`). */
+    val TerrainFast = aslShaderSet { terrainFastShader(it) }.withSolidOpaque(aslShaderSet { terrainFastCoreShader(it) })
+
+    /** Lean mobile paged clipmap terrain shader set (`TerrainQuality.Fast`, single-tap lookup, no deposit noise). */
+    val PagedTerrainFast =
+        aslShaderSet { pagedTerrainFastShader(it) }.withSolidOpaque(aslShaderSet { pagedTerrainFastCoreShader(it) })
+
     /** The clipmap rings' cascade depth, for any surface shader on the clipmap stage. */
     val TerrainShadowDepth = aslShaderSet(TerrainShadowDepthShader)
 

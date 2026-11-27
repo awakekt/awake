@@ -446,6 +446,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getLitShadow ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getLitShadowNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getMaskedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getPagedTerrainFast ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getParticle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getParticleShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSceneDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -469,6 +470,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSunFlare ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSunFlareUnoccluded ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTerrainFast ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrainShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTexturedNoDeposit ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
