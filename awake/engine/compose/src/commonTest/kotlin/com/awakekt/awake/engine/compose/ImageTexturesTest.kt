@@ -15,6 +15,7 @@ import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -107,11 +108,38 @@ class ImageTexturesTest {
         assertEquals(total, renderer.destroyed)
         assertEquals(0, textures.size)
     }
+
+    @Test
+    fun uiImagesUploadWithZeroMipSkipAndRestoreRendererSetting() {
+        val renderer = CountingRenderer().apply { textureMipSkip = 2 }
+        val textures = ImageTextures()
+
+        textures.materialFor(renderer, image)
+
+        assertEquals(listOf(0), renderer.mipSkipAtUploads, "UI bitmap must upload with textureMipSkip=0")
+        assertEquals(2, renderer.textureMipSkip, "renderer textureMipSkip must be restored after upload")
+        textures.dispose()
+    }
+
+    @Test
+    fun textureMipSkipIsRestoredWhenUploadFails() {
+        val renderer = CountingRenderer(failOnCreate = true).apply { textureMipSkip = 2 }
+        val textures = ImageTextures()
+
+        assertFailsWith<IllegalStateException> {
+            textures.materialFor(renderer, image)
+        }
+
+        assertEquals(listOf(0), renderer.mipSkipAtUploads)
+        assertEquals(2, renderer.textureMipSkip, "renderer textureMipSkip must be restored on failure")
+    }
 }
 
-private class CountingRenderer : NoopRenderer() {
+private class CountingRenderer(private val failOnCreate: Boolean = false) : NoopRenderer() {
+    override var textureMipSkip: Int = 0
     var created = 0
     var destroyed = 0
+    val mipSkipAtUploads = mutableListOf<Int>()
 
     override fun createMaterial(
         texture: TextureAsset?,
@@ -119,6 +147,8 @@ private class CountingRenderer : NoopRenderer() {
         uniformFloatCount: Int,
         pbrTextures: PbrTextureSet?,
     ): Material {
+        mipSkipAtUploads += textureMipSkip
+        if (failOnCreate) error("simulated upload failure")
         created += 1
         val base = super.createMaterial(texture, renderTarget, uniformFloatCount, pbrTextures)
         return object : Material by base {
