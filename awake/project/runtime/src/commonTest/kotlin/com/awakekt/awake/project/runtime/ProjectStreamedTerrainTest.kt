@@ -8,9 +8,12 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.asset.shaders.AttachedContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
+import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.RawHeightmapCodec
 import com.awakekt.awake.asset.terrain.TerrainPageCoord
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapGeometry
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.io.AssetSource
@@ -147,14 +150,44 @@ class ProjectStreamedTerrainTest {
         fail("The streamed terrain did not reach the expected state")
     }
 
+    @Test
+    fun clipmapConfigHookReducesPagedTerrainGeometryAndPreservesSampleSpacing() = runTest {
+        val mobileFeature = object : SceneFeature {
+            override val id = "test.paged-mobile-clipmap"
+
+            override suspend fun load(scene: com.awakekt.awake.scene.document.SceneDocument, files: AssetSource, content: SceneContent.Builder) {
+                if (content.hasRenderer) content[CoreSceneContent.TerrainClipmapConfig] = TerrainClipmapConfig.Mobile
+            }
+
+            override fun plan(scene: com.awakekt.awake.scene.document.SceneDocument, plan: SceneSystemPlan) = Unit
+        }
+        val project = loadProject(files(scene(collider = false)), capabilities = listOf(mobileFeature))
+        val terrain = assertNotNull(project.content[StreamedTerrainFeature.Terrain]).terrain
+        val renderer = HostRenderer()
+        val systems = sceneSystemsFor(project.scene, services(renderer, project), capabilities = listOf(mobileFeature))
+        val world = World().also { SceneLoader.instantiate(project.scene, it) }
+        camera(world, x = 2f)
+
+        systems.stepUntil(world) { renderer.attached == 1 }
+        val resolved = renderer.sources.single().resolve(RenderBackend.Vulkan)
+        val expected = TerrainClipmapGeometry.buildMergedClipmapMesh(
+            TerrainClipmapConfig.Mobile.copy(baseSpacing = terrain.layout.sampleSpacing),
+        )
+        assertEquals(expected.indices.size, resolved.geometry!!.indices.size)
+        assertEquals(expected.vertices.toList(), resolved.geometry!!.vertices.toList())
+        systems.close()
+    }
+
     private class HostRenderer :
         NoopRenderer(),
         ContentFeatureHost {
         var attached = 0
         var detached = 0
+        val sources = mutableListOf<ContentFeatureSource>()
 
         override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature {
             attached++
+            sources += source
             return AttachedContentFeature { detached++ }
         }
     }

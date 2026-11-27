@@ -12,6 +12,7 @@ import com.awakekt.awake.asset.shaders.withSolidOpaque
 import com.awakekt.awake.asset.terrain.PagedHeightmap
 import com.awakekt.awake.asset.terrain.RawHeightmapCodec
 import com.awakekt.awake.asset.terrain.TerrainPageCoord
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.core.image.toRgba8Bytes
 import com.awakekt.awake.core.io.AssetPath
@@ -53,12 +54,26 @@ class PagedTerrainLayers private constructor(
     fun contentFor(
         quality: TerrainQuality,
         includeSurfaceDeposit: Boolean = quality == TerrainQuality.Standard,
+    ): ContentFeatureSource = contentFor(quality, clipmapConfig = null, includeSurfaceDeposit = includeSurfaceDeposit)
+
+    /**
+     * Returns the paged terrain content feature configured for [quality], optional [clipmapConfig]
+     * override (preserving [terrain]'s sample spacing for level-0 collider parity), and optional
+     * [includeSurfaceDeposit], reusing [content] when all parameters match the default tier.
+     */
+    fun contentFor(
+        quality: TerrainQuality,
+        clipmapConfig: TerrainClipmapConfig?,
+        includeSurfaceDeposit: Boolean = quality == TerrainQuality.Standard,
     ): ContentFeatureSource =
-        if (quality == TerrainQuality.Standard && includeSurfaceDeposit) {
+        if (quality == TerrainQuality.Standard && clipmapConfig == null && includeSurfaceDeposit) {
             content
         } else {
+            val effectiveConfig = clipmapConfig?.copy(baseSpacing = terrain.layout.sampleSpacing)
+                ?: TerrainClipmapConfig(baseSpacing = terrain.layout.sampleSpacing)
             pagedTerrainContentFeature(
                 terrain,
+                config = effectiveConfig,
                 shaders = terrainLayersShaderSet(
                     slots = index.controlSlots,
                     quality = quality,

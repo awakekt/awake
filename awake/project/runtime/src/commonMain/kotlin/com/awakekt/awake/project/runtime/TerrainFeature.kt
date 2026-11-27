@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -46,10 +47,11 @@ internal object TerrainFeature : SceneFeature {
             // A renderer that can't take content features draws nothing, so it reads nothing either.
             val scope = host?.let { services.backgroundScope("terrain") }
             val quality = services.content[CoreSceneContent.TerrainQuality] ?: TerrainQuality.Standard
+            val clipmapConfig = services.content[CoreSceneContent.TerrainClipmapConfig]
             val baseProviders = services.content[CoreSceneContent.TerrainSurfaces].orEmpty()
             val providers = applyTerrainQuality(baseProviders, quality)
             val baseShaders = if (quality == TerrainQuality.Fast) PackShaderSets.TerrainFast else PackShaderSets.Terrain
-            TerrainDrawingSystem(host, scope, providers, baseShaders)
+            TerrainDrawingSystem(host, scope, providers, baseShaders, clipmapConfig)
         }
     }
 
@@ -79,6 +81,7 @@ internal class TerrainDrawingSystem(
     private val scope: CoroutineScope?,
     providers: Map<String, TerrainSurfaceProvider>,
     baseShaders: ShaderSet = PackShaderSets.Terrain,
+    clipmapConfigOverride: TerrainClipmapConfig? = null,
 ) : System,
     AutoCloseable {
     private val terrains = host?.let {
@@ -87,6 +90,8 @@ internal class TerrainDrawingSystem(
             scope = checkNotNull(scope) { "A terrain that draws resolves in a scope" },
             providers = providers,
             baseShaders = baseShaders,
+            surfacedOnly = false,
+            clipmapConfigOverride = clipmapConfigOverride,
         )
     }
 
