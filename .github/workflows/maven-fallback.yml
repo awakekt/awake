@@ -38,11 +38,11 @@ permissions:
 # one before, so these decide what stays served on awakekt.github.io/awake. GitHub Pages caps a
 # site at 1 GB. After bundle trimming, each Core release is ~69-75 MB unpacked, each Vulkan release
 # ~50 MB unpacked, and each prebuilt web-player.zip ~20 MB: keeping 5 Core + 4 Vulkan + wgpu4k +
-# 3 prebuilt web players stays safely below ASSEMBLE_LIMIT_MB (900 MB) and SITE_LIMIT_MB (950 MB).
+# 5 prebuilt web players stays safely below ASSEMBLE_LIMIT_MB (900 MB) and SITE_LIMIT_MB (950 MB).
 env:
   CORE_RELEASES: 5
   VULKAN_RELEASES: 4
-  WEB_PLAYER_RELEASES: 3
+  WEB_PLAYER_RELEASES: 5
   ASSEMBLE_LIMIT_MB: 900
   SITE_LIMIT_MB: 950
   R2_BUCKET: awake-maven
