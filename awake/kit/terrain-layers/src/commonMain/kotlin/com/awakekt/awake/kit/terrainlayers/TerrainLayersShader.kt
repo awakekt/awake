@@ -3,33 +3,43 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
+import com.awakekt.awake.asset.shaderdsl.AslFunctionHandle
+import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.and
+import com.awakekt.awake.asset.shaderdsl.b
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.dpdx
 import com.awakekt.awake.asset.shaderdsl.dpdy
 import com.awakekt.awake.asset.shaderdsl.eq
+import com.awakekt.awake.asset.shaderdsl.exp2
 import com.awakekt.awake.asset.shaderdsl.floor
+import com.awakekt.awake.asset.shaderdsl.g
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.le
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
+import com.awakekt.awake.asset.shaderdsl.min
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
 import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.plus
-import com.awakekt.awake.asset.shaderdsl.pow
+import com.awakekt.awake.asset.shaderdsl.r
 import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.sqrt
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.texture2dArray
 import com.awakekt.awake.asset.shaderdsl.textureDimensions
@@ -63,6 +73,7 @@ import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShadowSampling
 import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.asset.shaders.withSolidOpaque
+import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
@@ -567,9 +578,8 @@ private fun AslBlockBuilder.blendLayers(
         iff(share gt 0f.lit) {
             val layer = let("layer$index", max(slot.layer, 0f.lit))
             val params = let("layerParams$index", textureSampleLevel(layerParams, sampler, vec2((layer + 0.5f.lit) / tableSize, 0.5f.lit), 0f.lit))
-            // Inverse of encodeTiling: 2^(byte / 255 * 8 - 2) world units per repeat.
-            val tiling = let("tiling$index", pow(2f.lit, params.x * 8f.lit - 2f.lit))
-            val invTiling = let("invTiling$index", 1f.lit / tiling)
+            // Reciprocal of encodeTiling (1 / 2^(byte/255 * 8 - 2) == exp2(2 - byte/255 * 8)), avoiding pow + div.
+            val invTiling = let("invTiling$index", exp2(2f.lit - params.x * 8f.lit))
             val albedo = let(
                 "albedo$index",
                 textureSampleArrayGrad(albedoLayers, sampler, posXz * invTiling, toU32(layer), dPosDx * invTiling, dPosDy * invTiling),
@@ -592,3 +602,317 @@ private fun AslBlockBuilder.blendLayers(
     }
     return blended
 }
+
+/**
+ * Lean mobile terrain layers shader (`TerrainQuality.Fast`):
+ * - Single nearest/center control texel fetch (2 texture fetches instead of 8; zero 16-way slot merge).
+ * - Single-pass linear layer blend (skips height-blend pass and temporary layer arrays).
+ * - `exp2` inverse tiling (zero `pow()` and zero division).
+ * - Single-tap paged lightmap lookup (skips 4-tap cross-cell seam branch).
+ * - Polynomial sRGB decode + `sqrt`-based display encode (zero `pow()` SFU stalls).
+ * - Opt-in surface deposit (`includeSurfaceDeposit = false` by default).
+ */
+fun terrainLayersFastShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainLayersFastShader(clipSpace, CONTROL_SLOTS, paged = false, allowDiscard = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
+/** Discard-free Level-0 core-ring companion of [terrainLayersFastShader] for hardware Early-Z / FPK. */
+fun terrainLayersFastCoreShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainLayersFastShader(clipSpace, CONTROL_SLOTS, paged = false, allowDiscard = false, includeSurfaceDeposit = includeSurfaceDeposit)
+
+/** Lean mobile paged terrain layers shader (`TerrainQuality.Fast`). */
+fun pagedTerrainLayersFastShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainLayersFastShader(clipSpace, CONTROL_SLOTS, paged = true, allowDiscard = true, includeSurfaceDeposit = includeSurfaceDeposit)
+
+/** Discard-free Level-0 core-ring companion of [pagedTerrainLayersFastShader] for hardware Early-Z / FPK. */
+fun pagedTerrainLayersFastCoreShader(clipSpace: ClipSpace, includeSurfaceDeposit: Boolean = false): AslShaderDefinition =
+    terrainLayersFastShader(clipSpace, CONTROL_SLOTS, paged = true, allowDiscard = false, includeSurfaceDeposit = includeSurfaceDeposit)
+
+private class FastDisplayFns(
+    val toneMap: AslFunctionHandle,
+    val encode: AslFunctionHandle,
+    val decode: AslFunctionHandle,
+) {
+    fun display(radiance: AslExpr, exposure: AslExpr): AslExpr = encode(toneMap(radiance * exposure))
+    fun displayReferred(shaded: AslExpr, exposure: AslExpr): AslExpr = display(decode(shaded), exposure)
+}
+
+@Suppress("MagicNumber")
+private fun AslShaderBuilder.declareFastTerrainDisplay(): FastDisplayFns {
+    val startCompression = const("TONE_MAP_START_COMPRESSION", 0.76f)
+    val desaturation = const("TONE_MAP_DESATURATION", 0.15f)
+    val toneMap = fn("toneMapPbrNeutral", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val color by param(GpuDataShape.Vec3)
+        val low = let("low", min(color.r, min(color.g, color.b)))
+        val offset = let("offset", select(0.04f.lit, low - 6.25f.lit * low * low, low lt 0.08f.lit))
+        val shifted = let("shifted", color - vec3(offset))
+        val peak = let("peak", max(shifted.r, max(shifted.g, shifted.b)))
+        iff(peak lt startCompression) { returnValue(shifted) }
+        val shoulder = 1f.lit - startCompression
+        val newPeak = let("newPeak", 1f.lit - shoulder * shoulder / (peak + shoulder - startCompression))
+        val fade = let("fade", 1f.lit - 1f.lit / (desaturation * (peak - newPeak) + 1f.lit))
+        returnValue(mix(shifted * (newPeak / peak), vec3(newPeak), fade))
+    }
+    val encode = fn("fastLinearToSrgb", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val linearParam by param(GpuDataShape.Vec3)
+        val c = let("c", max(linearParam, vec3(0f.lit)))
+        val s1 = let("s1", sqrt(c))
+        val s2 = let("s2", sqrt(s1))
+        val s3 = let("s3", sqrt(s2))
+        returnValue(clamp(s1 * 0.5851224f.lit + s2 * 0.7831404f.lit - s3 * 0.3682627f.lit, vec3(0f.lit), vec3(1f.lit)))
+    }
+    val decode = fn("fastDisplayToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val encoded by param(GpuDataShape.Vec3)
+        val c = let("c", max(encoded, vec3(0f.lit)))
+        returnValue(c * (c * (c * 0.30530602f.lit + 0.6821711f.lit) + 0.012522878f.lit))
+    }
+    return FastDisplayFns(toneMap, encode, decode)
+}
+
+@Suppress("LongMethod", "CyclomaticComplexMethod")
+internal fun terrainLayersFastShader(
+    clipSpace: ClipSpace,
+    slots: Int,
+    paged: Boolean = false,
+    allowDiscard: Boolean = true,
+    includeSurfaceDeposit: Boolean = false,
+): AslShaderDefinition = shader(
+    (if (paged) "paged_" else "") +
+        (if (slots == CONTROL_SLOTS) "terrain_layers_fast" else "terrain_layers_fast_$slots") +
+        (if (includeSurfaceDeposit) "_deposit" else "") +
+        if (allowDiscard) "" else "_core",
+) {
+    val terrain = when {
+        !allowDiscard -> terrainClipmapCoreVertexStage(paged = paged)
+        paged -> pagedTerrainClipmapVertexStage()
+        else -> terrainClipmapVertexStage()
+    }
+    val shadows = terrainShadowSampling(terrain, clipSpace)
+    val display = declareFastTerrainDisplay()
+    val group = BindingLayout.Standard.slot(BindingSemantic.Material)
+    val albedoLayers by texture2dArray(group = group, binding = LAYER_ALBEDO_BINDING)
+    val layerParams by texture2d(group = group, binding = LAYER_TABLE_BINDING)
+    val controlIndices by if (paged) texture2dArray(group = group, binding = CONTROL_INDICES_BINDING) else texture2d(group = group, binding = CONTROL_INDICES_BINDING)
+    val controlWeights by if (paged) texture2dArray(group = group, binding = CONTROL_WEIGHTS_BINDING) else texture2d(group = group, binding = CONTROL_WEIGHTS_BINDING)
+    val layerSampler by sampler(group = group, binding = LAYER_SAMPLER_BINDING)
+    val lightmap by if (paged) texture2dArray(group = group, binding = LIGHTMAP_BINDING) else texture2d(group = group, binding = LIGHTMAP_BINDING)
+    val fallbackIndices = if (paged) {
+        val fallbackIndices by texture2d(group = group, binding = FALLBACK_CONTROL_INDICES_BINDING)
+        fallbackIndices
+    } else {
+        null
+    }
+    val fallbackWeights = if (paged) {
+        val fallbackWeights by texture2d(group = group, binding = FALLBACK_CONTROL_WEIGHTS_BINDING)
+        fallbackWeights
+    } else {
+        null
+    }
+    val fallbackLightmap = if (paged) {
+        val fallbackLightmap by texture2d(group = group, binding = FALLBACK_LIGHTMAP_BINDING)
+        fallbackLightmap
+    } else {
+        null
+    }
+
+    fragment {
+        if (allowDiscard) terrainClipmapDiscardUnderFinerRing(terrain)
+        val local = let("localPosition", terrain.localPosition)
+        val sampledSlots = sampleFastControlTap(
+            slots,
+            local,
+            terrain.terrainSampling,
+            controlIndices,
+            controlWeights,
+            layerSampler,
+            terrain.pages,
+            fallbackIndices,
+            fallbackWeights,
+        )
+        val surfacePosition = terrain.pages?.let { pages ->
+            vec4(terrain.worldPosition.x - pages.grid.x, terrain.worldPosition.y, terrain.worldPosition.z - pages.grid.y, 1f.lit).xyz
+        } ?: terrain.worldPosition
+        val baseAlbedo = blendLayersFast(sampledSlots, surfacePosition, albedoLayers, layerParams, layerSampler)
+        val normal = variable("normal", normalize(terrain.worldNormal))
+        val albedo = if (includeSurfaceDeposit) {
+            applyTerrainSurfaceDeposit(baseAlbedo, normal, surfacePosition, terrain)
+        } else {
+            baseAlbedo
+        }
+        val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
+        val ambient = let("ambient", terrain.sunDirection.w)
+        val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))
+        val shadow = let("shadow", shadows.sampleShadow(terrain.worldPosition, normal, nDotL))
+        val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
+        val position = terrain.worldPosition
+        val sampling = terrain.terrainSampling
+        val pages = terrain.pages
+        val baked = let(
+            "baked",
+            if (pages != null && fallbackLightmap != null) {
+                samplePagedLightFast(pages, lightmap, fallbackLightmap, vec2(local.x - pages.grid.x, local.z - pages.grid.y))
+            } else {
+                sampleClampedLinear(lightmap, layerSampler, vec2(local.x / sampling.x + 0.5f.lit, local.z / sampling.y + 0.5f.lit), "lightmap")
+            },
+        )
+        val daylight = let("daylight", saturate(toLight.y / SUNRISE_FADE.lit))
+        val light = let("light", mix(lighting, mix(ambient, 1f.lit, shadow * daylight), baked.w))
+        val surface = DebugSurface(
+            normal = normal,
+            worldPosition = position,
+            albedo = albedo,
+            shadow = shadow,
+            shadowCascade = shadows.shadowCascade(position),
+            layerWeights = layerWeightColor(sampledSlots),
+            dominantLayer = dominantLayerColor(sampledSlots),
+            lightmap = baked.xyz,
+            clay = display.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
+        )
+        val lit = let("lit", albedo * baked.xyz * 2f.lit * light)
+        val mapped = display.displayReferred(lit, terrain.exposure.x)
+        val shaded = vec4(applyTerrainFog(mapped, terrain), 1f.lit)
+        colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
+    }
+}
+
+/**
+ * Single center control texel fetch for `TerrainQuality.Fast`: reads 1 control-index texel and
+ * 1 control-weight texel per 4-slot part (2 fetches instead of 8), skipping the 4-corner bilinear
+ * merge cascade entirely.
+ */
+@Suppress("LongParameterList", "LongMethod")
+private fun AslBlockBuilder.sampleFastControlTap(
+    slots: Int,
+    position: AslExpr,
+    sampling: AslExpr,
+    indices: AslExpr,
+    weights: AslExpr,
+    sampler: AslExpr,
+    pages: TerrainPageSampling?,
+    fallbackIndices: AslExpr?,
+    fallbackWeights: AslExpr?,
+): List<Slot> {
+    val texelsPerControl = slots / CONTROL_SLOTS
+    val size = let("controlSize", textureDimensions(indices))
+    val textureWidth = let("controlTextureWidth", toF32(size.x))
+    val pageWidth = let("pageControlWidth", textureWidth / texelsPerControl.toFloat().lit)
+    val pageDepth = let("pageControlDepth", toF32(size.y))
+    val sizeX = let("controlWidth", if (pages == null) pageWidth else pageWidth * pages.dimensions.x)
+    val sizeZ = let("controlDepth", if (pages == null) pageDepth else pageDepth * pages.dimensions.y)
+    val texelX = let("texelX", (if (pages == null) position.x / sampling.x + 0.5f.lit else (position.x - pages.grid.x) / (pages.grid.z * pages.dimensions.x)) * sizeX - 0.5f.lit)
+    val texelZ = let("texelZ", (if (pages == null) position.z / sampling.y + 0.5f.lit else (position.z - pages.grid.y) / (pages.grid.z * pages.dimensions.y)) * sizeZ - 0.5f.lit)
+    val col = let("fastCtrlCol", clamp(floor(texelX + 0.5f.lit), 0f.lit, sizeX - 1f.lit))
+    val row = let("fastCtrlRow", clamp(floor(texelZ + 0.5f.lit), 0f.lit, sizeZ - 1f.lit))
+
+    val result = ArrayList<Slot>(slots)
+    if (pages != null) {
+        val fbIndices = requireNotNull(fallbackIndices)
+        val fbWeights = requireNotNull(fallbackWeights)
+        val maxCell = vec2(pages.dimensions.x - 1f.lit, pages.dimensions.y - 1f.lit)
+        val cell = let("fastCtrlCell", clamp(floor(vec2(col / pageWidth, row / pageDepth)), vec2(0f.lit, 0f.lit), maxCell))
+        val layer = pages.resolveLayerIn(this, "fastCtrl", cell)
+        val lVars = List(texelsPerControl) { variable("fastCtrlLayers$it", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit)) }
+        val sVars = List(texelsPerControl) { variable("fastCtrlShares$it", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit)) }
+        iff(layer gt (-0.5f).lit) {
+            val pageLayer = let("fastCtrlLayer", toU32(layer))
+            val localCol = (col - cell.x * pageWidth) * texelsPerControl.toFloat().lit
+            val localV = (row - cell.y * pageDepth + 0.5f.lit) / pageDepth
+            for (part in 0 until texelsPerControl) {
+                val uv = vec2((localCol + (part + 0.5f).lit) / textureWidth, localV)
+                assign(lVars[part], textureSampleArrayLevel(indices, pages.sampler, uv, pageLayer, 0f.lit))
+                assign(sVars[part], textureSampleArrayLevel(weights, pages.sampler, uv, pageLayer, 0f.lit))
+            }
+        }
+        iff(layer le (-0.5f).lit) {
+            val fbSize = textureDimensions(fbIndices)
+            val fbWidth = let("fastFbWidth", toF32(fbSize.x))
+            val fbCellsX = let("fastFbCellsX", fbWidth / texelsPerControl.toFloat().lit)
+            val fbH = let("fastFbH", toF32(fbSize.y))
+            val fbCol = clamp(floor((col + 0.5f.lit) / sizeX * fbCellsX), 0f.lit, fbCellsX - 1f.lit) * texelsPerControl.toFloat().lit
+            val fbV = (clamp(floor((row + 0.5f.lit) / sizeZ * fbH), 0f.lit, fbH - 1f.lit) + 0.5f.lit) / fbH
+            for (part in 0 until texelsPerControl) {
+                val fUv = vec2((fbCol + (part + 0.5f).lit) / fbWidth, fbV)
+                assign(lVars[part], textureSampleLevel(fbIndices, pages.sampler, fUv, 0f.lit))
+                assign(sVars[part], textureSampleLevel(fbWeights, pages.sampler, fUv, 0f.lit))
+            }
+        }
+        for (part in 0 until texelsPerControl) {
+            val l = lVars[part]
+            val s = sVars[part]
+            result += Slot(let("fastLayer${part * 4}", floor(l.x * 255f.lit + 0.5f.lit)), s.x)
+            result += Slot(let("fastLayer${part * 4 + 1}", floor(l.y * 255f.lit + 0.5f.lit)), s.y)
+            result += Slot(let("fastLayer${part * 4 + 2}", floor(l.z * 255f.lit + 0.5f.lit)), s.z)
+            result += Slot(let("fastLayer${part * 4 + 3}", floor(l.w * 255f.lit + 0.5f.lit)), s.w)
+        }
+    } else {
+        val baseCol = col * texelsPerControl.toFloat().lit
+        val v = (row + 0.5f.lit) / sizeZ
+        for (part in 0 until texelsPerControl) {
+            val uv = vec2((baseCol + (part + 0.5f).lit) / textureWidth, v)
+            val l = let("fastCtrlLayers$part", textureSampleLevel(indices, sampler, uv, 0f.lit))
+            val s = let("fastCtrlShares$part", textureSampleLevel(weights, sampler, uv, 0f.lit))
+            result += Slot(let("fastLayer${part * 4}", floor(l.x * 255f.lit + 0.5f.lit)), s.x)
+            result += Slot(let("fastLayer${part * 4 + 1}", floor(l.y * 255f.lit + 0.5f.lit)), s.y)
+            result += Slot(let("fastLayer${part * 4 + 2}", floor(l.z * 255f.lit + 0.5f.lit)), s.z)
+            result += Slot(let("fastLayer${part * 4 + 3}", floor(l.w * 255f.lit + 0.5f.lit)), s.w)
+        }
+    }
+    return result
+}
+
+/**
+ * Single-pass linear layer blend for `TerrainQuality.Fast`: skips the height-blend second pass
+ * and temporary per-slot colour/height register arrays, sampling only non-empty slots with `exp2`
+ * inverse tiling.
+ */
+private fun AslBlockBuilder.blendLayersFast(
+    slots: List<Slot>,
+    position: AslExpr,
+    albedoLayers: AslExpr,
+    layerParams: AslExpr,
+    sampler: AslExpr,
+): AslExpr {
+    val tableSize = let("layerTableSize", toF32(textureDimensions(layerParams).x))
+    val total = let("slotTotal", max(slots.map { it.weight }.reduce { a, b -> a + b }, EPSILON.lit))
+    val posXz = let("surfaceXz", vec2(position.x, position.z))
+    val dPosDx = let("surfaceDdx", dpdx(posXz))
+    val dPosDy = let("surfaceDdy", dpdy(posXz))
+    val byWeight = variable("byWeight", vec3(0f.lit))
+    slots.forEachIndexed { index, slot ->
+        val share = let("share$index", slot.weight / total)
+        iff(share gt FAST_WEIGHT_THRESHOLD.lit) {
+            val layer = let("layer$index", max(slot.layer, 0f.lit))
+            val params = let("layerParams$index", textureSampleLevel(layerParams, sampler, vec2((layer + 0.5f.lit) / tableSize, 0.5f.lit), 0f.lit))
+            val invTiling = let("invTiling$index", exp2(2f.lit - params.x * 8f.lit))
+            val albedo = let(
+                "albedo$index",
+                textureSampleArrayGrad(albedoLayers, sampler, posXz * invTiling, toU32(layer), dPosDx * invTiling, dPosDy * invTiling),
+            )
+            assign(byWeight, byWeight + albedo.xyz * share)
+        }
+    }
+    return byWeight
+}
+
+/** Single-cell paged lightmap lookup for `TerrainQuality.Fast` (omits 4-tap seam fallback). */
+private fun AslBlockBuilder.samplePagedLightFast(pages: TerrainPageSampling, image: AslExpr, fallback: AslExpr, relative: AslExpr): AslExpr {
+    val size = let("lightPageSize", textureDimensions(image))
+    val pageSize = let("lightPageSizeF", vec2(toF32(size.x), toF32(size.y)))
+    val dims = vec2(pages.dimensions.x, pages.dimensions.y)
+    val maxTexel = pageSize * dims - vec2(1f.lit, 1f.lit)
+    val texel = let("lightTexel", clamp(relative / pages.grid.z * pageSize - vec2(0.5f.lit, 0.5f.lit), vec2(0f.lit, 0f.lit), maxTexel))
+    val maxCell = vec2(pages.dimensions.x - 1f.lit, pages.dimensions.y - 1f.lit)
+    val cell = let("fastLightCell", clamp(floor(texel / pageSize), vec2(0f.lit, 0f.lit), maxCell))
+    val layer = pages.resolveLayerIn(this, "fastLight", cell)
+    val result = variable("pagedLight", vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit))
+    iff(layer gt (-0.5f).lit) {
+        val localTexel = clamp(texel - cell * pageSize, vec2(0f.lit, 0f.lit), pageSize - vec2(1f.lit, 1f.lit))
+        val uv = (localTexel + vec2(0.5f.lit, 0.5f.lit)) / pageSize
+        assign(result, textureSampleArrayLevel(image, pages.sampler, uv, toU32(layer), 0f.lit))
+    }
+    iff(layer le (-0.5f).lit) {
+        assign(result, sampleClampedLinear(fallback, pages.sampler, relative / (dims * pages.grid.z), "fallbackLight"))
+    }
+    return result
+}
+
+private const val FAST_WEIGHT_THRESHOLD = 0.002f

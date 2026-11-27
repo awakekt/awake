@@ -9,7 +9,6 @@ import com.awakekt.awake.core.geometry.InterleavedVertices
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
-import com.awakekt.awake.core.geometry.gridTriangleIndices
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -50,18 +49,68 @@ data class TerrainClipmapConfig(
 
     /** World-space side extent of ring level [level] in meters. */
     fun extentForLevel(level: Int): Float = ringResolution * spacingForLevel(level)
+
+    /** Preset clipmap configurations for desktop and mobile vertex budgets. */
+    companion object {
+        /** Desktop default: 6 concentric rings at 64x64 cells (4,096 m reach at 2 m base spacing). */
+        val Default: TerrainClipmapConfig = TerrainClipmapConfig(ringCount = 6, ringResolution = 64, baseSpacing = 2.0f)
+
+        /**
+         * Balanced mobile preset: 5 concentric rings at 32x32 cells (~4.75x fewer clipmap
+         * triangles than [Default], 1,024 m reach at 2 m base spacing).
+         */
+        val Mobile: TerrainClipmapConfig = TerrainClipmapConfig(ringCount = 5, ringResolution = 32, baseSpacing = 2.0f)
+
+        /**
+         * Compact low-RAM preset: 4 concentric rings at 32x32 cells (512 m reach at 2 m base
+         * spacing) for tight vertex budgets on entry-level mobile GPUs.
+         */
+        val Compact: TerrainClipmapConfig = TerrainClipmapConfig(ringCount = 4, ringResolution = 32, baseSpacing = 2.0f)
+    }
 }
+
+/**
+ * Contiguous index-buffer slice of one axis-aligned spatial sub-block within a merged clipmap mesh.
+ *
+ * Bounds are in the ring's local `(X, Z)` plane around `(0, 0)` before the vertex stage adds the
+ * ring's snapped world centre and clamps to the heightmap footprint. Keeping each sub-block
+ * contiguous inside its ring lets the renderer frustum-cull individual blocks and coalesce adjacent
+ * visible blocks into a single `drawIndexed` call with zero extra vertices or seams.
+ *
+ * @property level Clipmap LOD ring index (`0` for the inner core, `1..ringCount-1` for annular rings).
+ * @property firstIndex Starting offset in the merged clipmap index buffer.
+ * @property indexCount Number of triangle indices in this block (always a positive multiple of 6).
+ * @property minLocalX Minimum local X bound of cells in this block relative to the ring centre.
+ * @property maxLocalX Maximum local X bound of cells in this block relative to the ring centre.
+ * @property minLocalZ Minimum local Z bound of cells in this block relative to the ring centre.
+ * @property maxLocalZ Maximum local Z bound of cells in this block relative to the ring centre.
+ */
+data class ClipmapBlockRange(
+    val level: Int,
+    val firstIndex: Int,
+    val indexCount: Int,
+    val minLocalX: Float,
+    val maxLocalX: Float,
+    val minLocalZ: Float,
+    val maxLocalZ: Float,
+)
 
 /**
  * Generates Geometry Clipmap concentric ring meshes with zero CPU elevation bake.
  *
  * Vertices are generated on the unit/local grid $(X, Z)$ with $Y = 0$, unit normals $(0, 1, 0)$,
  * and normalized texture coordinates $(U, V)$ suitable for GPU vertex texture displacement.
+ * Each level's indices are partitioned into a `4 x 4` spatial block grid (omitting empty interior
+ * hole blocks on outer rings) while preserving exact vertex positions, index count, and Jolt
+ * main-diagonal triangulation, enabling zero-allocation per-block frustum culling at draw time.
  */
 object TerrainClipmapGeometry {
 
     /** How far, in a level's own cells, the finer level's centre can sit from its centre. */
     private const val ALWAYS_COVERED_MARGIN = 1.5f
+
+    /** Sub-blocks per side for spatial partitioning (`4 x 4` = up to 16 blocks per ring). */
+    private const val BLOCK_DIVISIONS = 4
 
     private val FORMAT = VertexFormat.PositionNormalColorUv
 
@@ -108,17 +157,130 @@ object TerrainClipmapGeometry {
 
     private const val INDICES_PER_CELL = 6
 
+    private class PartitionedIndices(
+        val indices: IntArray,
+        val blocks: List<ClipmapBlockRange>,
+    )
+
+    /**
+     * Builds spatially partitioned indices for one clipmap level (`cells x cells` grid), emitting
+     * each `4 x 4` sub-block contiguously using the exact main-diagonal quad split (`topLeft ->
+     * bottomRight`) matching `gridTriangleIndices` and Jolt's `HeightFieldShape`.
+     */
+    @Suppress("LongParameterList")
+    private fun buildPartitionedLevelIndices(
+        level: Int,
+        cells: Int,
+        spacing: Float,
+        halfExtent: Float,
+        innerStart: Int,
+        innerEnd: Int,
+        indexOffset: Int = 0,
+        baseVertex: Int = 0,
+    ): PartitionedIndices {
+        val raw = IntArray(cells * cells * INDICES_PER_CELL)
+        val blocks = ArrayList<ClipmapBlockRange>(BLOCK_DIVISIONS * BLOCK_DIVISIONS)
+        var cursor = 0
+        for (bz in 0 until BLOCK_DIVISIONS) {
+            val zStart = bz * cells / BLOCK_DIVISIONS
+            val zEnd = (bz + 1) * cells / BLOCK_DIVISIONS
+            for (bx in 0 until BLOCK_DIVISIONS) {
+                val xStart = bx * cells / BLOCK_DIVISIONS
+                val xEnd = (bx + 1) * cells / BLOCK_DIVISIONS
+                cursor = emitBlockIndices(
+                    raw, cursor, blocks, level, cells + 1, spacing, halfExtent,
+                    xStart, xEnd, zStart, zEnd, innerStart, innerEnd, indexOffset, baseVertex,
+                )
+            }
+        }
+        val trimmed = if (cursor == raw.size) raw else raw.copyOf(cursor)
+        return PartitionedIndices(trimmed, blocks)
+    }
+
+    @Suppress("LongParameterList")
+    private fun emitBlockIndices(
+        raw: IntArray,
+        startCursor: Int,
+        blocks: MutableList<ClipmapBlockRange>,
+        level: Int,
+        side: Int,
+        spacing: Float,
+        halfExtent: Float,
+        xStart: Int,
+        xEnd: Int,
+        zStart: Int,
+        zEnd: Int,
+        innerStart: Int,
+        innerEnd: Int,
+        indexOffset: Int,
+        baseVertex: Int,
+    ): Int {
+        var cursor = startCursor
+        var minCellX = Int.MAX_VALUE
+        var maxCellX = Int.MIN_VALUE
+        var minCellZ = Int.MAX_VALUE
+        var maxCellZ = Int.MIN_VALUE
+        for (z in zStart until zEnd) {
+            for (x in xStart until xEnd) {
+                if (level > 0 && x in innerStart until innerEnd && z in innerStart until innerEnd) continue
+                minCellX = minOf(minCellX, x)
+                maxCellX = maxOf(maxCellX, x)
+                minCellZ = minOf(minCellZ, z)
+                maxCellZ = maxOf(maxCellZ, z)
+                val topLeft = baseVertex + z * side + x
+                val topRight = topLeft + 1
+                val bottomLeft = topLeft + side
+                val bottomRight = bottomLeft + 1
+                // Main-diagonal split (topLeft -> bottomRight) matches gridTriangleIndices & Jolt.
+                raw[cursor++] = topLeft
+                raw[cursor++] = bottomLeft
+                raw[cursor++] = bottomRight
+                raw[cursor++] = topLeft
+                raw[cursor++] = bottomRight
+                raw[cursor++] = topRight
+            }
+        }
+        val count = cursor - startCursor
+        if (count > 0) {
+            blocks += ClipmapBlockRange(
+                level = level,
+                firstIndex = indexOffset + startCursor,
+                indexCount = count,
+                minLocalX = minCellX * spacing - halfExtent,
+                maxLocalX = (maxCellX + 1) * spacing - halfExtent,
+                minLocalZ = minCellZ * spacing - halfExtent,
+                maxLocalZ = (maxCellZ + 1) * spacing - halfExtent,
+            )
+        }
+        return cursor
+    }
+
+    private fun holeBounds(cells: Int): Pair<Int, Int> {
+        val innerStart = ceil(cells / 4f + ALWAYS_COVERED_MARGIN).toInt()
+        val innerEnd = floor(cells * 3f / 4f - ALWAYS_COVERED_MARGIN).toInt()
+        return innerStart to innerEnd
+    }
+
     /**
      * Builds the solid $(N \times N)$-cell Level 0 core grid centered at local origin $(0, 0)$.
      */
     fun buildCoreMesh(config: TerrainClipmapConfig): MeshGeometry {
-        val n = config.ringResolution + 1
+        val cells = config.ringResolution
+        val n = cells + 1
         val spacing = config.baseSpacing
         val halfExtent = config.coreExtent * 0.5f
 
         val vertices = flatGridVertices(n, spacing, halfExtent)
+        val partitioned = buildPartitionedLevelIndices(
+            level = 0,
+            cells = cells,
+            spacing = spacing,
+            halfExtent = halfExtent,
+            innerStart = 0,
+            innerEnd = 0,
+        )
 
-        return vertices.build(gridTriangleIndices(n, n))
+        return vertices.build(partitioned.indices)
     }
 
     /**
@@ -138,21 +300,19 @@ object TerrainClipmapGeometry {
         val n = cells + 1
         val spacing = config.spacingForLevel(level)
         val halfExtent = config.extentForLevel(level) * 0.5f
-
-        // The finer level spans cells/4 of these cells either side of its centre, which is within
-        // 1.5 cells of this one's: cells fully inside that, for every snap, are always covered.
-        val innerStart = ceil(cells / 4f + ALWAYS_COVERED_MARGIN).toInt()
-        val innerEnd = floor(cells * 3f / 4f - ALWAYS_COVERED_MARGIN).toInt()
+        val (innerStart, innerEnd) = holeBounds(cells)
 
         val vertices = flatGridVertices(n, spacing, halfExtent)
+        val partitioned = buildPartitionedLevelIndices(
+            level = level,
+            cells = cells,
+            spacing = spacing,
+            halfExtent = halfExtent,
+            innerStart = innerStart,
+            innerEnd = innerEnd,
+        )
 
-        // A ring is the same grid with its middle removed, which is exactly what the shared
-        // builder's cell filter is for.
-        val indices = gridTriangleIndices(n, n) { x, z ->
-            !((x >= innerStart && x < innerEnd) && (z >= innerStart && z < innerEnd))
-        }
-
-        return vertices.build(indices)
+        return vertices.build(partitioned.indices)
     }
 
     /**
@@ -164,6 +324,33 @@ object TerrainClipmapGeometry {
         for (level in 1 until config.ringCount) {
             add(buildRingMesh(level, config))
         }
+    }
+
+    /**
+     * Spatial sub-block index ranges matching [buildMergedClipmapMesh] for [config], ordered by
+     * ring level (`0` core blocks covering `[0, coreIndexCount)` first, then outer rings `1..N-1`).
+     */
+    fun mergedClipmapBlocks(config: TerrainClipmapConfig = TerrainClipmapConfig()): List<ClipmapBlockRange> {
+        val cells = config.ringResolution
+        val (innerStart, innerEnd) = holeBounds(cells)
+        val allBlocks = ArrayList<ClipmapBlockRange>(config.ringCount * BLOCK_DIVISIONS * BLOCK_DIVISIONS)
+        var indexCursor = 0
+        for (level in 0 until config.ringCount) {
+            val spacing = config.spacingForLevel(level)
+            val halfExtent = config.extentForLevel(level) * 0.5f
+            val partitioned = buildPartitionedLevelIndices(
+                level = level,
+                cells = cells,
+                spacing = spacing,
+                halfExtent = halfExtent,
+                innerStart = innerStart,
+                innerEnd = innerEnd,
+                indexOffset = indexCursor,
+            )
+            allBlocks.addAll(partitioned.blocks)
+            indexCursor += partitioned.indices.size
+        }
+        return allBlocks
     }
 
     /**

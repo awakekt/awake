@@ -76,6 +76,7 @@ internal fun builtinCall(function: String, args: List<FloatArray>): FloatArray =
     "length" -> floatArrayOf(sqrt(args[0].sumOf { (it * it).toDouble() }).toFloat())
     "sqrt" -> FloatArray(args[0].size) { sqrt(args[0][it]) }
     "exp" -> FloatArray(args[0].size) { mathExp(args[0][it]) }
+    "exp2" -> FloatArray(args[0].size) { 2f.pow(args[0][it]) }
     "saturate" -> FloatArray(args[0].size) { args[0][it].coerceIn(0f, 1f) }
     "select" -> if (args[2][0] != 0f) args[1] else args[0]
     "f32" -> args[0]

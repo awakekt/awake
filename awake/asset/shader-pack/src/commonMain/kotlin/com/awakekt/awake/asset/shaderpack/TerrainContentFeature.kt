@@ -10,10 +10,12 @@ import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.asset.terrain.Heightmap
+import com.awakekt.awake.asset.terrain.clipmap.ClipmapBlockRange
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapGeometry
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapTracker
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.GpuEnvironmentState
@@ -348,7 +350,27 @@ class TerrainRenderFeature(
      * record path, where `skills/awake-ui-performance` rules out per-frame allocation. */
     private val ringParams = FloatArray(TerrainUniformLayout.RingParams.floats)
     private val terrainParams = FloatArray(TerrainUniformLayout.TerrainParams.floats)
+    private val frustumPlanes = FloatArray(FRUSTUM_PLANE_FLOATS)
+    private val clipmapBlocks: List<ClipmapBlockRange> = TerrainClipmapGeometry.mergedClipmapBlocks(tracker.config)
+    private val coreBlockEnd: Int = clipmapBlocks.indexOfFirst { it.level > 0 }.let { if (it < 0) clipmapBlocks.size else it }
+    private val expectedClipmapIndexCount: Int = clipmapBlocks.sumOf { it.indexCount }
+    private var currentPlaced: Vec3f = AT_ORIGIN
+    private var currentPhaseX: Float = 0f
+    private var currentPhaseZ: Float = 0f
+    private val fillUniforms: com.awakekt.awake.render.renderer.UniformWriter.() -> Unit = {
+        put(terrainParams, TerrainUniformLayout.TerrainParams)
+        put(sampling, TerrainUniformLayout.TerrainSampling)
+        put(ringParams, TerrainUniformLayout.RingParams)
+        put(TerrainUniformLayout.TerrainOrigin, currentPlaced, 0f)
+        val terrain = pagedTerrain
+        if (terrain != null) {
+            val layout = terrain.layout
+            put(PagedTerrainUniformLayout.PageGrid, (layout.minX - terrain.originX).toFloat(), (layout.minZ - terrain.originZ).toFloat(), layout.cellSize, layout.intervals.toFloat())
+            put(PagedTerrainUniformLayout.PageDimensions, layout.cellCountX.toFloat(), layout.cellCountZ.toFloat(), currentPhaseX, currentPhaseZ)
+        }
+    }
 
+    @Suppress("LongMethod")
     override fun recordCommands(context: RenderFrameContext) {
         // Before the tracker updates: a hidden terrain should cost nothing, and its rings have no
         // meaning to keep current while nothing reads them.
@@ -361,7 +383,9 @@ class TerrainRenderFeature(
         val eye = context.cameraEye
         focus.set(eye.x + phaseX - placed.x, eye.y - placed.y, eye.z + phaseZ - placed.z)
         tracker.update(focus)
-        tracker.ringStates.forEachIndexed { index, ring ->
+        val rings = tracker.ringStates
+        for (index in rings.indices) {
+            val ring = rings[index]
             TerrainUniformLayout.RingParams.writeVec4Element(
                 destination = ringParams,
                 index = index,
@@ -371,31 +395,75 @@ class TerrainRenderFeature(
                 w = ring.halfExtent,
             )
         }
+        val baseY = heightBias - (terrain?.originY?.toFloat() ?: 0f)
         TerrainUniformLayout.TerrainParams.writeVec4(
             destination = terrainParams,
             x = heightScale,
             y = MORPH_WIDTH,
             z = BASE_SHADE,
-            w = heightBias - (terrain?.originY?.toFloat() ?: 0f),
+            w = baseY,
         )
         // Written in layout order -- UniformWriter checks each field against the layout's next
         // slot, so a reordering here is an error rather than a wrongly-shaped buffer.
-        uniforms.write(context.frameIndex) {
-            put(terrainParams, TerrainUniformLayout.TerrainParams)
-            put(sampling, TerrainUniformLayout.TerrainSampling)
-            put(ringParams, TerrainUniformLayout.RingParams)
-            put(TerrainUniformLayout.TerrainOrigin, placed, 0f)
-            if (terrain != null) {
-                val layout = terrain.layout
-                put(PagedTerrainUniformLayout.PageGrid, (layout.minX - terrain.originX).toFloat(), (layout.minZ - terrain.originZ).toFloat(), layout.cellSize, layout.intervals.toFloat())
-                put(PagedTerrainUniformLayout.PageDimensions, layout.cellCountX.toFloat(), layout.cellCountZ.toFloat(), phaseX, phaseZ)
-            }
-        }
+        currentPlaced = placed
+        currentPhaseX = phaseX
+        currentPhaseZ = phaseZ
+        uniforms.write(context.frameIndex, fillUniforms)
         val recorder: CommandRecorder = context.recorder
         val materialBinding = uniforms.binding(context.frameIndex)
+        val splitCore = corePipeline != null && coreIndexCount in 1 until geometry.elementCount
+        val canCull = geometry.elementCount == expectedClipmapIndexCount && extractFrustumPlanes(context.viewProjection)
+        if (!canCull) {
+            recordUnculled(recorder, context, materialBinding, splitCore)
+            return
+        }
+        val footMinX: Float
+        val footMaxX: Float
+        val footMinZ: Float
+        val footMaxZ: Float
+        if (terrain != null) {
+            val layout = terrain.layout
+            footMinX = (layout.minX - terrain.originX).toFloat()
+            footMaxX = footMinX + layout.cellCountX * layout.cellSize
+            footMinZ = (layout.minZ - terrain.originZ).toFloat()
+            footMaxZ = footMinZ + layout.cellCountZ * layout.cellSize
+        } else {
+            val halfX = sampling[0] * 0.5f
+            val halfZ = sampling[1] * 0.5f
+            footMinX = -halfX
+            footMaxX = halfX
+            footMinZ = -halfZ
+            footMaxZ = halfZ
+        }
+        val minY = baseY + placed.y - BORDER_SKIRT_MARGIN
+        val maxY = baseY + heightScale + placed.y + BOUNDS_Y_EPSILON
+        var buffersBound = false
+        if (splitCore) {
+            val core = requireNotNull(corePipeline)
+            buffersBound = recordCulledRange(
+                recorder, context, materialBinding, core, 0, coreBlockEnd,
+                phaseX, phaseZ, placed.x, placed.z, footMinX, footMaxX, footMinZ, footMaxZ, minY, maxY, buffersBound,
+            )
+            recordCulledRange(
+                recorder, context, materialBinding, pipeline, coreBlockEnd, clipmapBlocks.size,
+                phaseX, phaseZ, placed.x, placed.z, footMinX, footMaxX, footMinZ, footMaxZ, minY, maxY, buffersBound,
+            )
+        } else {
+            recordCulledRange(
+                recorder, context, materialBinding, pipeline, 0, clipmapBlocks.size,
+                phaseX, phaseZ, placed.x, placed.z, footMinX, footMaxX, footMinZ, footMaxZ, minY, maxY, buffersBound,
+            )
+        }
+    }
+
+    private fun recordUnculled(
+        recorder: CommandRecorder,
+        context: RenderFrameContext,
+        materialBinding: com.awakekt.awake.render.command.MaterialBinding,
+        splitCore: Boolean,
+    ) {
         recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
         geometry.indexBuffer?.let { recorder.bindIndexBuffer(it) }
-        val splitCore = corePipeline != null && coreIndexCount in 1 until geometry.elementCount
         if (splitCore) {
             val core = requireNotNull(corePipeline)
             recorder.bindPipeline(core)
@@ -414,10 +482,197 @@ class TerrainRenderFeature(
         }
     }
 
+    @Suppress("LongParameterList")
+    private fun recordCulledRange(
+        recorder: CommandRecorder,
+        context: RenderFrameContext,
+        materialBinding: com.awakekt.awake.render.command.MaterialBinding,
+        activePipeline: PipelineHandle,
+        startBlock: Int,
+        endBlock: Int,
+        phaseX: Float,
+        phaseZ: Float,
+        originX: Float,
+        originZ: Float,
+        footMinX: Float,
+        footMaxX: Float,
+        footMinZ: Float,
+        footMaxZ: Float,
+        minY: Float,
+        maxY: Float,
+        buffersAlreadyBound: Boolean,
+    ): Boolean {
+        val hasFootprint = footMaxX > footMinX && footMaxZ > footMinZ
+        var buffersBound = buffersAlreadyBound
+        var pipelineBound = false
+        var runStart = -1
+        var runCount = 0
+
+        for (blockIdx in startBlock until endBlock) {
+            val block = clipmapBlocks[blockIdx]
+            if (!isBlockVisible(block, phaseX, phaseZ, originX, originZ, hasFootprint, footMinX, footMaxX, footMinZ, footMaxZ, minY, maxY)) {
+                continue
+            }
+            if (runCount == 0) {
+                runStart = block.firstIndex
+                runCount = block.indexCount
+            } else if (runStart + runCount == block.firstIndex) {
+                runCount += block.indexCount
+            } else {
+                buffersBound = bindAndDrawRun(recorder, context, materialBinding, activePipeline, runStart, runCount, buffersBound, pipelineBound)
+                pipelineBound = true
+                runStart = block.firstIndex
+                runCount = block.indexCount
+            }
+        }
+        if (runCount > 0) {
+            buffersBound = bindAndDrawRun(recorder, context, materialBinding, activePipeline, runStart, runCount, buffersBound, pipelineBound)
+        }
+        return buffersBound
+    }
+
+    @Suppress("LongParameterList")
+    private fun isBlockVisible(
+        block: ClipmapBlockRange,
+        phaseX: Float,
+        phaseZ: Float,
+        originX: Float,
+        originZ: Float,
+        hasFootprint: Boolean,
+        footMinX: Float,
+        footMaxX: Float,
+        footMinZ: Float,
+        footMaxZ: Float,
+        minY: Float,
+        maxY: Float,
+    ): Boolean {
+        val ring = tracker.ringStates[block.level]
+        val pad = ring.spacing
+        val centerX = ring.snappedCenter.x - phaseX
+        val centerZ = ring.snappedCenter.z - phaseZ
+        val preMinX = centerX + block.minLocalX - pad
+        val preMaxX = centerX + block.maxLocalX + pad
+        val preMinZ = centerZ + block.minLocalZ - pad
+        val preMaxZ = centerZ + block.maxLocalZ + pad
+        // Vertices strictly past the footprint clamp onto a single border edge (zero-area triangles).
+        if (hasFootprint) {
+            val outsideX = preMaxX < footMinX - pad || preMinX > footMaxX + pad
+            val outsideZ = preMaxZ < footMinZ - pad || preMinZ > footMaxZ + pad
+            if (outsideX || outsideZ) return false
+        }
+        val clampedMinX = if (hasFootprint) preMinX.coerceIn(footMinX, footMaxX) else preMinX
+        val clampedMaxX = if (hasFootprint) preMaxX.coerceIn(footMinX, footMaxX) else preMaxX
+        val clampedMinZ = if (hasFootprint) preMinZ.coerceIn(footMinZ, footMaxZ) else preMinZ
+        val clampedMaxZ = if (hasFootprint) preMaxZ.coerceIn(footMinZ, footMaxZ) else preMaxZ
+        return aabbIntersectsFrustum(
+            clampedMinX + originX,
+            minY,
+            clampedMinZ + originZ,
+            clampedMaxX + originX,
+            maxY,
+            clampedMaxZ + originZ,
+        )
+    }
+
+    @Suppress("LongParameterList")
+    private fun bindAndDrawRun(
+        recorder: CommandRecorder,
+        context: RenderFrameContext,
+        materialBinding: com.awakekt.awake.render.command.MaterialBinding,
+        activePipeline: PipelineHandle,
+        firstIndex: Int,
+        indexCount: Int,
+        buffersAlreadyBound: Boolean,
+        pipelineAlreadyBound: Boolean,
+    ): Boolean {
+        if (!buffersAlreadyBound) {
+            recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
+            geometry.indexBuffer?.let { recorder.bindIndexBuffer(it) }
+        }
+        if (!pipelineAlreadyBound) {
+            recorder.bindPipeline(activePipeline)
+            recorder.bindMaterial(BindingSemantic.Material, materialBinding)
+            context.engineBinding(activePipeline, BindingSemantic.ShadowDepth)?.let { recorder.bindMaterial(BindingSemantic.ShadowDepth, it) }
+        }
+        recorder.drawIndexed(indexCount, 1, firstIndex)
+        return true
+    }
+
+    /**
+     * Extracts the 6 Gribb-Hartmann frustum planes from [viewProjection] into [frustumPlanes]
+     * without allocating. Returns `false` for degenerate/identity test matrices so callers fall
+     * back conservatively to drawing the full clipmap.
+     */
+    private fun extractFrustumPlanes(viewProjection: Mat4): Boolean {
+        val d = viewProjection.data
+        if (isZeroOrIdentity(d)) return false
+        setPlane(0, d[3] + d[0], d[7] + d[4], d[11] + d[8], d[15] + d[12])
+        setPlane(1, d[3] - d[0], d[7] - d[4], d[11] - d[8], d[15] - d[12])
+        setPlane(2, d[3] + d[1], d[7] + d[5], d[11] + d[9], d[15] + d[13])
+        setPlane(3, d[3] - d[1], d[7] - d[5], d[11] - d[9], d[15] - d[13])
+        // row3 + row2 is exact for OpenGL [-1, 1] and conservatively encloses Vulkan/WebGPU [0, 1].
+        setPlane(4, d[3] + d[2], d[7] + d[6], d[11] + d[10], d[15] + d[14])
+        setPlane(5, d[3] - d[2], d[7] - d[6], d[11] - d[10], d[15] - d[14])
+        return true
+    }
+
+    private fun setPlane(planeIndex: Int, nx: Float, ny: Float, nz: Float, dist: Float) {
+        val base = planeIndex * FLOATS_PER_PLANE
+        frustumPlanes[base] = nx
+        frustumPlanes[base + 1] = ny
+        frustumPlanes[base + 2] = nz
+        frustumPlanes[base + 3] = dist
+    }
+
+    @Suppress("LongParameterList")
+    private fun aabbIntersectsFrustum(
+        minX: Float,
+        minY: Float,
+        minZ: Float,
+        maxX: Float,
+        maxY: Float,
+        maxZ: Float,
+    ): Boolean {
+        var base = 0
+        while (base < FRUSTUM_PLANE_FLOATS) {
+            val nx = frustumPlanes[base]
+            val ny = frustumPlanes[base + 1]
+            val nz = frustumPlanes[base + 2]
+            val dist = frustumPlanes[base + 3]
+            val lenSq = nx * nx + ny * ny + nz * nz
+            if (lenSq > DEGENERATE_PLANE_SQ && lenSq.isFinite() && dist.isFinite()) {
+                val px = if (nx >= 0f) maxX else minX
+                val py = if (ny >= 0f) maxY else minY
+                val pz = if (nz >= 0f) maxZ else minZ
+                if (nx * px + ny * py + nz * pz + dist < 0f) return false
+            }
+            base += FLOATS_PER_PLANE
+        }
+        return true
+    }
+
     override fun destroy() = Unit
 
     private companion object {
         @Suppress("UnusedPrivateProperty") // Kept for binary compatibility on the outer class.
         const val AMBIENT = 0.35f
+        const val FLOATS_PER_PLANE = 4
+        const val FRUSTUM_PLANE_FLOATS = 6 * FLOATS_PER_PLANE
+        const val DEGENERATE_PLANE_SQ = 1e-12f
+        const val BORDER_SKIRT_MARGIN = 1.5f
+        const val BOUNDS_Y_EPSILON = 0.01f
+
+        fun isZeroOrIdentity(d: FloatArray): Boolean {
+            var allZero = true
+            var isIdentity = true
+            for (i in 0 until 16) {
+                val v = d[i]
+                if (!v.isFinite()) return true
+                if (v != 0f) allZero = false
+                val expected = if (i % 5 == 0) 1f else 0f
+                if (v != expected) isIdentity = false
+            }
+            return allZero || isIdentity
+        }
     }
 }

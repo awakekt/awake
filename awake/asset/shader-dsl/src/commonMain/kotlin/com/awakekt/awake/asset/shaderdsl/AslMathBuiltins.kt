@@ -50,6 +50,14 @@ fun length(value: AslExpr): AslExpr {
 fun exp(value: AslExpr): AslExpr = AslCall("exp", listOf(value), value.type)
 
 /**
+ * WGSL `exp2` builtin (`2^value`).
+ *
+ * @param value The exponent value.
+ * @return 2 raised to the power of value.
+ */
+fun exp2(value: AslExpr): AslExpr = AslCall("exp2", listOf(value), value.type)
+
+/**
  * WGSL `sin` builtin.
  *
  * @param value The angle in radians.

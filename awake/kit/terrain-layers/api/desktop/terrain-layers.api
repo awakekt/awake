@@ -220,6 +220,14 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersShaderKt {
 	public static final field LAYER_TABLE_BINDING I
 	public static final field LIGHTMAP_BINDING I
 	public static final fun getTerrainLayersShaders ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static final fun pagedTerrainLayersFastCoreShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun pagedTerrainLayersFastCoreShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun pagedTerrainLayersFastShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun pagedTerrainLayersFastShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun terrainLayersFastCoreShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun terrainLayersFastCoreShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun terrainLayersFastShader (Lcom/awakekt/awake/core/math/ClipSpace;Z)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun terrainLayersFastShader$default (Lcom/awakekt/awake/core/math/ClipSpace;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun terrainLayersShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
@@ -257,5 +265,22 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLightmapCodec {
 	public static final field INSTANCE Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmapCodec;
 	public final fun decode ([B)Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;
 	public final fun encode (Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;)[B
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainQuality : java/lang/Enum {
+	public static final field Fast Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;
+	public static final field Standard Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;
+	public static fun values ()[Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainQualityKt {
+	public static final fun getPagedTerrainLayersFastShaders ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static final fun getTerrainLayersFastShaders ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static final fun terrainLayersShaderSet (ILcom/awakekt/awake/kit/terrainlayers/TerrainQuality;ZZ)Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static synthetic fun terrainLayersShaderSet$default (ILcom/awakekt/awake/kit/terrainlayers/TerrainQuality;ZZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static final fun withTerrainQuality (Lcom/awakekt/awake/terrain/TerrainSurface;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;IZ)Lcom/awakekt/awake/terrain/TerrainSurface;
+	public static synthetic fun withTerrainQuality$default (Lcom/awakekt/awake/terrain/TerrainSurface;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;IZILjava/lang/Object;)Lcom/awakekt/awake/terrain/TerrainSurface;
 }
 
