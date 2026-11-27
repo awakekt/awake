@@ -26,6 +26,24 @@ internal class PhysicsBodyRecord(val entity: Entity, val handle: BodyHandle, val
 
     /** Where this record sits in [PhysicsBodyRecords]' posed list, or -1 if static/never simulated. */
     var poseIndex: Int = -1
+
+    /** Where this record sits in [PhysicsBodyRecords]' kinematic list, or -1 for static/dynamic bodies. */
+    var kinematicIndex: Int = -1
+
+    /** Kinematic pose tracking, allocated once on body creation for [MotionType.KINEMATIC] bodies only. */
+    var kinematic: KinematicSyncState? = null
+}
+
+/**
+ * Last world pose sent to or read from the physics backend for a kinematic body, kept out of
+ * static/dynamic [PhysicsBodyRecord]s so large static worlds pay zero extra heap per body.
+ */
+internal class KinematicSyncState(position: Vec3f, rotation: Quat) {
+    val lastPosition = Vec3f(position.x, position.y, position.z)
+    val lastRotation = Quat(rotation.x, rotation.y, rotation.z, rotation.w)
+
+    /** Whether the previous fixed step drove this kinematic body, so one stationary stop step clears velocity. */
+    var wasMoving: Boolean = false
 }
 
 /**
@@ -44,6 +62,7 @@ internal class PhysicsBodyRecords {
     private val byHandle = MutableLongObjectMap<PhysicsBodyRecord>()
     private val records = ArrayList<PhysicsBodyRecord>()
     private val posed = ArrayList<PhysicsBodyRecord>()
+    private val kinematics = ArrayList<PhysicsBodyRecord>()
 
     /** The record of the body this system built for [entity] as [handle], or `null` when it built none. */
     fun built(entity: Entity, handle: BodyHandle): PhysicsBodyRecord? {
@@ -65,6 +84,10 @@ internal class PhysicsBodyRecords {
         byHandle[handle.id] = record
         record.listIndex = records.size
         records += record
+        if (motionType == MotionType.KINEMATIC) {
+            record.kinematicIndex = kinematics.size
+            kinematics += record
+        }
         return record
     }
 
@@ -92,6 +115,14 @@ internal class PhysicsBodyRecords {
             }
             record.poseIndex = -1
         }
+        if (record.kinematicIndex >= 0) {
+            val lastKinematic = kinematics.removeAt(kinematics.lastIndex)
+            if (lastKinematic !== record) {
+                kinematics[record.kinematicIndex] = lastKinematic
+                lastKinematic.kinematicIndex = record.kinematicIndex
+            }
+            record.kinematicIndex = -1
+        }
     }
 
     /** Visits every record, without allocating. */
@@ -104,6 +135,11 @@ internal class PhysicsBodyRecords {
         for (index in 0 until posedCount) action(posedAt(index))
     }
 
+    /** Visits only kinematic bodies, avoiding a scan over static/dynamic bodies when driving kinematic transforms. */
+    inline fun forEachKinematic(action: (PhysicsBodyRecord) -> Unit) {
+        for (index in 0 until kinematicCount) action(kinematicAt(index))
+    }
+
     val recordCount: Int get() = records.size
 
     fun recordAt(index: Int): PhysicsBodyRecord = records[index]
@@ -111,6 +147,10 @@ internal class PhysicsBodyRecords {
     val posedCount: Int get() = posed.size
 
     fun posedAt(index: Int): PhysicsBodyRecord = posed[index]
+
+    val kinematicCount: Int get() = kinematics.size
+
+    fun kinematicAt(index: Int): PhysicsBodyRecord = kinematics[index]
 
     private companion object {
         const val INITIAL_CAPACITY = 64

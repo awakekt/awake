@@ -1,0 +1,1 @@
+- **Parented colliders and kinematic platforms honor world transforms.** `PhysicsSystem` and `PhysicsDebugWriter` now resolve full parent hierarchy transforms without per-step allocations, and `PhysicsSystem` drives `KINEMATIC` bodies via `moveKinematic` whenever their ECS world pose changes (for example under `KeyframeAnimationSystem`) while preserving parented local transforms.

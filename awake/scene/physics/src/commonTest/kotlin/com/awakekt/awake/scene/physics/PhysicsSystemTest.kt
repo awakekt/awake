@@ -81,11 +81,23 @@ class PhysicsSystemTest {
         ): BodyHandle {
             createBodyCallCount++
             builtWith += motionType
+            createdPositions += position.copy()
+            createdRotations += rotation.copy()
             return BodyHandle(nextHandleId++)
         }
 
         /** The motion type of every body actually created, in order. */
         val builtWith = mutableListOf<MotionType>()
+        val createdPositions = mutableListOf<Vec3f>()
+        val createdRotations = mutableListOf<Quat>()
+        val kinematicMoves = mutableListOf<KinematicMove>()
+
+        data class KinematicMove(
+            val handle: BodyHandle,
+            val position: Vec3f,
+            val rotation: Quat,
+            val deltaTime: Float,
+        )
 
         val destroyed = mutableListOf<BodyHandle>()
 
@@ -107,7 +119,9 @@ class PhysicsSystemTest {
             position: Vec3f,
             rotation: Quat,
             deltaTime: Float,
-        ) = Unit
+        ) {
+            kinematicMoves += KinematicMove(handle, position.copy(), rotation.copy(), deltaTime)
+        }
 
         override fun step(deltaTime: Float) {
             stepCallCount++
@@ -337,5 +351,103 @@ class PhysicsSystemTest {
         system.update(world, 1f / 60f)
         system.interpolate(world, 0.5f)
         assertEquals(24, physicsWorld.createBodyCallCount)
+    }
+
+    @Test
+    fun childStaticColliderUsesParentWorldPositionAndRotationAndDebugLinesMatch() {
+        val world = World()
+        val parent = world.create()
+        val halfPi = kotlin.math.PI.toFloat() * 0.5f
+        world.add(
+            parent,
+            Transform(
+                position = Vec3f(10f, 2f, -4f),
+                rotation = Vec3f(0f, halfPi, 0f),
+                scale = Vec3f(2f, 1f, 2f),
+            ),
+        )
+        val child = world.create()
+        world.add(
+            child,
+            Transform(
+                position = Vec3f(0f, 1f, 1.5f),
+                parent = parent,
+            ),
+        )
+        val body = PhysicsBody(shape = SphereShape(radius = 0.5f), motionType = MotionType.STATIC)
+        world.add(child, body)
+
+        val physicsWorld = FakePhysicsWorld()
+        val system = PhysicsSystem(physicsWorld)
+        system.update(world, 1f / 60f)
+
+        // Parent yaw +90 deg maps local +Z (1.5 * scale 2 = 3.0) onto world +X -> (13, 3, -4).
+        val builtPos = physicsWorld.createdPositions.single()
+        assertEquals(13f, builtPos.x, 1e-4f)
+        assertEquals(3f, builtPos.y, 1e-4f)
+        assertEquals(-4f, builtPos.z, 1e-4f)
+
+        val expectedRot = Quat.fromEuler(Vec3f(0f, halfPi, 0f))
+        val builtRot = physicsWorld.createdRotations.single()
+        val dot = kotlin.math.abs(
+            builtRot.x * expectedRot.x + builtRot.y * expectedRot.y +
+                builtRot.z * expectedRot.z + builtRot.w * expectedRot.w,
+        )
+        assertEquals(1f, dot, 1e-4f, "child collider rotation must inherit parent world rotation")
+
+        // Debug wireframes must agree with the body's world position rather than local (0, 1, 1.5).
+        val debugLines = physicsDebugLines(world)
+        assertTrue(debugLines.isNotEmpty())
+        val avgX = debugLines.map { (it.start.x + it.end.x) * 0.5f }.average().toFloat()
+        val avgY = debugLines.map { (it.start.y + it.end.y) * 0.5f }.average().toFloat()
+        val avgZ = debugLines.map { (it.start.z + it.end.z) * 0.5f }.average().toFloat()
+        assertEquals(13f, avgX, 0.05f)
+        assertEquals(3f, avgY, 0.05f)
+        assertEquals(-4f, avgZ, 0.05f)
+    }
+
+    @Test
+    fun kinematicBodyDrivesMoveKinematicWhenParentOrOwnTransformMovesAndPreservesChildLocalTransform() {
+        val world = World()
+        val platform = world.create()
+        val platformTransform = Transform(position = Vec3f(0f, 3f, -10f))
+        world.add(platform, platformTransform)
+
+        val collider = world.create()
+        val colliderTransform = Transform(position = Vec3f(0f, 0.25f, 0f), parent = platform)
+        world.add(collider, colliderTransform)
+        val body = PhysicsBody(shape = SphereShape(radius = 0.5f), motionType = MotionType.KINEMATIC)
+        world.add(collider, body)
+
+        val physicsWorld = FakePhysicsWorld()
+        val system = PhysicsSystem(physicsWorld)
+        val step = 1f / 60f
+
+        // Step 1: creates kinematic body at world (0, 3.25, -10), does not moveKinematic while stationary.
+        system.update(world, step)
+        val handle = assertNotNull(body.handle)
+        assertEquals(Vec3f(0f, 3.25f, -10f), physicsWorld.createdPositions.single())
+        assertTrue(physicsWorld.kinematicMoves.isEmpty())
+
+        // Step 2: keyframe animation moves the parent platform forward; PhysicsSystem drives Jolt via moveKinematic.
+        platformTransform.position.set(0f, 3.5f, -12f)
+        physicsWorld.scriptedTransforms = listOf(BodyTransform(handle, Vec3f(0f, 3.75f, -12f), Quat.IDENTITY))
+        system.update(world, step)
+
+        assertEquals(1, physicsWorld.kinematicMoves.size)
+        assertEquals(handle, physicsWorld.kinematicMoves[0].handle)
+        assertEquals(Vec3f(0f, 3.75f, -12f), physicsWorld.kinematicMoves[0].position)
+        assertEquals(step, physicsWorld.kinematicMoves[0].deltaTime)
+        // Parented child's local transform MUST remain (0, 0.25, 0), never overwritten with world (0, 3.75, -12).
+        assertEquals(Vec3f(0f, 0.25f, 0f), colliderTransform.position)
+
+        // Step 3: platform pauses at endpoint -> one final stationary moveKinematic clears velocity in Jolt.
+        system.update(world, step)
+        assertEquals(2, physicsWorld.kinematicMoves.size)
+        assertEquals(Vec3f(0f, 3.75f, -12f), physicsWorld.kinematicMoves[1].position)
+
+        // Step 4: still parked -> no redundant moveKinematic calls.
+        system.update(world, step)
+        assertEquals(2, physicsWorld.kinematicMoves.size)
     }
 }

@@ -99,12 +99,17 @@ internal class RecordingPhysicsWorld : PhysicsWorld {
     override fun setAngularVelocity(handle: BodyHandle, velocity: Vec3f) = Unit
     override fun getLinearVelocity(handle: BodyHandle): Vec3f = Vec3f(0f, 0f, 0f)
     override fun addImpulse(handle: BodyHandle, impulse: Vec3f) = Unit
+    var kinematicMoveCount = 0
+        private set
+
     override fun moveKinematic(
         handle: BodyHandle,
         position: Vec3f,
         rotation: Quat,
         deltaTime: Float,
-    ) = Unit
+    ) {
+        kinematicMoveCount++
+    }
 
     override fun shiftOrigin(offset: Vec3f) = Unit
     override fun raycast(

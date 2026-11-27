@@ -8,16 +8,19 @@ package com.awakekt.awake.scene.physics
 import com.awakekt.awake.core.host.MemoryPressure
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.ComponentStore
 import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family2
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.ContactEvent
+import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.physics.PhysicsBody
+import kotlin.math.abs
 
 /**
  * Bridges [PhysicsBody]/[Transform] ECS components to a live [physicsWorld]. This is
@@ -58,12 +61,18 @@ class PhysicsSystem(
      * Found per step by entity slot and by handle id, never by hashing a boxed handle (#1428).
      */
     private val bodies = PhysicsBodyRecords()
+    private val poseResolver = PhysicsWorldPoseResolver()
+    private val scratchWorldPosition = Vec3f()
+    private val scratchWorldRotation = Quat()
 
-    // Resolved once per world generation, so the per-body readback does not find `Transform` by class.
-    private var transformWorld: World? = null
-    private var transformGeneration = -1
+    // Resolved once per world generation, so per-step body sync, readback and interpolation touch
+    // neither KClass nor ComponentRegistry.
+    private var cachedWorld: World? = null
+    private var cachedGeneration = -1
     private var transformTypeId = ComponentTypeId(0)
-    private var steppingWorld: World? = null
+    private var transformStore: ComponentStore<Transform>? = null
+    private var bodyFamily: Family2<Transform, PhysicsBody>? = null
+    private var steppingTransformStore: ComponentStore<Transform>? = null
 
     // Steady-state memoization for body creation / motionType rebuilds: when the family membership
     // and in-place motionType/handle counters have not moved, every entity in the family already has
@@ -78,7 +87,15 @@ class PhysicsSystem(
     private val readBack = BodyTransformVisitor { handleId, position, rotation ->
         val record = bodies.forHandle(BodyHandle(handleId))
         if (record != null) {
-            val transform = steppingWorld?.get<Transform>(record.entity, transformTypeId)
+            val transform = steppingTransformStore?.get(record.entity)
+            val kinematic = record.kinematic
+            if (kinematic != null) {
+                kinematic.lastPosition.set(position)
+                kinematic.lastRotation.set(rotation)
+                // A parented kinematic collider's Transform is in local space under the parent that
+                // drives it; writing world coordinates back into it would double-translate it.
+                if (transform?.parent != null) return@BodyTransformVisitor
+            }
             if (transform != null) {
                 transform.position.x = position.x
                 transform.position.y = position.y
@@ -148,11 +165,19 @@ class PhysicsSystem(
     private fun liveEntity(handle: BodyHandle): Entity? =
         bodies.forHandle(handle)?.entity?.takeIf { drainingWorld?.isAlive(it) == true }
 
-    private fun resolveTransformType(world: World) {
-        if (transformWorld === world && transformGeneration == world.generation) return
-        transformTypeId = world.typeId(Transform::class)
-        transformWorld = world
-        transformGeneration = world.generation
+    private fun ensureWorldCache(world: World): Family2<Transform, PhysicsBody> {
+        val cached = bodyFamily
+        if (cachedWorld === world && cachedGeneration == world.generation && cached != null) {
+            if (transformStore == null) transformStore = world.componentStore(transformTypeId)
+            return cached
+        }
+        transformTypeId = world.typeId(TRANSFORM_CLASS)
+        transformStore = world.componentStore(transformTypeId)
+        val family = world.family<Transform, PhysicsBody>()
+        cachedWorld = world
+        cachedGeneration = world.generation
+        bodyFamily = family
+        return family
     }
 
     private fun needsBodySync(world: World, familyChanges: Int): Boolean {
@@ -163,8 +188,8 @@ class PhysicsSystem(
 
     override fun update(world: World, delta: Float) {
         if (memoryPressure.check()) physicsWorld.trimMemory()
-        resolveTransformType(world)
-        val family = world.family<Transform, PhysicsBody>()
+        val family = ensureWorldCache(world)
+        val store = transformStore
         if (needsBodySync(world, family.changes)) {
             family.forEach { entity, transform, physicsBody ->
                 val live = physicsBody.handle
@@ -176,17 +201,21 @@ class PhysicsSystem(
                     physicsBody.handle = null
                 }
                 if (physicsBody.handle == null) {
+                    poseResolver.resolve(store, transform, scratchWorldPosition, scratchWorldRotation)
                     val handle = physicsWorld.createBody(
                         physicsBody.shape,
-                        transform.position,
-                        Quat.fromEuler(transform.rotation),
+                        scratchWorldPosition,
+                        scratchWorldRotation,
                         physicsBody.motionType,
                         physicsBody.layer,
                         physicsBody.sensor,
                         physicsBody.degreesOfFreedom,
                     )
                     physicsBody.handle = handle
-                    bodies.add(entity, handle, physicsBody.motionType)
+                    val record = bodies.add(entity, handle, physicsBody.motionType)
+                    if (physicsBody.motionType == MotionType.KINEMATIC) {
+                        record.kinematic = KinematicSyncState(scratchWorldPosition, scratchWorldRotation)
+                    }
                 }
             }
             syncedWorld = world
@@ -196,13 +225,17 @@ class PhysicsSystem(
             syncedHandleEdits = physicsBodyHandleEdits
         }
 
+        if (bodies.kinematicCount > 0 && delta > 0f) {
+            syncKinematicBodies(store, delta)
+        }
+
         physicsWorld.step(delta)
 
         // The visitor form, not the list one: this runs every fixed step, and the list allocates
         // a vector and a quaternion per body to hand back values that are copied out immediately.
-        steppingWorld = world
+        steppingTransformStore = store
         physicsWorld.visitBodyTransforms(readBack)
-        steppingWorld = null
+        steppingTransformStore = null
 
         stepContacts.clear()
         drainingWorld = world
@@ -219,11 +252,53 @@ class PhysicsSystem(
      */
     override fun interpolate(world: World, alpha: Float) {
         if (bodies.posedCount == 0) return
-        resolveTransformType(world)
+        ensureWorldCache(world)
+        val store = transformStore ?: return
         bodies.forEachPosed { record ->
             val pose = record.pose ?: return@forEachPosed
-            val transform = world.get<Transform>(record.entity, transformTypeId) ?: return@forEachPosed
+            val transform = store.get(record.entity) ?: return@forEachPosed
             pose.blendInto(transform, alpha)
         }
     }
+
+    /**
+     * Drives kinematic bodies whose ECS world pose changed since the last step (e.g. moved by
+     * `KeyframeAnimationSystem` or a parent transform) via [PhysicsWorld.moveKinematic], so Jolt
+     * derives true velocity and carries standing characters/dynamic bodies cleanly. Callers that
+     * drive [PhysicsWorld.moveKinematic] directly without editing `Transform` first see no
+     * mismatch and are left untouched.
+     */
+    private fun syncKinematicBodies(store: ComponentStore<Transform>?, delta: Float) {
+        if (store == null) return
+        bodies.forEachKinematic { record ->
+            val kinematic = record.kinematic ?: return@forEachKinematic
+            val transform = store.get(record.entity) ?: return@forEachKinematic
+            poseResolver.resolve(store, transform, scratchWorldPosition, scratchWorldRotation)
+            val moved = !samePose(
+                scratchWorldPosition,
+                scratchWorldRotation,
+                kinematic.lastPosition,
+                kinematic.lastRotation,
+            )
+            if (moved || kinematic.wasMoving) {
+                physicsWorld.moveKinematic(record.handle, scratchWorldPosition, scratchWorldRotation, delta)
+                kinematic.lastPosition.set(scratchWorldPosition)
+                kinematic.lastRotation.set(scratchWorldRotation)
+                kinematic.wasMoving = moved
+            }
+        }
+    }
+
+    private fun samePose(posA: Vec3f, rotA: Quat, posB: Vec3f, rotB: Quat): Boolean {
+        val dx = posA.x - posB.x
+        val dy = posA.y - posB.y
+        val dz = posA.z - posB.z
+        if (dx * dx + dy * dy + dz * dz > POSITION_EPSILON_SQ) return false
+        val dot = abs(rotA.x * rotB.x + rotA.y * rotB.y + rotA.z * rotB.z + rotA.w * rotB.w)
+        return dot >= 1f - ROTATION_DOT_EPSILON
+    }
 }
+
+private val TRANSFORM_CLASS = Transform::class
+private const val POSITION_EPSILON_SQ = 1e-10f
+private const val ROTATION_DOT_EPSILON = 1e-5f

@@ -9,14 +9,15 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.diagnostics.DebugLines
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.ComponentStore
+import com.awakekt.awake.ecs.ComponentTypeId
+import com.awakekt.awake.ecs.Family2
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.debug.PhysicsShapeWireframe
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.scene.core.transform.Transform
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * World-space wireframes of what physics is actually colliding against.
@@ -62,38 +63,38 @@ fun physicsDebugLines(world: World): List<LineSegment> {
  */
 internal class PhysicsDebugWriter {
     private val shapes = PhysicsShapeWireframe()
+    private val poseResolver = PhysicsWorldPoseResolver()
+    private val position = Vec3f()
     private val rotation = Quat()
+    private var cachedWorld: World? = null
+    private var cachedGeneration = -1
+    private var transformTypeId = ComponentTypeId(0)
+    private var transformStore: ComponentStore<Transform>? = null
+    private var bodyFamily: Family2<Transform, PhysicsBody>? = null
 
     /** Writes the wireframe of every entity with a [Transform] and a [PhysicsBody] into [out]. */
     fun write(world: World, out: DebugLines) {
-        world.queryEach(Transform::class, PhysicsBody::class) { _, transform, body ->
-            setFromEuler(transform.rotation)
-            shapes.write(body.shape, transform.position, rotation, colorOf(body.motionType), out)
+        val family = ensureWorldCache(world)
+        val store = transformStore
+        family.forEach { _, transform, body ->
+            poseResolver.resolve(store, transform, position, rotation)
+            shapes.write(body.shape, position, rotation, colorOf(body.motionType), out)
         }
     }
 
-    /**
-     * [rotation] set to [Quat.fromEuler] of [radians] without its five quaternions: the axis rotations
-     * X = (sin hx, 0, 0, cos hx), Y = (0, sin hy, 0, cos hy) and Z = (0, 0, sin hz, cos hz), multiplied
-     * as `(X * Y) * Z` by the formula [Quat.times] uses, with the terms that are zero left out.
-     */
-    private fun setFromEuler(radians: Vec3f) {
-        val sx = sin(radians.x * HALF)
-        val cx = cos(radians.x * HALF)
-        val sy = sin(radians.y * HALF)
-        val cy = cos(radians.y * HALF)
-        val sz = sin(radians.z * HALF)
-        val cz = cos(radians.z * HALF)
-        // X * Y.
-        val x = cy * sx
-        val y = sy * cx
-        val z = -sy * sx
-        val w = cy * cx
-        // (X * Y) * Z.
-        rotation.x = cz * x - sz * y
-        rotation.y = cz * y + sz * x
-        rotation.z = cz * z + sz * w
-        rotation.w = cz * w - sz * z
+    private fun ensureWorldCache(world: World): Family2<Transform, PhysicsBody> {
+        val cached = bodyFamily
+        if (cachedWorld === world && cachedGeneration == world.generation && cached != null) {
+            if (transformStore == null) transformStore = world.componentStore(transformTypeId)
+            return cached
+        }
+        transformTypeId = world.typeId(DEBUG_TRANSFORM_CLASS)
+        transformStore = world.componentStore(transformTypeId)
+        val family = world.family<Transform, PhysicsBody>()
+        cachedWorld = world
+        cachedGeneration = world.generation
+        bodyFamily = family
+        return family
     }
 
     companion object {
@@ -103,7 +104,7 @@ internal class PhysicsDebugWriter {
             MotionType.DYNAMIC -> PhysicsDebugSource.DYNAMIC
             MotionType.KINEMATIC -> PhysicsDebugSource.KINEMATIC
         }
-
-        private const val HALF = 0.5f
     }
 }
+
+private val DEBUG_TRANSFORM_CLASS = Transform::class
