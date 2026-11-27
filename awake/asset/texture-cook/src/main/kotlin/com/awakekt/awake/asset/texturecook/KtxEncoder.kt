@@ -47,30 +47,40 @@ import org.lwjgl.util.ktx.ktxTextureCreateInfo
 internal object KtxEncoder {
 
     /** [levels] as a Basis Universal KTX2: ETC1S for colour, UASTC with Zstandard for the rest. */
-    fun basis(levels: List<RgbaImage>, settings: TextureCookSettings): ByteArray = withSource(levels, settings.srgb) { texture ->
-        MemoryStack.stackPush().use { stack ->
-            val params = ktxBasisParams.calloc(stack).structSize(ktxBasisParams.SIZEOF).threadCount(threads())
-            if (settings.role == TextureRole.Color) {
-                params.codec(KTX_BASIS_CODEC_ETC1S).qualityLevel(settings.etc1sQuality)
-            } else {
-                params.codec(KTX_BASIS_CODEC_UASTC_LDR_4x4).uastcFlags(settings.uastcLevel)
-                params.normalMap(settings.role == TextureRole.Normal)
+    fun basis(levels: List<RgbaImage>, settings: TextureCookSettings): ByteArray =
+        basisArray(listOf(levels), settings)
+
+    /** [layerLevels] (one mip chain per layer) as a Basis Universal KTX2 (2D array when > 1 layer). */
+    fun basisArray(layerLevels: List<List<RgbaImage>>, settings: TextureCookSettings): ByteArray =
+        withSourceArray(layerLevels, settings.srgb) { texture ->
+            MemoryStack.stackPush().use { stack ->
+                val params = ktxBasisParams.calloc(stack).structSize(ktxBasisParams.SIZEOF).threadCount(threads())
+                if (settings.role == TextureRole.Color) {
+                    params.codec(KTX_BASIS_CODEC_ETC1S).qualityLevel(settings.etc1sQuality)
+                } else {
+                    params.codec(KTX_BASIS_CODEC_UASTC_LDR_4x4).uastcFlags(settings.uastcLevel)
+                    params.normalMap(settings.role == TextureRole.Normal)
+                }
+                ensure(ktxTexture2_CompressBasisEx(texture, params), "Basis Universal compression")
             }
-            ensure(ktxTexture2_CompressBasisEx(texture, params), "Basis Universal compression")
+            if (settings.role != TextureRole.Color) ensure(ktxTexture2_DeflateZstd(texture, settings.zstdLevel), "Zstandard")
         }
-        if (settings.role != TextureRole.Color) ensure(ktxTexture2_DeflateZstd(texture, settings.zstdLevel), "Zstandard")
-    }
 
     /** [levels] as ASTC 4 x 4, encoded straight from the source pixels. */
-    fun astc(levels: List<RgbaImage>, settings: TextureCookSettings): ByteArray = withSource(levels, settings.srgb) { texture ->
-        MemoryStack.stackPush().use { stack ->
-            val params = ktxAstcParams.calloc(stack).structSize(ktxAstcParams.SIZEOF).threadCount(threads())
-                .blockDimension(KTX_PACK_ASTC_BLOCK_DIMENSION_4x4).mode(KTX_PACK_ASTC_ENCODER_MODE_LDR)
-                .qualityLevel(KTX_PACK_ASTC_QUALITY_LEVEL_MEDIUM).normalMap(settings.role == TextureRole.Normal)
-                .perceptual(settings.role == TextureRole.Color)
-            ensure(ktxTexture2_CompressAstcEx(texture, params), "ASTC compression")
+    fun astc(levels: List<RgbaImage>, settings: TextureCookSettings): ByteArray =
+        astcArray(listOf(levels), settings)
+
+    /** [layerLevels] (one mip chain per layer) as ASTC 4 x 4 (2D array when > 1 layer). */
+    fun astcArray(layerLevels: List<List<RgbaImage>>, settings: TextureCookSettings): ByteArray =
+        withSourceArray(layerLevels, settings.srgb) { texture ->
+            MemoryStack.stackPush().use { stack ->
+                val params = ktxAstcParams.calloc(stack).structSize(ktxAstcParams.SIZEOF).threadCount(threads())
+                    .blockDimension(KTX_PACK_ASTC_BLOCK_DIMENSION_4x4).mode(KTX_PACK_ASTC_ENCODER_MODE_LDR)
+                    .qualityLevel(KTX_PACK_ASTC_QUALITY_LEVEL_MEDIUM).normalMap(settings.role == TextureRole.Normal)
+                    .perceptual(settings.role == TextureRole.Color)
+                ensure(ktxTexture2_CompressAstcEx(texture, params), "ASTC compression")
+            }
         }
-    }
 
     /** [basis], a Basis Universal KTX2, transcoded to ETC2 RGBA8. */
     fun etc2(basis: ByteArray): ByteArray = loaded(basis) { texture ->
@@ -98,35 +108,50 @@ internal object KtxEncoder {
         }
     }
 
-    /** A texture of [levels] in RGBA8, [compress]ed in place and written to bytes. */
-    private fun withSource(levels: List<RgbaImage>, srgb: Boolean, compress: (ktxTexture2) -> Unit): ByteArray =
-        MemoryStack.stackPush().use { stack ->
-            val base = levels.first()
-            val info = ktxTextureCreateInfo.calloc(stack)
-                .vkFormat(if (srgb) VK_FORMAT_R8G8B8A8_SRGB else VK_FORMAT_R8G8B8A8_UNORM)
-                .baseWidth(base.width).baseHeight(base.height).baseDepth(1)
-                .numDimensions(2).numLevels(levels.size).numLayers(1).numFaces(1).isArray(false).generateMipmaps(false)
-            val created = stack.mallocPointer(1)
-            ensure(ktxTexture2_Create(info, KTX_TEXTURE_CREATE_ALLOC_STORAGE, created), "creating the texture")
-            val texture = ktxTexture2.create(created.get(0))
-            try {
-                // Rows are stored bottom first, as every Awake texture is: KTX2's "x right, y up".
-                val orientation = stack.ASCII(BOTTOM_ROW_FIRST, true)
-                ensure(ktxHashList_AddKVPair(texture.address() + ktxTexture2.KVDATAHEAD, KTX_ORIENTATION_KEY, orientation), "orientation")
+    /** A 2D texture or 2D texture array of [layerLevels] in RGBA8, [compress]ed in place and written to bytes. */
+    private fun withSourceArray(
+        layerLevels: List<List<RgbaImage>>,
+        srgb: Boolean,
+        compress: (ktxTexture2) -> Unit,
+    ): ByteArray = MemoryStack.stackPush().use { stack ->
+        require(layerLevels.isNotEmpty()) { "a texture needs at least one layer" }
+        val layers = layerLevels.size
+        val numLevels = layerLevels.first().size
+        val base = layerLevels.first().first()
+        require(layerLevels.all { it.size == numLevels && it.first().width == base.width && it.first().height == base.height }) {
+            "every array layer must share ${base.width}x${base.height} and $numLevels mip level(s)"
+        }
+        val info = ktxTextureCreateInfo.calloc(stack)
+            .vkFormat(if (srgb) VK_FORMAT_R8G8B8A8_SRGB else VK_FORMAT_R8G8B8A8_UNORM)
+            .baseWidth(base.width).baseHeight(base.height).baseDepth(1)
+            .numDimensions(2).numLevels(numLevels).numLayers(layers).numFaces(1)
+            .isArray(layers > 1).generateMipmaps(false)
+        val created = stack.mallocPointer(1)
+        ensure(ktxTexture2_Create(info, KTX_TEXTURE_CREATE_ALLOC_STORAGE, created), "creating the texture")
+        val texture = ktxTexture2.create(created.get(0))
+        try {
+            // Rows are stored bottom first, as every Awake texture is: KTX2's "x right, y up".
+            val orientation = stack.ASCII(BOTTOM_ROW_FIRST, true)
+            ensure(ktxHashList_AddKVPair(texture.address() + ktxTexture2.KVDATAHEAD, KTX_ORIENTATION_KEY, orientation), "orientation")
+            layerLevels.forEachIndexed { layer, levels ->
                 levels.forEachIndexed { level, image ->
                     val pixels = MemoryUtil.memAlloc(image.pixels.size).put(image.pixels).flip()
                     try {
-                        ensure(ktxTexture_SetImageFromMemory(ktxTexture.create(texture.address()), level, 0, 0, pixels), "level $level")
+                        ensure(
+                            ktxTexture_SetImageFromMemory(ktxTexture.create(texture.address()), level, layer, 0, pixels),
+                            "level $level layer $layer",
+                        )
                     } finally {
                         MemoryUtil.memFree(pixels)
                     }
                 }
-                compress(texture)
-                written(texture)
-            } finally {
-                ktxTexture2_Destroy(texture)
             }
+            compress(texture)
+            written(texture)
+        } finally {
+            ktxTexture2_Destroy(texture)
         }
+    }
 
     /** Runs [use] on [ktx2] loaded into libktx, and frees it after. */
     private fun <T> loaded(ktx2: ByteArray, use: (ktxTexture2) -> T): T {

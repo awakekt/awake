@@ -17,6 +17,7 @@ import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
 import com.awakekt.awake.project.ContentFormatTooNewException
+import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
@@ -205,7 +206,16 @@ internal suspend fun loadProjectStrings(files: AssetSource): Strings? {
 internal suspend fun LoadedProject.loadScene(path: String, onProgress: (Float) -> Unit = {}): ProjectScene {
     require(AwakeProjectValidator.isSafeProjectPath(path)) { "'$path' is not a project-relative path" }
     files.prefetchSceneContent(path, onProgress)
-    return loadProjectScene(path, manifest, files, componentRegistry, installedFeatures(capabilities), hasRenderer, physicsWorld)
+    return loadProjectScene(
+        path,
+        manifest,
+        files,
+        componentRegistry,
+        installedFeatures(capabilities),
+        hasRenderer,
+        physicsWorld,
+        compressedFormats = { compressedTextureFormats },
+    )
 }
 
 /** The scene at [path], read with what its project was loaded with, as [loadProject] reads the entry scene. */
@@ -218,9 +228,10 @@ internal suspend fun loadProjectScene(
     installed: List<SceneFeature>,
     hasRenderer: Boolean,
     physicsWorld: (suspend () -> PhysicsWorld)?,
+    compressedFormats: () -> Set<CompressedTextureFormat> = { emptySet() },
 ): ProjectScene {
     val scene = decodeScene(path, files, registry)
-    return projectSceneOf(path, scene, manifest, files, installed, hasRenderer, physicsWorld)
+    return projectSceneOf(path, scene, manifest, files, installed, hasRenderer, physicsWorld, compressedFormats)
 }
 
 /** [scene], a document read from [path] or made in code, loaded to play as [loadProjectScene] loads a file. */
@@ -233,10 +244,11 @@ internal suspend fun projectSceneOf(
     installed: List<SceneFeature>,
     hasRenderer: Boolean,
     physicsWorld: (suspend () -> PhysicsWorld)?,
+    compressedFormats: () -> Set<CompressedTextureFormat> = { emptySet() },
 ): ProjectScene {
     warnUnlistedTags(manifest, scene, path)
     warnUnlistedSortingLayers(manifest, scene, path)
-    val models = GltfAssetResolver().apply { readProjectFiles(files) }
+    val models = GltfAssetResolver().apply { readProjectFiles(files, compressedFormats) }
     if (hasRenderer) {
         scene.nodes.flatMap { it.meshNames() }
             .filter(models::canResolveMesh)

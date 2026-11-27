@@ -7,17 +7,20 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.asset.ktx.loader.CookedTextureLoader
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 
 /**
- * Reads this resolver's models from [files], each image the project ships cooked to KTX2 beside it
- * (`rock.png` with `rock.ktx2`) from the cooked file (#1211). A model loads before the device that
- * draws it is known, so it reads the Basis Universal file, which is transcoded to the device's block
- * format when its material is made; where the platform has no transcoder, as on Android and iOS, it
- * reads the image. An image embedded in a GLB has no file of its own and loads as before.
+ * Reads this resolver's models from [files], substituting each cooked image (`rock.png` ->
+ * `rock.astc.ktx2` / `rock.etc2.ktx2` when [compressedFormats] reports mobile block support, or
+ * `rock.ktx2` where a platform Basis transcoder is available) (#1211). Also decodes embedded
+ * `KHR_texture_basisu` KTX2 images in GLBs.
  */
-internal fun GltfAssetResolver.readProjectFiles(files: AssetSource) {
+internal fun GltfAssetResolver.readProjectFiles(
+    files: AssetSource,
+    compressedFormats: () -> Set<CompressedTextureFormat> = { emptySet() },
+) {
     val cooked = CookedTextureLoader(files)
-    setAssetSource(cooked.withCookedImages())
+    setAssetSource(cooked.withCookedImages(compressedFormats))
     setImageDecoder(cooked::decode)
 }

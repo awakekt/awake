@@ -57,6 +57,18 @@ interface GpuImageSource {
 }
 
 /**
+ * A [GpuImageSource] that retains CPU-side decoded pixels, compressed mip bytes, or encoded file
+ * bytes until [releaseImageData] lets them go after GPU upload.
+ */
+interface ReleasableGpuImageSource : GpuImageSource {
+    /** Whether [releaseImageData] has already released this source's CPU buffers. */
+    val isReleased: Boolean
+
+    /** Drops retained CPU buffers so they can be collected; returns true if anything was held. */
+    fun releaseImageData(): Boolean
+}
+
+/**
  * This decoded image as a [GpuImageSource]: in a browser its `ImageBitmap` is the
  * [GpuImageSource.externalImage] a WebGPU backend copies, and anywhere else [GpuImageSource.readRgba8]
  * supplies the CPU pixels. The image stays the caller's, open for as long as a material may be made
@@ -91,7 +103,7 @@ private class DecodedImageSource(private val image: DecodedImage) : GpuImageSour
     override fun readRgba8(): ByteArray = image.toRgba8Bytes()
 }
 
-private class ReleasingImageSource(decoded: DecodedImage, encoded: ByteArray) : GpuImageSource {
+private class ReleasingImageSource(decoded: DecodedImage, encoded: ByteArray) : ReleasableGpuImageSource {
     override val width: Int = decoded.width
     override val height: Int = decoded.height
     override val externalImage: Any? get() = null
@@ -107,14 +119,14 @@ private class ReleasingImageSource(decoded: DecodedImage, encoded: ByteArray) : 
 
     val needsDecode: Boolean get() = decoded == null && encoded != null
 
-    val released: Boolean get() = decoded == null && encoded == null
+    override val isReleased: Boolean get() = decoded == null && encoded == null
 
     suspend fun decodeAhead() {
         val bytes = encoded ?: return
         if (decoded == null) decoded = decodeImage(bytes)
     }
 
-    fun release(): Boolean {
+    override fun releaseImageData(): Boolean {
         val held = decoded != null || encoded != null
         decoded = null
         encoded = null
@@ -131,18 +143,18 @@ private class ReleasingImageSource(decoded: DecodedImage, encoded: ByteArray) : 
 }
 
 /**
- * Lets go of everything this image keeps once a material is made from it: its decoded pixels, and the
- * file bytes kept to decode them again. Afterwards it [isReleased], and making another material from
- * it fails; the holder reads the image's file again instead. For an image that holds memory the
- * caller can't get back, such as a texture loaded once for a scene that streams its content, and only
- * an image from [asReleasingGpuImageSource] keeps anything to let go of.
+ * Lets go of everything this image keeps once a material is made from it: its decoded pixels,
+ * compressed mip bytes, and encoded file bytes kept to decode or transcode again. Afterwards it
+ * [isReleased], and making another material from it fails; the holder reads the image's file again
+ * instead. Applies to [ReleasableGpuImageSource] implementations such as [asReleasingGpuImageSource]
+ * and KTX2 cooked image sources.
  *
  * @return Whether it held anything to let go of.
  */
-fun GpuImageSource.releaseImageData(): Boolean = (this as? ReleasingImageSource)?.release() ?: false
+fun GpuImageSource.releaseImageData(): Boolean = (this as? ReleasableGpuImageSource)?.releaseImageData() ?: false
 
 /** Whether [releaseImageData] let this image go, so nothing can be made from it until its file is read again. */
-val GpuImageSource.isReleased: Boolean get() = (this as? ReleasingImageSource)?.released == true
+val GpuImageSource.isReleased: Boolean get() = (this as? ReleasableGpuImageSource)?.isReleased == true
 
 /**
  * Whether reading this image's pixels would decode them first, on the reading thread: an image whose

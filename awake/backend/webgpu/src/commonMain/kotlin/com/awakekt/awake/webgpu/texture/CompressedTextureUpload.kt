@@ -34,9 +34,14 @@ internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage, filt
     val format = image.format
     // The top levels mip skip leaves out, as for an RGBA texture, while the new base is whole blocks (#1660).
     val skip = TextureSampling.levelsToSkip(image, filtering, mipSkip)
+    val layerCount = image.layerCount
     val texture = device.createTexture(
         TextureDescriptor(
-            size = Extent3D(width = image.levelWidth(skip).toUInt(), height = image.levelHeight(skip).toUInt()),
+            size = Extent3D(
+                width = image.levelWidth(skip).toUInt(),
+                height = image.levelHeight(skip).toUInt(),
+                depthOrArrayLayers = layerCount.toUInt(),
+            ),
             format = gpuFormat(format),
             usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst,
             dimension = GPUTextureDimension.TwoD,
@@ -48,7 +53,7 @@ internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage, filt
         val blocksWide = (image.levelWidth(level) + format.blockWidth - 1) / format.blockWidth
         val blocksHigh = (image.levelHeight(level) + format.blockHeight - 1) / format.blockHeight
         // A copy of a block format covers whole blocks, so a level smaller than a block is written
-        // as the one block it takes.
+        // as the one block it takes. Array layers are already packed back-to-back per level.
         device.queue.writeTextureBytes(
             texture = texture,
             data = bytes,
@@ -56,6 +61,7 @@ internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage, filt
             rowsPerImage = blocksHigh,
             width = blocksWide * format.blockWidth,
             height = blocksHigh * format.blockHeight,
+            depthOrArrayLayers = layerCount,
             mipLevel = level - skip,
         )
     }
@@ -64,6 +70,7 @@ internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage, filt
         image.width,
         image.height,
         mipLevelCount = image.levels.size - skip,
+        layerCount = layerCount,
         uploadedWidth = image.levelWidth(skip),
         uploadedHeight = image.levelHeight(skip),
         estimatedGpuBytes = image.levels.drop(skip).sumOf { it.size.toLong() },

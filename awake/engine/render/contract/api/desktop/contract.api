@@ -1222,10 +1222,15 @@ public abstract interface class com/awakekt/awake/render/pipeline/GpuCapabilityK
 public abstract interface class com/awakekt/awake/render/pipeline/GpuCompressedTextures : com/awakekt/awake/render/pipeline/GpuCapability {
 	public static final field Companion Lcom/awakekt/awake/render/pipeline/GpuCompressedTextures$Companion;
 	public abstract fun createMaterial (Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/TextureFiltering;I)Lcom/awakekt/awake/render/material/Material;
+	public fun createMaterial (Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrImageSet;Lcom/awakekt/awake/render/texture/PbrCompressedSet;)Lcom/awakekt/awake/render/material/Material;
 	public abstract fun getFormats ()Ljava/util/Set;
 }
 
 public final class com/awakekt/awake/render/pipeline/GpuCompressedTextures$Companion : com/awakekt/awake/render/pipeline/GpuCapabilityKind {
+}
+
+public final class com/awakekt/awake/render/pipeline/GpuCompressedTextures$DefaultImpls {
+	public static fun createMaterial (Lcom/awakekt/awake/render/pipeline/GpuCompressedTextures;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrImageSet;Lcom/awakekt/awake/render/texture/PbrCompressedSet;)Lcom/awakekt/awake/render/material/Material;
 }
 
 public final class com/awakekt/awake/render/pipeline/GpuCompressedTexturesKt {
@@ -2842,12 +2847,16 @@ public final class com/awakekt/awake/render/texture/CompressedTextureFormat : ja
 }
 
 public final class com/awakekt/awake/render/texture/CompressedTextureImage {
-	public fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureFormat;IIZLjava/util/List;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureFormat;IIZLjava/util/List;)V
+	public fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureFormat;IIZLjava/util/List;I)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureFormat;IIZLjava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getFormat ()Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
 	public final fun getHeight ()I
+	public final fun getLayerCount ()I
 	public final fun getLevels ()Ljava/util/List;
 	public final fun getSrgb ()Z
 	public final fun getWidth ()I
+	public final fun layerByteSize (I)I
 	public final fun levelHeight (I)I
 	public final fun levelWidth (I)I
 }
@@ -2889,6 +2898,18 @@ public final class com/awakekt/awake/render/texture/NeutralPbrTextures {
 	public final fun getOcclusion ()Lcom/awakekt/awake/render/texture/TextureAsset;
 }
 
+public final class com/awakekt/awake/render/texture/PbrCompressedSet {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/CompressedTextureImage;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/CompressedTextureImage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getEmissive ()Lcom/awakekt/awake/render/texture/CompressedTextureImage;
+	public final fun getMaps ()Ljava/util/List;
+	public final fun getMetallicRoughness ()Lcom/awakekt/awake/render/texture/CompressedTextureImage;
+	public final fun getNormal ()Lcom/awakekt/awake/render/texture/CompressedTextureImage;
+	public final fun getOcclusion ()Lcom/awakekt/awake/render/texture/CompressedTextureImage;
+	public final fun isEmpty ()Z
+}
+
 public final class com/awakekt/awake/render/texture/PbrImageSet {
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/GpuImageSource;)V
@@ -2924,6 +2945,16 @@ public final class com/awakekt/awake/render/texture/PbrTextureSet {
 	public final fun getOcclusion ()Lcom/awakekt/awake/render/texture/TextureAsset;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/render/texture/ReleasableGpuImageSource : com/awakekt/awake/render/texture/GpuImageSource {
+	public abstract fun isReleased ()Z
+	public abstract fun releaseImageData ()Z
+}
+
+public final class com/awakekt/awake/render/texture/ReleasableGpuImageSource$DefaultImpls {
+	public static fun compressed (Lcom/awakekt/awake/render/texture/ReleasableGpuImageSource;Ljava/util/Set;)Lcom/awakekt/awake/render/texture/CompressedTextureImage;
+	public static fun getCompressed (Lcom/awakekt/awake/render/texture/ReleasableGpuImageSource;)Lcom/awakekt/awake/render/texture/CompressedTextureImage;
 }
 
 public abstract interface class com/awakekt/awake/render/texture/RenderTarget {

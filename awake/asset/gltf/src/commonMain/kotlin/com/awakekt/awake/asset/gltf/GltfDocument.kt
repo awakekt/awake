@@ -139,6 +139,20 @@ data class GltfTextureRef(
     @SerialName("texCoord") val texCoordSet: Int = 0,
 )
 
+/** The `KHR_texture_basisu` extension pointing a glTF texture at a KTX2 image source. */
+@Serializable
+data class GltfKhrTextureBasisu(
+    /** The index of the KTX2 image in [GltfDocument.images]. */
+    val source: Int? = null,
+)
+
+/** Extensions recognised on a [GltfTexture]. */
+@Serializable
+data class GltfTextureExtensions(
+    /** Khronos Basis Universal / KTX2 image source (`KHR_texture_basisu`). */
+    @SerialName("KHR_texture_basisu") val khrTextureBasisu: GltfKhrTextureBasisu? = null,
+)
+
 /**
  * A glTF texture.
  */
@@ -148,7 +162,20 @@ data class GltfTexture(
     val source: Int? = null,
     /** The index of the sampler. */
     val sampler: Int? = null,
-)
+    /** Optional glTF texture extensions such as `KHR_texture_basisu`. */
+    val extensions: GltfTextureExtensions? = null,
+) {
+    /** Effective image index, preferring `KHR_texture_basisu.source` when declared. */
+    val resolvedSource: Int? get() = extensions?.khrTextureBasisu?.source ?: source
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(source: Int? = null, sampler: Int? = null) : this(source, sampler, extensions = null)
+
+    /** Binary-compatible copy overload before [extensions] was added. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(source: Int? = this.source, sampler: Int? = this.sampler): GltfTexture =
+        copy(source = source, sampler = sampler, extensions = this.extensions)
+}
 
 /**
  * A glTF image.

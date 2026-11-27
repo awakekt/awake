@@ -51,10 +51,15 @@ object LibKtxBasisTranscoder : BasisTranscoder {
     }
 
     private fun level(texture: ktxTexture2, level: Int): ByteArray = MemoryStack.stackPush().use { stack ->
+        val layers = texture.numLayers().coerceAtLeast(1)
+        val imageSize = ktxTexture_GetImageSize(ktxTexture.create(texture.address()), level).toInt()
         val offset = stack.mallocPointer(1)
-        ensure(ktxTexture2_GetImageOffset(texture, level, 0, 0, offset), "level $level's offset")
-        val size = ktxTexture_GetImageSize(ktxTexture.create(texture.address()), level).toInt()
-        ByteArray(size).also { texture.pData().get(offset.get(0).toInt(), it) }
+        val out = ByteArray(imageSize * layers)
+        repeat(layers) { layer ->
+            ensure(ktxTexture2_GetImageOffset(texture, level, layer, 0, offset), "level $level layer $layer's offset")
+            texture.pData().get(offset.get(0).toInt(), out, layer * imageSize, imageSize)
+        }
+        out
     }
 
     private fun ensure(code: Int, what: String) {

@@ -162,10 +162,16 @@ internal class GltfDocumentReader(
 
     /** A material texture's still-encoded image bytes, or null when there is no image to read. */
     private fun materialImage(texture: GltfTextureRef?): ByteArray? {
-        val imageIndex = texture?.let { document.textures.getOrNull(it.index) }?.source
-        if (imageIndex == null || imageIndex !in document.images.indices) return null
-        return images.getOrPut(imageIndex) { readImage(imageIndex) }
+        val def = texture?.let { document.textures.getOrNull(it.index) } ?: return null
+        return cachedImage(def.extensions?.khrTextureBasisu?.source) ?: cachedImage(def.source)
     }
+
+    private fun cachedImage(imageIndex: Int?): ByteArray? =
+        if (imageIndex != null && imageIndex in document.images.indices) {
+            images.getOrPut(imageIndex) { readImage(imageIndex) }
+        } else {
+            null
+        }
 
     private fun readImage(index: Int): ByteArray? {
         val image = document.images[index]

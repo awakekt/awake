@@ -127,10 +127,17 @@ private fun transcodeLevels(module: JsAny, data: JsAny, format: String): JsAny =
             if (!file.isValid()) throw new Error('not a KTX2 file Basis Universal reads');
             if (!file.startTranscoding()) throw new Error('Basis Universal could not start transcoding');
             const target = module.transcoder_texture_format[format].value;
+            const layers = Math.max(1, file.getLayers());
             const levels = [];
             for (let level = 0; level < file.getLevels(); level++) {
-                const out = new Uint8Array(file.getImageTranscodedSizeInBytes(level, 0, 0, target));
-                if (!file.transcodeImage(out, level, 0, 0, target, 0, -1, -1)) throw new Error('level ' + level + ' failed to transcode to ' + format);
+                const sliceSize = file.getImageTranscodedSizeInBytes(level, 0, 0, target);
+                const out = new Uint8Array(sliceSize * layers);
+                for (let layer = 0; layer < layers; layer++) {
+                    const view = layers === 1 ? out : out.subarray(layer * sliceSize, (layer + 1) * sliceSize);
+                    if (!file.transcodeImage(view, level, layer, 0, target, 0, -1, -1)) {
+                        throw new Error('level ' + level + ' layer ' + layer + ' failed to transcode to ' + format);
+                    }
+                }
                 levels.push(out);
             }
             return levels;

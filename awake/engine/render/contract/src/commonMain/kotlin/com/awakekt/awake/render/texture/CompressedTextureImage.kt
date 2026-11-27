@@ -54,8 +54,10 @@ private const val BYTE_BLOCK = 16
  *   map is. A backend samples the block format as it samples the same pixels in RGBA8: Awake's shaders
  *   decode base colour from sRGB themselves, so both take the format's UNORM variant.
  * @property levels The mip levels, the largest first. Level `l` is `max(1, width >> l)` by
- *   `max(1, height >> l)` pixels and holds exactly [CompressedTextureFormat.byteSize] bytes. A partial
- *   chain is allowed; a backend samples only the levels given.
+ *   `max(1, height >> l)` pixels and holds `[layerByteSize]` bytes per layer, with all [layerCount]
+ *   layers packed contiguously. A partial chain is allowed; a backend samples only the levels given.
+ * @property layerCount Number of array layers packed into each mip level (`1` for a standard 2D texture,
+ *   `> 1` for a compressed `Texture2DArray` such as tiled terrain layers).
  */
 class CompressedTextureImage(
     val format: CompressedTextureFormat,
@@ -63,20 +65,34 @@ class CompressedTextureImage(
     val height: Int,
     val srgb: Boolean,
     val levels: List<ByteArray>,
+    val layerCount: Int = 1,
 ) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        format: CompressedTextureFormat,
+        width: Int,
+        height: Int,
+        srgb: Boolean,
+        levels: List<ByteArray>,
+    ) : this(format, width, height, srgb, levels, layerCount = 1)
+
     init {
         require(width > 0 && height > 0) { "A compressed texture is at least 1 x 1; was ${width}x$height." }
+        require(layerCount >= 1) { "A compressed texture has at least 1 layer; was $layerCount." }
         require(levels.isNotEmpty()) { "A compressed texture needs at least its base level." }
         require(levels.size <= fullChainLength()) {
             "A ${width}x$height texture has at most ${fullChainLength()} levels; was ${levels.size}."
         }
         levels.forEachIndexed { level, bytes ->
-            val expected = format.byteSize(levelWidth(level), levelHeight(level))
-            require(bytes.size == expected) {
-                "Level $level of a ${width}x$height $format texture is $expected bytes; was ${bytes.size}."
+            val expected = layerByteSize(level).toLong() * layerCount
+            require(bytes.size.toLong() == expected) {
+                "Level $level of a ${width}x$height ($layerCount layer(s)) $format texture is $expected bytes; was ${bytes.size}."
             }
         }
     }
+
+    /** Bytes one array layer of mip [level] takes. */
+    fun layerByteSize(level: Int): Int = format.byteSize(levelWidth(level), levelHeight(level))
 
     /** Width of level [level], in pixels. */
     fun levelWidth(level: Int): Int = (width shr level).coerceAtLeast(1)

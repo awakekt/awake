@@ -420,6 +420,35 @@ public final class com/awakekt/awake/asset/gltf/GltfImage$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/asset/gltf/GltfKhrTextureBasisu {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSource ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/gltf/GltfKhrTextureBasisu$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfKhrTextureBasisu$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/asset/gltf/GltfLimits {
 	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfLimits$Companion;
 	public fun <init> ()V
@@ -828,13 +857,20 @@ public final class com/awakekt/awake/asset/gltf/GltfSkinningKt {
 public final class com/awakekt/awake/asset/gltf/GltfTexture {
 	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfTexture$Companion;
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;)V
 	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;)V
+	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Integer;
 	public final fun component2 ()Ljava/lang/Integer;
-	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
+	public final fun component3 ()Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;
+	public final synthetic fun copy (Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfTexture;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfTexture;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExtensions ()Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;
+	public final fun getResolvedSource ()Ljava/lang/Integer;
 	public final fun getSampler ()Ljava/lang/Integer;
 	public final fun getSource ()Ljava/lang/Integer;
 	public fun hashCode ()I
@@ -853,6 +889,35 @@ public final synthetic class com/awakekt/awake/asset/gltf/GltfTexture$$serialize
 }
 
 public final class com/awakekt/awake/asset/gltf/GltfTexture$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfTextureExtensions {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;
+	public final fun copy (Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;)Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKhrTextureBasisu ()Lcom/awakekt/awake/asset/gltf/GltfKhrTextureBasisu;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/gltf/GltfTextureExtensions$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfTextureExtensions;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfTextureExtensions$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
