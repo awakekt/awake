@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.84.0] - 2026-11-27
+
+### Added
+
+- **GLB external textures and skeletal skinning.** `GltfParser` now exposes `ByteArray` overloads of `externalUris`, `loadExternalResources`, and `parseSkinned`, and `GltfAssetResolver` loads sidecar textures (such as Kenney `Textures/colormap.png`) and rigged/skinned meshes from binary `.glb` files just like `.gltf` files.
+- **Minimalist game loading screen with liquid-slide progress and manifest contract.** `AwakeProjectManifest` now accepts an optional neutral `loadingScreen` (`AwakeLoadingScreen`: title, logo path, background/accent hex colors, and `showEngineAttribution`), and `awake-loader.js` renders a minimalist dark/light canvas with a flowing ember-gold liquid-slide bottom hairline and a full-colour bottom-right `Powered by AwakeKt` stamp (customizable via `data-logo`, `data-bg`, `data-accent`, and `data-attribution="none"`).
+
+### Fixed
+
+- **Parented colliders and kinematic platforms honor world transforms.** `PhysicsSystem` and `PhysicsDebugWriter` now resolve full parent hierarchy transforms without per-step allocations, and `PhysicsSystem` drives `KINEMATIC` bodies via `moveKinematic` whenever their ECS world pose changes (for example under `KeyframeAnimationSystem`) while preserving parented local transforms.
+
 ## [0.83.0] - 2026-11-27
 
 ### Added
