@@ -407,7 +407,7 @@ class GraphicsDevice {
 
     /** Coarse hardware classification reported by the picked `VkPhysicalDevice`. */
     var deviceClass: GpuDeviceClass = GpuDeviceClass.Unknown
-        private set
+        internal set
 
     /**
      * Whether the device enabled `depthClamp`, so the shadow depth pass can clamp a caster in

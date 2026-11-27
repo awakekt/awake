@@ -81,4 +81,18 @@ class VulkanShaderResolverTest {
         assertContentEquals(bytes, assertIs<ResolvedShader.SpirV>(resolved).bytes)
         assertEquals(0, compiler.compiles)
     }
+
+    @Test
+    fun clearCacheDropsCompiledEntriesAndRecompilesOnDemand() = runTest {
+        resolver.resolve(ShaderSource.InlineText(program, entryPoint = "vertexMain"))
+        assertEquals(1, compiler.compiles)
+        assertEquals(1, resolver.cachedEntryCount)
+
+        resolver.clearCache()
+        assertEquals(0, resolver.cachedEntryCount)
+
+        resolver.resolve(ShaderSource.InlineText(program, entryPoint = "fragmentMain"))
+        assertEquals(2, compiler.compiles)
+        assertEquals(1, resolver.cachedEntryCount)
+    }
 }

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.device
 
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
@@ -25,8 +26,9 @@ internal class StagingAllocation(
  * Thread-safe reusable persistently-mapped staging buffer pool owned by [GraphicsDevice].
  *
  * Eliminates per-mesh and per-texture `vkCreateBuffer`/`vkAllocateMemory`/`vkMapMemory`/
- * `vkUnmapMemory`/`vkDestroyBuffer`/`vkFreeMemory` churn on uploads up to [MAX_RETAINED_BYTES],
+ * `vkUnmapMemory`/`vkDestroyBuffer`/`vkFreeMemory` churn on uploads up to `maxRetainedBytes`,
  * while releasing oversized one-off uploads immediately so peak host memory does not stay inflated.
+ * Idle cached buffers also reclaim automatically after `idleReclaimFrames` quiet frames.
  *
  * The internal lock is never held across user upload callbacks, avoiding any lock-order inversion
  * with `TransferContext.uploadLock` or `GraphicsDevice.queueLock`.
@@ -35,6 +37,13 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
     private val lock = QueueLock()
     private var cached: StagingAllocation? = null
     private var destroyed = false
+    private var idleFrames = 0
+
+    /** Quiet presented frames without staging checkouts before an idle cached buffer is freed. */
+    var idleReclaimFrames: Int = DEFAULT_IDLE_RECLAIM_FRAMES
+
+    private val maxRetainedBytes: Long
+        get() = if (graphicsDevice.deviceClass == GpuDeviceClass.Mobile) MOBILE_MAX_RETAINED_BYTES else MAX_RETAINED_BYTES
 
     /** Total staging buffers allocated across this device's lifetime, for tests and diagnostics. */
     var allocations: Long = 0L
@@ -63,6 +72,7 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
 
     internal fun acquire(requiredBytes: Long): StagingAllocation {
         val taken = lock.withLock {
+            idleFrames = 0
             val existing = cached
             if (existing != null) {
                 cached = null
@@ -78,8 +88,9 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
             }
             freeAllocation(taken)
         }
-        val targetBytes = if (requiredBytes <= MAX_RETAINED_BYTES) {
-            nextStagingCapacity(requiredBytes)
+        val cap = maxRetainedBytes
+        val targetBytes = if (requiredBytes <= cap) {
+            nextStagingCapacity(requiredBytes, cap)
         } else {
             requiredBytes
         }
@@ -87,11 +98,12 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
     }
 
     internal fun release(allocation: StagingAllocation) {
-        if (allocation.capacityBytes > MAX_RETAINED_BYTES) {
+        if (allocation.capacityBytes > maxRetainedBytes) {
             freeAllocation(allocation)
             return
         }
         val displaced = lock.withLock {
+            idleFrames = 0
             if (destroyed) {
                 allocation
             } else {
@@ -109,9 +121,33 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
         }
     }
 
+    /** Reclaims the cached staging buffer automatically once [idleReclaimFrames] quiet frames pass. */
+    fun frameSubmitted() {
+        val toFree = lock.withLock {
+            val current = cached
+            if (current == null) {
+                idleFrames = 0
+                null
+            } else {
+                idleFrames += 1
+                if (idleFrames >= idleReclaimFrames) {
+                    idleFrames = 0
+                    cached = null
+                    current
+                } else {
+                    null
+                }
+            }
+        }
+        if (toFree != null) {
+            freeAllocation(toFree)
+        }
+    }
+
     /** Frees any cached staging buffer without disabling reuse for future uploads. */
     fun trim() {
         val toFree = lock.withLock {
+            idleFrames = 0
             val current = cached
             cached = null
             current
@@ -125,6 +161,7 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
     fun destroy() {
         val toFree = lock.withLock {
             destroyed = true
+            idleFrames = 0
             val current = cached
             cached = null
             current
@@ -168,11 +205,13 @@ internal class ReusableStagingBuffer(private val graphicsDevice: GraphicsDevice)
     internal companion object {
         const val MIN_STAGING_BYTES: Long = 64L * 1024L
         const val MAX_RETAINED_BYTES: Long = 16L * 1024L * 1024L
+        const val MOBILE_MAX_RETAINED_BYTES: Long = 2L * 1024L * 1024L
+        const val DEFAULT_IDLE_RECLAIM_FRAMES: Int = 120
 
-        private fun nextStagingCapacity(requiredBytes: Long): Long {
+        private fun nextStagingCapacity(requiredBytes: Long, maxRetainedBytes: Long): Long {
             var cap = MIN_STAGING_BYTES
-            while (cap < requiredBytes && cap < MAX_RETAINED_BYTES) {
-                cap = minOf(cap * 2L, MAX_RETAINED_BYTES)
+            while (cap < requiredBytes && cap < maxRetainedBytes) {
+                cap = minOf(cap * 2L, maxRetainedBytes)
             }
             return maxOf(cap, requiredBytes)
         }

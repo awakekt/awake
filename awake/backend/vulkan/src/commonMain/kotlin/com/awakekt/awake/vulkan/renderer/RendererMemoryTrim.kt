@@ -12,8 +12,9 @@ import com.awakekt.awake.vulkan.texture.DepthTarget
 /**
  * Reclaims temporary Vulkan staging buffers, retired resources, unused native-resolution swapchain
  * depth when scaled, idle transient render targets, scene-depth/mask targets (shrunk to dormant 1x1
- * stand-ins until the next frame that needs them), pooled instance/UI buffers, and empty
- * `DEVICE_LOCAL` memory slabs without touching caller-owned meshes, materials, or textures.
+ * stand-ins until the next frame that needs them), cached image-pass textures, pooled instance/UI
+ * buffers, CPU shader compiler caches, and empty `DEVICE_LOCAL` memory slabs without touching
+ * caller-owned meshes, materials, or textures.
  */
 internal fun Renderer.performTrimMemory() {
     if (device == 0L) return
@@ -29,6 +30,13 @@ internal fun Renderer.performTrimMemory() {
     maskPass?.resize(0, DepthTarget.DORMANT_SIZE, dormantLayers = MASK_TARGET_LAYER_COUNT)
     deferredResourceReaper.destroyAll()
     imagePassExecutor.releaseTransientTargets()
+    if (imagePassTextures.isNotEmpty()) {
+        imagePassTextures.values.forEach { texture ->
+            imagePassExecutor.invalidateImageView(texture.imageView.handle)
+            textureResources.release(texture)
+        }
+        imagePassTextures.clear()
+    }
     transferContext.uploadBatcher.trimIdleChunks()
     graphicsDevice.stagingBufferPool.trim()
     textureUploads.trimIdle()
@@ -41,6 +49,7 @@ internal fun Renderer.performTrimMemory() {
     if (trimInstances) {
         resetDrawPreparersAfterTrim()
     }
+    onTrimMemory?.invoke()
     graphicsDevice.deviceMemoryAllocator.trimEmptySlabs()
     graphicsDevice.uniformMemoryPool.trimEmptySlabs()
     graphicsDevice.descriptorSetPool.trimEmptyPools()

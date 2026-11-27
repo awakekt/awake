@@ -212,6 +212,9 @@ class Renderer internal constructor(
     /** One-shot hook invoked once after the first submitted frame, used to persist warmed pipeline caches. */
     internal var onFirstFrameSubmitted: (() -> Unit)? = null
 
+    /** Optional hook invoked during [trimMemory] so the owning engine can drop CPU shader caches. */
+    internal var onTrimMemory: (() -> Unit)? = null
+
     override val supportsSceneDepth: Boolean
         get() = contentFeatureHost?.supportsSceneDepth == true
 

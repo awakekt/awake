@@ -692,6 +692,7 @@ open class VulkanEngine(
                 }
                 bindDepthPlaceholder(renderer)
                 renderer.onFirstFrameSubmitted = ::flushPipelineCache
+                renderer.onTrimMemory = { clearShaderCaches(shaderResolver, replacementResolver) }
             }
             createdRenderer = renderer
             vulkanRenderer = renderer
@@ -815,17 +816,6 @@ open class VulkanEngine(
     /** `GraphicsEngine` only calls [destroyBackend] after setup reaches `isReady`, so a failed
      * setup must release its own prefix of allocated Vulkan objects. */
 
-    /** Runs [rollback], keeping what it throws as suppressed on [failure], so construction's own failure is what escapes. */
-    // TooGenericExceptionCaught: a rollback that fails must not replace the failure it is cleaning up after.
-    @Suppress("TooGenericExceptionCaught")
-    private inline fun rollbackQuietly(failure: Throwable?, rollback: () -> Unit) {
-        try {
-            rollback()
-        } catch (cleanupFailure: Throwable) {
-            failure?.addSuppressed(cleanupFailure)
-        }
-    }
-
     private fun rollbackBackendCreation(
         createdRenderer: Renderer?,
         renderFeatures: List<RenderFeature<VulkanRenderFrameContext>>,
@@ -872,6 +862,21 @@ open class VulkanEngine(
 
     private companion object {
         const val MAX_FRAMES_IN_FLIGHT = 2
+    }
+}
+
+private fun clearShaderCaches(vararg resolvers: VulkanShaderResolver) {
+    resolvers.forEach { it.clearCache() }
+}
+
+/** Runs [rollback], keeping what it throws as suppressed on [failure], so construction's own failure is what escapes. */
+// TooGenericExceptionCaught: a rollback that fails must not replace the failure it is cleaning up after.
+@Suppress("TooGenericExceptionCaught")
+private inline fun rollbackQuietly(failure: Throwable?, rollback: () -> Unit) {
+    try {
+        rollback()
+    } catch (cleanupFailure: Throwable) {
+        failure?.addSuppressed(cleanupFailure)
     }
 }
 
