@@ -64,6 +64,27 @@ data class AwakeProjectArtifact(
 const val AWAKE_ARTIFACT_GROUP: String = "com.awakekt.awake"
 
 /**
+ * Optional loading screen customization declared by an Awake project manifest.
+ *
+ * Neutral and tier-agnostic in Core: omitted fields keep the host's default loading screen, and
+ * hosts decide whether to apply or override branding according to their own product rules.
+ *
+ * @property title Optional display title shown on the loading screen (defaults to the project name).
+ * @property logoPath Optional safe project-relative path to a logo image (`.png`, `.jpg`, `.jpeg`, `.svg`, `.webp`).
+ * @property backgroundColor Optional CSS hex background color (`#RGB` or `#RRGGBB`).
+ * @property accentColor Optional CSS hex progress-bar accent color (`#RGB` or `#RRGGBB`).
+ * @property showEngineAttribution Whether to show the engine attribution badge (`Made with AwakeKt`). Defaults to `true`.
+ */
+@Serializable
+data class AwakeLoadingScreen(
+    val title: String? = null,
+    val logoPath: String? = null,
+    val backgroundColor: String? = null,
+    val accentColor: String? = null,
+    val showEngineAttribution: Boolean = true,
+)
+
+/**
  * The canonical project manifest shared by tools and runtimes.
  *
  * @property schema Optional JSON schema URI.
@@ -85,8 +106,10 @@ const val AWAKE_ARTIFACT_GROUP: String = "com.awakekt.awake"
  *   others, and a list that leaves it out has it first. Optional: with none, everything draws by its
  *   sort order alone, and [ProjectContentValidator.unlistedSortingLayerIssues] warns about a layer a
  *   scene names that the list does not.
+ * @property loadingScreen Optional loading screen customization; null keeps the host's default loading screen.
  */
 @Serializable
+@Suppress("LongParameterList")
 data class AwakeProjectManifest(
     @SerialName("\$schema")
     val schema: String? = null,
@@ -101,7 +124,69 @@ data class AwakeProjectManifest(
     val plugins: List<AwakeProjectPluginReference> = emptyList(),
     val tags: List<String> = emptyList(),
     val sortingLayers: List<String> = emptyList(),
-)
+    val loadingScreen: AwakeLoadingScreen? = null,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        schema: String? = null,
+        formatVersion: Int = 1,
+        id: String,
+        name: String,
+        version: String,
+        minEngineVersion: String? = null,
+        entryScene: String,
+        author: String = "",
+        assetRoots: List<String> = listOf("assets"),
+        plugins: List<AwakeProjectPluginReference> = emptyList(),
+        tags: List<String> = emptyList(),
+        sortingLayers: List<String> = emptyList(),
+    ) : this(
+        schema = schema,
+        formatVersion = formatVersion,
+        id = id,
+        name = name,
+        version = version,
+        minEngineVersion = minEngineVersion,
+        entryScene = entryScene,
+        author = author,
+        assetRoots = assetRoots,
+        plugins = plugins,
+        tags = tags,
+        sortingLayers = sortingLayers,
+        loadingScreen = null,
+    )
+
+    /** Copies this manifest while preserving its loading screen configuration. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        schema: String? = this.schema,
+        formatVersion: Int = this.formatVersion,
+        id: String = this.id,
+        name: String = this.name,
+        version: String = this.version,
+        minEngineVersion: String? = this.minEngineVersion,
+        entryScene: String = this.entryScene,
+        author: String = this.author,
+        assetRoots: List<String> = this.assetRoots,
+        plugins: List<AwakeProjectPluginReference> = this.plugins,
+        tags: List<String> = this.tags,
+        sortingLayers: List<String> = this.sortingLayers,
+    ): AwakeProjectManifest = copy(
+        schema = schema,
+        formatVersion = formatVersion,
+        id = id,
+        name = name,
+        version = version,
+        minEngineVersion = minEngineVersion,
+        entryScene = entryScene,
+        author = author,
+        assetRoots = assetRoots,
+        plugins = plugins,
+        tags = tags,
+        sortingLayers = sortingLayers,
+        loadingScreen = this.loadingScreen,
+    )
+}
 
 /** The sorting layer a sprite or tilemap draws on unless it names another; see [AwakeProjectManifest.sortingLayers]. */
 const val DEFAULT_SORTING_LAYER: String = "Default"
@@ -140,6 +225,8 @@ private val projectIdPattern = Regex("^[a-z][a-z0-9]*(\\.[a-z0-9-]+)+$")
 private val artifactPartPattern = Regex("^[A-Za-z0-9_.+-]+$")
 private val qualifiedClassPattern = Regex("^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$")
 private val projectDrivePathPattern = Regex("^[A-Za-z]:.*")
+private val hexColorPattern = Regex("^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$")
+private val loadingLogoExtensions = setOf("png", "jpg", "jpeg", "svg", "webp")
 
 /** Pure JSON, SemVer, and structural validation for the project contract. */
 object AwakeProjectValidator {
@@ -273,6 +360,45 @@ internal fun projectManifestIssueDetails(manifest: AwakeProjectManifest): List<P
     addAll(pluginIssues(manifest.plugins))
     addAll(tagIssues(manifest.tags))
     addAll(sortingLayerIssues(manifest.sortingLayers))
+    manifest.loadingScreen?.let { addAll(loadingScreenIssues(it)) }
+}
+
+private fun loadingScreenIssues(loadingScreen: AwakeLoadingScreen): List<ProjectContentIssue> = buildList {
+    if (loadingScreen.title != null && loadingScreen.title.isBlank()) {
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "loadingScreen.title must not be blank"))
+    }
+    loadingScreen.logoPath?.let { logo ->
+        if (!AwakeProjectValidator.isSafeProjectPath(logo)) {
+            add(
+                ProjectContentIssue(
+                    code = ProjectIssueCode.UNSAFE_PATH,
+                    message = "loadingScreen.logoPath must be a safe project-relative path",
+                    path = logo,
+                ),
+            )
+        } else {
+            val ext = logo.substringAfterLast('.', "").lowercase()
+            if (ext !in loadingLogoExtensions) {
+                add(
+                    ProjectContentIssue(
+                        code = ProjectIssueCode.INVALID_MANIFEST,
+                        message = "loadingScreen.logoPath must be an image (${loadingLogoExtensions.joinToString { ".$it" }})",
+                        path = logo,
+                    ),
+                )
+            }
+        }
+    }
+    loadingScreen.backgroundColor?.let { bg ->
+        if (!bg.matches(hexColorPattern)) {
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "loadingScreen.backgroundColor must be a #RGB or #RRGGBB hex color"))
+        }
+    }
+    loadingScreen.accentColor?.let { accent ->
+        if (!accent.matches(hexColorPattern)) {
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "loadingScreen.accentColor must be a #RGB or #RRGGBB hex color"))
+        }
+    }
 }
 
 private fun sortingLayerIssues(layers: List<String>): List<ProjectContentIssue> = buildList {
