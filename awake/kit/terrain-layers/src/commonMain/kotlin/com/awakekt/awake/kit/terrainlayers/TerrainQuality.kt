@@ -82,7 +82,7 @@ private fun fastLayersShaderSet(slots: Int, paged: Boolean, includeSurfaceDeposi
 
 /**
  * Returns a copy of this layered [TerrainSurface] configured for [quality], preserving all bound
- * layer arrays, tables, control maps, lightmaps, and sampler overrides.
+ * layer arrays, tables, control maps, lightmaps, sampler overrides, and shared [TerrainSurface.textureKeys].
  */
 fun TerrainSurface.withTerrainQuality(
     quality: TerrainQuality,
@@ -97,4 +97,5 @@ fun TerrainSurface.withTerrainQuality(
     ),
     textures = textures,
     samplerTextures = samplerTextures,
+    textureKeys = textureKeys,
 )

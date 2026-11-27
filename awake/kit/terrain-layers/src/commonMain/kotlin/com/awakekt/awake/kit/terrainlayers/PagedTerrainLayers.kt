@@ -6,6 +6,7 @@
 package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.asset.shaderpack.pagedTerrainContentFeature
+import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.asset.shaders.withSolidOpaque
 import com.awakekt.awake.asset.terrain.PagedHeightmap
@@ -44,6 +45,30 @@ class PagedTerrainLayers private constructor(
         sharedTextures = shared,
         samplerTextures = mapOf(LAYER_SAMPLER_BINDING to LAYER_ALBEDO_BINDING),
     )
+
+    /**
+     * Returns the paged terrain content feature configured for [quality] and optional
+     * [includeSurfaceDeposit], reusing [content] for the default [TerrainQuality.Standard] tier.
+     */
+    fun contentFor(
+        quality: TerrainQuality,
+        includeSurfaceDeposit: Boolean = quality == TerrainQuality.Standard,
+    ): ContentFeatureSource =
+        if (quality == TerrainQuality.Standard && includeSurfaceDeposit) {
+            content
+        } else {
+            pagedTerrainContentFeature(
+                terrain,
+                shaders = terrainLayersShaderSet(
+                    slots = index.controlSlots,
+                    quality = quality,
+                    paged = true,
+                    includeSurfaceDeposit = includeSurfaceDeposit,
+                ),
+                sharedTextures = shared,
+                samplerTextures = mapOf(LAYER_SAMPLER_BINDING to LAYER_ALBEDO_BINDING),
+            )
+        }
 
     /** Replaces cell control data and updates the coarse control texels owned by that cell. */
     fun editControl(coord: TerrainPageCoord, control: TerrainControlMap) {

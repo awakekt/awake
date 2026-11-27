@@ -17,6 +17,7 @@ import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.rendering.animation.AnimationUpdateRate
 import com.awakekt.awake.scene.shader.ShaderEffectAssets
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
+import com.awakekt.awake.kit.terrainlayers.TerrainQuality as TerrainShadingQuality
 
 /**
  * The content Core's features read from [SceneHostServices.content]. [loadSceneContent] fills it
@@ -88,4 +89,13 @@ object CoreSceneContent {
      * provider is missing draws with the built-in terrain shading, and its scene keeps the `surface`.
      */
     val TerrainSurfaces: SceneContentKey<Map<String, TerrainSurfaceProvider>> = SceneContentKey("terrain surfaces")
+
+    /**
+     * Fragment shading quality for terrain surfaces (`terrain` and `paged_terrain`), as
+     * [TerrainFeature] and [StreamedTerrainFeature] read it when planning terrain drawing. Core
+     * loads none, so terrains default to [TerrainShadingQuality.Standard]; a game opts into
+     * [TerrainShadingQuality.Fast] from its own feature's load when targeting mobile or low-spec
+     * tiers, without colliding with [TerrainSurfaces].
+     */
+    val TerrainQuality: SceneContentKey<TerrainShadingQuality> = SceneContentKey("terrain quality")
 }

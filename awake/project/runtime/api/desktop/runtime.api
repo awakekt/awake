@@ -111,6 +111,7 @@ public final class com/awakekt/awake/project/runtime/CoreSceneContent {
 	public final fun getParticleImages ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
 	public final fun getParticleSprites ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
 	public final fun getShaderEffects ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
+	public final fun getTerrainQuality ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
 	public final fun getTerrainSurfaces ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
 }
 

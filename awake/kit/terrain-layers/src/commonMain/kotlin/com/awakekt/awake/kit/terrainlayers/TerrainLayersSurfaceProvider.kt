@@ -45,11 +45,38 @@ data class TerrainLayersPayload(
  *
  * @param assets Where the palette, images and control map are read from, by project path.
  * @param decodeImage Turns image file bytes into RGBA8; the default uses the platform decoder.
+ * @property quality Fragment shading quality selected for resolved surfaces.
+ * @property includeSurfaceDeposit Whether resolved surfaces sample procedural weather surface deposits.
  */
-class TerrainLayersSurfaceProvider(
+class TerrainLayersSurfaceProvider private constructor(
     private val assets: AssetSource,
-    private val decodeImage: suspend (ByteArray) -> TextureAsset = ::decodeRgba8,
+    private val decodeImage: suspend (ByteArray) -> TextureAsset,
+    val quality: TerrainQuality,
+    val includeSurfaceDeposit: Boolean,
 ) : TerrainSurfaceProvider {
+
+    /** Creates a [TerrainQuality.Standard] provider reading layered terrain assets from [assets]. */
+    constructor(
+        assets: AssetSource,
+        decodeImage: suspend (ByteArray) -> TextureAsset = ::decodeRgba8,
+    ) : this(assets, decodeImage, TerrainQuality.Standard, includeSurfaceDeposit = true)
+
+    /** Creates a provider configured for [quality] and optional [includeSurfaceDeposit], keeping [decodeImage] last for trailing lambdas. */
+    constructor(
+        assets: AssetSource,
+        quality: TerrainQuality,
+        includeSurfaceDeposit: Boolean = quality == TerrainQuality.Standard,
+        decodeImage: suspend (ByteArray) -> TextureAsset = ::decodeRgba8,
+    ) : this(assets, decodeImage, quality, includeSurfaceDeposit)
+
+    /**
+     * Returns a provider reading from the same [assets] and [decodeImage] with [quality] and
+     * [includeSurfaceDeposit], preserving cross-chunk texture array deduplication keys.
+     */
+    fun withQuality(
+        quality: TerrainQuality,
+        includeSurfaceDeposit: Boolean = quality == TerrainQuality.Standard,
+    ): TerrainLayersSurfaceProvider = TerrainLayersSurfaceProvider(assets, decodeImage, quality, includeSurfaceDeposit)
 
     override suspend fun resolve(reference: TerrainSurfaceReference): TerrainSurface {
         require(reference.provider == TERRAIN_LAYERS_PROVIDER) {
@@ -85,6 +112,8 @@ class TerrainLayersSurfaceProvider(
                 LAYER_ALBEDO_BINDING to arrayKey,
                 LAYER_TABLE_BINDING to TerrainLayerTableKey(palette),
             ),
+            quality = quality,
+            includeSurfaceDeposit = includeSurfaceDeposit,
         )
     }
 

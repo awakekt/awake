@@ -1,6 +1,8 @@
 public final class com/awakekt/awake/kit/terrainlayers/PagedTerrainLayers {
 	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/PagedTerrainLayers$Companion;
 	public synthetic fun <init> (Lcom/awakekt/awake/terrain/PagedTerrain;Lcom/awakekt/awake/terrain/TerrainPageIndex;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun contentFor (Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;Z)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun contentFor$default (Lcom/awakekt/awake/kit/terrainlayers/PagedTerrainLayers;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public final fun editControl (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;)V
 	public final fun getContent ()Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public final fun getIndex ()Lcom/awakekt/awake/terrain/TerrainPageIndex;
@@ -234,14 +236,22 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersShaderKt {
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceKt {
 	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;)Lcom/awakekt/awake/terrain/TerrainSurface;
 	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;Ljava/util/Map;)Lcom/awakekt/awake/terrain/TerrainSurface;
+	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;Ljava/util/Map;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;Z)Lcom/awakekt/awake/terrain/TerrainSurface;
 	public static synthetic fun terrainLayersSurface$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;ILjava/lang/Object;)Lcom/awakekt/awake/terrain/TerrainSurface;
 	public static synthetic fun terrainLayersSurface$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/terrain/TerrainSurface;
+	public static synthetic fun terrainLayersSurface$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;Ljava/util/Map;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;ZILjava/lang/Object;)Lcom/awakekt/awake/terrain/TerrainSurface;
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider : com/awakekt/awake/terrain/TerrainSurfaceProvider {
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;ZLkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;ZLkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function2;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getIncludeSurfaceDeposit ()Z
+	public final fun getQuality ()Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;
 	public fun resolve (Lcom/awakekt/awake/terrain/TerrainSurfaceReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun withQuality (Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;Z)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider;
+	public static synthetic fun withQuality$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider;Lcom/awakekt/awake/kit/terrainlayers/TerrainQuality;ZILjava/lang/Object;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider;
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProviderKt {

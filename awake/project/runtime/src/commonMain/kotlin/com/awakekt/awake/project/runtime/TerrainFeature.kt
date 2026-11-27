@@ -5,12 +5,15 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
+import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.kit.terrainlayers.TERRAIN_LAYERS_PROVIDER
 import com.awakekt.awake.kit.terrainlayers.TerrainLayersSurfaceProvider
+import com.awakekt.awake.kit.terrainlayers.TerrainQuality
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.terrain.TerrainContentSystem
@@ -23,7 +26,9 @@ import kotlinx.coroutines.cancel
  * A scene's `terrain`s, drawn when the host has a renderer: each by [TerrainContentSystem], with the
  * surface its `surface` names from [CoreSceneContent.TerrainSurfaces], or the built-in terrain shading
  * without one. A project's content holds the layered-terrain kit's provider, read from the project's
- * files. A headless host draws none. A terrain's collision is [PhysicsFeature]'s.
+ * files. When a game sets [CoreSceneContent.TerrainQuality] to [TerrainQuality.Fast], the layered
+ * provider and built-in terrain base shaders switch to their lean mobile variants while preserving
+ * cross-chunk texture deduplication. A headless host draws none. A terrain's collision is [PhysicsFeature]'s.
  */
 internal object TerrainFeature : SceneFeature {
     override val id = "com.awakekt.awake.terrain"
@@ -40,7 +45,25 @@ internal object TerrainFeature : SceneFeature {
             val host = services.renderer as? ContentFeatureHost
             // A renderer that can't take content features draws nothing, so it reads nothing either.
             val scope = host?.let { services.backgroundScope("terrain") }
-            TerrainDrawingSystem(host, scope, services.content[CoreSceneContent.TerrainSurfaces].orEmpty())
+            val quality = services.content[CoreSceneContent.TerrainQuality] ?: TerrainQuality.Standard
+            val baseProviders = services.content[CoreSceneContent.TerrainSurfaces].orEmpty()
+            val providers = applyTerrainQuality(baseProviders, quality)
+            val baseShaders = if (quality == TerrainQuality.Fast) PackShaderSets.TerrainFast else PackShaderSets.Terrain
+            TerrainDrawingSystem(host, scope, providers, baseShaders)
+        }
+    }
+
+    private fun applyTerrainQuality(
+        providers: Map<String, TerrainSurfaceProvider>,
+        quality: TerrainQuality,
+    ): Map<String, TerrainSurfaceProvider> {
+        if (quality == TerrainQuality.Standard) return providers
+        return providers.mapValues { (id, provider) ->
+            if (id == TERRAIN_LAYERS_PROVIDER && provider is TerrainLayersSurfaceProvider) {
+                provider.withQuality(quality)
+            } else {
+                provider
+            }
         }
     }
 }
@@ -55,9 +78,17 @@ internal class TerrainDrawingSystem(
     host: ContentFeatureHost?,
     private val scope: CoroutineScope?,
     providers: Map<String, TerrainSurfaceProvider>,
+    baseShaders: ShaderSet = PackShaderSets.Terrain,
 ) : System,
     AutoCloseable {
-    private val terrains = host?.let { TerrainContentSystem(it, checkNotNull(scope) { "A terrain that draws resolves in a scope" }, providers) }
+    private val terrains = host?.let {
+        TerrainContentSystem(
+            host = it,
+            scope = checkNotNull(scope) { "A terrain that draws resolves in a scope" },
+            providers = providers,
+            baseShaders = baseShaders,
+        )
+    }
 
     override fun update(world: World, delta: Float) {
         terrains?.update(world, delta)
