@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime.session
 
+import com.awakekt.awake.core.host.MemoryPressure
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
@@ -12,6 +13,7 @@ import com.awakekt.awake.engine.platform.error.AppCoroutineScope
 import com.awakekt.awake.engine.platform.error.appChildScope
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.binding.renderableRequests
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
@@ -49,7 +51,9 @@ class SceneSession internal constructor(
 
     internal val schedule = SceneSchedule(spec)
     internal val bridges = SceneBridgeList()
+    private val memoryPressureWatcher = MemoryPressure.watch()
     private var assetLibrary: SceneAssetLibrary? = null
+    private var activeRenderer: Renderer? = null
 
     private var scope: CoroutineScope? = null
 
@@ -86,6 +90,7 @@ class SceneSession internal constructor(
 
     internal suspend fun ready(runtime: SceneAppLifecycleRuntime) {
         becameReady = true
+        activeRenderer = runtime.renderer
         schedule.initialize(runtime)
         spec.scenePopulationBlock(runtime)
         spec.onReadyBlock(runtime)
@@ -112,11 +117,17 @@ class SceneSession internal constructor(
         bridges.beforeAdvance(world, delta)
         schedule.advance(world, delta, fixedUpdate)
         bridges.afterAdvance(world, delta)
+        memoryPressureWatcher.drain {
+            assetLibrary?.trimMemory()
+            activeRenderer?.trimMemory()
+        }
     }
 
     internal fun dispose(runtime: SceneAppLifecycleRuntime) {
         val bridgeFailure = bridges.closeAll()
         if (becameReady) spec.onDisposeBlock(runtime)
+        memoryPressureWatcher.close()
+        activeRenderer = null
         sceneManager.close()
         assetLibrary?.dispose()
         assetLibrary = null

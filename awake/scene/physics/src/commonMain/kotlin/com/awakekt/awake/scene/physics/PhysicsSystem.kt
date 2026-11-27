@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.physics
 
+import com.awakekt.awake.core.host.MemoryPressure
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.ComponentTypeId
@@ -99,6 +100,7 @@ class PhysicsSystem(
 
     private val stepContacts = ArrayList<PhysicsContact>()
     private var drainingWorld: World? = null
+    private val memoryPressure = MemoryPressure.watch()
 
     // Built once, so a step with no contacts allocates nothing.
     private val collectContact: (ContactEvent) -> Unit = { event ->
@@ -160,6 +162,7 @@ class PhysicsSystem(
     }
 
     override fun update(world: World, delta: Float) {
+        if (memoryPressure.check()) physicsWorld.trimMemory()
         resolveTransformType(world)
         val family = world.family<Transform, PhysicsBody>()
         if (needsBodySync(world, family.changes)) {

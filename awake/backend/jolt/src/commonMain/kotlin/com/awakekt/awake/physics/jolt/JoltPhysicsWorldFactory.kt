@@ -8,9 +8,11 @@ package com.awakekt.awake.physics.jolt
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.PhysicsWorldConfig
 
 /**
- * Builds this target's [PhysicsWorld].
+ * Builds this target's [PhysicsWorld] using the platform's default [PhysicsWorldConfig]
+ * ([PhysicsWorldConfig.Mobile] on Android, [PhysicsWorldConfig.Desktop] on desktop).
  *
  * `JoltPhysicsWorld` is a separate class per target rather than one `expect` class -- the three
  * bindings share no code, so there is nothing to declare in common. That left common code with
@@ -28,4 +30,14 @@ import com.awakekt.awake.physics.PhysicsWorld
 expect suspend fun createJoltPhysicsWorld(
     gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
     layers: CollisionLayers = CollisionLayers.Default,
+): PhysicsWorld
+
+/**
+ * Builds this target's [PhysicsWorld] with explicit [config] capacity, threading, temp-allocator,
+ * and `MeshShape` BVH cache limits.
+ */
+expect suspend fun createJoltPhysicsWorld(
+    gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
+    layers: CollisionLayers = CollisionLayers.Default,
+    config: PhysicsWorldConfig,
 ): PhysicsWorld

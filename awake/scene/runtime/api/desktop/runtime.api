@@ -70,6 +70,9 @@ public final class com/awakekt/awake/scene/binding/SceneWorldExportKt {
 }
 
 public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver : com/awakekt/awake/scene/runtime/SceneAssetResolver, java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/scene/runtime/AssetSourceTextureResolver$Companion;
+	public static final field DEFAULT_MAX_CACHED_ENTRIES I
+	public static final field LOW_RAM_MAX_CACHED_ENTRIES I
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
@@ -84,14 +87,22 @@ public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver : 
 	public fun defaultCullMode (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/CullMode;
 	public fun forgetTexture (Ljava/lang/String;)V
 	public fun forgetTextures ()V
+	public final fun getMaxCachedEntries ()I
 	public fun loadMaterial (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public fun loadMesh (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun meshLevels (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneMeshLevels;
 	public fun onMaterialReused (Ljava/lang/String;)V
+	public final fun setMaxCachedEntries (I)V
 	public fun sharedMaterialKey (Ljava/lang/String;)Ljava/lang/String;
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
+	public fun trimMemory ()V
+}
+
+public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver$Companion {
+	public final fun defaultMaxCachedEntries (Lcom/awakekt/awake/core/host/DeviceProfile;)I
+	public static synthetic fun defaultMaxCachedEntries$default (Lcom/awakekt/awake/scene/runtime/AssetSourceTextureResolver$Companion;Lcom/awakekt/awake/core/host/DeviceProfile;ILjava/lang/Object;)I
 }
 
 public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolvers {
@@ -291,6 +302,10 @@ public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/aw
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
+	public static final field Companion Lcom/awakekt/awake/scene/runtime/SceneAssetLibrary$Companion;
+	public static final field HIGH_RAM_RETAINED_MESH_BUDGET_BYTES J
+	public static final field LOW_RAM_RETAINED_MESH_BUDGET_BYTES J
+	public static final field MID_RAM_RETAINED_MESH_BUDGET_BYTES J
 	public fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/List;JLjava/util/Map;)V
 	public synthetic fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/List;JLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun applyRequestedForgets ()V
@@ -315,6 +330,14 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
 	public final fun retainedMeshBytes ()J
 	public final fun texture (Ljava/lang/String;)Lcom/awakekt/awake/render/texture/TextureAsset;
 	public final fun textureImage (Ljava/lang/String;)Lcom/awakekt/awake/render/texture/GpuImageSource;
+	public final fun trimMemory ()V
+	public final fun trimRetainedMeshes (J)J
+	public static synthetic fun trimRetainedMeshes$default (Lcom/awakekt/awake/scene/runtime/SceneAssetLibrary;JILjava/lang/Object;)J
+}
+
+public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary$Companion {
+	public final fun defaultRetainedMeshBudgetBytes (Lcom/awakekt/awake/core/host/DeviceProfile;)J
+	public static synthetic fun defaultRetainedMeshBudgetBytes$default (Lcom/awakekt/awake/scene/runtime/SceneAssetLibrary$Companion;Lcom/awakekt/awake/core/host/DeviceProfile;ILjava/lang/Object;)J
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAssetReferences {
@@ -363,6 +386,7 @@ public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolv
 	public fun onMaterialReused (Ljava/lang/String;)V
 	public fun sharedMaterialKey (Ljava/lang/String;)Ljava/lang/String;
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
+	public fun trimMemory ()V
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImpls {
@@ -382,6 +406,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImp
 	public static fun onMaterialReused (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)V
 	public static fun sharedMaterialKey (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Ljava/lang/String;
 	public static fun texture (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
+	public static fun trimMemory (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;)V
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneFrameBreakdownKt {

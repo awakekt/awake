@@ -7,6 +7,8 @@ package com.awakekt.awake.scene.gltf
 
 import com.awakekt.awake.asset.gltf.GltfMesh
 import com.awakekt.awake.asset.gltf.LoadedSkinnedScene
+import com.awakekt.awake.core.host.DeviceProfile
+import com.awakekt.awake.core.host.readDeviceProfile
 
 /**
  * Which models a [GltfAssetResolver] lets go of the CPU copies of once they are uploaded, and what it
@@ -44,6 +46,8 @@ internal class GltfReleases {
     }
 
     fun isReleasable(path: String): Boolean = path in releasable
+
+    fun isKept(path: String): Boolean = path in kept
 
     /** What was let go of for model [path], forgotten with it. */
     fun forget(path: String) {
@@ -116,3 +120,88 @@ private fun GltfMesh.withoutGeometry(): GltfMesh = copy(
 
 private val EMPTY_FLOATS = FloatArray(0)
 private val EMPTY_INTS = IntArray(0)
+
+/**
+ * Refcount + LRU retention policy for `GltfAssetResolver.loadedScenes` so skinned skeletons and
+ * animation clips from visited zones do not accumulate forever on 4 GB RAM devices.
+ */
+internal class GltfSceneRetention(
+    private val loadedScenes: MutableMap<String, LoadedSkinnedScene>,
+    private val isKept: (String) -> Boolean,
+    private val forgetModel: (String) -> Unit,
+) {
+    private val holders = HashMap<String, Int>()
+    private val accessOrder = LinkedHashSet<String>()
+
+    var maxRetainedScenes: Int = defaultMaxRetainedScenes()
+        set(value) {
+            field = value.coerceAtLeast(1)
+            evictExcess()
+        }
+
+    fun touch(path: String) {
+        if (path !in loadedScenes) return
+        accessOrder.remove(path)
+        accessOrder.add(path)
+    }
+
+    fun recordLoaded(path: String) {
+        if (path !in loadedScenes) return
+        accessOrder.remove(path)
+        accessOrder.add(path)
+        evictExcess(protectedPath = path)
+    }
+
+    fun acquire(path: String) {
+        holders[path] = (holders[path] ?: 0) + 1
+        if (path in loadedScenes) {
+            accessOrder.remove(path)
+            accessOrder.add(path)
+        }
+    }
+
+    fun release(path: String) {
+        val current = holders[path] ?: return
+        if (current > 1) {
+            holders[path] = current - 1
+        } else {
+            holders.remove(path)
+            evictExcess()
+        }
+    }
+
+    fun holderCount(path: String): Int = holders[path] ?: 0
+
+    fun onForget(path: String) {
+        accessOrder.remove(path)
+        holders.remove(path)
+    }
+
+    fun trimUnused() {
+        val candidates = loadedScenes.keys.filter { it !in holders && !isKept(it) }
+        for (path in candidates) {
+            forgetModel(path)
+        }
+    }
+
+    fun evictExcess(protectedPath: String? = null) {
+        while (loadedScenes.size > maxRetainedScenes) {
+            val victim = accessOrder.firstOrNull {
+                it != protectedPath && it in loadedScenes && it !in holders && !isKept(it)
+            } ?: break
+            forgetModel(victim)
+        }
+    }
+
+    companion object {
+        private const val LOW_RAM_BYTES: Long = 4L * 1024L * 1024L * 1024L
+        const val LOW_RAM_MAX_RETAINED_SCENES: Int = 32
+        const val DEFAULT_MAX_RETAINED_SCENES: Int = 128
+
+        fun defaultMaxRetainedScenes(profile: DeviceProfile = readDeviceProfile()): Int {
+            val total = profile.totalMemoryBytes
+            val isLowRam = profile.isLowRamDevice || (total != null && total in 1L..LOW_RAM_BYTES)
+            return if (isLowRam) LOW_RAM_MAX_RETAINED_SCENES else DEFAULT_MAX_RETAINED_SCENES
+        }
+    }
+}

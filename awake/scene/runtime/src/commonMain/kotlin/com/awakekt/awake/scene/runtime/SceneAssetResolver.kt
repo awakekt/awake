@@ -174,6 +174,13 @@ interface SceneAssetResolver {
 
     /** [forgetTexture] for every texture this resolver keeps. [SceneAssetLibrary.forgetTextures] calls it. */
     fun forgetTextures() {}
+
+    /**
+     * Releases unreferenced cached CPU/decoded asset payloads to reclaim memory under pressure
+     * without disturbing live GPU meshes or materials. [SceneAssetLibrary.trimMemory] calls it on
+     * the frame thread when host [com.awakekt.awake.core.host.MemoryPressure] fires.
+     */
+    fun trimMemory() {}
 }
 
 /**

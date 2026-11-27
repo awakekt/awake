@@ -1,7 +1,11 @@
 public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/awake/scene/runtime/SceneAssetResolver {
+	public static final field Companion Lcom/awakekt/awake/scene/gltf/GltfAssetResolver$Companion;
+	public static final field DEFAULT_MAX_RETAINED_SCENES I
+	public static final field LOW_RAM_MAX_RETAINED_SCENES I
 	public fun <init> ()V
 	public fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun acquireModel (Ljava/lang/String;)V
 	public final fun adopt (Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfAssetResolver;)V
 	public fun attach (Lkotlinx/coroutines/CoroutineScope;)V
 	public fun canResolveMaterial (Ljava/lang/String;)Z
@@ -14,6 +18,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public fun forgetTexture (Ljava/lang/String;)V
 	public fun forgetTextures ()V
 	public final fun getLoadedScene (Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun getMaxRetainedScenes ()I
 	public final fun isMaterialLetGo (Ljava/lang/String;)Z
 	public final fun isMeshLetGo (Ljava/lang/String;)Z
 	public final fun isPreloaded (Ljava/lang/String;)Z
@@ -27,6 +32,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun materialParameters (Ljava/lang/String;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
 	public final fun materialSlots (Ljava/lang/String;)Ljava/util/List;
 	public fun meshLevels (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneMeshLevels;
+	public final fun modelHolderCount (Ljava/lang/String;)I
 	public final fun modelPath (Ljava/lang/String;)Ljava/lang/String;
 	public fun onMaterialReused (Ljava/lang/String;)V
 	public final fun preload (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -34,10 +40,18 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun preloadBytes (Ljava/lang/String;[B)V
 	public final fun preloadMaterials (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun releaseAfterUpload (Ljava/lang/String;)V
+	public final fun releaseModel (Ljava/lang/String;)V
 	public final fun setAssetSource (Lcom/awakekt/awake/core/io/AssetSource;)V
 	public final fun setImageDecoder (Lkotlin/jvm/functions/Function2;)V
+	public final fun setMaxRetainedScenes (I)V
 	public fun sharedMaterialKey (Ljava/lang/String;)Ljava/lang/String;
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
+	public fun trimMemory ()V
+}
+
+public final class com/awakekt/awake/scene/gltf/GltfAssetResolver$Companion {
+	public final fun defaultMaxRetainedScenes (Lcom/awakekt/awake/core/host/DeviceProfile;)I
+	public static synthetic fun defaultMaxRetainedScenes$default (Lcom/awakekt/awake/scene/gltf/GltfAssetResolver$Companion;Lcom/awakekt/awake/core/host/DeviceProfile;ILjava/lang/Object;)I
 }
 
 public final class com/awakekt/awake/scene/gltf/GltfAssetResolverKt {
