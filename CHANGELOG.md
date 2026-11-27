@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.83.0] - 2026-11-27
+
+### Added
+
+- Added `CoreSceneContent.TerrainQuality`, `TerrainLayersSurfaceProvider.withQuality(...)`, `PagedTerrainLayers.contentFor(...)`, and `PackShaderSets.TerrainFast` / `PagedTerrainFast` so games can opt into `TerrainQuality.Fast` from a `SceneFeature.load` without colliding with `CoreSceneContent.TerrainSurfaces`, and preserved `TerrainSurface.textureKeys` in `TerrainSurface.withTerrainQuality(...)`.
+
 ## [0.82.0] - 2026-11-27
 
 ### Added
