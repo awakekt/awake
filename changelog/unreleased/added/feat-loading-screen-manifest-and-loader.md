@@ -1,0 +1,1 @@
+- **Customizable game loading screen contract and web loader.** `AwakeProjectManifest` now accepts an optional neutral `loadingScreen` (`AwakeLoadingScreen`: title, logo path, background/accent hex colors, and `showEngineAttribution`), and `awake-loader.js` honors `data-logo`, `data-bg`, and `data-accent` in game mode while defaulting to the monochrome `Made with AwakeKt` splash.

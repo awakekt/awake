@@ -28,9 +28,28 @@
   const showAttribution = script?.dataset.attribution !== "none";
   const escapeHtml = (value) =>
     value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const safeHex = (value) => {
+    const trimmed = (value ?? "").trim();
+    return /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(trimmed) ? trimmed : "";
+  };
+  const safeLogoUrl = (value) => {
+    const trimmed = (value ?? "").trim();
+    if (!trimmed) return "";
+    if (/^(?:javascript|vbscript|data):/i.test(trimmed) || trimmed.startsWith("//")) return "";
+    return trimmed;
+  };
+  const hexIsLight = (hex) => {
+    const raw = hex.slice(1);
+    const full = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
+    const r = parseInt(full.slice(0, 2), 16), g = parseInt(full.slice(2, 4), 16), b = parseInt(full.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 160;
+  };
   const explicitTitle = (script?.dataset.title ?? "").trim();
   const docTitle = playing ? "" : (document.title ?? "").trim();
   const gameTitle = explicitTitle || (/^Awake(Kt)?\b/i.test(docTitle) ? "" : docTitle);
+  const customLogo = gameMode ? safeLogoUrl(script?.dataset.logo) : "";
+  const customBg = gameMode ? safeHex(script?.dataset.bg) : "";
+  const customAccent = gameMode ? safeHex(script?.dataset.accent) : "";
 
   // First-party Ember Signal glyph without its field; its gold stops follow the scheme through --glyph-*.
   const COLOR_MARK = `<svg class="mark" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>`;
@@ -73,8 +92,10 @@
       background: linear-gradient(90deg, #FF4D2E, #FF9F1C 60%, #FFD166);
       transition: transform 280ms cubic-bezier(0.23, 1, 0.32, 1); }
     #awake-loader.game .name { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; text-align: center; }
+    #awake-loader.game img.custom-logo { max-width: 96px; max-height: 96px; object-fit: contain;
+      margin-bottom: 16px; border-radius: 16px; display: block; }
     #awake-loader.game .track { height: 3px; margin-top: 22px; }
-    #awake-loader.game .bar { background: var(--text); }
+    #awake-loader.game .bar { background: var(--bar-fill, var(--text)); }
     #awake-loader.game .box svg.mono-mark { width: 64px; height: 64px; color: var(--text); }
     #awake-loader.game .made-with { margin: 16px 0 0; font-size: 14px; color: var(--muted); letter-spacing: 0.01em; }
     #awake-loader.game .made-with strong { font-weight: 600; color: var(--text); }
@@ -103,15 +124,33 @@
   root.setAttribute("aria-valuemin", "0");
   root.setAttribute("aria-valuemax", "100");
   if (gameMode) {
-    const centerBrand = !gameTitle && showAttribution ? `${MONO_MARK}<p class="made-with">Made with <strong>AwakeKt</strong></p>` : "";
+    if (customBg) {
+      const light = hexIsLight(customBg);
+      root.style.setProperty("--bg", customBg);
+      root.style.setProperty("--text", light ? "#16161C" : "#ECEAE6");
+      root.style.setProperty("--muted", light ? "#524E59" : "#9E9BA6");
+      root.style.setProperty("--faint", light ? "#706C78" : "#6E6B76");
+      root.style.setProperty("--track", light ? "rgba(22, 22, 28, 0.14)" : "rgba(236, 234, 230, 0.14)");
+    }
+    if (customAccent) root.style.setProperty("--bar-fill", customAccent);
+    const hasCustomCenter = Boolean(gameTitle || customLogo);
+    const centerBrand = !hasCustomCenter && showAttribution ? `${MONO_MARK}<p class="made-with">Made with <strong>AwakeKt</strong></p>` : "";
     const heading = gameTitle ? `<p class="name">${escapeHtml(gameTitle)}</p>` : "";
-    const footer = gameTitle && showAttribution
+    const footer = hasCustomCenter && showAttribution
       ? `<div class="attribution">${MONO_MARK}<span>Made with <strong>AwakeKt</strong></span></div>`
       : "";
     root.innerHTML = `<div class="box">${centerBrand}${heading}
       <div class="track"><div class="bar"></div></div>
       <div class="status"><span class="step">Starting…</span><span class="pct">0%</span></div>
       <p class="error" role="alert"></p></div>${footer}`;
+    if (customLogo) {
+      const img = document.createElement("img");
+      img.className = "custom-logo";
+      img.alt = "";
+      img.src = customLogo;
+      img.addEventListener("error", () => img.remove(), { once: true });
+      root.querySelector(".box")?.prepend(img);
+    }
   } else {
     root.innerHTML = `<div class="box">${COLOR_MARK}
       <p class="name">AwakeKt${product ? ` <span>${escapeHtml(product)}</span>` : ""}</p>
