@@ -43,3 +43,8 @@ mavenPublishing {
         description.set("Debug sources: readings and world-space lines a game shows about itself, turned on by one flag")
     }
 }
+
+// Allocation gates count every byte a frame's hot paths allocate, matching Android/Wasm runtimes without escape analysis.
+tasks.named<Test>("desktopTest") {
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}

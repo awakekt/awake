@@ -20,6 +20,10 @@ plays: readings on an overlay and lines over the scene, each turned on by name w
 - **`StatsSeries` / `StatsSummary`**: a fixed-capacity ring of timestamped `Double` readings that
   summarizes any trailing window into `avg`, `p50`, `p95` and `max` without per-sample allocations,
   optionally mapping readings on read (such as frame milliseconds to FPS).
+- **`RuntimePerfGuard` / `RuntimePerfGuardConfig`**: an allocation-free rolling-quantile (default p90)
+  frame-time state machine (`Normal`, `Slow`, `Severe`) with separate degrade/recover hysteresis
+  bands, post-transition cooldown and window flushing, exponential recovery backoff on oscillation,
+  and `forTargetFps(targetFps)` presets.
 - **`FrameBreakdown`**: rolling frame-time and resource attribution across simulation (`simMs`),
   render extraction (`renderSystemsMs`), total scene update (`simRenderMs`), UI phases (`uiBuildMs`,
   `uiStageMs`, `uiWaitMs`), host/GPU wait outside measured phases (`outsideMs`), GPU timing and draw
