@@ -6,10 +6,12 @@
 package com.awakekt.awake.core.audio
 
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 internal class AndroidAudioPlayerTest {
 
@@ -133,5 +135,76 @@ internal class AndroidAudioPlayerTest {
         player.stopMusic()
         player.dispose()
         assertNull(player.playSound(clip, loop = false))
+    }
+
+    @Test
+    fun playMusicStreamAppliesMasterAndMusicVolumesAndStopsCleanly() {
+        val opened = mutableListOf<FakeStreamHandle>()
+        val player = AndroidAudioPlayer(maxConcurrentOneShots = 4) { _, initialVolume, loop ->
+            FakeStreamHandle(initialVolume, loop).also { opened += it }
+        }
+        val track = MusicStreamSource.EncodedBytes("bgm/town.mp3", byteArrayOf(1, 2, 3, 4))
+
+        player.masterVolume = 0.5f
+        player.musicVolume = 0.8f
+        assertTrue(player.playMusicStream(track, volume = 0.5f, loop = true))
+        assertEquals(1, opened.size)
+        assertEquals(0.2f, opened[0].lastVolume, 0.0001f)
+        assertTrue(opened[0].loop)
+        assertTrue(opened[0].isPlaying)
+
+        // Both masterVolume and musicVolume live-update the active music stream.
+        player.masterVolume = 1.0f
+        assertEquals(0.4f, opened[0].lastVolume, 0.0001f)
+        player.musicVolume = 0.5f
+        assertEquals(0.25f, opened[0].lastVolume, 0.0001f)
+
+        // Starting a second stream stops the first stream before opening the replacement.
+        val nextTrack = MusicStreamSource.FilePath("bgm/field", "/data/field.ogg")
+        assertTrue(player.playMusicStream(nextTrack, volume = 1.0f, loop = false))
+        assertEquals(1, opened[0].stopCount)
+        assertFalse(opened[0].isPlaying)
+        assertEquals(2, opened.size)
+        assertEquals(0.5f, opened[1].lastVolume, 0.0001f)
+
+        // Empty sources are rejected without opening a handle.
+        assertFalse(player.playMusicStream(MusicStreamSource.EncodedBytes("empty.mp3", byteArrayOf())))
+        assertFalse(player.playMusicStream(MusicStreamSource.FilePath("blank", " ")))
+
+        // Dispose stops the active stream and rejects subsequent stream requests.
+        player.dispose()
+        assertEquals(1, opened[1].stopCount)
+        assertFalse(player.playMusicStream(track))
+    }
+
+    @Test
+    fun readMediaSliceCopiesRequestedRangesAndReportsEof() {
+        val source = byteArrayOf(10, 20, 30, 40, 50)
+        val dest = ByteArray(4)
+        assertEquals(3, readMediaSlice(source, position = 1L, destination = dest, offset = 1, size = 3))
+        assertContentEquals(byteArrayOf(0, 20, 30, 40), dest)
+        assertEquals(1, readMediaSlice(source, position = 4L, destination = dest, offset = 0, size = 4))
+        assertEquals(50, dest[0])
+        assertEquals(-1, readMediaSlice(source, position = 5L, destination = dest, offset = 0, size = 4))
+        assertEquals(-1, readMediaSlice(source, position = -1L, destination = dest, offset = 0, size = 4))
+        assertEquals(0, readMediaSlice(source, position = 0L, destination = dest, offset = 0, size = 0))
+    }
+
+    private class FakeStreamHandle(
+        initialVolume: Float,
+        val loop: Boolean,
+    ) : AndroidMusicStreamHandle {
+        var lastVolume: Float = initialVolume
+        var stopCount: Int = 0
+        override var isPlaying: Boolean = true
+
+        override fun setVolume(effectiveVolume: Float) {
+            lastVolume = effectiveVolume
+        }
+
+        override fun stop() {
+            stopCount++
+            isPlaying = false
+        }
     }
 }

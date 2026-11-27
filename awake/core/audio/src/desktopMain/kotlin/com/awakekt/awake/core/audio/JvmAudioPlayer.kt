@@ -11,7 +11,6 @@ import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.Clip
 import javax.sound.sampled.FloatControl
-import kotlin.math.log10
 
 /**
  * Desktop JVM low-latency audio player built directly on standard Java Sound (`javax.sound.sampled`).
@@ -19,10 +18,25 @@ import kotlin.math.log10
  */
 class JvmAudioPlayer : AudioPlayer {
     override var masterVolume: Float = 1.0f
+        set(value) {
+            field = value.coerceIn(0f, 1f)
+            updateMusicVolume()
+        }
+
     override var sfxVolume: Float = 1.0f
+        set(value) {
+            field = value.coerceIn(0f, 1f)
+        }
+
     override var musicVolume: Float = 0.6f
+        set(value) {
+            field = value.coerceIn(0f, 1f)
+            updateMusicVolume()
+        }
 
     private var activeMusicClip: Clip? = null
+    private var activeMusicStream: JvmMusicStream? = null
+    private var activeMusicUserVolume: Float = 1.0f
     private val voicePool = HashMap<String, ArrayList<Clip>>()
     private var isDisposed = false
 
@@ -110,7 +124,9 @@ class JvmAudioPlayer : AudioPlayer {
 
     override fun playMusic(clip: AudioClip, volume: Float, loop: Boolean) {
         stopMusic()
-        val totalVolume = (masterVolume * musicVolume * volume).coerceIn(0f, 1f)
+        if (isDisposed) return
+        activeMusicUserVolume = volume.coerceIn(0f, 1f)
+        val totalVolume = effectiveMusicVolume()
         if (totalVolume <= 0.0001f) return
 
         runCatching {
@@ -133,12 +149,23 @@ class JvmAudioPlayer : AudioPlayer {
         }
     }
 
+    override fun playMusicStream(source: MusicStreamSource, volume: Float, loop: Boolean): Boolean {
+        if (isDisposed || !source.isValidSource()) return false
+        stopMusic()
+        activeMusicUserVolume = volume.coerceIn(0f, 1f)
+        val stream = JvmMusicStream.open(source, effectiveMusicVolume(), loop)
+        activeMusicStream = stream
+        return stream != null
+    }
+
     override fun stopMusic() {
         activeMusicClip?.let {
             if (it.isRunning) it.stop()
             it.close()
         }
         activeMusicClip = null
+        activeMusicStream?.stop()
+        activeMusicStream = null
     }
 
     override fun dispose() {
@@ -169,12 +196,17 @@ class JvmAudioPlayer : AudioPlayer {
         )
     }
 
+    private fun effectiveMusicVolume(): Float =
+        (masterVolume * musicVolume * activeMusicUserVolume).coerceIn(0f, 1f)
+
+    private fun updateMusicVolume() {
+        val gain = effectiveMusicVolume()
+        activeMusicClip?.takeIf { it.isOpen }?.let { applyGain(it, gain) }
+        activeMusicStream?.setVolume(gain)
+    }
+
     private fun applyGain(clip: Clip, linearVolume: Float) {
-        if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-            val gainControl = clip.getControl(FloatControl.Type.MASTER_GAIN) as FloatControl
-            val dB = (20.0 * log10(linearVolume.coerceAtLeast(0.0001f).toDouble())).toFloat()
-            gainControl.value = dB.coerceIn(gainControl.minimum, gainControl.maximum)
-        }
+        applyLineGain(clip, linearVolume)
     }
 
     private fun applyPan(clip: Clip, pan: Float) {

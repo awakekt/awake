@@ -112,6 +112,15 @@ class OfflineAudioMixer(
         playMusic(clip = clip, volume = volume, loop = loop, startOffsetSeconds = 0f, fadeInSeconds = 0f)
     }
 
+    override fun playMusicStream(source: MusicStreamSource, volume: Float, loop: Boolean): Boolean {
+        val wav = (source as? MusicStreamSource.EncodedBytes)
+            ?.takeIf { it.bytes.isNotEmpty() }
+            ?.let { WavDecoder.decode(it.id, it.id, it.bytes) }
+            ?: return false
+        playMusic(wav, volume = volume, loop = loop)
+        return true
+    }
+
     /**
      * Starts background music playback with optional start seek offset and smooth fade-in.
      *

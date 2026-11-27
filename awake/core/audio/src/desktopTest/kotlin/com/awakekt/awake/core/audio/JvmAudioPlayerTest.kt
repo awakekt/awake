@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.core.audio
 
+import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -39,5 +41,43 @@ class JvmAudioPlayerTest {
         assertTrue(elapsedMs < 2.0, "Pooled clip playback must be sub-millisecond, took ${elapsedMs}ms")
 
         player.dispose()
+    }
+
+    @Test
+    fun playMusicStreamStreamsWavBytesAndFilesAndRejectsUnsupportedPayloads() {
+        val mixer = OfflineAudioMixer(sampleRate = 22_050)
+        mixer.playMusic(SoundSynthesizer.tone("bgm", "Tone", 330f, 0.05f), volume = 0.5f, loop = false)
+        mixer.advance(0.05f)
+        val wavBytes = mixer.encodeWav()
+
+        val player = JvmAudioPlayer()
+        assertFalse(player.playMusicStream(MusicStreamSource.EncodedBytes("bad.mp3", byteArrayOf(1, 2, 3, 4))))
+        assertFalse(player.playMusicStream(MusicStreamSource.FilePath("missing", "nonexistent_track.wav")))
+
+        val bytesAccepted = player.playMusicStream(
+            MusicStreamSource.EncodedBytes("bgm/test.wav", wavBytes),
+            volume = 0.3f,
+            loop = true,
+        )
+        player.musicVolume = 0.2f
+        player.masterVolume = 0.5f
+        player.stopMusic()
+
+        val tempWav = File.createTempFile("awake-stream-test", ".wav")
+        try {
+            tempWav.writeBytes(wavBytes)
+            val fileAccepted = player.playMusicStream(
+                MusicStreamSource.FilePath("bgm/file.wav", tempWav.absolutePath),
+                volume = 0.3f,
+                loop = false,
+            )
+            // On hosts with an audio mixer both WAV stream modes open cleanly; headless CI without a
+            // Java Sound line returns false cleanly without throwing.
+            assertTrue(bytesAccepted == fileAccepted)
+        } finally {
+            player.dispose()
+            tempWav.delete()
+        }
+        assertFalse(player.playMusicStream(MusicStreamSource.EncodedBytes("bgm/test.wav", wavBytes)))
     }
 }

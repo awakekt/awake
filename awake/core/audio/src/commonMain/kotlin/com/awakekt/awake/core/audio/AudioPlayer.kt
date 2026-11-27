@@ -139,6 +139,24 @@ interface AudioPlayer {
      */
     fun playMusic(clip: AudioClip, volume: Float = 0.6f, loop: Boolean = true)
 
+    /**
+     * Starts streaming encoded background music from [source], replacing any currently playing
+     * music without expanding full PCM waveforms into heap or static native buffers.
+     *
+     * Implementations that cannot stream [source] return `false` by default, letting callers fall
+     * back to [playMusic] with a decoded [AudioClip] when needed.
+     *
+     * @param source Encoded bytes or platform file/URL source to stream.
+     * @param volume Music playback volume multiplier (`0f..1f`).
+     * @param loop Whether music repeats continuously upon reaching the end.
+     * @return `true` if streaming playback was accepted and started; `false` if unsupported or invalid.
+     */
+    fun playMusicStream(
+        source: MusicStreamSource,
+        volume: Float = 0.6f,
+        loop: Boolean = true,
+    ): Boolean = false
+
     /** Stops current background music playback and closes music streams. */
     fun stopMusic()
 

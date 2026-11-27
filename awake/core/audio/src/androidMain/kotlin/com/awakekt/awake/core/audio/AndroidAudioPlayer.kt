@@ -13,19 +13,29 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Android low-latency audio player built directly on standard [AudioTrack] in static buffer mode.
- * Supports stereo and mono PCM clips, volume controls, dynamic stereo panning, and loop modes.
+ * Android low-latency audio player built on [AudioTrack] for sound effects and streaming
+ * [android.media.MediaPlayer] / `AudioTrack.MODE_STREAM` for background music.
+ * Supports stereo and mono PCM clips, compressed music streaming, volume controls, dynamic stereo
+ * panning, and loop modes.
  *
  * @param maxConcurrentOneShots Maximum number of concurrent non-looping sound effects before the
  *   oldest active one-shot track is evicted and released.
+ * @param streamOpener Internal factory seam for opening streaming music handles in host tests.
  */
-class AndroidAudioPlayer @JvmOverloads constructor(
-    maxConcurrentOneShots: Int = OneShotTrackReaper.DEFAULT_MAX_CONCURRENT_ONE_SHOTS,
+class AndroidAudioPlayer internal constructor(
+    maxConcurrentOneShots: Int,
+    private val streamOpener: (MusicStreamSource, Float, Boolean) -> AndroidMusicStreamHandle?,
 ) : AudioPlayer {
+    @JvmOverloads
+    constructor(
+        maxConcurrentOneShots: Int = OneShotTrackReaper.DEFAULT_MAX_CONCURRENT_ONE_SHOTS,
+    ) : this(maxConcurrentOneShots, ::openAndroidMediaPlayerStream)
+
     override var masterVolume: Float = 1.0f
         set(value) {
             field = value.coerceIn(0f, 1f)
             updateActiveHandles()
+            updateMusicVolume()
         }
 
     override var sfxVolume: Float = 1.0f
@@ -47,6 +57,7 @@ class AndroidAudioPlayer @JvmOverloads constructor(
         maxConcurrent = maxConcurrentOneShots,
     )
     private var activeMusicHandle: AndroidSoundHandle? = null
+    private var activeMusicStream: AndroidMusicStreamHandle? = null
     private var activeMusicVolume: Float = 1f
 
     @Volatile
@@ -97,22 +108,39 @@ class AndroidAudioPlayer @JvmOverloads constructor(
         stopMusic()
         if (isDisposed || !clip.isValidForPlayback()) return
 
-        activeMusicVolume = volume
-        val handle = createTrackHandle(
-            clip = clip,
-            volume = volume,
-            pan = 0f,
-            loop = loop,
-            isMusic = true,
-        ) ?: return
+        activeMusicVolume = volume.coerceIn(0f, 1f)
+        if (clip.pcmBytes.size > MAX_STATIC_MUSIC_BYTES) {
+            openAndroidPcmMusicStream(clip, effectiveMusicVolume(), loop)?.let { stream ->
+                activeMusicStream = stream
+                if (isDisposed) stopMusic()
+            }
+        } else {
+            createTrackHandle(clip = clip, volume = volume, pan = 0f, loop = loop, isMusic = true)?.let { handle ->
+                activeMusicHandle = handle
+                handle.play()
+            }
+        }
+    }
 
-        activeMusicHandle = handle
-        handle.play()
+    override fun playMusicStream(source: MusicStreamSource, volume: Float, loop: Boolean): Boolean {
+        if (isDisposed || !source.isValidSource()) return false
+        stopMusic()
+        activeMusicVolume = volume.coerceIn(0f, 1f)
+        val stream = streamOpener(source, effectiveMusicVolume(), loop)
+        val started = stream != null && !isDisposed
+        if (started) {
+            activeMusicStream = stream
+        } else {
+            stream?.stop()
+        }
+        return started
     }
 
     override fun stopMusic() {
         activeMusicHandle?.stop()
         activeMusicHandle = null
+        activeMusicStream?.stop()
+        activeMusicStream = null
         synchronized(reaperLock) {
             oneShotReaper.reap()
         }
@@ -205,8 +233,12 @@ class AndroidAudioPlayer @JvmOverloads constructor(
         }
     }
 
+    private fun effectiveMusicVolume(): Float =
+        (masterVolume * musicVolume * activeMusicVolume).coerceIn(0f, 1f)
+
     private fun updateMusicVolume() {
         activeMusicHandle?.applyCurrentVolumes()
+        activeMusicStream?.setVolume(effectiveMusicVolume())
     }
 
     private inner class AndroidSoundHandle(
