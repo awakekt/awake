@@ -8,8 +8,7 @@ package com.awakekt.awake.scene.physics
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.ecs.ComponentTypeId
-import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.ComponentStore
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.cos
 import kotlin.math.sin
@@ -26,23 +25,23 @@ import kotlin.math.sqrt
  * and an orthonormalized rotation quaternion from the resulting world matrix.
  */
 internal class PhysicsWorldPoseResolver {
-    private val ancestors = ArrayList<Transform>(INITIAL_CHAIN_CAPACITY)
+    private val ancestors = ArrayList<Transform>(MAX_HIERARCHY_DEPTH)
     private val worldA = Mat4()
     private val worldB = Mat4()
     private val localScratch = Mat4()
 
     /**
      * Writes [transform]'s world-space translation into [outPosition] and unit rotation into
-     * [outRotation]. Uses [transformTypeId] to look up parent [Transform]s without class hashing.
+     * [outRotation]. Reads ancestors straight from [transformStore] (hoisted per step) so walking a
+     * parent chain touches neither `KClass` nor `ComponentRegistry`.
      */
     fun resolve(
-        world: World,
+        transformStore: ComponentStore<Transform>?,
         transform: Transform,
-        transformTypeId: ComponentTypeId,
         outPosition: Vec3f,
         outRotation: Quat,
     ) {
-        if (transform.parent == null) {
+        if (transform.parent == null || transformStore == null) {
             outPosition.set(transform.position)
             setEulerInPlace(transform.rotation, outRotation)
             return
@@ -54,7 +53,7 @@ internal class PhysicsWorldPoseResolver {
         while (cursor != null && depth < MAX_HIERARCHY_DEPTH) {
             ancestors.add(cursor)
             val parentEntity = cursor.parent ?: break
-            cursor = world.get(parentEntity, transformTypeId)
+            cursor = transformStore.get(parentEntity)
             depth++
         }
 
@@ -186,7 +185,6 @@ internal class PhysicsWorldPoseResolver {
     }
 
     private companion object {
-        const val INITIAL_CHAIN_CAPACITY = 8
         const val MAX_HIERARCHY_DEPTH = 64
         const val HALF = 0.5f
         const val QUARTER = 0.25f

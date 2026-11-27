@@ -9,7 +9,9 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.diagnostics.DebugLines
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.ComponentStore
 import com.awakekt.awake.ecs.ComponentTypeId
+import com.awakekt.awake.ecs.Family2
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.MotionType
@@ -64,21 +66,35 @@ internal class PhysicsDebugWriter {
     private val poseResolver = PhysicsWorldPoseResolver()
     private val position = Vec3f()
     private val rotation = Quat()
-    private var transformWorld: World? = null
-    private var transformGeneration = -1
+    private var cachedWorld: World? = null
+    private var cachedGeneration = -1
     private var transformTypeId = ComponentTypeId(0)
+    private var transformStore: ComponentStore<Transform>? = null
+    private var bodyFamily: Family2<Transform, PhysicsBody>? = null
 
     /** Writes the wireframe of every entity with a [Transform] and a [PhysicsBody] into [out]. */
     fun write(world: World, out: DebugLines) {
-        if (transformWorld !== world || transformGeneration != world.generation) {
-            transformTypeId = world.typeId(Transform::class)
-            transformWorld = world
-            transformGeneration = world.generation
-        }
-        world.queryEach(Transform::class, PhysicsBody::class) { _, transform, body ->
-            poseResolver.resolve(world, transform, transformTypeId, position, rotation)
+        val family = ensureWorldCache(world)
+        val store = transformStore
+        family.forEach { _, transform, body ->
+            poseResolver.resolve(store, transform, position, rotation)
             shapes.write(body.shape, position, rotation, colorOf(body.motionType), out)
         }
+    }
+
+    private fun ensureWorldCache(world: World): Family2<Transform, PhysicsBody> {
+        val cached = bodyFamily
+        if (cachedWorld === world && cachedGeneration == world.generation && cached != null) {
+            if (transformStore == null) transformStore = world.componentStore(transformTypeId)
+            return cached
+        }
+        transformTypeId = world.typeId(DEBUG_TRANSFORM_CLASS)
+        transformStore = world.componentStore(transformTypeId)
+        val family = world.family<Transform, PhysicsBody>()
+        cachedWorld = world
+        cachedGeneration = world.generation
+        bodyFamily = family
+        return family
     }
 
     companion object {
@@ -90,3 +106,5 @@ internal class PhysicsDebugWriter {
         }
     }
 }
+
+private val DEBUG_TRANSFORM_CLASS = Transform::class

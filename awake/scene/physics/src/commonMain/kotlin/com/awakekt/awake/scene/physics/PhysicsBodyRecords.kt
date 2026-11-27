@@ -30,12 +30,20 @@ internal class PhysicsBodyRecord(val entity: Entity, val handle: BodyHandle, val
     /** Where this record sits in [PhysicsBodyRecords]' kinematic list, or -1 for static/dynamic bodies. */
     var kinematicIndex: Int = -1
 
-    /** Last world pose sent to or received from the physics backend for a kinematic body. */
-    val lastKinematicPosition = Vec3f()
-    val lastKinematicRotation = Quat()
+    /** Kinematic pose tracking, allocated once on body creation for [MotionType.KINEMATIC] bodies only. */
+    var kinematic: KinematicSyncState? = null
+}
+
+/**
+ * Last world pose sent to or read from the physics backend for a kinematic body, kept out of
+ * static/dynamic [PhysicsBodyRecord]s so large static worlds pay zero extra heap per body.
+ */
+internal class KinematicSyncState(position: Vec3f, rotation: Quat) {
+    val lastPosition = Vec3f(position.x, position.y, position.z)
+    val lastRotation = Quat(rotation.x, rotation.y, rotation.z, rotation.w)
 
     /** Whether the previous fixed step drove this kinematic body, so one stationary stop step clears velocity. */
-    var wasKinematicMoving: Boolean = false
+    var wasMoving: Boolean = false
 }
 
 /**
