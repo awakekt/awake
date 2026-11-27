@@ -663,17 +663,23 @@ public final class com/awakekt/awake/asset/gltf/GltfNode$Companion {
 public final class com/awakekt/awake/asset/gltf/GltfParser {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfParser;
 	public final fun externalUris (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Ljava/util/List;
+	public final fun externalUris ([BLcom/awakekt/awake/asset/gltf/GltfLimits;)Ljava/util/List;
 	public static synthetic fun externalUris$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun externalUris$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Ljava/util/List;
 	public final fun load-BWLJW6A (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun load-BWLJW6A$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun loadExternalResources-yxL6bBk (Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun loadExternalResources-yxL6bBk ([BLcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun loadExternalResources-yxL6bBk$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun loadExternalResources-yxL6bBk$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun parse (Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
 	public static synthetic fun parse$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
 	public final fun parseScene ([BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
 	public static synthetic fun parseScene$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
 	public final fun parseSkinned (Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun parseSkinned ([BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 	public static synthetic fun parseSkinned$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public static synthetic fun parseSkinned$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 }
 
 public final class com/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness {

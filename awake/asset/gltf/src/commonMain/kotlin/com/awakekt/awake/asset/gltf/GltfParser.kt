@@ -72,6 +72,24 @@ object GltfParser {
     }
 
     /**
+     * Fetches all non-data external URIs referenced by a GLB container's JSON chunk (such as
+     * external textures like `Textures/colormap.png` emitted by low-poly asset kits), resolved
+     * relative to [assetPath]. Returns an empty map with no I/O when the GLB is self-contained.
+     */
+    suspend fun loadExternalResources(
+        bytes: ByteArray,
+        assetPath: AssetPath,
+        source: AssetSource,
+        limits: GltfLimits = GltfLimits.Default,
+    ): Result<Map<String, ByteArray>> = suspendRunCatching {
+        val uris = externalUris(bytes, limits)
+        if (uris.isEmpty()) return@suspendRunCatching emptyMap()
+        uris.associateWith { uri ->
+            source.read(assetPath.resolve(percentDecoded(uri))).getOrThrow()
+        }
+    }
+
+    /**
      * [uri] with its percent-encoded bytes decoded as UTF-8, so `Part%20Foot.png` is
      * `Part Foot.png` and `caf%C3%A9.png` is `café.png`. A `%` that isn't followed by two hex
      * digits stays as it is, and so does `+`, which only form encoding treats as a space.
@@ -146,6 +164,21 @@ object GltfParser {
     }
 
     /**
+     * Extracts every external URI referenced by a GLB container's JSON chunk (buffers or images
+     * stored outside the BIN chunk).
+     *
+     * @param bytes The GLB file bytes.
+     * @param limits The bounds the parse runs under.
+     * @return List of external URIs.
+     * @throws GltfFormatException If [bytes] is not a valid GLB container or exceeds [limits].
+     */
+    fun externalUris(bytes: ByteArray, limits: GltfLimits = GltfLimits.Default): List<String> = gltfFailuresTyped {
+        val context = GltfReadContext(limits)
+        val glb = readGlbContainer(bytes, context)
+        externalUris(glb.json, limits)
+    }
+
+    /**
      * Parses a glTF Binary (GLB) container -- header + JSON chunk + optional BIN chunk --
      * walks its `scenes`/`nodes` graph, and returns every mesh reachable from the default
      * scene with each primitive's owning node's composed world transform attached. Unlike
@@ -212,6 +245,38 @@ object GltfParser {
         val context = GltfReadContext(limits)
         val document = decodeDocument(json, limits)
         val buffers = decodeBuffers(document, externalResources, context)
+        parseSkinnedDocument(document, buffers, externalResources, context, limits)
+    }
+
+    /**
+     * Parses a glTF Binary (GLB) container into every mesh, node, skin, and animation clip the
+     * document has, matching [parseSkinned] for JSON `.gltf` files while resolving buffers from
+     * the GLB's BIN chunk and optional external image/buffer sidecars from [externalResources].
+     *
+     * @param bytes The GLB file bytes.
+     * @param externalResources Map of external URIs to their pre-fetched byte content.
+     * @param limits The bounds the parse runs under.
+     * @throws GltfFormatException If the file is malformed or exceeds [limits].
+     */
+    fun parseSkinned(
+        bytes: ByteArray,
+        externalResources: Map<String, ByteArray> = emptyMap(),
+        limits: GltfLimits = GltfLimits.Default,
+    ): LoadedSkinnedScene = gltfFailuresTyped {
+        val context = GltfReadContext(limits)
+        val glb = readGlbContainer(bytes, context)
+        val document = decodeDocument(glb.json, limits)
+        val buffers = decodeBuffers(document, externalResources, context, glb)
+        parseSkinnedDocument(document, buffers, externalResources, context, limits)
+    }
+
+    private fun parseSkinnedDocument(
+        document: GltfDocument,
+        buffers: List<ByteArray>,
+        externalResources: Map<String, ByteArray>,
+        context: GltfReadContext,
+        limits: GltfLimits,
+    ): LoadedSkinnedScene {
         document.validateNodeGraph(limits)
         val reader = GltfDocumentReader(document, buffers, externalResources, context)
 
@@ -241,7 +306,7 @@ object GltfParser {
         }
         val skinnedNodes = skinnedNodes(document, primitives, skins.map { it.joints.size })
 
-        LoadedSkinnedScene(
+        return LoadedSkinnedScene(
             skeleton = Skeleton(bones, rootNodes),
             meshes = primitives.map { it.first() },
             skins = skins,
