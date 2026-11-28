@@ -183,7 +183,7 @@ class SceneSystemNamesTest {
             "terrain", "terrain-collider", "mesh-collider", "physics", "character-sensor-bodies", "character",
             "navigation-agents", "ai-intents", "ai-perception", "ai-definitions", "ai-trees", "ai-machines", "ai-patrol",
             "ai-chase", "ai-flee", "path-requests", "spin-clock", "spin", "locomotion", "keyframes", "texture-clips",
-            "sprite-clips", "particles-2d", "particle-content", "particles", "day-cycle", "shader-effects",
+            "sprite-locomotion", "sprite-clips", "particles-2d", "particle-content", "particles", "day-cycle", "shader-effects",
             "audio-listener", "audio", "animation", "input-replay", "director",
         )
     }

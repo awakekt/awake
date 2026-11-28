@@ -14,7 +14,13 @@ name="AwakePlayer"
 main_class="com.awakekt.awake.player.shell.MainKt"
 root="$(git rev-parse --show-toplevel)"
 out="$root/awake/player/player-shell/build/desktop-package"
-input="$out/lib"
+if [[ "${AWAKE_SKIP_PROGUARD:-0}" == "1" ]]; then
+  gradle_pkg_task=":awake:player:player-shell:desktopPackageInput"
+  input="$out/lib"
+else
+  gradle_pkg_task=":awake:player:player-shell:desktopObfuscate"
+  input="$root/awake/player/player-shell/build/desktop-package-obfuscated/lib"
+fi
 natives="$input/natives"
 dist="$out/dist"
 
@@ -24,7 +30,7 @@ cd "$root"
 ./gradlew --console=plain --no-configuration-cache \
   :awake:engine:window:buildDesktopNative \
   :awake:backend:vulkan:bindings:buildDesktopNative \
-  :awake:player:player-shell:desktopPackageInput
+  "$gradle_pkg_task"
 
 rm -rf "$natives" "$dist"
 mkdir -p "$natives" "$dist"
@@ -70,7 +76,11 @@ for size in 16 32 128 256 512; do
 done
 iconutil -c icns "$iconset" -o "$out/AwakePlayer.icns"
 
-main_jar="$(basename "$(ls "$input"/awake-player-player-shell-*.jar | head -1)")"
+if [[ "${AWAKE_SKIP_PROGUARD:-0}" == "1" ]]; then
+  main_jar="$(basename "$(ls "$input"/awake-player-player-shell-*.jar | head -1)")"
+else
+  main_jar="awake-player.jar"
+fi
 jpackage \
   --type app-image \
   --dest "$dist" \

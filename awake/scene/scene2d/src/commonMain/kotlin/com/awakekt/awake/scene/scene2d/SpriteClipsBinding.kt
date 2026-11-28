@@ -26,6 +26,12 @@ class SpriteClips(val sheet: SceneSpriteClips) {
 
     private val player = FrameClipPlayer(sheet.clips.mapValues { (_, run) -> run.toFrameClip() }, sheet.initialClip)
 
+    /** Names of all clips in this sprite's library. */
+    val clipIds: Set<String> get() = player.clipIds
+
+    /** Whether [clipId] exists in this sprite's clip library. */
+    fun hasClip(clipId: String): Boolean = player.hasClip(clipId)
+
     /** Name of the selected run, or none for an empty library. */
     val activeClipId: String? get() = player.activeClipId
 

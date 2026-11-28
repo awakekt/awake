@@ -23,6 +23,9 @@ import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.scene.scene2d.SceneSpriteClip
+import com.awakekt.awake.scene.scene2d.SceneSpriteClips
+import com.awakekt.awake.scene.scene2d.SpriteClips
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -189,6 +192,30 @@ class BlueprintSystemTest {
         assertNull(player.activeClipId, "a wire that found no one is not the blueprint's own entity")
         assertEquals(1, warnings.size, "one warning, not one a step: $warnings")
         assertContains(warnings.single(), "'act' (Play Animation)")
+    }
+
+    @Test
+    fun playAnimationDrives2dSpriteClipsToo() {
+        graphs["emote"] = graph {
+            node("start", "event.start")
+            node("play", "animation.play", "clip" to "attack", "loop" to false)
+            wire("start.then", "play.exec")
+        }
+        val self = blueprint("emote")
+        val clips = SpriteClips(
+            SceneSpriteClips(
+                clips = linkedMapOf(
+                    "idle" to SceneSpriteClip(firstFrame = 0, frameCount = 2, framesPerSecond = 6f),
+                    "attack" to SceneSpriteClip(firstFrame = 2, frameCount = 2, framesPerSecond = 8f, loop = false),
+                ),
+                clip = "idle",
+            ),
+        )
+        world.add(self, clips)
+
+        step()
+
+        assertEquals("attack", clips.activeClipId)
     }
 
     @Test

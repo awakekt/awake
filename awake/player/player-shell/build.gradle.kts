@@ -66,7 +66,29 @@ fun stagedJarName(jar: File, componentId: org.gradle.api.artifacts.component.Com
     return if (componentId is ModuleComponentIdentifier) "${componentId.group}-${jar.name}" else jar.name
 }
 
-tasks.register<Sync>("desktopPackageInput") {
+val r8Classpath by configurations.creating
+
+dependencies {
+    // R8 9.5.26 (same shrinker/obfuscator as Android AGP 9.2.1) natively supports Kotlin 2.5
+    // metadata and emits an obfuscated JVM classfile JAR via `--classfile`.
+    r8Classpath("com.android.tools:r8:9.5.26")
+}
+
+// Libraries ship their keep rules in META-INF/proguard; collect them from both project and external
+// runtime JARs so the prebuilt macOS player runs through R8 shrinking and obfuscation just like
+// `:awake:player:player-android`.
+val libraryKeepRules = tasks.register<Sync>("libraryKeepRules") {
+    val jars = configurations.named("desktopRuntimeClasspath")
+    dependsOn(jars)
+    from(jars.map { cfg -> cfg.files.filter { it.name.endsWith(".jar") }.map { zipTree(it) } }) {
+        include("META-INF/proguard/*.pro")
+    }
+    into(layout.buildDirectory.dir("library-keep-rules"))
+    eachFile { path = name }
+    includeEmptyDirs = false
+}
+
+val desktopPackageInput = tasks.register<Sync>("desktopPackageInput") {
     val desktopJar = tasks.named("desktopJar")
     dependsOn(desktopJar)
     val runtimeArtifacts = configurations.named("desktopRuntimeClasspath")
@@ -80,4 +102,80 @@ tasks.register<Sync>("desktopPackageInput") {
         }
     }
     into(layout.buildDirectory.dir("desktop-package/lib"))
+}
+
+tasks.register<JavaExec>("desktopObfuscate") {
+    dependsOn(desktopPackageInput, libraryKeepRules)
+    classpath = r8Classpath
+    mainClass.set("com.android.tools.r8.R8")
+
+    val inputDir = layout.buildDirectory.dir("desktop-package/lib")
+    val rulesDir = layout.buildDirectory.dir("library-keep-rules")
+    val outDir = layout.buildDirectory.dir("desktop-package-obfuscated/lib")
+    val outJar = layout.buildDirectory.file("desktop-package-obfuscated/lib/awake-player.jar")
+    val appRules = project.file("proguard-rules.pro")
+    val configFile = layout.buildDirectory.file("tmp/desktopObfuscate/r8.conf")
+
+    inputs.dir(inputDir)
+    inputs.dir(rulesDir)
+    inputs.file(appRules)
+    outputs.file(outJar)
+
+    doFirst {
+        val outputDirectory = outDir.get().asFile
+        outputDirectory.deleteRecursively()
+        outputDirectory.mkdirs()
+
+        val javaHome = File(System.getProperty("java.home"))
+        val allJars = inputDir.get().asFile.listFiles()
+            .orEmpty()
+            .filter { it.isFile && it.extension == "jar" }
+            .sortedBy { it.name }
+        // Obfuscate all Awake Core & player modules into `awake-player.jar`, while passing
+        // third-party runtime libraries (and `awake-core-text-*`, which embeds 400 KB Apache-2.0
+        // Roboto font data classes that exceed JVM's 64 KB UTF-8 constant-pool limit in R8
+        // `--classfile` output) as `--lib` and staging them alongside it.
+        val (programJars, libraryJars) = allJars.partition { jar ->
+            !jar.name.startsWith("awake-core-text-") && (
+                jar.name.startsWith("awake-") ||
+                    jar.name.startsWith("player-shell-") ||
+                    jar.name.startsWith("com.awakekt.")
+                )
+        }
+        libraryJars.forEach { jar -> jar.copyTo(File(outputDirectory, jar.name), overwrite = true) }
+
+        val libRuleFiles = rulesDir.get().asFile.listFiles()
+            .orEmpty()
+            .filter { it.isFile && it.extension == "pro" }
+            .sortedBy { it.name }
+
+        val conf = configFile.get().asFile
+        conf.parentFile.mkdirs()
+        conf.writeText(
+            buildString {
+                appendLine("-include '${appRules.absolutePath}'")
+                libRuleFiles.forEach { rule ->
+                    appendLine("-include '${rule.absolutePath}'")
+                }
+                appendLine("-dontnote **")
+            },
+        )
+
+        val r8Args = mutableListOf(
+            "--release",
+            "--classfile",
+            "--output",
+            outJar.get().asFile.absolutePath,
+            "--pg-conf",
+            conf.absolutePath,
+            "--lib",
+            javaHome.absolutePath,
+        )
+        libraryJars.forEach { jar ->
+            r8Args += "--lib"
+            r8Args += jar.absolutePath
+        }
+        programJars.forEach { jar -> r8Args += jar.absolutePath }
+        args(r8Args)
+    }
 }

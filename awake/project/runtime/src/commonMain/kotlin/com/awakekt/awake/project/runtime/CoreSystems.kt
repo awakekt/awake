@@ -97,6 +97,9 @@ object CoreSystems {
     /** `texture-clips`: Steps a sprite sheet's clips. */
     const val TEXTURE_CLIPS: String = "texture-clips"
 
+    /** `sprite-locomotion`: Picks a 2D sprite's locomotion clip and facing from motion. */
+    const val SPRITE_LOCOMOTION: String = "sprite-locomotion"
+
     /** `sprite-clips`: Steps each sprite's clip. */
     const val SPRITE_CLIPS: String = "sprite-clips"
 
@@ -160,6 +163,7 @@ object CoreSystems {
         LOCOMOTION,
         KEYFRAMES,
         TEXTURE_CLIPS,
+        SPRITE_LOCOMOTION,
         SPRITE_CLIPS,
         PARTICLES_2D,
         PARTICLE_CONTENT,
