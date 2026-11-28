@@ -1,0 +1,1 @@
+- **Live GitHub star count and YouTube link on `awakekt.com`.** Added a live GitHub Star button (desktop and mobile) to the `awakekt.com` header, hero, and `/brand/` page via `site-stars.js`, set `repo_name: awakekt/awake` in MkDocs so docs display live star counts, and linked the official `@awakekt` YouTube channel across footers, `llms.txt`, and Organization structured data.

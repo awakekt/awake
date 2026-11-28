@@ -37,6 +37,7 @@ Awake Engine is the free, code-first core. Awake Studio is a separate visual edi
 - [Changelog](https://github.com/awakekt/awake/blob/main/CHANGELOG.md)
 - [Maven Central](https://central.sonatype.com/namespace/com.awakekt.awake.engine): artifacts are published under the group IDs `com.awakekt.awake.engine` (for example `bootstrap`), `com.awakekt.awake.asset` (for example `shaders`) and `com.awakekt.awake.backend` (`vulkan`)
 - [Source repository](https://github.com/awakekt/awake): Kotlin sources, module guide and architecture notes
+- [YouTube (@awakekt)](https://www.youtube.com/@awakekt): demos, devlogs, and AI MCP builds
 
 ## License
 
