@@ -47,7 +47,6 @@ fun pagedTerrainContentFeature(
             spec = shaders.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Draw),
             depth = depth.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Draw),
             textures = uploads.initialImages() + sharedTextures,
-            geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
             paint = ContentPaint.OpaqueGeometry,
             textureUpdates = uploads,
             samplerTextures = mapOf(2 to 1) + samplerTextures,
@@ -69,6 +68,8 @@ fun pagedTerrainContentFeature(
                 )
             },
             geometryKey = TerrainClipmapGeometryKey(config),
+            textureKeys = emptyMap(),
+            geometryProvider = { TerrainClipmapGeometry.buildMergedClipmapMesh(config) },
             build = { pipeline, uniforms, geometry ->
                 TerrainRenderFeature(
                     pipeline, uniforms, requireNotNull(geometry), TerrainClipmapTracker(config),

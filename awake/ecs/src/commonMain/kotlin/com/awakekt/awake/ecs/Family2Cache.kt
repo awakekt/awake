@@ -71,6 +71,9 @@ internal class Family2Cache<A : Any, B : Any>(
     internal fun componentsB(): Array<B> = componentValuesB.compatibilityArray(count, entities.size)
 
     @PublishedApi
+    internal fun entityAt(index: Int): Entity = Entity(entities[index])
+
+    @PublishedApi
     internal fun componentA(index: Int): A = componentValuesA.valueAt(index)
 
     @PublishedApi

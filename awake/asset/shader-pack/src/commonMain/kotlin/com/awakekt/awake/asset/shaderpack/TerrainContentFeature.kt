@@ -125,7 +125,6 @@ fun terrainContentFeature(
                 uniforms = TerrainUniformLayout.Draw,
             ),
             textures = surfaceTextures + (HEIGHTMAP_BINDING to encoded.texture),
-            geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
             paint = ContentPaint.OpaqueGeometry,
             samplerTextures = mapOf(HEIGHTMAP_SAMPLER_BINDING to HEIGHTMAP_BINDING) + samplerTextures,
             images = emptyMap(),
@@ -136,6 +135,7 @@ fun terrainContentFeature(
             buildWithAlternate = ::buildTerrain,
             geometryKey = TerrainClipmapGeometryKey(config),
             textureKeys = textureKeys,
+            geometryProvider = { TerrainClipmapGeometry.buildMergedClipmapMesh(config) },
             build = { pipeline, uniforms, geometry -> buildTerrain(pipeline, null, uniforms, geometry) },
         )
     }

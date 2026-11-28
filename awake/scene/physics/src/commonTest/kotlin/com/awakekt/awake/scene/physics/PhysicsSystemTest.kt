@@ -450,4 +450,70 @@ class PhysicsSystemTest {
         system.update(world, step)
         assertEquals(2, physicsWorld.kinematicMoves.size)
     }
+
+    @Test
+    fun incrementalBodySyncAvoidsFullScanOnPureAdditionsAndRemovals() {
+        val world = World()
+        val initialEntities = List(100) { index ->
+            val entity = world.create()
+            world.add(entity, Transform(position = Vec3f(index.toFloat(), 0f, 0f)))
+            world.add(entity, PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.STATIC))
+            entity
+        }
+        val physicsWorld = FakePhysicsWorld()
+        val system = PhysicsSystem(physicsWorld)
+
+        // Initial step builds all 100 bodies.
+        system.update(world, 1f / 60f)
+        assertEquals(100, physicsWorld.createBodyCallCount)
+        assertEquals(100, system.lastBodySyncScannedCount)
+
+        // Steady state scans 0 bodies.
+        system.update(world, 1f / 60f)
+        assertEquals(0, system.lastBodySyncScannedCount)
+
+        // Pure append of 3 new static colliders scans only those 3 tail entries, not all 103.
+        val appended = List(3) { index ->
+            val entity = world.create()
+            world.add(entity, Transform(position = Vec3f(200f + index, 0f, 0f)))
+            val body = PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.STATIC)
+            world.add(entity, body)
+            entity to body
+        }
+        system.update(world, 1f / 60f)
+        assertEquals(103, physicsWorld.createBodyCallCount)
+        assertEquals(3, system.lastBodySyncScannedCount, "pure appends must scan only newly appended entries")
+        appended.forEach { (_, body) -> assertNotNull(body.handle) }
+
+        // Pure removal via destroyBody + world.destroy scans 0 settled bodies.
+        for (i in 0 until 5) {
+            system.destroyBody(world, initialEntities[i])
+            world.destroy(initialEntities[i])
+        }
+        system.update(world, 1f / 60f)
+        assertEquals(103, physicsWorld.createBodyCallCount)
+        assertEquals(0, system.lastBodySyncScannedCount, "pure removals must not rescan settled bodies")
+
+        // Destroying a body while keeping its entity alive recreates only that detached entity.
+        val keptEntity = initialEntities[10]
+        val keptBody = assertNotNull(world.get<PhysicsBody>(keptEntity))
+        val oldHandle = assertNotNull(keptBody.handle)
+        system.destroyBody(world, keptEntity)
+        system.update(world, 1f / 60f)
+        assertEquals(104, physicsWorld.createBodyCallCount)
+        assertEquals(1, system.lastBodySyncScannedCount, "rebuilding a kept detached body scans only that entity")
+        assertNotNull(keptBody.handle)
+        assertTrue(keptBody.handle != oldHandle)
+
+        // Mixed remove + add in the same step falls back to a full scan and creates the new body cleanly.
+        system.destroyBody(world, initialEntities[11])
+        world.destroy(initialEntities[11])
+        val mixedEntity = world.create()
+        world.add(mixedEntity, Transform(position = Vec3f(300f, 0f, 0f)))
+        val mixedBody = PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.STATIC)
+        world.add(mixedEntity, mixedBody)
+        system.update(world, 1f / 60f)
+        assertEquals(105, physicsWorld.createBodyCallCount)
+        assertNotNull(mixedBody.handle)
+    }
 }

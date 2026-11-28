@@ -178,6 +178,83 @@ internal class AndroidAudioPlayerTest {
     }
 
     @Test
+    fun asyncMusicStreamSkipsSupersededOpensAndAppliesLateVolumeChanges() {
+        val pendingTasks = ArrayDeque<() -> Unit>()
+        val opened = mutableListOf<Pair<String, FakeStreamHandle>>()
+        val player = AndroidAudioPlayer(
+            maxConcurrentOneShots = 4,
+            streamOpener = { source, initialVolume, loop ->
+                FakeStreamHandle(initialVolume, loop).also { opened += source.id to it }
+            },
+            runMusicTask = { task -> pendingTasks.addLast(task) },
+        )
+        val town = MusicStreamSource.EncodedBytes("town.ogg", byteArrayOf(1, 2, 3))
+        val field = MusicStreamSource.EncodedBytes("field.ogg", byteArrayOf(4, 5, 6))
+
+        // Rapidly switching tracks while the first open is still queued must skip opening the stale track.
+        assertTrue(player.playMusicStream(town, volume = 0.8f, loop = true))
+        assertTrue(player.playMusicStream(field, volume = 0.5f, loop = true))
+        assertEquals(0, opened.size, "playMusicStream must return without blocking on streamOpener")
+
+        // Changing volume while field.ogg is still opening must take effect once it opens.
+        player.masterVolume = 0.5f
+        player.musicVolume = 0.4f
+
+        while (pendingTasks.isNotEmpty()) {
+            pendingTasks.removeFirst().invoke()
+        }
+
+        assertEquals(1, opened.size, "superseded town.ogg open must be skipped")
+        assertEquals("field.ogg", opened.single().first)
+        assertEquals(0.1f, opened.single().second.lastVolume, 0.0001f)
+        assertTrue(opened.single().second.isPlaying)
+
+        // Stopping enqueues teardown off the caller thread and stops the active handle cleanly.
+        player.stopMusic()
+        assertEquals(0, opened.single().second.stopCount, "stopMusic must defer stream teardown onto music executor")
+        while (pendingTasks.isNotEmpty()) {
+            pendingTasks.removeFirst().invoke()
+        }
+        assertEquals(1, opened.single().second.stopCount)
+
+        // Starting a track and disposing before it opens must never leak an unstopped handle.
+        assertTrue(player.playMusicStream(town, volume = 1f, loop = true))
+        player.dispose()
+        while (pendingTasks.isNotEmpty()) {
+            pendingTasks.removeFirst().invoke()
+        }
+        assertEquals(1, opened.size, "disposing before queued open runs must skip opening a new stream")
+    }
+
+    @Test
+    fun asyncMusicStreamStopsHandleOpenedAfterGenerationAdvanced() {
+        val opened = mutableListOf<FakeStreamHandle>()
+        var onOpening: (() -> Unit)? = null
+        val pendingTasks = ArrayDeque<() -> Unit>()
+        val player = AndroidAudioPlayer(
+            maxConcurrentOneShots = 4,
+            streamOpener = { _, initialVolume, loop ->
+                onOpening?.invoke()
+                FakeStreamHandle(initialVolume, loop).also { opened += it }
+            },
+            runMusicTask = { task -> pendingTasks.addLast(task) },
+        )
+        val town = MusicStreamSource.EncodedBytes("town.ogg", byteArrayOf(1, 2, 3))
+        assertTrue(player.playMusicStream(town, volume = 1f, loop = true))
+
+        // Simulate stopMusic() arriving while MediaPlayer.prepare() is already mid-flight.
+        onOpening = { player.stopMusic() }
+        while (pendingTasks.isNotEmpty()) {
+            pendingTasks.removeFirst().invoke()
+        }
+
+        assertEquals(1, opened.size)
+        assertEquals(1, opened.single().stopCount, "a handle that finishes opening after stopMusic must be stopped immediately")
+        assertFalse(opened.single().isPlaying)
+        player.dispose()
+    }
+
+    @Test
     fun readMediaSliceCopiesRequestedRangesAndReportsEof() {
         val source = byteArrayOf(10, 20, 30, 40, 50)
         val dest = ByteArray(4)

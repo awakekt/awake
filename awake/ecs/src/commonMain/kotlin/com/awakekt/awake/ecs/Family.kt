@@ -35,6 +35,9 @@ class Family1<A : Any> @PublishedApi internal constructor(
      */
     fun components(): Array<A> = cache.components()
 
+    /** Returns the entity at [index] in dense family order. */
+    fun entityAt(index: Int): Entity = cache.entityAt(index)
+
     /** Returns the component at [index] in dense family order. */
     fun componentAt(index: Int): A = cache.componentAt(index)
 
@@ -85,6 +88,9 @@ class Family2<A : Any, B : Any> @PublishedApi internal constructor(
      * API lazily materializes repeated singleton references.
      */
     fun componentsB(): Array<B> = cache.componentsB()
+
+    /** Returns the entity at [index] in dense family order. */
+    fun entityAt(index: Int): Entity = cache.entityAt(index)
 
     /** Returns the first component at [index] in dense family order. */
     fun componentA(index: Int): A = cache.componentA(index)
