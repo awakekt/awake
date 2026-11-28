@@ -108,6 +108,15 @@ class SceneAssetLibrary(
      * eviction order, so re-inserting on release is what makes this least-recently-released. */
     private val retainedMeshes = linkedMapOf<String, Mesh>()
 
+    /**
+     * Released GPU materials kept for reuse when [retainedMeshBudgetBytes] is positive, keyed by
+     * [NamedMaterialKey] or [SharedMaterialKey] in least-recently-released order. Bounded by
+     * [maxRetainedMaterials], cleared on [trimMemory] and [dispose].
+     */
+    private val retainedMaterials = linkedMapOf<Any, Material>()
+    internal var maxRetainedMaterials: Int = defaultRetainedMaterialLimit(retainedMeshBudgetBytes)
+    private var lastTextureMipSkip: Int = 0
+
     // How many times [resolve] took holds for each request, so [releaseRenderable] gives back exactly those.
     private val resolvedRequests = mutableMapOf<SceneRenderableRequest, Int>()
 
@@ -307,14 +316,22 @@ class SceneAssetLibrary(
 
     /**
      * The load material [name] needs before it can be made without blocking the frame, started in
-     * [scope]; null when it can be made now: one registered or already made, one whose shared GPU
-     * material is already live at [mipSkip], or one its resolver has nothing to load for.
+     * [scope]; null when it can be made now: one registered, already live, retained for reuse, one
+     * whose shared GPU material is already live or retained at [mipSkip], or one its resolver has
+     * nothing to load for.
      */
-    internal fun loadMaterial(name: String, scope: CoroutineScope, mipSkip: () -> Int = { 0 }): SceneMeshLoad? = when {
-        name in materialFactories || name in materials -> null
-        else -> dynamicResolvers.firstOrNull { it.canResolveMaterial(name) }?.let { resolver ->
-            val hasShared = sharedMaterials.isNotEmpty() &&
-                resolver.sharedMaterialKey(name)?.let { SharedMaterialKey(it, mipSkip()) in sharedMaterials } == true
+    internal fun loadMaterial(name: String, scope: CoroutineScope, mipSkip: () -> Int = { 0 }): SceneMeshLoad? {
+        if (name in materialFactories || name in materials || NamedMaterialKey(name) in retainedMaterials) {
+            return null
+        }
+        return dynamicResolvers.firstOrNull { it.canResolveMaterial(name) }?.let { resolver ->
+            val hasShared = (sharedMaterials.isNotEmpty() || retainedMaterials.isNotEmpty()) &&
+                resolver.sharedMaterialKey(name)?.let { key ->
+                    val activeMipSkip = mipSkip()
+                    lastTextureMipSkip = activeMipSkip
+                    val sharedKey = SharedMaterialKey(key, activeMipSkip)
+                    sharedKey in sharedMaterials || sharedKey in retainedMaterials
+                } == true
             if (hasShared) null else resolver.loadMaterial(name, scope)
         }
     }
@@ -359,7 +376,9 @@ class SceneAssetLibrary(
     /** Builds [name] on first use and takes a reference to it; see [releaseMaterial]. */
     fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material {
         frameThread.check("SceneAssetLibrary.requireMaterial")
-        val material = materials.getOrPut(name) { resolveMaterial(runtime, name) }
+        val material = retainedMaterials.remove(NamedMaterialKey(name))?.also { revived ->
+            materials[name] = revived
+        } ?: materials.getOrPut(name) { resolveMaterial(runtime, name) }
         materialHolders[name] = (materialHolders[name] ?: 0) + 1
         return material
     }
@@ -377,9 +396,16 @@ class SceneAssetLibrary(
         if (!resolver.canResolveMaterial(name)) return null
         val contentKey = resolver.sharedMaterialKey(name)
         val existing = contentKey?.let { key ->
-            val sharedKey = SharedMaterialKey(key, runtime.renderer.textureMipSkip)
+            val mipSkip = runtime.renderer.textureMipSkip
+            lastTextureMipSkip = mipSkip
+            val sharedKey = SharedMaterialKey(key, mipSkip)
             sharedMaterials[sharedKey]?.also {
                 sharedMaterialHolders[sharedKey] = (sharedMaterialHolders[sharedKey] ?: 0) + 1
+                materialSharedKeys[name] = sharedKey
+                resolver.onMaterialReused(name)
+            } ?: retainedMaterials.remove(sharedKey)?.also { revived ->
+                sharedMaterials[sharedKey] = revived
+                sharedMaterialHolders[sharedKey] = 1
                 materialSharedKeys[name] = sharedKey
                 resolver.onMaterialReused(name)
             }
@@ -389,7 +415,10 @@ class SceneAssetLibrary(
             // is never cached under the original content key.
             val createdContentKey = resolver.sharedMaterialKey(name)
             if (createdContentKey != null) {
-                val createdKey = SharedMaterialKey(createdContentKey, runtime.renderer.textureMipSkip)
+                val mipSkip = runtime.renderer.textureMipSkip
+                lastTextureMipSkip = mipSkip
+                val createdKey = SharedMaterialKey(createdContentKey, mipSkip)
+                retainedMaterials.remove(createdKey)?.destroy()
                 if (createdKey !in sharedMaterials) {
                     sharedMaterials[createdKey] = resolved
                     sharedMaterialHolders[createdKey] = 1
@@ -460,16 +489,28 @@ class SceneAssetLibrary(
     }
 
     /**
-     * Releases all idle retained GPU meshes and notifies every installed [SceneAssetResolver] to
-     * drop unreferenced CPU caches. Called on the frame thread when host memory pressure fires.
+     * Releases all idle retained GPU meshes and materials and notifies every installed
+     * [SceneAssetResolver] to drop unreferenced CPU caches. Called on the frame thread when host
+     * memory pressure fires.
      */
     fun trimMemory() {
         trimRetainedMeshes(0L)
+        trimRetainedMaterials(0)
         dynamicResolvers.forEach { it.trimMemory() }
     }
 
     /** Whether [name] is released but still kept for reuse. */
     fun isMeshRetained(name: String): Boolean = name in retainedMeshes
+
+    internal fun retainedMaterialCount(): Int = retainedMaterials.size
+
+    internal fun isMaterialRetained(name: String): Boolean = retainedMaterials.isNotEmpty() && (
+        NamedMaterialKey(name) in retainedMaterials ||
+            dynamicResolvers.any { resolver ->
+                resolver.canResolveMaterial(name) &&
+                    resolver.sharedMaterialKey(name)?.let { SharedMaterialKey(it, lastTextureMipSkip) in retainedMaterials } == true
+            }
+        )
 
     /**
      * Whether mesh [name] is built now, held by a renderer or retained, so a renderer can take it with
@@ -477,14 +518,19 @@ class SceneAssetLibrary(
      */
     fun isMeshBuilt(name: String): Boolean = name in meshes || name in retainedMeshes
 
-    /** Whether material [name] is built now, held by a renderer, so a renderer can take it with nothing read first. */
-    fun isMaterialBuilt(name: String): Boolean = name in materials
+    /**
+     * Whether material [name] is built now, held by a renderer or retained for reuse, so a renderer
+     * can take it with nothing read first.
+     */
+    fun isMaterialBuilt(name: String): Boolean = name in materials || isMaterialRetained(name)
 
     /**
-     * Drops one reference to [name], destroying the underlying GPU material when no material name
-     * still holds it (see [SceneAssetResolver.sharedMaterialKey]).
+     * Drops one reference to [name], releasing the underlying GPU material when no material name
+     * still holds it (see [SceneAssetResolver.sharedMaterialKey]). When [retainedMeshBudgetBytes]
+     * is positive, the released material is retained in the bounded LRU cache for reuse across cell
+     * seams rather than immediately destroyed.
      *
-     * @return true when this call destroyed the underlying GPU material.
+     * @return true when this call released the last holder of the underlying GPU material.
      */
     fun releaseMaterial(name: String): Boolean {
         val count = checkNotNull(materialHolders[name]) {
@@ -502,7 +548,7 @@ class SceneAssetLibrary(
 
     private fun releaseUnderlyingMaterial(name: String, material: Material): Boolean {
         val sharedKey = materialSharedKeys.remove(name)
-        val shouldDestroy = if (sharedKey == null) {
+        val releasedLastHolder = if (sharedKey == null) {
             true
         } else {
             val sharedCount = sharedMaterialHolders[sharedKey] ?: 0
@@ -515,8 +561,27 @@ class SceneAssetLibrary(
                 true
             }
         }
-        if (shouldDestroy) material.destroy()
-        return shouldDestroy
+        if (!releasedLastHolder) return false
+        if (maxRetainedMaterials > 0) {
+            retainMaterial(sharedKey ?: NamedMaterialKey(name), material)
+        } else {
+            material.destroy()
+        }
+        return true
+    }
+
+    private fun retainMaterial(key: Any, material: Material) {
+        retainedMaterials.remove(key)?.destroy()
+        retainedMaterials[key] = material
+        trimRetainedMaterials(maxRetainedMaterials)
+    }
+
+    private fun trimRetainedMaterials(targetCount: Int) {
+        val cap = targetCount.coerceAtLeast(0)
+        while (retainedMaterials.size > cap && retainedMaterials.isNotEmpty()) {
+            val eldest = retainedMaterials.keys.first()
+            retainedMaterials.remove(eldest)?.destroy()
+        }
     }
 
     /** How many holders [name] has, for a test or a diagnostic. Zero when it is not loaded. */
@@ -659,11 +724,13 @@ class SceneAssetLibrary(
             if (name !in materialSharedKeys) material.destroy()
         }
         sharedMaterials.values.forEach { material -> material.destroy() }
+        retainedMaterials.values.forEach { material -> material.destroy() }
         meshes.clear()
         retainedMeshes.clear()
         retainedBytes = 0
         materials.clear()
         sharedMaterials.clear()
+        retainedMaterials.clear()
         sharedMaterialHolders.clear()
         materialSharedKeys.clear()
         meshHolders.clear()
@@ -675,6 +742,18 @@ class SceneAssetLibrary(
     companion object {
         private const val FOUR_GIB_BYTES: Long = 4L * 1024L * 1024L * 1024L
         private const val EIGHT_GIB_BYTES: Long = 8L * 1024L * 1024L * 1024L
+        private const val BYTES_PER_RETAINED_MATERIAL: Long = 512L * 1024L
+        private const val MIN_RETAINED_MATERIALS: Int = 16
+        private const val MAX_RETAINED_MATERIALS: Int = 128
+
+        private fun defaultRetainedMaterialLimit(retainedMeshBudgetBytes: Long): Int =
+            if (retainedMeshBudgetBytes <= 0L) {
+                0
+            } else {
+                (retainedMeshBudgetBytes / BYTES_PER_RETAINED_MATERIAL)
+                    .toInt()
+                    .coerceIn(MIN_RETAINED_MATERIALS, MAX_RETAINED_MATERIALS)
+            }
 
         /** Recommended retained idle mesh budget for low-RAM / 4 GB devices (8 MiB). */
         const val LOW_RAM_RETAINED_MESH_BUDGET_BYTES: Long = 8L * 1024L * 1024L
@@ -702,6 +781,9 @@ class SceneAssetLibrary(
 
 /** Immutable cache key for a shared GPU material: content digest key plus upload mip-skip. */
 private data class SharedMaterialKey(val key: String, val mipSkip: Int)
+
+/** Immutable cache key for a non-shared GPU material retained by exact name. */
+private data class NamedMaterialKey(val name: String)
 
 /** Textures asked to be forgotten, by name, or all of them; replaced whole, never changed in place. */
 private class ForgetRequests(val names: Set<String>, val all: Boolean)

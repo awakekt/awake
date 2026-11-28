@@ -167,18 +167,19 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
 
     private fun acquireGeometry(feature: ContentFeature): SharedGeometry? {
         val key = feature.geometryKey
-        val source = feature.geometry
         return when {
-            key == null || source == null -> null
+            key == null || !feature.hasGeometry -> null
             key in sharedGeometries -> sharedGeometries.getValue(key).also { it.users++ }
-            else -> gpu.uploadGeometry(source)?.let { upload ->
-                if (upload.geometry == null) {
-                    upload.release()
-                    throw IllegalArgumentException(
-                        "ContentFeatureGpu.uploadGeometry returned no ContentGeometry for '${feature.name}'.",
-                    )
+            else -> feature.geometry?.let { source ->
+                gpu.uploadGeometry(source)?.let { upload ->
+                    if (upload.geometry == null) {
+                        upload.release()
+                        throw IllegalArgumentException(
+                            "ContentFeatureGpu.uploadGeometry returned no ContentGeometry for '${feature.name}'.",
+                        )
+                    }
+                    SharedGeometry(key, upload).also { sharedGeometries[key] = it }
                 }
-                SharedGeometry(key, upload).also { sharedGeometries[key] = it }
             }
         }
     }

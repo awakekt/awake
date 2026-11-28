@@ -55,6 +55,9 @@ internal class Family1Cache<A : Any>(
     internal fun components(): Array<A> = componentValues.compatibilityArray(count, entities.size)
 
     @PublishedApi
+    internal fun entityAt(index: Int): Entity = Entity(entities[index])
+
+    @PublishedApi
     internal fun componentAt(index: Int): A = componentValues.valueAt(index)
 
     /** Adds an already matched entity while a family is initially populated. */

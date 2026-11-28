@@ -45,8 +45,7 @@ import com.awakekt.awake.render.texture.TextureAsset
  * binding index. Shape and bindings are fixed at construction; opted-in base-level images can
  * receive regions through [textureUpdates]. A binding declared `arrayed` takes a multi-layer
  * [TextureAsset]; a single-layer one there is rejected rather than left to the GPU to catch.
- * @property geometry Mesh uploaded once with the feature, or null when the feature supplies its
- * own. Load-time data, for the same reason the textures above are.
+ * @param geometry Eagerly supplied mesh uploaded once with the feature, or null when omitted or supplied lazily via [geometryProvider].
  * @property paint Which side of the scene's geometry this feature draws on. A sky draws before
  * it; anything reading [com.awakekt.awake.render.pipeline.BindingSemantic.SceneDepth]
  * to cover what is already there -- fog, water, soft particles -- draws after.
@@ -81,6 +80,7 @@ import com.awakekt.awake.render.texture.TextureAsset
  * index. When a binding is present here, a `ContentFeatureHost` may upload that texture once per
  * equal key (and active mip-skip level) and share the GPU texture across attached features using
  * reference counting until the last feature sharing that key detaches.
+ * @param geometryProvider Optional lazy factory that builds [geometry] on demand when [geometryKey] misses the shared geometry cache.
  * @property build Turns the registry's output into the feature that records with it.
  *
  * Mutable textures opt into [textureUpdates]. Backends prepare regions before any depth or scene
@@ -92,7 +92,7 @@ class ContentFeature(
     val name: String,
     val spec: PipelineSpec,
     val textures: Map<Int, TextureAsset> = emptyMap(),
-    val geometry: MeshGeometry? = null,
+    geometry: MeshGeometry? = null,
     val paint: ContentPaint = ContentPaint.BeforeGeometry,
     val samplesSceneDepth: Boolean = false,
     val depth: PipelineSpec? = null,
@@ -114,7 +114,7 @@ class ContentFeature(
     val buildWithAlternate: ((PipelineHandle, PipelineHandle?, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>)?,
     /**
      * Optional immutable key for deduplicating immutable [geometry] uploads across attached
-     * features. Must only be supplied when [geometry] is non-null.
+     * features. Must only be supplied when [hasGeometry] is true.
      */
     val geometryKey: Any?,
     /**
@@ -122,8 +122,75 @@ class ContentFeature(
      * across attached features (for example, terrain layer texture arrays shared across chunks).
      */
     val textureKeys: Map<Int, Any>,
+    /**
+     * Optional lazy factory that builds [geometry] on demand when [geometryKey] misses the shared
+     * GPU geometry cache, avoiding redundant CPU mesh generation on cache hits.
+     */
+    private val geometryProvider: (() -> MeshGeometry)?,
     val build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
 ) {
+    private var resolvedGeometry: MeshGeometry? = geometry
+
+    /** Whether this feature declares geometry (either eagerly or through a lazy factory). */
+    val hasGeometry: Boolean get() = resolvedGeometry != null || geometryProvider != null
+
+    /**
+     * Mesh uploaded once with the feature, or null when the feature supplies its own. When built
+     * lazily via [geometryProvider], the mesh is generated at most once on first access.
+     */
+    val geometry: MeshGeometry?
+        get() {
+            val cached = resolvedGeometry
+            if (cached != null) return cached
+            val built = geometryProvider?.invoke() ?: return null
+            require(spec.vertexFormat == built.format) {
+                "Content feature '$name' draws ${built.format} geometry through a " +
+                    "${spec.vertexFormat} pipeline. A mismatch here reads a vertex buffer with the " +
+                    "wrong stride, which renders scrambled rather than failing."
+            }
+            resolvedGeometry = built
+            return built
+        }
+
+    /** A feature whose geometry is supplied eagerly rather than lazily, kept for binary compatibility. */
+    @Suppress("LongParameterList")
+    constructor(
+        name: String,
+        spec: PipelineSpec,
+        textures: Map<Int, TextureAsset> = emptyMap(),
+        geometry: MeshGeometry? = null,
+        paint: ContentPaint = ContentPaint.BeforeGeometry,
+        samplesSceneDepth: Boolean = false,
+        depth: PipelineSpec? = null,
+        textureUpdates: ContentTextureUpdates? = null,
+        samplerTextures: Map<Int, Int> = emptyMap(),
+        samplesMask: Boolean = false,
+        images: Map<Int, GpuImageSource>,
+        alternateSpec: PipelineSpec?,
+        buildWithAlternate: ((PipelineHandle, PipelineHandle?, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>)?,
+        geometryKey: Any?,
+        textureKeys: Map<Int, Any>,
+        build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
+    ) : this(
+        name,
+        spec,
+        textures,
+        geometry,
+        paint,
+        samplesSceneDepth,
+        depth,
+        textureUpdates,
+        samplerTextures,
+        samplesMask,
+        images,
+        alternateSpec,
+        buildWithAlternate,
+        geometryKey,
+        textureKeys,
+        null,
+        build,
+    )
+
     /** A feature whose textures are not shared across attachments, kept for binary compatibility. */
     @Suppress("LongParameterList")
     constructor(
@@ -332,15 +399,18 @@ class ContentFeature(
                 "layout differs from its own. The depth pass draws the same geometry with the same " +
                 "uniform block, so the two have to read them alike."
         }
-        require(geometryKey == null || geometry != null) {
+        require(geometryKey == null || hasGeometry) {
             "Content feature '$name' declares geometryKey '$geometryKey' without geometry."
+        }
+        require(resolvedGeometry == null || geometryProvider == null) {
+            "Content feature '$name' supplies both eager geometry and a lazy geometryProvider."
         }
         require(textureKeys.keys.all { it in textures && it !in textureUpdates?.bindings.orEmpty() }) {
             "Content feature '$name' declares textureKeys for bindings ${textureKeys.keys.sorted()} " +
                 "which must be immutable TextureAsset bindings."
         }
-        require(geometry == null || spec.vertexFormat == geometry.format) {
-            "Content feature '$name' draws ${geometry?.format} geometry through a " +
+        require(resolvedGeometry == null || spec.vertexFormat == resolvedGeometry?.format) {
+            "Content feature '$name' draws ${resolvedGeometry?.format} geometry through a " +
                 "${spec.vertexFormat} pipeline. A mismatch here reads a vertex buffer with the " +
                 "wrong stride, which renders scrambled rather than failing."
         }

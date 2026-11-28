@@ -80,8 +80,15 @@ class PhysicsSystem(
     private var syncedWorld: World? = null
     private var syncedGeneration = -1
     private var syncedFamilyChanges = -1
+    private var syncedFamilySize = 0
     private var syncedMotionEdits = -1
     private var syncedHandleEdits = -1
+    private var detachedEntities = LongArray(INITIAL_DETACHED_CAPACITY)
+    private var detachedCount = 0
+
+    // Diagnostic counters for incremental-sync verification in tests.
+    internal var lastBodySyncScannedCount = 0
+        private set
 
     // Built once, so a step allocates no visitor; a BodyTransformVisitor, so no handle is boxed per body (#1428).
     private val readBack = BodyTransformVisitor { handleId, position, rotation ->
@@ -159,7 +166,11 @@ class PhysicsSystem(
         val handle = body.handle ?: return
         physicsWorld.destroyBody(handle)
         bodies.remove(handle)
-        body.handle = null
+        body.assignHandleSilently(null)
+        if (detachedCount == detachedEntities.size) {
+            detachedEntities = detachedEntities.copyOf(detachedEntities.size * 2)
+        }
+        detachedEntities[detachedCount++] = entity.packed
     }
 
     private fun liveEntity(handle: BodyHandle): Entity? =
@@ -180,50 +191,12 @@ class PhysicsSystem(
         return family
     }
 
-    private fun needsBodySync(world: World, familyChanges: Int): Boolean {
-        val worldChanged = syncedWorld !== world || syncedGeneration != world.generation
-        val editsChanged = syncedMotionEdits != physicsBodyMotionTypeEdits || syncedHandleEdits != physicsBodyHandleEdits
-        return worldChanged || syncedFamilyChanges != familyChanges || editsChanged
-    }
-
     override fun update(world: World, delta: Float) {
         if (memoryPressure.check()) physicsWorld.trimMemory()
         val family = ensureWorldCache(world)
         val store = transformStore
-        if (needsBodySync(world, family.changes)) {
-            family.forEach { entity, transform, physicsBody ->
-                val live = physicsBody.handle
-                // A rebuild rather than a mutation: the backend port has no setMotionType, and adding
-                // one to four backends to serve an editor field is the larger change.
-                if (live != null && bodies.built(entity, live)?.motionType != physicsBody.motionType) {
-                    physicsWorld.destroyBody(live)
-                    bodies.remove(live)
-                    physicsBody.handle = null
-                }
-                if (physicsBody.handle == null) {
-                    poseResolver.resolve(store, transform, scratchWorldPosition, scratchWorldRotation)
-                    val handle = physicsWorld.createBody(
-                        physicsBody.shape,
-                        scratchWorldPosition,
-                        scratchWorldRotation,
-                        physicsBody.motionType,
-                        physicsBody.layer,
-                        physicsBody.sensor,
-                        physicsBody.degreesOfFreedom,
-                    )
-                    physicsBody.handle = handle
-                    val record = bodies.add(entity, handle, physicsBody.motionType)
-                    if (physicsBody.motionType == MotionType.KINEMATIC) {
-                        record.kinematic = KinematicSyncState(scratchWorldPosition, scratchWorldRotation)
-                    }
-                }
-            }
-            syncedWorld = world
-            syncedGeneration = world.generation
-            syncedFamilyChanges = family.changes
-            syncedMotionEdits = physicsBodyMotionTypeEdits
-            syncedHandleEdits = physicsBodyHandleEdits
-        }
+        lastBodySyncScannedCount = 0
+        syncPendingBodies(world, family, store)
 
         if (bodies.kinematicCount > 0 && delta > 0f) {
             syncKinematicBodies(store, delta)
@@ -241,6 +214,70 @@ class PhysicsSystem(
         drainingWorld = world
         physicsWorld.drainContacts(collectContact)
         drainingWorld = null
+    }
+
+    private fun syncPendingBodies(
+        world: World,
+        family: Family2<Transform, PhysicsBody>,
+        store: ComponentStore<Transform>?,
+    ) {
+        val worldChanged = syncedWorld !== world || syncedGeneration != world.generation
+        val editsChanged = syncedMotionEdits != physicsBodyMotionTypeEdits || syncedHandleEdits != physicsBodyHandleEdits
+        val familyChanges = family.changes
+        if (worldChanged || editsChanged || syncedFamilyChanges != familyChanges) {
+            syncFamilyBodies(family, store, worldChanged || editsChanged, familyChanges)
+            syncedWorld = world
+            syncedGeneration = world.generation
+            syncedFamilyChanges = family.changes
+            syncedFamilySize = family.size
+            syncedMotionEdits = physicsBodyMotionTypeEdits
+            syncedHandleEdits = physicsBodyHandleEdits
+        }
+        if (detachedCount > 0) {
+            if (!worldChanged) syncDetachedBodies(world, store)
+            detachedCount = 0
+        }
+    }
+
+    private fun syncFamilyBodies(
+        family: Family2<Transform, PhysicsBody>,
+        store: ComponentStore<Transform>?,
+        forceFullScan: Boolean,
+        familyChanges: Int,
+    ) {
+        val deltaChanges = familyChanges - syncedFamilyChanges
+        val deltaSize = family.size - syncedFamilySize
+        val pureRemoval = !forceFullScan && deltaSize < 0 && deltaChanges == -deltaSize
+        val pureAppend = !forceFullScan && deltaSize > 0 && deltaChanges == deltaSize
+        when {
+            pureRemoval -> Unit
+            pureAppend -> {
+                for (index in syncedFamilySize until family.size) {
+                    lastBodySyncScannedCount++
+                    syncEntityBody(store, family.entityAt(index), family.componentA(index), family.componentB(index))
+                }
+            }
+            else -> {
+                family.forEach { entity, transform, physicsBody ->
+                    lastBodySyncScannedCount++
+                    syncEntityBody(store, entity, transform, physicsBody)
+                }
+            }
+        }
+    }
+
+    private fun syncDetachedBodies(world: World, store: ComponentStore<Transform>?) {
+        for (index in 0 until detachedCount) {
+            val entity = Entity(detachedEntities[index])
+            if (world.isAlive(entity)) {
+                val transform = store?.get(entity)
+                val physicsBody = world.get<PhysicsBody>(entity)
+                if (transform != null && physicsBody != null) {
+                    lastBodySyncScannedCount++
+                    syncEntityBody(store, entity, transform, physicsBody)
+                }
+            }
+        }
     }
 
     /**
@@ -289,16 +326,50 @@ class PhysicsSystem(
         }
     }
 
-    private fun samePose(posA: Vec3f, rotA: Quat, posB: Vec3f, rotB: Quat): Boolean {
-        val dx = posA.x - posB.x
-        val dy = posA.y - posB.y
-        val dz = posA.z - posB.z
-        if (dx * dx + dy * dy + dz * dz > POSITION_EPSILON_SQ) return false
-        val dot = abs(rotA.x * rotB.x + rotA.y * rotB.y + rotA.z * rotB.z + rotA.w * rotB.w)
-        return dot >= 1f - ROTATION_DOT_EPSILON
+    private fun syncEntityBody(
+        store: ComponentStore<Transform>?,
+        entity: Entity,
+        transform: Transform,
+        physicsBody: PhysicsBody,
+    ) {
+        val live = physicsBody.handle
+        // A rebuild rather than a mutation: the backend port has no setMotionType, and adding
+        // one to four backends to serve an editor field is the larger change.
+        if (live != null && bodies.built(entity, live)?.motionType != physicsBody.motionType) {
+            physicsWorld.destroyBody(live)
+            bodies.remove(live)
+            physicsBody.assignHandleSilently(null)
+        }
+        if (physicsBody.handle == null) {
+            poseResolver.resolve(store, transform, scratchWorldPosition, scratchWorldRotation)
+            val handle = physicsWorld.createBody(
+                physicsBody.shape,
+                scratchWorldPosition,
+                scratchWorldRotation,
+                physicsBody.motionType,
+                physicsBody.layer,
+                physicsBody.sensor,
+                physicsBody.degreesOfFreedom,
+            )
+            physicsBody.assignHandleSilently(handle)
+            val record = bodies.add(entity, handle, physicsBody.motionType)
+            if (physicsBody.motionType == MotionType.KINEMATIC) {
+                record.kinematic = KinematicSyncState(scratchWorldPosition, scratchWorldRotation)
+            }
+        }
     }
 }
 
+private fun samePose(posA: Vec3f, rotA: Quat, posB: Vec3f, rotB: Quat): Boolean {
+    val dx = posA.x - posB.x
+    val dy = posA.y - posB.y
+    val dz = posA.z - posB.z
+    if (dx * dx + dy * dy + dz * dz > POSITION_EPSILON_SQ) return false
+    val dot = abs(rotA.x * rotB.x + rotA.y * rotB.y + rotA.z * rotB.z + rotA.w * rotB.w)
+    return dot >= 1f - ROTATION_DOT_EPSILON
+}
+
 private val TRANSFORM_CLASS = Transform::class
+private const val INITIAL_DETACHED_CAPACITY = 16
 private const val POSITION_EPSILON_SQ = 1e-10f
 private const val ROTATION_DOT_EPSILON = 1e-5f

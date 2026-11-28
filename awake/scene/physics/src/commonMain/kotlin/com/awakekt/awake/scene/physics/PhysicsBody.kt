@@ -80,13 +80,21 @@ class PhysicsBody(
             }
         }
 
-    var handle: BodyHandle? = handle
+    private var handleBacking: BodyHandle? = handle
+
+    var handle: BodyHandle?
+        get() = handleBacking
         set(value) {
-            if (field != value) {
-                field = value
+            if (handleBacking != value) {
+                handleBacking = value
                 physicsBodyHandleEdits++
             }
         }
+
+    /** Updates [handle] from [PhysicsSystem] without tripping external handle-edit rescan tracking. */
+    internal fun assignHandleSilently(value: BodyHandle?) {
+        handleBacking = value
+    }
 
     /** Destructures [shape]. */
     operator fun component1(): PhysicsShape = shape

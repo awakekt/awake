@@ -137,6 +137,41 @@ class SharedContentGeometryTest {
         assertEquals(2, gpu.geometryReleases)
     }
 
+    @Test
+    fun lazyGeometryProviderRunsOnlyOnceOnCacheMissAndIsSkippedOnCacheHits() = runTest {
+        var providerInvocations = 0
+        fun lazyFeature(name: String) = ContentFeatureSource {
+            ContentFeature(
+                name = name,
+                spec = SPEC_A,
+                images = emptyMap(),
+                alternateSpec = null,
+                buildWithAlternate = null,
+                geometryKey = KEY_A,
+                textureKeys = emptyMap(),
+                geometryProvider = {
+                    providerInvocations++
+                    QUAD
+                },
+            ) { _, _, geometry ->
+                requireNotNull(geometry)
+                RecordingFeature(name, events)
+            }
+        }
+
+        val first = attacher.attachContentFeature(lazyFeature("chunk-0"))
+        val second = attacher.attachContentFeature(lazyFeature("chunk-1"))
+        val third = attacher.attachContentFeature(lazyFeature("chunk-2"))
+
+        assertEquals(1, providerInvocations, "shared geometry cache hits must skip invoking geometryProvider")
+        assertEquals(1, gpu.geometryUploads)
+
+        first.detach()
+        second.detach()
+        third.detach()
+        assertEquals(1, gpu.geometryReleases)
+    }
+
     private fun feature(
         name: String,
         spec: PipelineSpec,
