@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.86.0] - 2026-11-28
+
+### Added
+
+- **2D sprite locomotion & Blueprint sprite animation.** Added `SceneSpriteLocomotion` (`"component": "sprite_locomotion"`), `SpriteLocomotion`, and zero-allocation `SpriteLocomotionSystem` in `:awake:scene:scene2d` to switch `idle`/`walk`/`run`/`jump`/`fall` sprite clips and flip horizontal facing from entity motion and ancestor `GroundContact`, extended Blueprint `animation.play` to also drive 2D `SpriteClips`, and added R8 shrinking and obfuscation (`:awake:player:player-shell:desktopObfuscate`) for the prebuilt macOS desktop player (`scripts/package-macos-player.sh`).
+
 ## [0.85.0] - 2026-11-28
 
 ### Added
