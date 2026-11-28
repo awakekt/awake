@@ -45,6 +45,12 @@ class FrameClipPlayer(
         require(initialClipId == null || initialClipId in runs) { "Unknown initial clip: $initialClipId." }
     }
 
+    /** Names of all clips in this player's library. */
+    val clipIds: Set<String> get() = runs.keys
+
+    /** Whether [clipId] is present in this player's library. */
+    fun hasClip(clipId: String): Boolean = clipId in runs
+
     /** Name of the active run, or null when none was selected. */
     var activeClipId: String? = initialClipId
         private set

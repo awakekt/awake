@@ -154,6 +154,7 @@ public final class com/awakekt/awake/project/runtime/CoreSystems {
 	public static final field SPIN Ljava/lang/String;
 	public static final field SPIN_CLOCK Ljava/lang/String;
 	public static final field SPRITE_CLIPS Ljava/lang/String;
+	public static final field SPRITE_LOCOMOTION Ljava/lang/String;
 	public static final field TERRAIN Ljava/lang/String;
 	public static final field TERRAIN_COLLIDER Ljava/lang/String;
 	public static final field TEXTURE_CLIPS Ljava/lang/String;

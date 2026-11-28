@@ -74,6 +74,7 @@ registers it.
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`sprite`](#sprite) | `Sprite` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`sprite_clips`](#sprite_clips) | `SpriteClips` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
+| [`sprite_locomotion`](#sprite_locomotion) | `SpriteLocomotion` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`state_machine`](#state_machine) | `StateMachineAsset` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#trees-and-machines-from-data) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`tag`](#tag) | `Tags` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
@@ -1337,6 +1338,30 @@ local runs override imported names. The result saves as ordinary scene component
 Runs must contain contiguous, untrimmed cells on one row. Uniform `durations_ms` overrides `fps`;
 without durations, `fps` is required. Packed atlases, reordered cells and variable frame durations
 are unsupported and rejected with `IllegalArgumentException`.
+
+## `sprite_locomotion`
+
+Motion-driven 2D sprite animation and horizontal facing for an entity with `sprite` and
+`sprite_clips`. `SceneSpriteLocomotion`.
+
+The standard scene runtime runs `SpriteLocomotionSystem` right before `SpriteClipSystem`, measuring
+world X/Y movement from the entity's `Transform` and reading `GroundContact` from the entity or its
+nearest character ancestor. When `flipOnMoveX` is true, horizontal movement faster than `walkAbove`
+updates `Sprite.flipX` automatically. Clips outside this component (such as an attack triggered from
+a blueprint) play uninterrupted until finished.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `idle` | string | none | Clip played while standing still on the ground. |
+| `walk` | string | none | Clip played above `walkAbove` horizontal speed. |
+| `run` | string | none | Clip played above `runAbove` horizontal speed; falls back to `walk` when omitted. |
+| `jump` | string | none | Clip played while airborne, or while rising when `fall` is supplied. |
+| `fall` | string | none | Clip played while descending in the air; falls back to `jump` when omitted. |
+| `walkAbove` | number | `0.1` | Horizontal speed in scene units per second above which `walk` plays. Not negative. |
+| `runAbove` | number | `4.0` | Horizontal speed in scene units per second above which `run` plays. Not negative and at least `walkAbove`. |
+| `airborneAbove` | number | `2.0` | Vertical speed that starts airborne playback without a `GroundContact`. Above 0. |
+| `flipOnMoveX` | boolean | `true` | Mirror `Sprite.flipX` automatically to match horizontal movement direction. |
+| `defaultFacingRight` | boolean | `true` | Whether unflipped (`flipX = false`) sprite art faces right (`+X`). |
 
 ## `static_transform`
 

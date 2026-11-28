@@ -51,6 +51,7 @@ import com.awakekt.awake.scene.runtime.schedule.guardedFor
 import com.awakekt.awake.scene.runtime.timeScale
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
+import com.awakekt.awake.scene.scene2d.SpriteLocomotionSystem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -418,6 +419,7 @@ internal class ProjectSceneRunner(
      */
     private fun systemsFor(scene: ProjectScene, sceneLoads: PlayedSceneLoads): SceneSystemSet {
         val hostRuns = buildSet {
+            if (runtime.hasInfrastructureSystem(SpriteLocomotionSystem::class)) add(SPRITE_LOCOMOTION_SYSTEM)
             if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) add(SPRITE_CLIPS_SYSTEM)
             if (runtime.hasInfrastructureSystem(Particle2DSystem::class)) add(PARTICLES_2D_SYSTEM)
         }

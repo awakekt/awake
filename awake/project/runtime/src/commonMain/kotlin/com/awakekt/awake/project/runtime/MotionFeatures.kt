@@ -29,8 +29,13 @@ import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.scene.scene2d.SceneParticleEmitter2D
 import com.awakekt.awake.scene.scene2d.SceneSpriteClips
+import com.awakekt.awake.scene.scene2d.SceneSpriteLocomotion
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
+import com.awakekt.awake.scene.scene2d.SpriteLocomotionSystem
 import com.awakekt.awake.scene.scene2d.Transform2DPlacement
+
+/** The name of the system that picks each sprite's locomotion clip and facing in its schedule. */
+internal const val SPRITE_LOCOMOTION_SYSTEM = CoreSystems.SPRITE_LOCOMOTION
 
 /** The name of the system that advances a scene's `sprite_clips` in its schedule. */
 internal const val SPRITE_CLIPS_SYSTEM = CoreSystems.SPRITE_CLIPS
@@ -52,6 +57,7 @@ internal object MotionFeature : SceneFeature {
         val hasRenderer = plan.hasRenderer
         if (scene.uses(SceneKeyframeAnimation::class)) plan.frame(CoreSystems.KEYFRAMES) { KeyframeAnimationSystem(hasRenderer) }
         if (scene.uses(SceneTextureClips::class)) plan.frame(CoreSystems.TEXTURE_CLIPS, SceneSystemRole.Presentation) { TextureClipSystem() }
+        if (scene.uses(SceneSpriteLocomotion::class)) plan.frame(CoreSystems.SPRITE_LOCOMOTION, SceneSystemRole.Presentation) { SpriteLocomotionSystem() }
         if (scene.uses(SceneSpriteClips::class)) plan.frame(CoreSystems.SPRITE_CLIPS, SceneSystemRole.Presentation) { SpriteClipSystem() }
     }
 }

@@ -23,6 +23,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.nodegraph.NodeSpec
 import com.awakekt.awake.nodegraph.PortSpec
 import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.scene.scene2d.SpriteClips
 
 /**
  * Nodes that act on scene entities: sensor events, entities and animation.
@@ -112,8 +113,8 @@ object SceneNodes {
     }
 
     /**
-     * Plays a clip on the target's `Animator`. A missing animator or clip, or a wired target that
-     * gives no entity, is skipped.
+     * Plays a clip on the target's 3D `Animator` or 2D `SpriteClips`. A missing animation
+     * component or clip, or a wired target that gives no entity, is skipped.
      *
      * @param scene The blueprint scene execution bridge.
      */
@@ -129,11 +130,22 @@ object SceneNodes {
         override val effect = Effect.Presentation
 
         override fun run(ctx: BlueprintContext): Step {
-            // A wired target that gives no entity has no Animator: NoEntity is never alive.
-            val player = scene.world.get<Animator>(targetOrOwner(ctx))?.player ?: return then
             val clip = ctx.string(CLIP)
-            if (clip != null && clip in player.clipEntries) {
-                player.play(clip, if (ctx.bool(LOOP)) AnimationPlayback.Loop else AnimationPlayback.Once)
+            if (clip != null) {
+                val target = targetOrOwner(ctx)
+                val loop = ctx.bool(LOOP)
+                // A wired target that gives no entity has neither component: NoEntity is never alive.
+                val player = scene.world.get<Animator>(target)?.player
+                if (player != null) {
+                    if (clip in player.clipEntries) {
+                        player.play(clip, if (loop) AnimationPlayback.Loop else AnimationPlayback.Once)
+                    }
+                } else {
+                    val spriteClips = scene.world.get<SpriteClips>(target)
+                    if (spriteClips != null && spriteClips.hasClip(clip)) {
+                        spriteClips.play(clip, restart = !loop)
+                    }
+                }
             }
             return then
         }
