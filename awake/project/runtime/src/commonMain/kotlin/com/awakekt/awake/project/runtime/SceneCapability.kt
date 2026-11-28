@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.ioDispatcher
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.document.SceneComponent
@@ -13,6 +14,8 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import com.awakekt.awake.scene.runtime.SceneSystemRole
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.yield
 import kotlin.reflect.KClass
 
 /**
@@ -292,7 +295,7 @@ interface SceneCapability : SceneFeature {
 
 /**
  * Runs each of [installed]'s [SceneFeature.load] in order into [content], prefixing a refusal with
- * [label].
+ * [label]. Yields cooperatively between features so single-threaded hosts can paint loading frames.
  */
 internal suspend fun loadContent(
     scene: SceneDocument,
@@ -307,6 +310,17 @@ internal suspend fun loadContent(
         } catch (problem: IllegalArgumentException) {
             throw IllegalArgumentException("$label: ${problem.message}", problem)
         }
+        yieldIfSingleThreadedHost()
     }
     return content.build()
+}
+
+/**
+ * Yields cooperatively on single-threaded hosts (where [ioDispatcher] shares [Dispatchers.Default]
+ * with the event loop, such as WasmJs) so long model and feature loads allow loading frames to
+ * paint. Multi-threaded hosts already load off the frame thread, so skipping [yield] avoids extra
+ * dispatch hops and prevents suspended continuations from retaining loaded scene references.
+ */
+internal suspend fun yieldIfSingleThreadedHost() {
+    if (ioDispatcher === Dispatchers.Default) yield()
 }

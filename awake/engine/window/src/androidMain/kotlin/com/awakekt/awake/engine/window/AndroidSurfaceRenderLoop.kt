@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.window
 
+import android.os.Process
 import com.awakekt.awake.core.host.AndroidFrameLoop
 import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.engine.platform.WindowLifecycle
@@ -27,6 +28,7 @@ internal class AndroidSurfaceRenderLoop(
     private val tickFrame: (FrameRateMode, (Double) -> Unit) -> Unit = AndroidFrameLoop::tick,
     private val onFrameRendered: () -> Unit = {},
     private val threadName: String = DEFAULT_THREAD_NAME,
+    private val configureThreadPriority: () -> Unit = ::promoteRenderThreadPriority,
 ) {
     private val lock = ReentrantLock()
     private val stateChanged = lock.newCondition()
@@ -142,6 +144,7 @@ internal class AndroidSurfaceRenderLoop(
     }
 
     private fun runLoop() {
+        configureThreadPriority()
         try {
             var alive = true
             while (alive) {
@@ -282,5 +285,11 @@ internal class AndroidSurfaceRenderLoop(
 
     internal companion object {
         const val DEFAULT_THREAD_NAME = "AwakeSurfaceView-Render"
+
+        private fun promoteRenderThreadPriority() {
+            // Keep the dedicated frame thread above default-priority Dispatchers.IO / decode pools
+            // so background asset streaming and crypto do not starve loading or gameplay frames.
+            runCatching { Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY) }.let {}
+        }
     }
 }
