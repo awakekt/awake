@@ -12,9 +12,6 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
-import com.awakekt.awake.render.command.PreparedDraw
-import com.awakekt.awake.render.command.SortedDraws
-import com.awakekt.awake.render.command.allDraws
 import com.awakekt.awake.render.passes.maskExtentHeight
 import com.awakekt.awake.render.passes.maskExtentWidth
 import com.awakekt.awake.render.pipeline.BindingSemantic
@@ -93,15 +90,15 @@ internal fun Renderer.ensureMaskTarget(width: Int, height: Int, input: GpuPassIn
 internal fun Renderer.recordSceneDepthPass(
     encoder: GPUCommandEncoder,
     input: GpuPassInput,
-    sorted: SortedDraws<out PreparedDraw>,
 ) {
     val pass = sceneDepthPass ?: return
     if (!needsSceneDepth(input.environment)) {
         pass.clearLayers(encoder, onlyDirty = true)
     } else {
+        // Transparent draws write no depth in the main pass and must never populate SceneDepth.
         pass.recordCommands(
             encoder,
-            sorted.allDraws,
+            input.resolvedOpaqueDraws,
             GpuShadowCascadeData(
                 viewProjections = listOf(input.viewProjection),
                 splitDistances = floatArrayOf(Float.MAX_VALUE),

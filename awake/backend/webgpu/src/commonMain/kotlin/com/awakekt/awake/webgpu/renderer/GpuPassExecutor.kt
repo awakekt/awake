@@ -64,7 +64,7 @@ internal class RendererGpuPassExecutor(
             stages.next(RenderDrawStage.Upload, RenderDrawStage.Record)
             val colorTexture = renderingContext.getCurrentTexture()
             val colorView = colorTexture.createView()
-            recordDepthPasses(encoder, input, sorted, view = swapchainManager)
+            recordDepthPasses(encoder, input, view = swapchainManager)
             val output = com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget(
                 colorTexture = colorTexture,
                 colorView = colorView,
@@ -133,7 +133,7 @@ internal class RendererGpuPassExecutor(
             0,
             com.awakekt.awake.webgpu.texture.TextureUploads(renderer.graphicsDevice),
         )
-        recordDepthPasses(encoder, input, sorted, view = offscreen)
+        recordDepthPasses(encoder, input, view = offscreen)
         recordScene(encoder, offscreen.attachment(), input, sorted, primary)
         recordPostPasses(encoder, input.postPasses)
         renderer.submitRenderCommands(encoder)
@@ -142,11 +142,10 @@ internal class RendererGpuPassExecutor(
     private fun recordDepthPasses(
         encoder: io.ygdrasil.webgpu.GPUCommandEncoder,
         input: GpuPassInput,
-        sorted: com.awakekt.awake.render.command.SortedDraws<out PreparedDraw>,
         view: Any,
     ) {
         renderer.depthPrePass?.recordCommands(encoder, input.prePasses, input.environment, view)
-        renderer.recordSceneDepthPass(encoder, input, sorted)
+        renderer.recordSceneDepthPass(encoder, input)
         renderer.recordMaskPass(encoder, input)
     }
 

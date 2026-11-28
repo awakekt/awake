@@ -130,7 +130,8 @@ private fun Renderer.prepareDepthDraws(input: GpuPassInput): List<PreparedDraw> 
     val shadowActive = input.environment.shadowsEnabled && input.prePasses.isNotEmpty()
     val sceneDepthActive = sceneDepthTarget != null && needsSceneDepth(input.environment)
     if (!shadowActive && !sceneDepthActive) return emptyList()
-    return input.resolvedDraws
+    // Transparent draws write no depth in the main pass and must never populate SceneDepth or shadows.
+    return input.resolvedOpaqueDraws
 }
 
 /**
