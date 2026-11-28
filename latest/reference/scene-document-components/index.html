@@ -3425,6 +3425,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprite_locomotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sprite_locomotion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#static_transform" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4657,6 +4668,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprite_locomotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sprite_locomotion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#static_transform" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5235,6 +5257,13 @@ registers it.</p>
 <tr>
 <td><a href="#sprite_clips"><code>sprite_clips</code></a></td>
 <td><code>SpriteClips</code></td>
+<td><code>com.awakekt.awake.scene:scene2d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../component-map/">Component map</a></td>
+</tr>
+<tr>
+<td><a href="#sprite_locomotion"><code>sprite_locomotion</code></a></td>
+<td><code>SpriteLocomotion</code></td>
 <td><code>com.awakekt.awake.scene:scene2d</code></td>
 <td><code>DefaultSceneComponentResolvers.install()</code></td>
 <td><a href="../component-map/">Component map</a></td>
@@ -9655,6 +9684,86 @@ local runs override imported names. The result saves as ordinary scene component
 <p>Runs must contain contiguous, untrimmed cells on one row. Uniform <code>durations_ms</code> overrides <code>fps</code>;
 without durations, <code>fps</code> is required. Packed atlases, reordered cells and variable frame durations
 are unsupported and rejected with <code>IllegalArgumentException</code>.</p>
+<h2 id="sprite_locomotion"><code>sprite_locomotion</code></h2>
+<p>Motion-driven 2D sprite animation and horizontal facing for an entity with <code>sprite</code> and
+<code>sprite_clips</code>. <code>SceneSpriteLocomotion</code>.</p>
+<p>The standard scene runtime runs <code>SpriteLocomotionSystem</code> right before <code>SpriteClipSystem</code>, measuring
+world X/Y movement from the entity's <code>Transform</code> and reading <code>GroundContact</code> from the entity or its
+nearest character ancestor. When <code>flipOnMoveX</code> is true, horizontal movement faster than <code>walkAbove</code>
+updates <code>Sprite.flipX</code> automatically. Clips outside this component (such as an attack triggered from
+a blueprint) play uninterrupted until finished.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>idle</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip played while standing still on the ground.</td>
+</tr>
+<tr>
+<td><code>walk</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip played above <code>walkAbove</code> horizontal speed.</td>
+</tr>
+<tr>
+<td><code>run</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip played above <code>runAbove</code> horizontal speed; falls back to <code>walk</code> when omitted.</td>
+</tr>
+<tr>
+<td><code>jump</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip played while airborne, or while rising when <code>fall</code> is supplied.</td>
+</tr>
+<tr>
+<td><code>fall</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip played while descending in the air; falls back to <code>jump</code> when omitted.</td>
+</tr>
+<tr>
+<td><code>walkAbove</code></td>
+<td>number</td>
+<td><code>0.1</code></td>
+<td>Horizontal speed in scene units per second above which <code>walk</code> plays. Not negative.</td>
+</tr>
+<tr>
+<td><code>runAbove</code></td>
+<td>number</td>
+<td><code>4.0</code></td>
+<td>Horizontal speed in scene units per second above which <code>run</code> plays. Not negative and at least <code>walkAbove</code>.</td>
+</tr>
+<tr>
+<td><code>airborneAbove</code></td>
+<td>number</td>
+<td><code>2.0</code></td>
+<td>Vertical speed that starts airborne playback without a <code>GroundContact</code>. Above 0.</td>
+</tr>
+<tr>
+<td><code>flipOnMoveX</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Mirror <code>Sprite.flipX</code> automatically to match horizontal movement direction.</td>
+</tr>
+<tr>
+<td><code>defaultFacingRight</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether unflipped (<code>flipX = false</code>) sprite art faces right (<code>+X</code>).</td>
+</tr>
+</tbody>
+</table>
 <h2 id="static_transform"><code>static_transform</code></h2>
 <p>Marks a node that never moves, such as a placed prop. <code>SceneStaticTransform</code>, no fields.</p>
 <p><code>TransformSystem</code> builds the node's world matrix once and then skips it, so a level of thousands of
