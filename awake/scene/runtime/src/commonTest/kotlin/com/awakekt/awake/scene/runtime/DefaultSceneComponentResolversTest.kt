@@ -21,7 +21,7 @@ class DefaultSceneComponentResolversTest {
         "AmbientLightBinding", "TerrainBinding", "CanvasElementBinding", "CanvasScalerBinding", "CanvasControlsBinding",
         "CanvasFollowLimitBinding", "CanvasFollowOcclusionBinding", "LocomotionAnimationBinding", "KeyframeAnimationBinding",
         "DayCycleBinding", "ParticleEmitterBinding", "TextureAnimationBinding", "TextureClipsBinding", "SpriteBinding",
-        "TilemapBinding", "SpriteClipsBinding", "ParticleEmitter2DBinding", "ShaderEffectBinding",
+        "TilemapBinding", "SpriteClipsBinding", "SpriteLocomotionBinding", "ParticleEmitter2DBinding", "ShaderEffectBinding",
         // Text placed in the scene (#1062).
         "WorldTextBinding",
         // A strip of point pairs rewritten every frame (#1465).
