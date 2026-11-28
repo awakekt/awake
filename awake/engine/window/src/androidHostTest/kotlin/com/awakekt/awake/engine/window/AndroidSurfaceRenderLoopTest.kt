@@ -232,6 +232,36 @@ internal class AndroidSurfaceRenderLoopTest {
         assertEquals("simulated backend failure", uncaught.get()?.message)
     }
 
+    @Test
+    fun renderLoopPromotesThreadPriorityOnRenderThreadBeforeCreate() {
+        val firstUpdate = CountDownLatch(1)
+        val priorityThread = AtomicReference<String?>(null)
+        val events = CopyOnWriteArrayList<String>()
+        val lifecycle = RecordingLifecycle(
+            onCreate = { events += "create" },
+            onUpdate = { firstUpdate.countDown() },
+        )
+        val loop = AndroidSurfaceRenderLoop(
+            lifecycle = lifecycle,
+            tickFrame = { _, step ->
+                step(0.016)
+                Thread.sleep(2)
+            },
+            configureThreadPriority = {
+                priorityThread.set(Thread.currentThread().name)
+                events += "priority"
+            },
+        )
+
+        loop.onSurfaceCreated("surface-1")
+        assertTrue(firstUpdate.await(5, TimeUnit.SECONDS))
+        loop.onSurfaceDestroyed()
+        loop.onDetachedFromWindow()
+
+        assertEquals(AndroidSurfaceRenderLoop.DEFAULT_THREAD_NAME, priorityThread.get())
+        assertEquals(listOf("priority", "create"), events.take(2))
+    }
+
     @Suppress("TooManyFunctions") // One override per WindowLifecycle callback.
     private class RecordingLifecycle(
         private val onCreate: () -> Unit = {},

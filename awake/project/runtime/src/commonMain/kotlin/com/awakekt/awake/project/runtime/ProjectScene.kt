@@ -259,6 +259,9 @@ internal suspend fun projectSceneOf(
                 // A played scene makes its meshes and materials through the async load path, so the
                 // CPU copies can go once they are uploaded; one made again reads its model again (#1753).
                 models.releaseAfterUpload(it)
+                // Yield between heavy model preloads on single-threaded hosts (e.g. WasmJs) so the
+                // browser can paint loading frames instead of stalling across an entire model list.
+                yieldIfSingleThreadedHost()
             }
     }
     // Every file is read before the physics world exists, so a missing model, or a load cancelled
