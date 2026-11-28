@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.87.1] - 2026-11-28
+
+### Fixed
+
+- **Fix upside-down 3D particle sprite UVs in `ParticleContentSystem`.** Updated `ParticleContentSystem`'s shared unit quad UVs (`y = -0.5 -> v = 0`, `y = +0.5 -> v = 1`, matching `SpriteRenderBatch`) so decoded PNG/JPEG sprites loaded via `loadParticleImages` / `loadParticleSprites` (which decode bottom-up across Desktop, Android, and Web) render right-side up on both Vulkan and WebGPU.
+- **Exclude transparent draws from `SceneDepth` pre-pass.** Vulkan (`GpuPassExecutor.prepareDepthDraws`) and WebGPU (`RendererMaskTarget.recordSceneDepthPass`) now render only opaque draws (`input.resolvedOpaqueDraws`) into the camera-space `SceneDepth` target so transparent/additive billboards (such as weapon glow and skill VFX quads) no longer punch false depth squares into depth-reading effects like `StylizedWater`, `DepthFog`, and `SunFlare`.
+
 ## [0.87.0] - 2026-11-28
 
 ## [0.86.0] - 2026-11-28
