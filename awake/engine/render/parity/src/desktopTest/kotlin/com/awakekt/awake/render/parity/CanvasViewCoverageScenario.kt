@@ -112,6 +112,9 @@ internal suspend fun captureCanvasViewCoverage(
             portrait.visible = true
             capture("ancestor")
             ancestorClip = false
+            // Depth fog samples SceneDepth (opaque geometry) and exempts unlit draws via the mask layer,
+            // so verify it over Portrait 2 (opaque lit geometry) while the lower half stays empty.
+            portrait.camera = "Portrait 2"
             fogVisible = true
             capture("fog")
         } finally {
@@ -176,6 +179,15 @@ private fun SceneAppLifecycleRuntime.populateViewCoverage(): CanvasElement {
             world.add(it, Name("Portrait $index"))
             world.add(it, Camera(coverageLens(side), isPrimary = false))
         }
+    }
+    world.create().also {
+        world.add(it, Transform(position = Vec3f(70f, 0f, 0f)))
+        world.add(it, MeshRenderer(renderer.createMesh(geometry), renderer.texturedMaterial(SolidWhite), transparent = false))
+        world.add(it, PbrMaterial(baseColorFactor = Color(1f, 0f, 0f, 1f), unlit = false))
+    }
+    world.create().also {
+        world.add(it, Name("Portrait 2"))
+        world.add(it, Camera(coverageLens(70f), isPrimary = false))
     }
     world.add(
         world.create(),

@@ -81,8 +81,10 @@ class CanvasViewCoverageParityTest {
         assertTrue(panel[3] in 152..154, "$backend: control, the panel is translucent: $panel")
         assertTrue(half.zip(expected).all { (actual, wanted) -> abs(actual - wanted) <= 2 }, "$backend: premultiplied source-over coverage: $half vs $expected")
         assertEquals(pixel("panel", 128, 176), pixel("transparent", 128, 176), "$backend: empty camera pixels preserve the panel including alpha")
+        val fogGeo = pixel("fog", 128, 80)
+        println("$backend View fogGeo=$fogGeo fogEmpty=${pixel("fog", 128, 176)}")
         assertEquals(pixel("panel", 128, 176), pixel("fog", 128, 176), "$backend: depth fog does not fill the empty camera background")
-        assertTrue(pixel("fog", 128, 80) != half, "$backend: the registered depth fog still renders over geometry")
+        assertTrue(fogGeo[2] > 10 && fogGeo[3] == 255, "$backend: the registered depth fog still tints opaque lit geometry: $fogGeo")
         for (mask in listOf("rounded", "circle")) {
             assertEquals(pixel("panel", 36, 36), pixel(mask, 36, 36), "$backend: $mask removes the picture at its corner")
             assertEquals(half, pixel(mask, 128, 80), "$backend: $mask preserves its interior")
