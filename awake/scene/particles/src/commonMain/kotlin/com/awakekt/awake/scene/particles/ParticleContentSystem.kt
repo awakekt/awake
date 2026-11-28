@@ -127,13 +127,16 @@ class ParticleContentSystem(
     }
 }
 
-/** A unit quad in the XY plane, position and UV; the particle shader lays it along each draw's quad axes. */
+/**
+ * Unit XY quad matching Awake's bottom-up decoded images (`v = 0` bottom, `v = 1` top, matching
+ * `SpriteRenderBatch`); the particle shader lays it along each draw's quad axes.
+ */
 private val QUAD = MeshGeometry(
     floatArrayOf(
-        -0.5f, -0.5f, 0f, 0f, 1f,
-        0.5f, -0.5f, 0f, 1f, 1f,
-        0.5f, 0.5f, 0f, 1f, 0f,
-        -0.5f, 0.5f, 0f, 0f, 0f,
+        -0.5f, -0.5f, 0f, 0f, 0f,
+        0.5f, -0.5f, 0f, 1f, 0f,
+        0.5f, 0.5f, 0f, 1f, 1f,
+        -0.5f, 0.5f, 0f, 0f, 1f,
     ),
     intArrayOf(0, 1, 2, 2, 3, 0),
     format = VertexFormat.PositionUv,
