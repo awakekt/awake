@@ -2,6 +2,7 @@ site_name: AwakeKt Docs
 site_description: Guides and reference for AwakeKt Engine, the Kotlin Multiplatform engine for 2D and 3D apps.
 site_url: https://docs.awakekt.com/
 repo_url: https://github.com/awakekt/awake
+repo_name: awakekt/awake
 hooks:
   - hooks.py
 plugins:
