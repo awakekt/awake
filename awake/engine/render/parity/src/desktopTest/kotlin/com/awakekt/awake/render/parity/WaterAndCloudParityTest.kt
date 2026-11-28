@@ -86,6 +86,37 @@ class WaterAndCloudParityTest {
         assertTrue(diff < MAX_BACKEND_DIFF, "Vulkan and WebGPU depth water foam should match closely (diff=$diff)")
     }
 
+    /**
+     * Transparent/additive quads hovering over `StylizedWater` must not write into `SceneDepth`.
+     *
+     * Negative control (before passing `resolvedOpaqueDraws` only to `sceneDepthPass`): both Vulkan
+     * and WebGPU leaked the zero-alpha transparent textured quad into `SceneDepth` and punched a
+     * solid foam rectangle into the water (`diffAgainstClean = 5.7590537` on both backends).
+     */
+    @Test
+    fun vulkanTransparentQuadDoesNotWriteSceneDepthFoamSquare() =
+        verifyTransparentQuadExcludedFromSceneDepth(HeadlessUiBackend.Vulkan)
+
+    @Test
+    fun webGpuTransparentQuadDoesNotWriteSceneDepthFoamSquare() =
+        verifyTransparentQuadExcludedFromSceneDepth(HeadlessUiBackend.WebGpu)
+
+    private fun verifyTransparentQuadExcludedFromSceneDepth(backend: HeadlessUiBackend) {
+        val clean = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Standard, samplesDepth = true)
+        val withQuad = renderStylizedWaterWithRockScene(
+            backend,
+            StylizedWaterQuality.Standard,
+            samplesDepth = true,
+            includeTransparentQuad = true,
+        )
+        val diff = meanRgbDiff(clean, withQuad)
+        println("WATER_TRANSPARENT_DEPTH[$backend] diffAgainstClean=$diff")
+        assertTrue(
+            diff < 0.5f,
+            "$backend: transparent quad over StylizedWater must not write into SceneDepth and punch a foam square (diff=$diff)",
+        )
+    }
+
     private fun verifyWaterDepthFoam(backend: HeadlessUiBackend) {
         val withFoam = renderStylizedWaterWithRockScene(backend, StylizedWaterQuality.Standard, samplesDepth = true)
         val attachedFoam = renderStylizedWaterWithRockScene(

@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.StylizedWaterLook
 import com.awakekt.awake.asset.shaderpack.StylizedWaterQuality
+import com.awakekt.awake.asset.shaderpack.TexturedUniformLayout
 import com.awakekt.awake.asset.shaderpack.cloudLayerContentFeature
 import com.awakekt.awake.asset.shaderpack.stylizedWaterContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
@@ -32,11 +33,13 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.testing.HeadlessRenderSession
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.application.VulkanEngine
 import com.awakekt.awake.webgpu.webGpuHeadlessPlan
 import kotlinx.coroutines.CompletableDeferred
@@ -261,6 +264,16 @@ private suspend fun openDepthWaterSession(
             materialBindings = GroupBindings.UniformOnlyMaterial,
             buildTransparent = true,
         ),
+        scenePipelines = listOf(
+            ScenePipeline(
+                key = PipelineKey.Format(VertexFormat.PositionNormalColorUv),
+                shaders = PackShaderSets.Textured,
+                vertexFormat = VertexFormat.PositionNormalColorUv,
+                buildBackCulled = true,
+                buildTransparent = true,
+                buildAdditive = true,
+            ),
+        ),
         contentFeatures = listOfNotNull(waterFeature),
         depthPrePassShaderSet = PackShaderSets.ShadowDepth,
         sceneDepthShaderSet = PackShaderSets.SceneDepth,
@@ -279,6 +292,10 @@ private suspend fun openDepthWaterSession(
 
 /**
  * Renders flowing stylized water around a boulder and sloped sandy shoreline using `SceneDepth` contact foam.
+ *
+ * When [includeTransparentQuad] is true, adds a camera-facing transparent zero-alpha quad hovering over the
+ * deep foreground water (mimicking an additive weapon-glow or skill VFX billboard whose transparent pixels
+ * must never write depth into `SceneDepth` or punch a square foam patch into the water surface).
  */
 @Suppress("LongParameterList")
 fun renderStylizedWaterWithRockScene(
@@ -288,6 +305,7 @@ fun renderStylizedWaterWithRockScene(
     timeSeconds: Float = 1.2f,
     size: Int = SCENE_SIZE,
     attachDynamically: Boolean = false,
+    includeTransparentQuad: Boolean = false,
 ): ByteArray {
     val look = StylizedWaterLook(
         enabled = true,
@@ -318,7 +336,7 @@ fun renderStylizedWaterWithRockScene(
             null
         }
         try {
-            renderDepthWaterFrame(r, size)
+            renderDepthWaterFrame(r, size, includeTransparentQuad = includeTransparentQuad)
         } finally {
             r.waitIdle()
             attached?.detach()
@@ -326,13 +344,54 @@ fun renderStylizedWaterWithRockScene(
     }
 }
 
-private fun renderDepthWaterFrame(r: Renderer, size: Int): ByteArray {
+private fun transparentWaterQuadGeometry(): MeshGeometry {
+    // Large quad sitting right across the deep foreground water (z = 3.6..5.2, y = -0.05..1.85),
+    // matching imported additive billboard VFX (VertexFormat.PositionNormalColorUv, alphaMode = Opaque,
+    // transparent = true, additive = true). Its 1x1 texture has alpha = 0 so it adds zero colour in
+    // the scene pass; if it leaks into SceneDepth, StylizedWater samples depth=0 across the quad and
+    // paints a sharp solid foam rectangle over the river.
+    val verts = floatArrayOf(
+        -2.4f, -0.05f, 5.2f, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f,
+        2.4f, -0.05f, 5.2f, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f,
+        2.4f, 1.85f, 3.6f, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f,
+        -2.4f, 1.85f, 3.6f, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f,
+    )
+    return MeshGeometry(verts, intArrayOf(0, 1, 2, 0, 2, 3), VertexFormat.PositionNormalColorUv)
+}
+
+private val TRANSPARENT_BLACK_PIXEL = TextureAsset(
+    width = 1,
+    height = 1,
+    data = byteArrayOf(0, 0, 0, 0),
+)
+
+private fun renderDepthWaterFrame(r: Renderer, size: Int, includeTransparentQuad: Boolean = false): ByteArray {
     val target = r.createRenderTarget(size, size)
     val rockMesh = r.createMesh(rockAndRiverbedGeometry())
     val rockMaterial = r.createMaterial(LitShadowUniformLayout)
+    val quadMesh = if (includeTransparentQuad) r.createMesh(transparentWaterQuadGeometry()) else null
+    val quadMaterial = if (includeTransparentQuad) {
+        r.createMaterial(TexturedUniformLayout, texture = TRANSPARENT_BLACK_PIXEL)
+    } else {
+        null
+    }
     try {
         val lens = Lens(eye = Vec3f(0f, 6.2f, 12.5f), center = Vec3f(0f, 0f, -1.5f), fovYRadians = 0.85f, near = 0.2f, far = 150f)
-        val draws = listOf(RenderDrawCommand(mesh = rockMesh, material = rockMaterial, model = Mat4()))
+        val draws = buildList {
+            add(RenderDrawCommand(mesh = rockMesh, material = rockMaterial, model = Mat4()))
+            if (quadMesh != null && quadMaterial != null) {
+                add(
+                    RenderDrawCommand(
+                        mesh = quadMesh,
+                        material = quadMaterial,
+                        model = Mat4(),
+                        transparent = true,
+                        additive = true,
+                        cullMode = CullMode.None,
+                    ),
+                )
+            }
+        }
         r.renderToTexture(
             target,
             ScenePassCompiler.compile(
@@ -357,6 +416,8 @@ private fun renderDepthWaterFrame(r: Renderer, size: Int): ByteArray {
         return runBlocking { r.readPixels(target) }.data
     } finally {
         r.waitIdle()
+        quadMesh?.destroy()
+        quadMaterial?.destroy()
         rockMesh.destroy()
         rockMaterial.destroy()
         target.destroy()
@@ -386,6 +447,18 @@ internal fun writeWaterAndCloudEvidence(
         "Stylized water with SceneDepth foam: lacy cellular contact foam, shallow absorption, and underwater caustics",
         size,
         renderStylizedWaterWithRockScene(HeadlessUiBackend.Vulkan, StylizedWaterQuality.Standard, samplesDepth = true, size = size),
+    )
+    write(
+        "scene-stylized-water-transparent-billboard",
+        "Stylized water with transparent VFX quad above surface: SceneDepth skips transparent draws so no foam square appears",
+        size,
+        renderStylizedWaterWithRockScene(
+            HeadlessUiBackend.Vulkan,
+            StylizedWaterQuality.Standard,
+            samplesDepth = true,
+            size = size,
+            includeTransparentQuad = true,
+        ),
     )
     write(
         "scene-cloud-layer-standard",
